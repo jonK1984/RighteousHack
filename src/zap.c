@@ -126,7 +126,7 @@ learnwand(struct obj *obj)
        object type provided that the object itself is known (as more
        than just "a wand").  If object type is already discovered and
        we observed the effect, mark the individual wand as having been
-       seen.  Suppress spells (which use fake spellbook object for `obj')
+       seen.  Suppress spells (which use fake prophetic book object for `obj')
        so that casting a spell won't re-discover its forgotten book. */
     if (obj->oclass != SPBOOK_CLASS) {
         /* if type already discovered, treat this item has having been seen
@@ -1298,7 +1298,7 @@ cancel_item(struct obj *obj)
         || otyp == POT_ACID
         || otyp == POT_SICKNESS
         || (otyp == POT_WATER && (obj->blessed || obj->cursed))
-        /* not magic; cancels to blank spellbook */
+        /* not magic; cancels to blank prophetic book */
         || otyp == SPE_NOVEL) {
         int cancelled_spe = (obj->oclass == WAND_CLASS
                              || otyp == CRYSTAL_BALL) ? -1 : 0;
@@ -1320,7 +1320,7 @@ cancel_item(struct obj *obj)
             if (otyp != SPE_CANCELLATION && otyp != SPE_BOOK_OF_THE_DEAD) {
                 costly_alteration(obj, COST_CANCEL);
                 obj->otyp = SPE_BLANK_PAPER;
-                /* cancelling a novel is more involved than a spellbook */
+                /* cancelling a novel is more involved than a prophetic book */
                 if (otyp == SPE_NOVEL) /* old type */
                     blank_novel(obj);
             }
@@ -1359,16 +1359,16 @@ cancel_item(struct obj *obj)
     return;
 }
 
-/* soaking or cancelling a novel converts it into a blank spellbook but
+/* soaking or cancelling a novel converts it into a blank prophetic book but
    needs more than just changing its otyp (caller is responsible for that) */
 void
 blank_novel(struct obj *obj)
 {
     assert(obj->otyp == SPE_BLANK_PAPER);
-    /* novelidx overloads corpsenm, not used for spellbooks */
+    /* novelidx overloads corpsenm, not used for prophetic books */
     obj->novelidx = 0;
     free_oname(obj); /* get rid of [former] novel's title */
-    /* a blank spellbook weighs more than a novel; update obj's weight and
+    /* a blank prophetic book weighs more than a novel; update obj's weight and
        recursively the weight of any container holding it */
     container_weight(obj);
 }
@@ -1846,7 +1846,7 @@ poly_obj(struct obj *obj, int id)
         while (otmp->otyp == WAN_WISHING || otmp->otyp == WAN_POLYMORPH)
             otmp->otyp = rnd_class(WAN_LIGHT, WAN_LIGHTNING);
         /* altering the object tends to degrade its quality
-           (analogous to spellbook `read count' handling) */
+           (analogous to prophetic book `read count' handling) */
         if ((int) otmp->recharged < rn2(7)) /* recharge_limit */
             otmp->recharged++;
         break;
@@ -1862,7 +1862,7 @@ poly_obj(struct obj *obj, int id)
     case SPBOOK_CLASS:
         while (otmp->otyp == SPE_POLYMORPH)
             otmp->otyp = rnd_class(svb.bases[SPBOOK_CLASS], SPE_BLANK_PAPER);
-        /* reduce spellbook abuse; non-blank books degrade;
+        /* reduce prophetic book abuse; non-blank books degrade;
            3.7: novels don't use spestudied so shouldn't degrade to blank
            (but don't force spestudied to zero for them since a non-zero
            value could get passed along to a future polymorph) */
@@ -2424,7 +2424,7 @@ bhito(struct obj *obj, struct obj *otmp)
 /* returns nonzero if something was hit */
 int
 bhitpile(
-    struct obj *obj,            /* wand or fake spellbook for type of zap */
+    struct obj *obj,            /* wand or fake prophetic book for type of zap */
     int (*fhito)(OBJ_P, OBJ_P), /* callback for each object being hit */
     coordxy tx, coordxy ty,     /* target location */
     schar zz)                   /* direction for up/down zaps */
@@ -4572,7 +4572,7 @@ zhitu(
 }
 
 /*
- * burn objects (such as scrolls and spellbooks) on floor
+ * burn objects (such as scrolls and prophetic books) on floor
  * at position x,y; return the number of objects burned
  */
 int
@@ -5733,7 +5733,7 @@ item_what(int dmgtyp)
  *      [1] boiling potion other than oil
  *      [2] boiling potion of oil
  *      [3] burning scroll
- *      [4] burning spellbook
+ *      [4] burning prophetic book
  *      [5] shocked ring
  *      [6] shocked wand
  * (books, rings, and wands don't stack so don't need plural form;

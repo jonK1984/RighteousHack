@@ -4146,7 +4146,7 @@ apply_ok(struct obj *obj)
     if (!obj)
         return GETOBJ_EXCLUDE;
 
-    /* all tools, all wands (breaking), all spellbooks (flipping through -
+    /* all tools, all wands (breaking), all prophetic books (flipping through -
        including blank/novel/Book of the Dead) */
     if (obj->oclass == TOOL_CLASS || obj->oclass == WAND_CLASS
         || obj->oclass == SPBOOK_CLASS)
@@ -4490,7 +4490,7 @@ flip_through_book(struct obj *obj)
               Hallucination ? "freshly picked"
                             : "rough and dry");
     } else if (obj->otyp == SPE_BLANK_PAPER) {
-        pline("This spellbook %s.",
+        pline("This prophetic book %s.",
               Hallucination ? "doesn't have much of a plot"
                             : "has nothing written in it");
         makeknown(obj->otyp);
@@ -4508,7 +4508,7 @@ flip_through_book(struct obj *obj)
         };
         int findx = min(obj->spestudied, MAX_SPELL_STUDY);
 
-        pline("The%s ink in this spellbook is %s.",
+        pline("The%s ink in this prophetic book is %s.",
               objects[obj->otyp].oc_magic ? " magical" : "",
               fadeness[findx]);
     }

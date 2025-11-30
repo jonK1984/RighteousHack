@@ -289,7 +289,7 @@ enum cost_alteration_types {
     COST_DECHNT  =  5, /* disenchant weapons or armor */
     COST_DEGRD   =  6, /* removal of rustproofing, dulling via engraving */
     COST_DILUTE  =  7, /* potion dilution */
-    COST_ERASE   =  8, /* scroll or spellbook blanking */
+    COST_ERASE   =  8, /* scroll or prophetic book blanking */
     COST_BURN    =  9, /* dipped into flaming oil */
     COST_NUTRLZ  = 10, /* neutralized via unicorn horn */
     COST_DSTROY  = 11, /* wand breaking (bill first, useup later) */

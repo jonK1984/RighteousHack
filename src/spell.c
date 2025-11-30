@@ -10,13 +10,13 @@
 #define SPELLMENU_SORT (MAXSPELL) /* special menu entry */
 
 /* spell retention period, in turns; at 10% of this value, player becomes
-   eligible to reread the spellbook and regain 100% retention (the threshold
+   eligible to reread the prophetic book and regain 100% retention (the threshold
    used to be 1000 turns, which was 10% of the original 10000 turn retention
    period but didn't get adjusted when that period got doubled to 20000) */
 #define KEEN 20000
-/* x: need to add 1 when used for reading a spellbook rather than for hero
+/* x: need to add 1 when used for reading a prophetic book rather than for hero
    initialization; spell memory is decremented at the end of each turn,
-   including the turn on which the spellbook is read; without the extra
+   including the turn on which the prophetic book is read; without the extra
    increment, the hero used to get cheated out of 1 turn of retention */
 #define incrnknow(spell, x) (svs.spl_book[spell].sp_know = KEEN + (x))
 
@@ -106,7 +106,7 @@ staticfn void propagate_chain_lightning(struct chain_lightning_queue *,
 #define uarmgbon 6 /* Casting channels through the hands */
 #define uarmfbon 2 /* All metal interferes to some degree */
 
-/* since the spellbook itself doesn't blow up, don't say just "explodes" */
+/* since the prophetic book itself doesn't blow up, don't say just "explodes" */
 static const char explodes[] = "radiates explosive energy";
 
 /* convert a letter into a number in the range 0..51, or -1 if not a letter */
@@ -162,7 +162,7 @@ cursed_book(struct obj *bp)
         bp->in_use = FALSE;
         poison_strdmg(Poison_resistance ? rn1(2, 1) : rn1(4, 3),
                       rnd(Poison_resistance ? 6 : 10),
-                      "contact-poisoned spellbook", KILLED_BY_AN);
+                      "contact-poisoned prophetic book", KILLED_BY_AN);
         bp->in_use = was_in_use;
         break;
     case 6:
@@ -194,7 +194,7 @@ confused_book(struct obj *spellbook)
         pline(
          "Being confused you have difficulties in controlling your actions.");
         display_nhwindow(WIN_MESSAGE, FALSE);
-        You("accidentally tear the spellbook to pieces.");
+        You("accidentally tear the prophetic book to pieces.");
         trycall(spellbook);
         useup(spellbook);
         gone = TRUE;
@@ -398,7 +398,7 @@ learn(void)
     } else if (spellid(i) == booktype) {
         /* normal book can be read and re-read a total of 4 times */
         if (book->spestudied > MAX_SPELL_STUDY) {
-            pline("This spellbook is too faint to be read any more.");
+            pline("This prophetic book is too faint to be read any more.");
             book->otyp = booktype = SPE_BLANK_PAPER;
             faded_to_blank = TRUE;
             /* reset spestudied as if polymorph had taken place */
@@ -416,7 +416,7 @@ learn(void)
            one less reading is available than when re-learning */
         if (book->spestudied >= MAX_SPELL_STUDY) {
             /* pre-used due to being the product of polymorph */
-            pline("This spellbook is too faint to read even once.");
+            pline("This prophetic book is too faint to read even once.");
             book->otyp = booktype = SPE_BLANK_PAPER;
             faded_to_blank = TRUE;
             /* reset spestudied as if polymorph had taken place */
@@ -435,12 +435,12 @@ learn(void)
         }
     }
     if (i < MAXSPELL) {
-        /* might be learning a new spellbook type or spellbook of blank paper;
+        /* might be learning a new prophetic book type or prophetic book of blank paper;
            if so, persistent inventory will get updated */
         makeknown((int) booktype);
         /* makeknown() calls update_inventory() when discovering something
            new but is a no-op for something that's already known so wouldn't
-           update persistent inventory to reflect faded book if spellbook of
+           update persistent inventory to reflect faded book if prophetic book of
            blank paper happens to already be discovered */
         if (faded_to_blank)
             update_inventory();
@@ -503,7 +503,7 @@ study_book(struct obj *spellbook)
     } else {
         /* KMH -- Simplified this code */
         if (booktype == SPE_BLANK_PAPER) {
-            pline("This spellbook is all blank.");
+            pline("This prophetic book is all blank.");
             makeknown(booktype);
             return 1;
         }
@@ -552,7 +552,7 @@ study_book(struct obj *spellbook)
             svc.context.spbook.delay = -8 * objects[booktype].oc_delay;
             break;
         default:
-            impossible("Unknown spellbook level %d, book %d;",
+            impossible("Unknown prophetic book level %d, book %d;",
                        objects[booktype].oc_level, booktype);
             return 0;
         }
@@ -587,7 +587,7 @@ study_book(struct obj *spellbook)
                     char qbuf[QBUFSZ];
 
                     Sprintf(qbuf,
-                    "This spellbook is %sdifficult to comprehend.  Continue?",
+                    "This prophetic book is %sdifficult to comprehend.  Continue?",
                             (read_ability < 12 ? "very " : ""));
                     if (y_n(qbuf) != 'y') {
                         spellbook->in_use = FALSE;
@@ -610,7 +610,7 @@ study_book(struct obj *spellbook)
             svc.context.spbook.delay = 0;
             if (gone || !rn2(3)) {
                 if (!gone)
-                    pline_The("spellbook crumbles to dust!");
+                    pline_The("prophetic book crumbles to dust!");
                 trycall(spellbook);
                 useup(spellbook);
             } else
@@ -639,7 +639,7 @@ study_book(struct obj *spellbook)
     return 1;
 }
 
-/* a spellbook has been destroyed or the character has changed levels;
+/* a prophetic book has been destroyed or the character has changed levels;
    the stored address for the current book is no longer valid */
 void
 book_disappears(struct obj *obj)
@@ -687,10 +687,10 @@ rejectcasting(void)
 {
     /* rejections which take place before selecting a particular spell */
     if (Stunned) {
-        You("are too impaired to cast a spell.");
+        You("are too impaired to think about a prophecy.");
         return TRUE;
     } else if (!can_chant(&gy.youmonst)) {
-        You("are unable to chant the incantation.");
+        You("are unable to think about a prophecy.");
         return TRUE;
     } else if (!freehand() && !(uwep && uwep->otyp == QUARTERSTAFF)) {
         /* Note: !freehand() occurs when weapon and shield (or two-handed
@@ -700,7 +700,7 @@ rejectcasting(void)
          * But why isn't lack of free arms (for gesturing) an issue when
          * poly'd hero has no limbs?
          */
-        Your("arms are not free to cast!");
+        Your("arms are not free to think about a prophecy!");
         return TRUE;
     }
     return FALSE;
@@ -719,7 +719,7 @@ getspell(int *spell_no)
 
     nspells = num_spells();
     if (!nspells) {
-        You("don't know any spells right now.");
+        You("don't know any prophecies right now.");
         return FALSE;
     }
     if (rejectcasting())
@@ -751,7 +751,7 @@ getspell(int *spell_no)
         else
             Sprintf(lets, "a-zA-%c", 'A' + nspells - 27);
 
-        Snprintf(qbuf, sizeof qbuf, "Cast which spell? [%s *?]", lets);
+        Snprintf(qbuf, sizeof qbuf, "Think upon which prophecy? [%s *?]", lets);
         for (retry_limit = 0; ; ++retry_limit) {
             if (retry_limit == 10) {
                 /* limit is mainly to prevent the fuzzer from getting stuck
@@ -770,14 +770,14 @@ getspell(int *spell_no)
 
             idx = spell_let_to_idx(ilet);
             if (idx < 0 || idx >= nspells) {
-                You("don't know that spell.");
+                You("don't know that prophecy.");
                 continue; /* ask again */
             }
             *spell_no = idx;
             return TRUE;
         }
     }
-    return dospellmenu("Choose which spell to cast", SPELLMENU_CAST,
+    return dospellmenu("Choose which prophecy to think upon...", SPELLMENU_CAST,
                        spell_no);
 }
 
@@ -857,7 +857,7 @@ spell_skilltype(int booktype)
     return objects[booktype].oc_skill;
 }
 
-/* Wizards learn what spellbooks look like based on their skill in the
+/* Wizards learn what prophetic books look like based on their skill in the
    spell's school */
 void
 skill_based_spellbook_id(void)
@@ -1709,7 +1709,7 @@ tport_spell(int what)
         if (spellid(i) == SPE_TELEPORT_AWAY || spellid(i) == NO_SPELL)
             break;
     if (i == MAXSPELL) {
-        impossible("tport_spell: spellbook full");
+        impossible("tport_spell: prophetic book full");
         /* wizard mode ^T is not able to honor player's menu choice */
     } else if (spellid(i) == NO_SPELL) {
         if (what == HIDE_SPELL || what == REMOVESPELL) {
@@ -1908,7 +1908,7 @@ spell_cmp(const genericptr vptr1, const genericptr vptr2)
 }
 
 /* sort the index used for display order of the "view known spells"
-   list (sortmode == SORTBY_xxx), or sort the spellbook itself to make
+   list (sortmode == SORTBY_xxx), or sort the prophetic book itself to make
    the current display order stick (sortmode == SORTRETAINORDER) */
 staticfn void
 sortspells(void)
@@ -1932,7 +1932,7 @@ sortspells(void)
         if (gs.spl_sortmode == SORTBY_LETTER /* default */
             || gs.spl_sortmode == SORTRETAINORDER)
             return;
-        /* allocate enough for full spellbook rather than just N spells */
+        /* allocate enough for full prophetic book rather than just N spells */
         gs.spl_orderindx = (int *) alloc(MAXSPELL * sizeof(int));
         for (i = 0; i < MAXSPELL; i++)
             gs.spl_orderindx[i] = i;
@@ -2317,7 +2317,7 @@ initialspell(struct obj *obj)
     if (i == MAXSPELL) {
         impossible("Too many spells memorized!");
     } else if (spellid(i) != NO_SPELL) {
-        /* initial inventory shouldn't contain duplicate spellbooks */
+        /* initial inventory shouldn't contain duplicate prophetic books */
         impossible("Spell %s already known.", OBJ_NAME(objects[otyp]));
     } else {
         svs.spl_book[i].sp_id = otyp;

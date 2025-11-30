@@ -8,7 +8,7 @@
 #define NO_SPELL 0
 #define UNKNOWN_SPELL (-1)
 
-/* spellbook re-use control; used when reading and when polymorphing */
+/* prophetic book re-use control; used when reading and when polymorphing */
 #define MAX_SPELL_STUDY 3
 
 struct spell {

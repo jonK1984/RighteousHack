@@ -82,7 +82,7 @@ struct objclass {
     Bitfield(oc_material, 5); /* one of obj_material_types */
 
     schar oc_subtyp;
-#define oc_skill oc_subtyp  /* Skills of weapons, spellbooks, tools, gems */
+#define oc_skill oc_subtyp  /* Skills of weapons, prophetic books, tools, gems */
 #define oc_armcat oc_subtyp /* for armor (enum obj_armor_types) */
 
     uchar oc_oprop; /* property (invis, &c.) conveyed */

@@ -378,7 +378,7 @@
  *  keep Medusa from continuing to move after she's been killed by reflection
  *      of her own gaze (fixes relmon panic)
  *  make monsters a little smarter; assorted eating and chatting changes
- *  fix object amnesia for spellbooks; fix Nazgul's sleep gas attack
+ *  fix object amnesia for prophetic books; fix Nazgul's sleep gas attack
  *  fix bullwhip usage for case of having recently been in a trap
  *  egg hatching fixes, oil potion fixes, magic marker fixes
  *  support object class chars as selection accelerators for some menus

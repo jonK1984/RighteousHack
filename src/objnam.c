@@ -232,7 +232,7 @@ obj_typename(int otyp)
         break;
     case SPBOOK_CLASS:
         if (otyp != SPE_NOVEL) {
-            Strcpy(buf, "spellbook");
+            Strcpy(buf, "prophetic book");
         } else {
             Strcpy(buf, !nn ? "book" : "novel");
             nn = 0;
@@ -281,7 +281,7 @@ obj_typename(int otyp)
     /* here for ring/scroll/potion/wand */
     if (nn) {
         if (ocl->oc_unique)
-            Strcpy(buf, actualn); /* avoid spellbook of Book of the Dead */
+            Strcpy(buf, actualn); /* avoid prophetic book of Book of the Dead */
         else
             Sprintf(eos(buf), " of %s", actualn);
     }
@@ -891,15 +891,15 @@ xname_flags(
             break;
             /* end of tribute */
         } else if (!dknown) {
-            Strcpy(buf, "spellbook");
+            Strcpy(buf, "prophetic book");
         } else if (nn) {
             if (typ != SPE_BOOK_OF_THE_DEAD)
-                Strcpy(buf, "spellbook of ");
+                Strcpy(buf, "prophetic book of ");
             Strcat(buf, actualn);
         } else if (un) {
-            xcalled(buf, BUFSZ - PREFIX, "spellbook", un);
+            xcalled(buf, BUFSZ - PREFIX, "prophetic book", un);
         } else
-            Sprintf(buf, "%s spellbook", dn);
+            Sprintf(buf, "%s prophetic book", dn);
         break;
     case RING_CLASS:
         if (!dknown)
@@ -2473,7 +2473,7 @@ thesimpleoname(struct obj *obj)
 
 /* basic name of obj, as if it has been discovered; for some types of
    items, we can't just use OBJ_NAME() because it doesn't always include
-   the class (for instance "light" when we want "spellbook of light");
+   the class (for instance "light" when we want "prophetic book of light");
    minimal_xname() uses xname() to get that */
 char *
 actualoname(struct obj *obj)
@@ -2505,7 +2505,7 @@ bare_artifactname(struct obj *obj)
 
 static const char *const wrp[] = {
     "wand",   "ring",      "potion",     "scroll", "gem",
-    "amulet", "spellbook", "spell book",
+    "amulet", "propheticbook", "prophetic book",
     /* for non-specific wishes */
     "weapon", "armor",     "tool",       "food",   "comestible",
 };
@@ -3473,7 +3473,7 @@ rnd_otyp_by_namedesc(
      * When this spans classes (the !oclass case), the item
      * probabilities are not very useful because they don't take
      * the class generation probability into account.  [If 10%
-     * of spellbooks were blank and 1% of scrolls were blank,
+     * of prophetic books were blank and 1% of scrolls were blank,
      * "blank" would have 10/11 chance to yield a book even though
      * scrolls are supposed to be much more common than books.]
      */
@@ -4358,13 +4358,13 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     } else {
         /*
          * Find corpse type using "of" (figurine of an orc, tin of orc meat)
-         * Don't check if it's a wand or spellbook.
+         * Don't check if it's a wand or prophetic book.
          * (avoid "wand/finger of death" confusion).
          * Don't match "ogre" or "giant" monster name inside alternate item
          * names "gauntlets of ogre power" and "gauntlets of giant strength"
          * (or the alternate spelling of those, "gloves of ...").
          */
-        if (!strstri(d->bp, "wand ") && !strstri(d->bp, "spellbook ")
+        if (!strstri(d->bp, "wand ") && !strstri(d->bp, "prophetic book ")
             && !strstri(d->bp, "gauntlets ") && !strstri(d->bp, "gloves ")
             && !strstri(d->bp, "finger ")) {
             if ((d->p = strstri(d->bp, "tin of ")) != 0) {
@@ -4430,7 +4430,7 @@ readobjnam_postparse1(struct _readobjnam_data *d)
            'of inversion' finds a match] */
         && strcmpi(d->bp, "tricks")
         /* an odd potential wish; fail rather than get a false match with
-           "cloth" because it might yield a "cloth spellbook" rather than
+           "cloth" because it might yield a "cloth prophetic book" rather than
            a "piece of cloth" cloak [maybe we should give random armor?] */
         && strcmpi(d->bp, "clothes")
         ) {
@@ -4488,7 +4488,7 @@ readobjnam_postparse1(struct _readobjnam_data *d)
         d->typ = POT_WATER;
         return 2; /*goto typfnd;*/
     }
-    /* accept "paperback" or "paperback book", reject "paperback spellbook" */
+    /* accept "paperback" or "paperback book", reject "paperback prophetic book" */
     if (!strncmpi(d->bp, "paperback", 9)) {
         char *dbp = d->bp + 9; /* just past "paperback" */
 
@@ -4504,11 +4504,11 @@ readobjnam_postparse1(struct _readobjnam_data *d)
         d->typ = SCR_BLANK_PAPER;
         return 2; /*goto typfnd;*/
     }
-    if (d->unlabeled && !BSTRCMPI(d->bp, d->p - 9, "spellbook")) {
+    if (d->unlabeled && !BSTRCMPI(d->bp, d->p - 9, "prophetic book")) {
         d->typ = SPE_BLANK_PAPER;
         return 2; /*goto typfnd;*/
     }
-    /* specific food rather than color of gem/potion/spellbook[/scales] */
+    /* specific food rather than color of gem/potion/prophetic book[/scales] */
     if (!BSTRCMPI(d->bp, d->p - 6, "orange") && d->mntmp == NON_PM) {
         d->typ = ORANGE;
         return 2; /*goto typfnd;*/
@@ -5230,7 +5230,7 @@ readobjnam(char *bp, struct obj *no_wish)
         case STATUE:
             d.otmp->corpsenm = d.mntmp;
             if (Has_contents(d.otmp) && verysmall(&mons[d.mntmp]))
-                delete_contents(d.otmp); /* no spellbook */
+                delete_contents(d.otmp); /* no prophetic book */
             break;
         case SCALE_MAIL:
             /* Dragon mail - depends on the order of objects & dragons. */

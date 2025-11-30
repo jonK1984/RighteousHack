@@ -951,7 +951,7 @@ parse_id(
                         if ((i >= WAN_LIGHT) && (i <= WAN_LIGHTNING))
                             buf2 = "wand of ";
                         else if ((i >= SPE_DIG) && (i < SPE_BLANK_PAPER))
-                            buf2 = "spellbook of ";
+                            buf2 = "prophetic book of ";
                         else if ((i >= SCR_ENCHANT_ARMOR)
                                  && (i <= SCR_STINKING_CLOUD))
                             buf2 = "scroll of ";
@@ -966,7 +966,7 @@ parse_id(
                         else
                             buf2 = "";
                         buf3 = (i == SCR_BLANK_PAPER) ? "blank scroll"
-                               : (i == SPE_BLANK_PAPER) ? "blank spellbook"
+                               : (i == SPE_BLANK_PAPER) ? "blank prophetic book"
                                  : (i == SLIME_MOLD) ? "slime mold"
                                    : obj_descr[i].oc_name
                                      ? obj_descr[i].oc_name

@@ -2595,7 +2595,7 @@ fpostfx(struct obj *otmp)
 }
 
 #if 0
-/* intended for eating a spellbook while polymorphed, but not used;
+/* intended for eating a prophetic book while polymorphed, but not used;
    "leather" applied to appearance, not composition, and has been
    changed to "leathery" to reflect that */
 staticfn boolean leather_cover(struct obj *);

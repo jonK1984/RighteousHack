@@ -8,7 +8,7 @@ staticfn int write_ok(struct obj *) NO_NNARGS;
 staticfn char *new_book_description(int, char *) NONNULL NONNULLPTRS;
 
 /*
- * returns basecost of a scroll or a spellbook
+ * returns basecost of a scroll or a prophetic book
  */
 staticfn int
 cost(struct obj *otmp)
@@ -99,9 +99,9 @@ dowrite(struct obj *pen)
     if (!paper)
         return ECMD_CANCEL;
     /* can't write on a novel (unless/until it's been converted into a blank
-       spellbook), but we want messages saying so to avoid "spellbook" */
+       prophetic book), but we want messages saying so to avoid "prophetic book" */
     typeword = (paper->otyp == SPE_NOVEL) ? "book"
-               : (paper->oclass == SPBOOK_CLASS) ? "spellbook"
+               : (paper->oclass == SPBOOK_CLASS) ? "prophetic book"
                  : "scroll";
     if (Blind) {
         if (!paper->dknown) {
@@ -130,7 +130,7 @@ dowrite(struct obj *pen)
     nm = namebuf;
     if (!strncmpi(nm, "scroll ", 7))
         nm += 7;
-    else if (!strncmpi(nm, "spellbook ", 10))
+    else if (!strncmpi(nm, "prophetic book ", 10))
         nm += 10;
     if (!strncmpi(nm, "of ", 3))
         nm += 3;
@@ -152,7 +152,7 @@ dowrite(struct obj *pen)
 
         if (!strcmpi(OBJ_NAME(objects[i]), nm)) {
             if (objects[i].oc_name_known
-                /* spellbooks can only be written by_name, so no need to
+                /* prophetic books can only be written by_name, so no need to
                    hold out for a 'better' by_descr match */
                 || paper->oclass == SPBOOK_CLASS) {
                 goto found;
@@ -235,7 +235,7 @@ dowrite(struct obj *pen)
         return ECMD_TIME;
     } else if (by_descr && paper->oclass == SPBOOK_CLASS
                && !objects[i].oc_name_known) {
-        /* can't write unknown spellbooks by description */
+        /* can't write unknown prophetic books by description */
         pline("Unfortunately you don't have enough information to go on.");
         return ECMD_TIME;
     }
@@ -268,9 +268,9 @@ dowrite(struct obj *pen)
     if (pen->spe < actualcost) {
         pen->spe = 0;
         Your("marker dries out!");
-        /* scrolls disappear, spellbooks don't */
+        /* scrolls disappear, prophetic books don't */
         if (paper->oclass == SPBOOK_CLASS) {
-            pline_The("spellbook is left unfinished and your writing fades.");
+            pline_The("prophetic book is left unfinished and your writing fades.");
             update_inventory(); /* pen charges */
         } else {
             pline_The("scroll is now useless and disappears!");
@@ -286,7 +286,7 @@ dowrite(struct obj *pen)
      * book type.  One has previously been read (and its effect
      * was evident) or been ID'd via scroll/spell/throne (or skill
      * for Wizards) and it will be on the discoveries list.
-     * Unknown spellbooks can also be written by name if the hero
+     * Unknown prophetic books can also be written by name if the hero
      * has fresh knowledge of the spell, or if the spell is almost
      * forgotten and the hero is Lucky (with a greater chance than
      * if the spell is unknown or forgotten).
@@ -319,7 +319,7 @@ dowrite(struct obj *pen)
                 || spell_knowledge == spe_GoingStale)
                ? 5 : 15)) {
         You("%s to write that.", by_descr ? "fail" : "don't know how");
-        /* scrolls disappear, spellbooks don't */
+        /* scrolls disappear, prophetic books don't */
         if (paper->oclass == SPBOOK_CLASS) {
             You(
       "write in your best handwriting:  \"My Diary\", but it quickly fades.");
@@ -350,13 +350,13 @@ dowrite(struct obj *pen)
         return ECMD_TIME;
     }
 
-    /* useup old scroll / spellbook */
+    /* useup old scroll / prophetic book */
     useup(paper);
 
     /* success */
     if (new_obj->oclass == SPBOOK_CLASS) {
         /* acknowledge the change in the object's description... */
-        pline_The("spellbook warps strangely, then turns %s.",
+        pline_The("prophetic book warps strangely, then turns %s.",
                   new_book_description(new_obj->otyp, namebuf));
     }
     new_obj->blessed = (curseval > 0);
@@ -385,7 +385,7 @@ dowrite(struct obj *pen)
 
 /* most book descriptions refer to cover appearance, so we can issue a
    message for converting a plain book into one of those with something
-   like "the spellbook turns red" or "the spellbook turns ragged";
+   like "the prophetic book turns red" or "the prophetic book turns ragged";
    but some descriptions refer to composition and "the book turns vellum"
    looks funny, so we want to insert "into " prior to such descriptions;
    even that's rather iffy, indicating that such descriptions probably

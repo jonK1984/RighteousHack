@@ -641,7 +641,7 @@ dopotion(struct obj *otmp)
 }
 
 /* potion or spell of restore ability; for spell, otmp is a temporary
-   spellbook object that will be blessed if hero is skilled in healing */
+   prophetic book object that will be blessed if hero is skilled in healing */
 staticfn void
 peffect_restore_ability(struct obj *otmp)
 {

@@ -335,7 +335,7 @@ doread(void)
 
     /*
      * Reading while blind is allowed in most cases, including the
-     * Book of the Dead but not regular spellbooks.  For scrolls, the
+     * Book of the Dead but not regular prophetic books.  For scrolls, the
      * description has to have been seen or magically learned (so only
      * when scroll->dknown is true):  hero recites the label while
      * holding the unfurled scroll.  We deliberately don't require
@@ -562,7 +562,7 @@ doread(void)
 
         if (otyp == SPE_NOVEL)
             /* unseen novels are already distinguishable from unseen
-               spellbooks so this isn't revealing any extra information */
+               prophetic books so this isn't revealing any extra information */
             what = "words";
         else if (scroll->oclass == SPBOOK_CLASS)
             what = "mystic runes";
@@ -607,7 +607,7 @@ doread(void)
     if (scroll->oclass == SPBOOK_CLASS) {
         return study_book(scroll) ? ECMD_TIME : ECMD_OK;
     }
-    scroll->in_use = TRUE; /* scroll, not spellbook, now being read */
+    scroll->in_use = TRUE; /* scroll, not prophetic book, now being read */
     if (otyp != SCR_BLANK_PAPER) {
         boolean silently = !can_chant(&gy.youmonst);
 
@@ -1416,7 +1416,7 @@ seffect_scare_monster(struct obj **sobjp)
 staticfn void
 seffect_remove_curse(struct obj **sobjp)
 {
-    struct obj *sobj = *sobjp; /* scroll or fake spellbook */
+    struct obj *sobj = *sobjp; /* scroll or fake prophetic book */
     int otyp = sobj->otyp;
     boolean sblessed = sobj->blessed;
     boolean scursed = sobj->cursed;
@@ -2118,7 +2118,7 @@ seffect_mail(struct obj **sobjp)
    become discovered, 0 if caller should take care of those side-effects */
 int
 seffects(
-    struct obj *sobj) /* sobj - scroll or fake spellbook for spell */
+    struct obj *sobj) /* sobj - scroll or fake prophetic book for spell */
 {
     int otyp = sobj->otyp;
 
@@ -2416,7 +2416,7 @@ set_lit(coordxy x, coordxy y, genericptr_t val)
 void
 litroom(
     boolean on,      /* True: make nearby area lit; False: cursed scroll */
-    struct obj *obj) /* scroll, spellbook (for spell), or wand of light */
+    struct obj *obj) /* scroll, prophetic book (for spell), or wand of light */
 {
     struct obj *otmp, *nextobj;
     boolean blessed_effect = (obj && obj->oclass == SCROLL_CLASS

@@ -262,7 +262,7 @@ priestini(
             && on_level(&sanctum_level, &u.uz)) {
             (void) mongets(priest, AMULET_OF_YENDOR);
         }
-        /* 2 to 4 spellbooks */
+        /* 2 to 4 prophetic books */
         for (cnt = rn1(3, 2); cnt > 0; --cnt) {
             (void) mpickobj(priest, mkobj(SPBOOK_no_NOVEL, FALSE));
         }

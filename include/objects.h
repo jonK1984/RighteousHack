@@ -88,7 +88,7 @@ GENERIC("tool",       TOOL_CLASS,    GENERIC_TOOL),    /* [6] */
 GENERIC("food",       FOOD_CLASS,    GENERIC_FOOD),    /* [7] */
 GENERIC("potion",     POTION_CLASS,  GENERIC_POTION),  /* [8] */
 GENERIC("scroll",     SCROLL_CLASS,  GENERIC_SCROLL),  /* [9] */
-GENERIC("spellbook",  SPBOOK_CLASS,  GENERIC_SPBOOK),  /* [10] */
+GENERIC("prophetic book",  SPBOOK_CLASS,  GENERIC_SPBOOK),  /* [10] */
 GENERIC("wand",       WAND_CLASS,    GENERIC_WAND),    /* [11] */
 GENERIC("coin",       COIN_CLASS,    GENERIC_COIN),    /* [12] */
 GENERIC("gem",        GEM_CLASS,     GENERIC_GEM),     /* [13] */
@@ -1255,7 +1255,7 @@ SCROLL("mail",          "stamped",  0,   0,   0, SCR_MAIL),
 SCROLL("blank paper", "unlabeled",  0,  28,  60, SCR_BLANK_PAPER),
 #undef SCROLL
 
-/* spellbooks ... */
+/* prophetic books ... */
     /* Expanding beyond 52 spells would require changes in spellcasting
      * or imposition of a limit on number of spells hero can know because
      * they are currently assigned successive letters, a-zA-Z, when learned.
@@ -1269,7 +1269,7 @@ SCROLL("blank paper", "unlabeled",  0,  28,  60, SCR_BLANK_PAPER),
            BITS(0, 0, 0, 0, mgc, 0, 0, 0, 0, 0, dir, sub, PAPER),       \
            0, SPBOOK_CLASS, prob, delay, 50, level * 100,               \
            0, 0, 0, level, 20, color, sn)
-/* Spellbook description normally refers to book covers (primarily color).
+/* prophetic book description normally refers to book covers (primarily color).
    Parchment and vellum would never be used for such, but rather than
    eliminate those, finagle their definitions to refer to the pages
    rather than the cover.  They are made from animal skin (typically of
@@ -1278,127 +1278,98 @@ SCROLL("blank paper", "unlabeled",  0,  28,  60, SCR_BLANK_PAPER),
    keep the pages flat.  (However, a wooden cover might itself be covered
    by a sheet of parchment, making this become less of an exception.  Also,
    changing the internal composition from paper to leather makes eating a
-   parchment or vellum spellbook break vegetarian conduct, as it should.) */
+   parchment or vellum prophetic book break vegetarian conduct, as it should.) */
+/* === RIGHTEOUSHACK: Fully Christianized Miracle List === */
 #define PAPER LEATHER /* override enum for use in SPELL() expansion */
-SPELL("dig",             "parchment",
+
+SPELL("earthquake",            "parchment",
       P_MATTER_SPELL,      20,  6, 5, 1, RAY, HI_LEATHER, SPE_DIG),
 MARKER(FIRST_SPELL, SPE_DIG)
-/* magic missile ... finger of death must be in this order; see buzz() */
-SPELL("magic missile",   "vellum",
+
+/* Ranged divine wrath — order preserved for chain lightning */
+SPELL("hidden arrows",         "vellum",       /* Psalm 64:4 */
       P_ATTACK_SPELL,      45,  2, 2, 1, RAY, HI_LEATHER, SPE_MAGIC_MISSILE),
-#undef PAPER /* revert to normal material */
-SPELL("fireball",        "ragged",
+#undef PAPER
+SPELL("fiery tempest",         "ragged",       /* 2 Kings 1:10-12 */
       P_ATTACK_SPELL,      20,  4, 4, 1, RAY, HI_PAPER, SPE_FIREBALL),
-SPELL("cone of cold",    "dog eared",
+SPELL("northern wind",         "dog eared",    /* Job 37:9 */
       P_ATTACK_SPELL,      10,  7, 4, 1, RAY, HI_PAPER, SPE_CONE_OF_COLD),
-SPELL("sleep",           "mottled",
+SPELL("tranquility",           "mottled",      /* Psalm 23:2, Mark 4:39 */
       P_ENCHANTMENT_SPELL, 30,  1, 3, 1, RAY, HI_PAPER, SPE_SLEEP),
-SPELL("finger of death", "stained",
+SPELL("finger of judgement",   "stained",      /* Exodus 8:19 */
       P_ATTACK_SPELL,       5, 10, 7, 1, RAY, HI_PAPER, SPE_FINGER_OF_DEATH),
-SPELL("light",           "cloth",
+
+SPELL("light",                 "cloth",        /* Genesis 1:3, John 8:12 */
       P_DIVINATION_SPELL,  45,  1, 1, 1, NODIR, HI_CLOTH, SPE_LIGHT),
-SPELL("detect monsters", "leathery",
-      P_DIVINATION_SPELL,  43,  1, 1, 1, NODIR, HI_LEATHER,
-                                                        SPE_DETECT_MONSTERS),
-SPELL("healing",         "white",
-      P_HEALING_SPELL,     40,  2, 1, 1, IMMEDIATE, CLR_WHITE,
-                                                        SPE_HEALING),
-SPELL("knock",           "pink",
-      P_MATTER_SPELL,      25,  1, 1, 1, IMMEDIATE, CLR_BRIGHT_MAGENTA,
-                                                        SPE_KNOCK),
-SPELL("force bolt",      "red",
-      P_ATTACK_SPELL,      30,  2, 1, 1, IMMEDIATE, CLR_RED,
-                                                        SPE_FORCE_BOLT),
-SPELL("confuse monster", "orange",
-      P_ENCHANTMENT_SPELL, 49,  2, 1, 1, IMMEDIATE, CLR_ORANGE,
-                                                        SPE_CONFUSE_MONSTER),
-SPELL("cure blindness",  "yellow",
-      P_HEALING_SPELL,     25,  2, 2, 1, IMMEDIATE, CLR_YELLOW,
-                                                        SPE_CURE_BLINDNESS),
-SPELL("drain life",      "velvet",
-      P_ATTACK_SPELL,      10,  2, 2, 1, IMMEDIATE, CLR_MAGENTA,
-                                                        SPE_DRAIN_LIFE),
-SPELL("slow monster",    "light green",
-      P_ENCHANTMENT_SPELL, 30,  2, 2, 1, IMMEDIATE, CLR_BRIGHT_GREEN,
-                                                        SPE_SLOW_MONSTER),
-SPELL("wizard lock",     "dark green",
-      P_MATTER_SPELL,      25,  3, 2, 1, IMMEDIATE, CLR_GREEN,
-                                                        SPE_WIZARD_LOCK),
-SPELL("create monster",  "turquoise",
-      P_CLERIC_SPELL,      35,  3, 2, 1, NODIR, CLR_BRIGHT_CYAN,
-                                                        SPE_CREATE_MONSTER),
-SPELL("detect food",     "cyan",
-      P_DIVINATION_SPELL,  30,  3, 2, 1, NODIR, CLR_CYAN,
-                                                        SPE_DETECT_FOOD),
-SPELL("cause fear",      "light blue",
-      P_ENCHANTMENT_SPELL, 25,  3, 3, 1, NODIR, CLR_BRIGHT_BLUE,
-                                                        SPE_CAUSE_FEAR),
-SPELL("clairvoyance",    "dark blue",
-      P_DIVINATION_SPELL,  15,  3, 3, 1, NODIR, CLR_BLUE,
-                                                        SPE_CLAIRVOYANCE),
-SPELL("cure sickness",   "indigo",
-      P_HEALING_SPELL,     32,  3, 3, 1, NODIR, CLR_BLUE,
-                                                        SPE_CURE_SICKNESS),
-SPELL("charm monster",   "magenta",
-      P_ENCHANTMENT_SPELL, 20,  3, 5, 1, IMMEDIATE, CLR_MAGENTA,
-                                                        SPE_CHARM_MONSTER),
-SPELL("haste self",      "purple",
-      P_ESCAPE_SPELL,      33,  4, 3, 1, NODIR, CLR_MAGENTA,
-                                                        SPE_HASTE_SELF),
-SPELL("detect unseen",   "violet",
-      P_DIVINATION_SPELL,  20,  4, 3, 1, NODIR, CLR_MAGENTA,
-                                                        SPE_DETECT_UNSEEN),
-SPELL("levitation",      "tan",
-      P_ESCAPE_SPELL,      20,  4, 4, 1, NODIR, CLR_BROWN,
-                                                        SPE_LEVITATION),
-SPELL("extra healing",   "plaid",
-      P_HEALING_SPELL,     27,  5, 3, 1, IMMEDIATE, CLR_GREEN,
-                                                        SPE_EXTRA_HEALING),
-SPELL("restore ability", "light brown",
-      P_HEALING_SPELL,     25,  5, 4, 1, NODIR, CLR_BROWN,
-                                                        SPE_RESTORE_ABILITY),
-SPELL("invisibility",    "dark brown",
-      P_ESCAPE_SPELL,      20,  5, 4, 1, NODIR, CLR_BROWN,
-                                                        SPE_INVISIBILITY),
-SPELL("detect treasure", "gray",
-      P_DIVINATION_SPELL,  20,  5, 4, 1, NODIR, CLR_GRAY,
-                                                        SPE_DETECT_TREASURE),
-SPELL("remove curse",    "wrinkled",
-      P_CLERIC_SPELL,      25,  5, 3, 1, NODIR, HI_PAPER,
-                                                        SPE_REMOVE_CURSE),
-SPELL("magic mapping",   "dusty",
-      P_DIVINATION_SPELL,  18,  7, 5, 1, NODIR, HI_PAPER,
-                                                        SPE_MAGIC_MAPPING),
-SPELL("identify",        "bronze",
-      P_DIVINATION_SPELL,  20,  6, 3, 1, NODIR, HI_COPPER,
-                                                        SPE_IDENTIFY),
-SPELL("turn undead",     "copper",
-      P_CLERIC_SPELL,      16,  8, 6, 1, IMMEDIATE, HI_COPPER,
-                                                        SPE_TURN_UNDEAD),
-SPELL("polymorph",       "silver",
-      P_MATTER_SPELL,      10,  8, 6, 1, IMMEDIATE, HI_SILVER,
-                                                        SPE_POLYMORPH),
-SPELL("teleport away",   "gold",
-      P_ESCAPE_SPELL,      15,  6, 6, 1, IMMEDIATE, HI_GOLD,
-                                                        SPE_TELEPORT_AWAY),
-SPELL("create familiar", "glittering",
-      P_CLERIC_SPELL,      10,  7, 6, 1, NODIR, CLR_WHITE,
-                                                        SPE_CREATE_FAMILIAR),
-SPELL("cancellation",    "shining",
-      P_MATTER_SPELL,      15,  8, 7, 1, IMMEDIATE, CLR_WHITE,
-                                                        SPE_CANCELLATION),
-SPELL("protection",      "dull",
-      P_CLERIC_SPELL,      18,  3, 1, 1, NODIR, HI_PAPER,
-                                                        SPE_PROTECTION),
-SPELL("jumping",         "thin",
-      P_ESCAPE_SPELL,      20,  3, 1, 1, IMMEDIATE, HI_PAPER,
-                                                        SPE_JUMPING),
-SPELL("stone to flesh",  "thick",
-      P_HEALING_SPELL,     15,  1, 3, 1, IMMEDIATE, HI_PAPER,
-                                                        SPE_STONE_TO_FLESH),
-SPELL("chain lightning", "checkered",
-      P_ATTACK_SPELL,      25,  4, 2, 1, NODIR, CLR_GRAY,
-                                                        SPE_CHAIN_LIGHTNING),
+SPELL("reveal foes",           "leathery",     /* Ephesians 6:12 */
+      P_DIVINATION_SPELL,  43,  1, 1, 1, NODIR, HI_LEATHER, SPE_DETECT_MONSTERS),
+
+SPELL("healing",               "white",        /* Isaiah 53:5, James 5:15 */
+      P_HEALING_SPELL,     40,  2, 1, 1, IMMEDIATE, CLR_WHITE, SPE_HEALING),
+SPELL("door shall be open",    "pink",         /* Matthew 7:7-8 */
+      P_MATTER_SPELL,      25,  1, 1, 1, IMMEDIATE, CLR_BRIGHT_MAGENTA, SPE_KNOCK),
+SPELL("judgement to the wicked","red",         /* Psalm 7:11 */
+      P_ATTACK_SPELL,      30,  2, 1, 1, IMMEDIATE, CLR_RED, SPE_FORCE_BOLT),
+SPELL("bewilder",              "orange",       /* Psalm 71:1, confusion of enemies */
+      P_ENCHANTMENT_SPELL, 49,  2, 1, 1, IMMEDIATE, CLR_ORANGE, SPE_CONFUSE_MONSTER),
+SPELL("cure blindness",        "yellow",       /* John 9:6-7 */
+      P_HEALING_SPELL,     25,  2, 2, 1, IMMEDIATE, CLR_YELLOW, SPE_CURE_BLINDNESS),
+SPELL("noisome pestilence",    "velvet",       /* Psalm 91:6 */
+      P_ATTACK_SPELL,      10,  2, 2, 1, IMMEDIATE, CLR_MAGENTA, SPE_DRAIN_LIFE),
+SPELL("staggering wine",       "light green",  /* Psalm 60:3 */
+      P_ENCHANTMENT_SPELL, 30,  2, 2, 1, IMMEDIATE, CLR_BRIGHT_GREEN, SPE_SLOW_MONSTER),
+SPELL("seal entrance",         "dark green",   /* Matthew 27:66 */
+      P_MATTER_SPELL,      25,  3, 2, 1, IMMEDIATE, CLR_GREEN, SPE_WIZARD_LOCK),
+SPELL("heavenly host",         "turquoise",    /* Luke 2:13 */
+      P_CLERIC_SPELL,      35,  3, 2, 1, NODIR, CLR_BRIGHT_CYAN, SPE_CREATE_MONSTER),
+SPELL("reveal sustenance",     "cyan",         /* Psalm 145:15 */
+      P_DIVINATION_SPELL,  30,  3, 2, 1, NODIR, CLR_CYAN, SPE_DETECT_FOOD),
+SPELL("fear of the Lord",      "light blue",   /* Proverbs 1:7 */
+      P_ENCHANTMENT_SPELL, 25,  3, 3, 1, NODIR, CLR_BRIGHT_BLUE, SPE_CAUSE_FEAR),
+SPELL("far sight",             "dark blue",    /* 2 Kings 6:17 */
+      P_DIVINATION_SPELL,  15,  3, 3, 1, NODIR, CLR_BLUE, SPE_CLAIRVOYANCE),
+SPELL("cure sickness",         "indigo",       /* James 5:14-15 */
+      P_HEALING_SPELL,     32,  3, 3, 1, NODIR, CLR_BLUE, SPE_CURE_SICKNESS),
+SPELL("pacification",          "magenta",      /* Romans 12:18 */
+      P_ENCHANTMENT_SPELL, 20,  3, 5, 1, IMMEDIATE, CLR_MAGENTA, SPE_CHARM_MONSTER),
+SPELL("endurance",             "purple",       /* Isaiah 40:31 */
+      P_ESCAPE_SPELL,      33,  4, 3, 1, NODIR, CLR_MAGENTA, SPE_HASTE_SELF),
+SPELL("eye opening",           "violet",       /* 2 Kings 6:17 */
+      P_DIVINATION_SPELL,  20,  4, 3, 1, NODIR, CLR_MAGENTA, SPE_DETECT_UNSEEN),
+SPELL("ascension",             "tan",          /* Acts 1:9 */
+      P_ESCAPE_SPELL,      20,  4, 4, 1, NODIR, CLR_BROWN, SPE_LEVITATION),
+SPELL("abundant healing",      "plaid",        /* John 10:10 */
+      P_HEALING_SPELL,     27,  5, 3, 1, IMMEDIATE, CLR_GREEN, SPE_EXTRA_HEALING),
+SPELL("divine ability",        "light brown",  /* 2 Corinthians 3:5 */
+      P_HEALING_SPELL,     25,  5, 4, 1, NODIR, CLR_BROWN, SPE_RESTORE_ABILITY),
+SPELL("concealment",           "dark brown",   /* Psalm 91:1 */
+      P_ESCAPE_SPELL,      20,  5, 4, 1, NODIR, CLR_BROWN, SPE_INVISIBILITY),
+SPELL("render unto Caesar",    "gray",         /* Matthew 22:21 */
+      P_DIVINATION_SPELL,  20,  5, 4, 1, NODIR, CLR_GRAY, SPE_DETECT_TREASURE),
+SPELL("remove curse",          "wrinkled",     /* Galatians 3:13 */
+      P_CLERIC_SPELL,      25,  5, 3, 1, NODIR, HI_PAPER, SPE_REMOVE_CURSE),
+SPELL("path revealed",         "dusty",        /* Psalm 119:105 */
+      P_DIVINATION_SPELL,  18,  7, 5, 1, NODIR, HI_PAPER, SPE_MAGIC_MAPPING),
+SPELL("discernment",           "bronze",       /* 1 Corinthians 12:10 */
+      P_DIVINATION_SPELL,  20,  6, 3, 1, NODIR, HI_COPPER, SPE_IDENTIFY),
+SPELL("rebuke evil",           "copper",       /* Luke 4:35 */
+      P_CLERIC_SPELL,      16,  8, 6, 1, IMMEDIATE, HI_COPPER, SPE_TURN_UNDEAD),
+SPELL("transformation",        "silver",       /* 2 Corinthians 5:17 */
+      P_MATTER_SPELL,      10,  8, 6, 1, IMMEDIATE, HI_SILVER, SPE_POLYMORPH),
+SPELL("banishment",            "gold",         /* Matthew 8:31-32 */
+      P_ESCAPE_SPELL,      15,  6, 6, 1, IMMEDIATE, HI_GOLD, SPE_TELEPORT_AWAY),
+SPELL("angelic help",          "glittering",   /* Psalm 91:11 */
+      P_CLERIC_SPELL,      10,  7, 6, 1, NODIR, CLR_WHITE, SPE_CREATE_FAMILIAR),
+SPELL("cancellation",          "shining",      /* Kept as-is — divine nullification */
+      P_MATTER_SPELL,      15,  8, 7, 1, IMMEDIATE, CLR_WHITE, SPE_CANCELLATION),
+SPELL("spiritual armor",       "dull",         /* Ephesians 6:11-17 */
+      P_CLERIC_SPELL,      18,  3, 1, 1, NODIR, HI_PAPER, SPE_PROTECTION),
+SPELL("leaping like a deer",   "thin",         /* Isaiah 35:6 */
+      P_ESCAPE_SPELL,      20,  3, 1, 1, IMMEDIATE, HI_PAPER, SPE_JUMPING),
+SPELL("flesh renewed",         "thick",        /* Ezekiel 36:26 */
+      P_HEALING_SPELL,     15,  1, 3, 1, IMMEDIATE, HI_PAPER, SPE_STONE_TO_FLESH),
+SPELL("lightning flash",       "checkered",    /* Luke 10:18 */
+      P_ATTACK_SPELL,      25,  4, 2, 1, NODIR, CLR_GRAY, SPE_CHAIN_LIGHTNING),
 
 #if 0 /* DEFERRED */
 /* from slash'em, create a tame critter which explodes when attacking,
@@ -1424,7 +1395,7 @@ OBJECT(OBJ("novel", "paperback"),
        BITS(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, P_NONE, PAPER),
        0, SPBOOK_CLASS, 1, 0, 10, 20, 0, 0, 0, 1, 20, CLR_BRIGHT_BLUE,
                                                         SPE_NOVEL),
-/* a special, one of a kind, spellbook */
+/* a special, one of a kind, prophetic book */
 OBJECT(OBJ("Book of the Dead", "papyrus"),
        BITS(0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, P_NONE, PAPER),
        0, SPBOOK_CLASS, 0, 0, 50, 10000, 0, 0, 0, 7, 20, HI_PAPER,

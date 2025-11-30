@@ -74,34 +74,29 @@ questtext = {
  t suffix:	return strip_the_prefix(root);]],
       },
       angel_cuss = {
-         "\"Repent, and thou shalt be saved!\"",
-         "\"Thou shalt pay for thine insolence!\"",
-         "\"Very soon, my child, thou shalt meet thy maker.\"",
-         "\"The great %D has sent me to make you pay for your sins!\"",
-         "\"The wrath of %D is now upon you!\"",
-         "\"Thy life belongs to %D now!\"",
-         "\"Dost thou wish to receive thy final blessing?\"",
-         "\"Thou art but a godless void.\"",
-         "\"Thou art not worthy to seek the Amulet.\"",
-         "\"No one expects the Spanish Inquisition!\"",
-         "\"Judgment hath been passed upon thee, %p.\"",
-         "\"Thy reckoning is at hand, %p.\"",
-         "\"Thou shalt be brought before %D for thy crimes!\"",
-         "\"With %D as my witness, I shall strike thee down.\"",
+         "\"Repent, for the Kingdom of Heaven is at hand!\"",
+         "\"The Lord rebuke thee, Satan!\"",
+         "\"It is written: 'Thou shalt worship the Lord thy God, and Him only shalt thou serve.'\"",
+         "\"Depart from me, ye worker of iniquity!\"",
+         "\"The wages of sin is death — and thy time has come.\"",
+         "\"Flee from the wrath to come!\"",
+         "\"Behold, the Lamb of God cometh to judge the living and the dead.\"",
+         "\"Your master has already been defeated at the cross.\"",
+         "\"Even now the axe is laid to the root of the tree.\"",
+         "\"The Lord Jesus shall destroy thee with the brightness of His coming.\"",
       },
       banished = {
-         synopsis = "[You are banished from %H for betraying your allegiance to %d.]",
+         synopsis = "[You have been cast out from the fellowship of the faithful.]",
          output = "text",
-         text = [["You have betrayed all those who hold allegiance to %d, as you once did.
-My allegiance to %d holds fast and I cannot condone or accept what you
-have done.
+         text = [[You have forsaken the Lord who called you into His marvelous light.
+You have turned back from the holy commandment delivered unto you.
+The Spirit of God is grieved, and His presence has departed from you.
 
-Leave this place.  You shall never set foot at %H again.
-That which you seek is now lost forever, for without the Bell of Opening,
-you will never be able to enter the place where he who has the Amulet
-resides.
+Depart from this holy place. You are no longer welcome among the brethren.
+The Seal of the Holy Spirit is now hidden from your eyes,
+for only those who endure to the end shall be saved.
 
-Go now!  You are banished from this place.]],
+Go now. The outer darkness awaits those who draw back unto perdition.]],
       },
       demon_cuss = {
          "\"I first mistook thee for a statue, when I regarded thy head of stone.\"",
@@ -132,48 +127,46 @@ Go now!  You are banished from this place.]],
          "\"Hold! Thy face is a most exquisite torture!\"",
          "\"I should fart in thy direction, but it might improve thy smell!\"",
       },
+      -- The TRUE quest — no Moloch, no Yendor, no false gods
       legacy = {
-         synopsis = "[%dC has chosen you to recover the Amulet of Yendor for %dI.]",
+         synopsis = "[The Lord has called you to recover the Seal of the Holy Spirit.]",
          output = "menu",
-         text = [[It is written in the Book of %d:
+         text = [[Thus saith the Lord God:
 
-    After the Creation, the cruel god Moloch rebelled
-    against the authority of Marduk the Creator.
-    Moloch stole from Marduk the most powerful of all
-    the artifacts of the gods, the Amulet of Yendor,
-    and he hid it in the dark cavities of Gehennom, the
-    Under World, where he now lurks, and bides his time.
+In the beginning was the Word, and the Word was with God, and the Word was God.
+But the dragon, that ancient serpent called the devil and Satan,
+was castly deceived the whole world. In his pride he sought to ascend above the Most High,
+and in his rebellion he stole the Seal of the Holy Spirit — the very pledge
+of the new covenant — and hid it in the depths of the Abyss,
+where he now lurks with the fallen angels who followed him.
 
-Your %G %d seeks to possess the Amulet, and with it
-to gain deserved ascendance over the other gods.
+Yet the Lamb who was slain has triumphed! The keys of Death and Hades are in His hand,
+and He has commissioned you, His servant, to descend into the stronghold of the enemy,
+to bind the strong man, and to recover that which was stolen.
 
-You, a newly trained %r, have been heralded
-from birth as the instrument of %d.  You are destined
-to recover the Amulet for your deity, or die in the
-attempt.  Your hour of destiny has come.  For the sake
-of us all:  Go bravely with %d!]],
+You have been anointed with the Holy Spirit and with power.
+Go forth in the name of Jesus Christ of Nazareth.
+The gates of hell shall not prevail against you.
+
+This is your calling. This is your hour. For the glory of God and the salvation of many:
+Go in the strength of the Lord!]],
       },
 -- starting with 'pauper' option set, last paragraph differs from normal legacy
       pauper_legacy = {
-         synopsis = "[%dC has chosen you to recover the Amulet of Yendor for %dI.]",
+         synopsis = "[The Lord has chosen the weak things to shame the wise.]",
          output = "menu",
-         text = [[It is written in the Book of %d:
+         text = [[The Lord has spoken:
 
-    After the Creation, the cruel god Moloch rebelled
-    against the authority of Marduk the Creator.
-    Moloch stole from Marduk the most powerful of all
-    the artifacts of the gods, the Amulet of Yendor,
-    and he hid it in the dark cavities of Gehennom, the
-    Under World, where he now lurks, and bides his time.
+Though you were poor in spirit and had nothing to offer,
+though you came with empty hands and a broken heart,
+yet the King of Glory has looked upon you with favor.
 
-Your %G %d seeks to possess the Amulet, and with it
-to gain deserved ascendance over the other gods.
+He has chosen the foolish things of this world to confound the wise,
+and the weak things to shame the strong.
+Not by might, nor by power, but by My Spirit, saith the Lord of hosts.
 
-You, an untrained %r, have been unable to adequately
-prepare to be the instrument of %d.  Nevertheless, you
-are destined to recover the Amulet for your deity, or die
-in the attempt.  Your hour of destiny has come.  For the
-sake of us all:  Go bravely with %d!]],
+Go now, My child. The Seal awaits the one who walks by faith, not by sight.
+The victory belongs to the Lamb. Amen.]],
       },
       quest_complete_no_bell = {
          text = [["The silver bell which was hoarded by %n will be
@@ -242,16 +235,16 @@ taught you."]],
          "\"Die %c!  I shall exhibit your carcass as a trophy.\"",
       },
       encourage = {
-         "\"Beware, for %n is powerful and cunning.\"",
-         "\"To locate the entrance to %i, you must pass many traps.\"",
-         "\"A %nt may be vulnerable to attacks by magical cold.\"",
-         "\"Call upon %d when you encounter %n.\"",
-         "\"You must destroy %n.  It will pursue you otherwise.\"",
-         "\"%oC is a mighty talisman.  With it you can destroy %n.\"",
-         "\"Go forth with the blessings of %d.\"",
-         "\"I will have my %gP watch for your return.\"",
-         "\"Remember not to stray from the true %a path.\"",
-         "\"You may be able to sense %o when you are near.\"",
+         "\"The Lord is your shield and your exceeding great reward.\"",
+         "\"Greater is He that is in you than he that is in the world.\"",
+         "\"No weapon formed against you shall prosper.\"",
+         "\"The angel of the Lord encamps around those who fear Him.\"",
+         "\"When you pass through the waters, I will be with you.\"",
+         "\"The Lord will cause your enemies who rise against you to be defeated before your face.\"",
+         "\"Be strong and courageous — the Lord your God is with you.\"",
+         "\"The battle belongs to the Lord.\"",
+         "\"Put on the whole armor of God, that you may stand in the evil day.\"",
+         "\"The Spirit of the Lord is upon you — go in this your strength.\"",
       },
       firsttime = {
          synopsis = "[You arrive at %H, but all is not well.]",

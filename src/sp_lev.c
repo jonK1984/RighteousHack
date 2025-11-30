@@ -3474,7 +3474,7 @@ find_objtype(lua_State *L, const char *s)
             { "ring of ", RING_CLASS },
             { "potion of ", POTION_CLASS },
             { "scroll of ", SCROLL_CLASS },
-            { "spellbook of ", SPBOOK_CLASS },
+            { "prophetic book of ", SPBOOK_CLASS },
             { "wand of ", WAND_CLASS },
             { NULL, 0 }
         };

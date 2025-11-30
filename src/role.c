@@ -38,7 +38,7 @@ const struct Role roles[NUM_ROLES+1] = {
         { "Speleologist", 0 },
         { "Collector", 0 },
         { "Curator", 0 } },
-      "Quetzalcoatl", "Camaxtli", "Huhetotl", /* Central American */
+      "the Lord", "God", "the Almighty", /* Christian*/
       "Arc",
       "the College of Archeology",
       "the Tomb of the Toltec Kings",

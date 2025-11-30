@@ -2833,7 +2833,7 @@ immune_to_trap(struct monst *mon, unsigned ttype)
                 || obj->oclass == SPBOOK_CLASS
                 || (obj->owornmask && is_flammable(obj))) {
                 if ((obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL)
-                    /* mon knows scroll of fire or spellbook of fireball
+                    /* mon knows scroll of fire or prophetic book of fireball
                        won't be affected; hero knows iff this one has been
                        seen and its type has been discovered */
                     && (!is_you
@@ -4523,7 +4523,7 @@ lava_damage(struct obj *obj, coordxy x, coordxy y)
 void
 acid_damage(struct obj *obj)
 {
-    /* Scrolls but not spellbooks can be erased by acid. */
+    /* Scrolls but not prophetic books can be erased by acid. */
     struct monst *victim;
     boolean vismon;
 
@@ -4721,7 +4721,7 @@ water_damage(
         if (obj->spestudied)
             obj->spestudied = rn2(obj->spestudied);
         obj->dknown = 0;
-        /* blanking a novel is more involved than blanking a spellbook */
+        /* blanking a novel is more involved than blanking a prophetic book */
         if (otyp == SPE_NOVEL) /* old type */
             blank_novel(obj);
         if (in_invent)

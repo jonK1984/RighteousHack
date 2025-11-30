@@ -820,7 +820,7 @@ gcrownu(void)
 
     class_gift = STRANGE_OBJECT;
     /* 3.3.[01] had this in the A_NEUTRAL case,
-       preventing chaotic wizards from receiving a spellbook */
+       preventing chaotic wizards from receiving a prophetic book */
     if (Role_if(PM_WIZARD)
         && !u_wield_art(ART_VORPAL_BLADE)
         && !u_wield_art(ART_STORMBRINGER)
@@ -875,7 +875,7 @@ gcrownu(void)
         /* get book type before dropping (don't think that could destroy
            the book because we need to be on an altar in order to become
            crowned, but be paranoid about it) */
-        Strcpy(bbuf, actualoname(obj)); /* for livelog; "spellbook of <foo>"
+        Strcpy(bbuf, actualoname(obj)); /* for livelog; "prophetic book of <foo>"
                                          * even if hero doesn't know book */
         bless(obj);
         obj->bknown = 1; /* ok to skip set_bknown() */
@@ -1033,14 +1033,14 @@ give_spell(void)
            is blank paper or the spell is known and has retention
            of spe_Fresh, so no 'else' case is needed here */
         if ((spe_let = force_learn_spell(otmp->otyp)) != '\0') {
-            /* for spellbook class, OBJ_NAME() yields the name of
-               the spell rather than "spellbook of <spell-name>" */
+            /* for prophetic book class, OBJ_NAME() yields the name of
+               the spell rather than "prophetic book of <spell-name>" */
             const char *spe_name = OBJ_NAME(objects[otmp->otyp]);
 
             if (spe_knowledge == spe_Unknown) /* prior to learning */
                 /* appending "spell 'a'" seems slightly silly but
                    is similar to "added to your repertoire, as 'a'"
-                   and without any spellbook on hand a novice player
+                   and without any prophetic book on hand a novice player
                    might not recognize that 'spe_name' is a spell */
                 pline("Divine knowledge of %s fills your mind!  Spell '%c'.",
                       spe_name, spe_let);

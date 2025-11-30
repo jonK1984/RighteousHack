@@ -875,7 +875,7 @@ pauper_reinit(void)
     u.weapon_slots = 2;
 
     /* paupers don't know any spells yet, but several roles will recognize
-       the spellbook for a key spell (not necessarily that role's special
+       the prophetic book for a key spell (not necessarily that role's special
        spell); "supply chests" on the first few levels provide a fairly
        high chance to find the book; some other roles know a non-book item */
     switch (Role_switch) {
@@ -1294,7 +1294,7 @@ ini_inv(struct trobj *trop)
 {
     struct obj *obj;
     int otyp;
-    boolean got_sp1 = FALSE; /* got a level 1 spellbook? */
+    boolean got_sp1 = FALSE; /* got a level 1 prophetic book? */
 
     if (u.uroleplay.pauper) /* pauper gets no items */
         return;
@@ -1308,7 +1308,7 @@ ini_inv(struct trobj *trop)
             otyp = obj->otyp;
             /* Heavily relies on the fact that 1) we create wands
              * before rings, 2) that we create rings before
-             * spellbooks, and that 3) not more than 1 object of a
+             * prophetic books, and that 3) not more than 1 object of a
              * particular symbol is to be prohibited.  (For more
              * objects, we need more nocreate variables...)
              */
@@ -1323,7 +1323,7 @@ ini_inv(struct trobj *trop)
                 gn.nocreate2 = SPE_POLYMORPH;
                 gn.nocreate3 = POT_POLYMORPH;
             }
-            /* Don't have 2 of the same ring or spellbook */
+            /* Don't have 2 of the same ring or prophetic book */
             if (obj->oclass == RING_CLASS || obj->oclass == SPBOOK_CLASS)
                 gn.nocreate4 = otyp;
         }
@@ -1345,7 +1345,7 @@ ini_inv(struct trobj *trop)
 
         ini_inv_use_obj(obj);
 
-        /* First spellbook should be level 1 - did we get it? */
+        /* First prophetic book should be level 1 - did we get it? */
         if (obj->oclass == SPBOOK_CLASS && objects[obj->otyp].oc_level == 1)
             got_sp1 = TRUE;
 

@@ -397,7 +397,7 @@ enum glyphmap_change_triggers { gm_nochange, gm_newgame, gm_levelchange,
  *                  strange object's 'illobj class'), the rest are
  *                  regular objects.  Some members of the generic
  *                  subset are used to prevent color of potions, gems,
- *                  and spellbooks from being revealed when obj->dknown
+ *                  and prophetic books from being revealed when obj->dknown
  *                  hasn't been set, avoiding a bug which had been
  *                  present since day one of color support.
  *                  Count: NUM_OBJECTS
@@ -802,7 +802,7 @@ enum glyph_offsets {
      && ((obj)->otyp != BOULDER || go.otg_otmp->otyp == BOULDER))
 /* used to hide info such as potion and gem color when not seen yet;
    stones and rock are excluded for gem class; LAST_SPELL includes blank
-   spellbook but excludes novel and the Book of the Dead */
+   prophetic book but excludes novel and the Book of the Dead */
 #define obj_is_generic(obj) \
     (!(obj)->dknown                                             \
      && ((obj)->oclass == POTION_CLASS                          \

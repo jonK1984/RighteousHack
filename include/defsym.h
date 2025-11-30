@@ -474,7 +474,8 @@
     OBJCLASS( 7,  '%', FOOD,   S_food, "food", "piece of food")
     OBJCLASS( 8,  '!', POTION, S_potion, "potions", "potion")
     OBJCLASS( 9,  '?', SCROLL, S_scroll, "scrolls", "scroll")
-    OBJCLASS(10,  '+', SPBOOK, S_book, "spellbooks", "spellbook")
+    OBJCLASS(10,  '+', SPBOOK, S_book, "prophetic books", "prophetic book")
+    /*OBJCLASS(10,  '+', SPBOOK, S_book, "prophetic books", "prophetic book")*/
     OBJCLASS(11,  '/', WAND,   S_wand, "wands", "wand")
     OBJCLASS2(12, '$', COIN,   GOLD_SYM, S_coin, "coins", "pile of coins")
     OBJCLASS(13,  '*', GEM,    S_gem, "rocks", "gem or rock")

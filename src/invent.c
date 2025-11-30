@@ -2965,7 +2965,7 @@ item_reading_classification(struct obj *obj, char *outbuf)
         Sprintf(outbuf, "%s this %s",
                 (novel || blank) ? "Read" : tome ? "Examine" : "Study",
                 novel ? simpleonames(obj) /* "novel" or "paperback book" */
-                      : tome ? "tome" : "spellbook");
+                      : tome ? "tome" : "prophetic book");
     } else {
         res = IA_NONE;
     }
@@ -5384,7 +5384,7 @@ useupf(struct obj *obj, long numused)
  */
 static NEARDATA const char *names[] = {
     0, "Illegal objects", "Weapons", "Armor", "Rings", "Amulets", "Tools",
-    "Comestibles", "Potions", "Scrolls", "Spellbooks", "Wands", "Coins",
+    "Comestibles", "Potions", "Scrolls", "prophetic books", "Wands", "Coins",
     "Gems/Stones", "Boulders/Statues", "Iron balls", "Chains", "Venoms"
 };
 static NEARDATA const char oth_symbols[] = { CONTAINED_SYM, '\0' };

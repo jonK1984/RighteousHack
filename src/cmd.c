@@ -1794,7 +1794,7 @@ struct ext_func_tab extcmdlist[] = {
               NULL },
     { 'Q',    "quiver", "select ammunition for quiver",
               dowieldquiver, 0, NULL },
-    { 'r',    "read", "read a scroll or spellbook",
+    { 'r',    "read", "read a scroll or prophetic book",
               doread, 0, NULL },
     { C('r'), "redraw", "redraw screen",
               doredraw, IFBURIED | GENERALCMD | CMD_INSANE, NULL },

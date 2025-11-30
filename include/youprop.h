@@ -327,7 +327,7 @@
  *   Magical explosion of a magic trap               [magical]
  *   Sitting on a throne with a bad effect           [magical]
  *   Contaminated water from a sink                  [poison/sickness]
- *   Contact-poisoned spellbooks                     [poison/sickness]
+ *   Contact-poisoned prophetic books                     [poison/sickness]
  *   Eating acidic/poisonous/mildly-old corpses      [poison/sickness]
  *   Eating a poisoned weapon while polyselfed       [poison/sickness]
  *   Engulfing a zombie or mummy (AT_ENGL in hmonas) [poison/sickness]

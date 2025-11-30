@@ -1446,7 +1446,7 @@ do_mapping(void)
 /* clairvoyance */
 void
 do_vicinity_map(
-    struct obj *sobj) /* scroll--actually fake spellbook--object */
+    struct obj *sobj) /* scroll--actually fake prophetic book--object */
 {
     int zx, zy;
     struct monst *mtmp;
@@ -1455,7 +1455,7 @@ do_vicinity_map(
     char save_viz_uyux;
     boolean unconstrained, refresh = FALSE,
             mdetected = FALSE, odetected = FALSE,
-            /* fake spellbook 'sobj' implies hero has cast the spell;
+            /* fake prophetic book 'sobj' implies hero has cast the spell;
                when book is blessed, casting is skilled or expert level;
                if already clairvoyant, non-skilled spell acts like skilled */
             extended = (sobj && (sobj->blessed || Clairvoyant)),
