@@ -726,7 +726,7 @@ saveobj(NHFILE *nhfp, struct obj *otmp)
         } else {
             Sfo_int(nhfp, &zerobuf, "obj-omonst_length");
         }
-        /* extra info about scroll of mail */
+        /* extra info about letter */
         buflen = OMAILCMD(otmp) ? (int) strlen(OMAILCMD(otmp)) + 1 : 0;
         Sfo_int(nhfp, &buflen, "obj-omailcmd_length");
         if (buflen > 0) {

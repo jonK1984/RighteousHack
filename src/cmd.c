@@ -1667,7 +1667,7 @@ struct ext_func_tab extcmdlist[] = {
 #endif
     { 'C',    "call", "name a monster, specific object, or type of object",
               docallcmd, IFBURIED, NULL },
-    { 'Z',    "cast", "zap (cast) a spell",
+    { 'Z',    "meditate", "zap (meditate) on a prophecy",
               docast, IFBURIED, NULL },
     { M('c'), "chat", "talk to someone",
               dotalk, IFBURIED | AUTOCOMPLETE, NULL },
@@ -1974,7 +1974,7 @@ struct ext_func_tab extcmdlist[] = {
               wiz_wish, IFBURIED | WIZMODECMD, NULL },
     { '\0',   "wmode", "show wall modes",
               wiz_show_wmodes, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
-    { 'z',    "zap", "zap a wand",
+    { 'z',    "zap", "zap a rod",
               dozap, 0, NULL },
     /* movement commands will be bound by reset_commands() */
     /* move or attack; accept m/g/G/F prefixes */

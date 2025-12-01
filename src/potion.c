@@ -676,9 +676,9 @@ peffect_restore_ability(struct obj *otmp)
                 i = 0;
         }
 
-        /* when using the potion (not the spell) also restore lost levels,
+        /* when using the potion (not the prophecy) also restore lost levels,
            to make the potion more worth keeping around for players with
-           the spell or with a unihorn; this is better than full healing
+           the prophecy or with a unihorn; this is better than full healing
            in that it can restore all of them, not just half, and a
            blessed potion restores them all at once */
         if (otmp->otyp == POT_RESTORE_ABILITY && u.ulevel < u.ulevelmax) {
@@ -1580,7 +1580,7 @@ H2Opotion_dip(
 #undef COST_none
 }
 
-/* used when blessed or cursed scroll of light interacts with artifact light;
+/* used when blessed or cursed sealed word of light interacts with artifact light;
    if the lit object (Sunsword or gold dragon scales/mail) doesn't resist,
    treat like dipping it in holy or unholy water (BUC change, glow message) */
 void

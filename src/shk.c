@@ -5074,7 +5074,7 @@ getcad(
     struct monst *shkp, const char *dmgstr, coordxy x, coordxy y,
     boolean uinshp, boolean animal, boolean pursue)
 {
-    boolean dugwall = (!strcmp(dmgstr, "dig into")    /* wand */
+    boolean dugwall = (!strcmp(dmgstr, "dig into")    /* rod */
                     || !strcmp(dmgstr, "damage")); /* pick-axe */
 
     if (muteshk(shkp)) {

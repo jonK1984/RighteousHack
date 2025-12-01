@@ -75,15 +75,12 @@ questtext = {
       },
       angel_cuss = {
          "\"Repent, for the Kingdom of Heaven is at hand!\"",
-         "\"The Lord rebuke thee, Satan!\"",
          "\"It is written: 'Thou shalt worship the Lord thy God, and Him only shalt thou serve.'\"",
          "\"Depart from me, ye worker of iniquity!\"",
-         "\"The wages of sin is death — and thy time has come.\"",
-         "\"Flee from the wrath to come!\"",
+         "\"The wages of sin is death — but the gift of God is enternal life through Christ Jesus our Lord.\"",
+         "\"Who has told you of the wrath that is to come!\"",
          "\"Behold, the Lamb of God cometh to judge the living and the dead.\"",
-         "\"Your master has already been defeated at the cross.\"",
          "\"Even now the axe is laid to the root of the tree.\"",
-         "\"The Lord Jesus shall destroy thee with the brightness of His coming.\"",
       },
       banished = {
          synopsis = "[You have been cast out from the fellowship of the faithful.]",
@@ -93,8 +90,6 @@ You have turned back from the holy commandment delivered unto you.
 The Spirit of God is grieved, and His presence has departed from you.
 
 Depart from this holy place. You are no longer welcome among the brethren.
-The Seal of the Holy Spirit is now hidden from your eyes,
-for only those who endure to the end shall be saved.
 
 Go now. The outer darkness awaits those who draw back unto perdition.]],
       },
@@ -129,27 +124,42 @@ Go now. The outer darkness awaits those who draw back unto perdition.]],
       },
       -- The TRUE quest — no Moloch, no Yendor, no false gods
       legacy = {
-         synopsis = "[The Lord has called you to recover the Seal of the Holy Spirit.]",
+         synopsis = "[The Lord has called you to recover the key to the bottomless pit.]",
          output = "menu",
-         text = [[Thus saith the Lord God:
+        text = [[As you wander the windswept hills, you come upon the mouth 
+of an ancient cave. The entrance is hewn smooth, as though by no human hand, 
+and upon the rock above the opening these words are engraved, as if by fire:
 
-In the beginning was the Word, and the Word was with God, and the Word was God.
-But the dragon, that ancient serpent called the devil and Satan,
-was castly deceived the whole world. In his pride he sought to ascend above the Most High,
-and in his rebellion he stole the Seal of the Holy Spirit — the very pledge
-of the new covenant — and hid it in the depths of the Abyss,
-where he now lurks with the fallen angels who followed him.
+"Behold, now is the favorable time; behold, now is the day of salvation."
 
-Yet the Lamb who was slain has triumphed! The keys of Death and Hades are in His hand,
-and He has commissioned you, His servant, to descend into the stronghold of the enemy,
-to bind the strong man, and to recover that which was stolen.
+Compelled by an unseen force, you step inside. The air grows still. A single 
+shaft of pure light cleaves through rock and rests upon you. Suddenly the cave fades, 
+and you stand in the midst of a vast, whirling expanse filled with eyes and living 
+flames. Strength leaves your limbs; you fall to your knees, then to your face, 
+paralyzed with fear.
 
-You have been anointed with the Holy Spirit and with power.
-Go forth in the name of Jesus Christ of Nazareth.
-The gates of hell shall not prevail against you.
+Like the sound of many waters, a voice breaks through the flames and speaks 
+from a throne of glory:
 
-This is your calling. This is your hour. For the glory of God and the salvation of many:
-Go in the strength of the Lord!]],
+"%SC of man, gird yourself and stand upon your feet, for I will speak with you."
+
+Trembling, you rise. The voice continues:
+
+"I am sending you to the depths of the earth, where the accuser of the 
+bretheren, that ancient serpent who is called the Devil and Satan,
+has bound a soul captive which I have ordained for redemption. Descend into the 
+great cave that opens beneath this place. Find the soul, break the chains 
+the Adversary has forged, and bring my %SC into the light. Do exactly as I command. 
+Do not turn from it to the right hand nor to the left."
+
+The glory withdraws. The cave falls silent once more. Before you, a narrow stair 
+spirals downward into darkness. In your trembling hand now rests a plain wooden 
+staff and a small clay lamp.
+
+As you peer into the abyss, the voice thunders one final time through the cavern:
+
+""%p, be strong and courageous. Do not be frightened, and do not be dismayed,
+for the LORD your God is with you wherever you go."]],
       },
 -- starting with 'pauper' option set, last paragraph differs from normal legacy
       pauper_legacy = {
@@ -165,7 +175,7 @@ He has chosen the foolish things of this world to confound the wise,
 and the weak things to shame the strong.
 Not by might, nor by power, but by My Spirit, saith the Lord of hosts.
 
-Go now, My child. The Seal awaits the one who walks by faith, not by sight.
+Go now, My child. The key awaits the one who walks by faith, not by sight.
 The victory belongs to the Lamb. Amen.]],
       },
       quest_complete_no_bell = {

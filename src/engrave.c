@@ -14,7 +14,7 @@ struct _doengrave_ctx {
     boolean jello;    /* TRUE if we are engraving in slime */
     boolean ptext;    /* TRUE if we must prompt for engrave text */
     boolean teleengr; /* TRUE if we move the old engraving */
-    boolean zapwand;  /* TRUE if we remove a wand charge */
+    boolean zapwand;  /* TRUE if we remove a rod charge */
     boolean disprefresh; /* TRUE if the display needs a refresh */
     boolean frosted;  /* TRUE if engraving on ice */
     boolean adding;   /* TRUE if adding to existing engraving */

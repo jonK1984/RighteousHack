@@ -287,9 +287,9 @@ dowrite(struct obj *pen)
      * was evident) or been ID'd via scroll/spell/throne (or skill
      * for Wizards) and it will be on the discoveries list.
      * Unknown prophetic books can also be written by name if the hero
-     * has fresh knowledge of the spell, or if the spell is almost
+     * has fresh knowledge of the prophecy, or if the prophecy is almost
      * forgotten and the hero is Lucky (with a greater chance than
-     * if the spell is unknown or forgotten).
+     * if the prophecy is unknown or forgotten).
      * (Previous versions allowed scrolls and books to be written
      * by type name if they were on the discoveries list via being
      * given a user-assigned name, even though doing the latter

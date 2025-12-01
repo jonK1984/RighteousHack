@@ -187,7 +187,7 @@ maybereleaseobuf(char *obuffer)
      * "Oops!  food rations out of your grasp!"
      * hold_another_object() was passed 'the(aobjnam(newscroll, "slip"))'
      * as an argument and that should have yielded
-     * "Oops!  The scroll of <foo> slips out of your grasp!"
+     * "Oops!  The sealed word of <foo> slips out of your grasp!"
      * but attempting to add the item to inventory triggered update for
      * perm_invent and the result from 'the(...)' was clobbered by partial
      * formatting of some inventory item.  [It happened in a shop and the
@@ -225,10 +225,10 @@ obj_typename(int otyp)
         Strcpy(buf, "potion");
         break;
     case SCROLL_CLASS:
-        Strcpy(buf, "scroll");
+        Strcpy(buf, "sealed word");
         break;
     case WAND_CLASS:
-        Strcpy(buf, "wand");
+        Strcpy(buf, "rod");
         break;
     case SPBOOK_CLASS:
         if (otyp != SPE_NOVEL) {
@@ -278,7 +278,7 @@ obj_typename(int otyp)
         }
         return buf;
     }
-    /* here for ring/scroll/potion/wand */
+    /* here for ring/scroll/potion/rod */
     if (nn) {
         if (ocl->oc_unique)
             Strcpy(buf, actualn); /* avoid prophetic book of Book of the Dead */
@@ -852,7 +852,7 @@ xname_flags(
         }
         break;
     case SCROLL_CLASS:
-        Strcpy(buf, "scroll");
+        Strcpy(buf, "sealed word");
         if (!dknown)
             break;
         if (nn) {
@@ -865,18 +865,18 @@ xname_flags(
             Strcat(buf, dn);
         } else {
             Strcpy(buf, dn);
-            Strcat(buf, " scroll");
+            Strcat(buf, " sealed word");
         }
         break;
     case WAND_CLASS:
         if (!dknown)
-            Strcpy(buf, "wand");
+            Strcpy(buf, "rod");
         else if (nn)
-            Sprintf(buf, "wand of %s", actualn);
+            Sprintf(buf, "rod of %s", actualn);
         else if (un)
-            xcalled(buf, BUFSZ - PREFIX, "wand", un);
+            xcalled(buf, BUFSZ - PREFIX, "rod", un);
         else
-            Sprintf(buf, "%s wand", dn);
+            Sprintf(buf, "%s rod", dn);
         break;
     case SPBOOK_CLASS:
         if (typ == SPE_NOVEL) { /* 3.6 tribute */
@@ -1178,7 +1178,7 @@ add_erosion_words(struct obj *obj, char *prefix)
         Strcat(prefix, is_corrodeable(obj) ? "corroded " : "rotted ");
     }
     /* note: it is possible for an item to be both eroded and erodeproof
-       (cursed scroll of destroy armor read while confused erodeproofs an
+       (cursed sealed word of destroy armor read while confused erodeproofs an
        item of armor without repairing existing erosion) */
     if (rknown && obj->oerodeproof)
         Strcat(prefix, iscrys ? "fixed "
@@ -2504,7 +2504,7 @@ bare_artifactname(struct obj *obj)
 }
 
 static const char *const wrp[] = {
-    "wand",   "ring",      "potion",     "scroll", "gem",
+    "rod",   "ring",      "potion",     "sealed word", "gem",
     "amulet", "propheticbook", "prophetic book",
     /* for non-specific wishes */
     "weapon", "armor",     "tool",       "food",   "comestible",
@@ -3318,7 +3318,7 @@ wishymatch(
         }
     } else if (!strcmp(o_str, "aluminum")) {
         /* this special case doesn't really fit anywhere else... */
-        /* (note that " wand" will have been stripped off by now) */
+        /* (note that " rod" will have been stripped off by now) */
         if (!strcmpi(u_str, "aluminium"))
             return fuzzymatch(u_str + 9, o_str + 8, " -", TRUE);
     }
@@ -3383,7 +3383,7 @@ static const struct alt_spellings {
     { "elven chain mail", ELVEN_MITHRIL_COAT },
     { "silver shield", SHIELD_OF_REFLECTION },
     { "potion of sleep", POT_SLEEPING },
-    { "scroll of recharging", SCR_CHARGING },
+    { "sealed word of renewal", SCR_CHARGING },
     { "recharging", SCR_CHARGING },
     { "stone", ROCK },
     { "camera", EXPENSIVE_CAMERA },
@@ -4236,7 +4236,7 @@ readobjnam_postparse1(struct _readobjnam_data *d)
      *  egg
      *  fortune cookies
      *  very heavy iron ball named hoei
-     *  wand of wishing
+     *  rod of wishing
      *  elven cloak
      */
     if ((d->p = strstri(d->bp, " named ")) != 0) {
@@ -4358,13 +4358,13 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     } else {
         /*
          * Find corpse type using "of" (figurine of an orc, tin of orc meat)
-         * Don't check if it's a wand or prophetic book.
-         * (avoid "wand/finger of death" confusion).
+         * Don't check if it's a rod or prophetic book.
+         * (avoid "rod/finger of death" confusion).
          * Don't match "ogre" or "giant" monster name inside alternate item
          * names "gauntlets of ogre power" and "gauntlets of giant strength"
          * (or the alternate spelling of those, "gloves of ...").
          */
-        if (!strstri(d->bp, "wand ") && !strstri(d->bp, "prophetic book ")
+        if (!strstri(d->bp, "rod ") && !strstri(d->bp, "prophetic book ")
             && !strstri(d->bp, "gauntlets ") && !strstri(d->bp, "gloves ")
             && !strstri(d->bp, "finger ")) {
             if ((d->p = strstri(d->bp, "tin of ")) != 0) {
@@ -4387,7 +4387,7 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     /* Find corpse type w/o "of" (red dragon scale mail, yeti corpse) */
     if (strncmpi(d->bp, "samurai sword", 13)  /* not the "samurai" monster! */
         && strncmpi(d->bp, "wizard lock", 11) /* not the "wizard" monster! */
-        && strncmpi(d->bp, "death wand", 10)  /* 'of inversion', not Rider */
+        && strncmpi(d->bp, "final judgement rod", 10)  /* 'of inversion', not Rider */
         && strncmpi(d->bp, "master key", 10)  /* not the "master" rank */
         && strncmpi(d->bp, "ninja-to", 8)     /* not the "ninja" rank */
         && strncmpi(d->bp, "magenta", 7)) {   /* not the "mage" rank */
@@ -4541,7 +4541,7 @@ readobjnam_postparse1(struct _readobjnam_data *d)
         return 4; /*goto any;*/
     }
 
-    /* Search for class names: XXXXX potion, scroll of XXXXX.
+    /* Search for class names: XXXXX potion, sealed word of XXXXX.
        Avoid false hits on, e.g., rings for "ring mail". */
     if (strncmpi(d->bp, "enchant ", 8)
         && strncmpi(d->bp, "destroy ", 8)
@@ -4907,7 +4907,7 @@ readobjnam(char *bp, struct obj *no_wish)
     /* first, remove extra whitespace they may have typed */
     (void) mungspaces(bp);
     /* allow wishing for "nothing" to preserve wishless conduct...
-       [now requires "wand of nothing" if that's what was really wanted] */
+       [now requires "rod of nothing" if that's what was really wanted] */
     if (!strcmpi(bp, "nothing") || !strcmpi(bp, "nil")
         || !strcmpi(bp, "none"))
         return no_wish;
@@ -5155,7 +5155,7 @@ readobjnam(char *bp, struct obj *no_wish)
         break;
     };
 #ifdef MAIL_STRUCTURES
-    /* scroll of mail:  0: delivered in-game via external event (or randomly
+    /* sealed word of mail:  0: delivered in-game via external event (or randomly
        for fake mail); 1: from bones or wishing; 2: written with marker */
     case SCR_MAIL:
         d.otmp->spe = 1;

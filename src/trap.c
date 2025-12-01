@@ -2833,7 +2833,7 @@ immune_to_trap(struct monst *mon, unsigned ttype)
                 || obj->oclass == SPBOOK_CLASS
                 || (obj->owornmask && is_flammable(obj))) {
                 if ((obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL)
-                    /* mon knows scroll of fire or prophetic book of fireball
+                    /* mon knows sealed word of consuming fire or prophetic book of firey tempest
                        won't be affected; hero knows iff this one has been
                        seen and its type has been discovered */
                     && (!is_you
@@ -4342,7 +4342,7 @@ domagictrap(void)
 
             pseudo = cg.zeroobj; /* force 'uncursed' and zero out oextra */
             /* used to be SCR_REMOVE_CURSE but that could cause seffects()
-               to have hero discover scroll of remove curse */
+               to have hero discover sealed word of remove curse */
             pseudo.otyp = SPE_REMOVE_CURSE;
             pseudo.oclass = SPBOOK_CLASS;
             HConfusion = 0L;

@@ -210,7 +210,7 @@ restobj(NHFILE *nhfp, struct obj *otmp)
             restmon(nhfp, OMONST(otmp));
         }
 
-        /* omailcmd - feedback mechanism for scroll of mail */
+        /* omailcmd - feedback mechanism for letter */
         Sfi_int(nhfp, &buflen, "obj-omailcmd_length");
         if (buflen > 0) {
             char *omailcmd = (char *) alloc(buflen);

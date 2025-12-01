@@ -274,7 +274,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
         }
 
         Snprintf(blindbuf, sizeof blindbuf, "reading %s", onambuf);
-        strsubst(blindbuf, "reading a scroll labeled",
+        strsubst(blindbuf, "reading a sealed word labeled",
                  mtmp->mconf ? "attempting to incant" : "incant");
         You_hear("%s %s.",
                  x_monnam(mtmp, ARTICLE_A, (char *) 0, mflags, FALSE),
@@ -869,7 +869,7 @@ use_defensive(struct monst *mtmp)
         int obj_is_cursed;
 
         if (!otmp)
-            panic(MissingDefensiveItem, "scroll of teleportation");
+            panic(MissingDefensiveItem, "sealed word of dove wings");
         obj_is_cursed = otmp->cursed;
         if (mtmp->isshk || mtmp->isgd || mtmp->ispriest)
             return 2;
@@ -1001,7 +1001,7 @@ use_defensive(struct monst *mtmp)
         boolean known = FALSE;
 
         if (!otmp)
-            panic(MissingDefensiveItem, "scroll of create monster");
+            panic(MissingDefensiveItem, "sealed word of heavenly host");
         if (!rn2(73))
             cnt += rnd(4);
         if (mtmp->mconf || otmp->cursed)
@@ -1934,7 +1934,7 @@ use_offensive(struct monst *mtmp)
             if (Half_spell_damage)
                 num = (num + 1) / 2;
             else
-                losehp(num, "scroll of fire", KILLED_BY_AN);
+                losehp(num, "sealed word of fire", KILLED_BY_AN);
             for (mtmp2 = fmon; mtmp2; mtmp2 = mtmp2->nmon) {
                 if (DEADMONSTER(mtmp2))
                     continue;
@@ -3184,7 +3184,7 @@ muse_unslime(
 staticfn int
 cures_sliming(struct monst *mon, struct obj *obj)
 {
-    /* scroll of fire */
+    /* sealed word of fire */
     if (obj->otyp == SCR_FIRE)
         return (haseyes(mon->data) && mon->mcansee && !nohands(mon->data));
 

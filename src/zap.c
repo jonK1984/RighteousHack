@@ -51,7 +51,7 @@ staticfn void wishcmdassist(int);
 /* 8 and 9 are currently unassigned */
 
 #define ZT_WAND(x) (x)
-#define ZT_SPELL(x) (10 + (x))
+#define ZT_PBOOK(x) (10 + (x))
 #define ZT_BREATH(x) (20 + (x))
 
 #define is_hero_spell(type) ((type) >= 10 && (type) < 20)
@@ -163,7 +163,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
     boolean dbldam = Role_if(PM_KNIGHT) && u.uhave.questart;
     boolean skilled_spell, helpful_gesture = FALSE;
     int dmg, otyp = otmp->otyp; /* otmp is not NULL */
-    const char *zap_type_text = "spell";
+    const char *zap_type_text = "prophecy";
     struct obj *obj;
     boolean disguised_mimic = (mtmp->data->mlet == S_MIMIC
                                && M_AP_TYPE(mtmp) != M_AP_NOTHING);
@@ -2174,7 +2174,7 @@ bhito(struct obj *obj, struct obj *otmp)
      * for the STONE_TO_FLESH spell.
      */
     if (!(obj->where == OBJ_FLOOR || otmp->otyp == SPE_STONE_TO_FLESH))
-        impossible("bhito: obj is not floor or Stone To Flesh spell");
+        impossible("bhito: obj is not floor or Stone To Flesh prophecy");
 
     if (obj == uball) {
         res = 0;
@@ -3447,12 +3447,12 @@ weffects(struct obj *obj)
         if (otyp == WAN_DIGGING || otyp == SPE_DIG)
             zap_dig();
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH)
-            ubuzz(BZ_U_SPELL(BZ_OFS_SPE(otyp)), u.ulevel / 2 + 1);
+            ubuzz(BZ_U_PBOOK(BZ_OFS_SPE(otyp)), u.ulevel / 2 + 1);
         else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING)
             ubuzz(BZ_U_WAND(BZ_OFS_WAN(otyp)),
                   (otyp == WAN_MAGIC_MISSILE) ? 2 : 6);
         else
-            impossible("weffects: unexpected spell or wand");
+            impossible("weffects: unexpected prophecy or rod");
         disclose = TRUE;
     }
     if (disclose) {
@@ -3611,11 +3611,11 @@ maybe_explode_trap(
 }
 
 /* zap_map() occurs before hitting monsters or objects and handles wands or
-   spells that don't dish out 'elemental' damage */
+   prophecies that don't dish out 'elemental' damage */
 staticfn void
 zap_map(
     coordxy x, coordxy y,
-    struct obj *obj) /* zapped wand, or book for cast spell */
+    struct obj *obj) /* zapped wand, or book for cast prophecy */
 {
     struct trap *ttmp = t_at(x, y);
     coordxy dbx = x, dby = y; /* might be changed by drawbridge handling */
@@ -4368,7 +4368,7 @@ zhitm(
     if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && u.uhave.questart))
         tmp *= 2;
     if (tmp > 0 && type >= 0
-        && resist(mon, type < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
+        && resist(mon, type < ZT_PBOOK(0) ? WAND_CLASS : '\0', 0, NOTELL))
         tmp /= 2;
     if (tmp < 0)
         tmp = 0; /* don't allow negative damage */
@@ -4725,7 +4725,7 @@ dobuzz(
     struct monst *mon;
     coord save_bhitpos;
     boolean shopdamage = FALSE,
-            fireball = (type == ZT_SPELL(ZT_FIRE)), /* set once */
+            fireball = (type == ZT_PBOOK(ZT_FIRE)), /* set once */
             gas_hit = FALSE; /* will be set during each iteration */
     struct obj *otmp;
     int spell_type;
@@ -5345,15 +5345,15 @@ zap_over_floor(
     if (!exploding_wand_typ) {
         int ztype = zaptype(type); /* 0..29 for both hero and monsters */
 
-        if (ztype < ZT_SPELL(0))
+        if (ztype < ZT_PBOOK(0))
             zapverb = "bolt"; /* wand zap */
         else if (ztype < ZT_BREATH(0))
-            zapverb = "spell";
+            zapverb = "prophecy";
     } else if (exploding_wand_typ == POT_OIL
                || exploding_wand_typ == SCR_FIRE) {
         /* breakobj() -> explode_oil() -> splatter_burning_oil()
-           -> explode(ZT_SPELL(ZT_FIRE), BURNING_OIL)
-           -> zap_over_floor(ZT_SPELL(ZT_FIRE), POT_OIL) */
+           -> explode(ZT_PBOOK(ZT_FIRE), BURNING_OIL)
+           -> zap_over_floor(ZT_PBOOK(ZT_FIRE), POT_OIL) */
         /* leave zapverb as "blast"; exploding_wand_typ was nonzero, so
            'yourzap' is FALSE and the result will be "the blast" */
         exploding_wand_typ = 0; /* not actually an exploding wand */
@@ -5488,7 +5488,7 @@ mon_spell_hits_spot(
                                     * though it's only used when zapdmgtyp
                                     * is non-negative (hero's fault) */
         int zt_typ = adtyp - 1,            /* convert AD_xxxx to ZT_xxxx */
-            zapdmgtyp = -ZT_SPELL(zt_typ); /* damage is from monster spell */
+            zapdmgtyp = -ZT_PBOOK(zt_typ); /* damage is from monster spell */
 
         (void) zap_over_floor(x, y, zapdmgtyp, &shopdummy, TRUE, 0);
     } else {
@@ -6094,7 +6094,7 @@ resist(struct monst *mtmp, char oclass, int damage, int tell)
         break;
     default:
         alev = u.ulevel;
-        break; /* spell */
+        break; /* prophecy */
     }
     /* defense level */
     dlev = (int) mtmp->m_lev;
@@ -6292,7 +6292,7 @@ makewish(void)
 /* Fills buf with the appropriate string for this ray.
  * In the hallucination case, insert "blast of <silly thing>".
  * Assumes that the caller will specify typ in the appropriate range for
- * wand/spell/breath weapon. */
+ * wand/prophecy/breath weapon. */
 const char*
 flash_str(
     int typ,

@@ -1023,18 +1023,18 @@ give_spell(void)
         otmp->otyp = rnd_class(svb.bases[SPBOOK_CLASS], SPE_BLANK_PAPER);
     }
     /*
-     * 25% chance of learning the spell directly instead of
+     * 25% chance of learning the prophecy directly instead of
      * receiving the book for it, unless it's already well known.
      * The chance is not influenced by whether hero is illiterate.
      */
     if (otmp->otyp != SPE_BLANK_PAPER && !rn2(4)
         && (spe_knowledge = known_spell(otmp->otyp)) != spe_Fresh) {
         /* force_learn_spell() should only return '\0' if the book
-           is blank paper or the spell is known and has retention
+           is blank paper or the prophecy is known and has retention
            of spe_Fresh, so no 'else' case is needed here */
         if ((spe_let = force_learn_spell(otmp->otyp)) != '\0') {
             /* for prophetic book class, OBJ_NAME() yields the name of
-               the spell rather than "prophetic book of <spell-name>" */
+               the prophecy rather than "prophetic book of <spell-name>" */
             const char *spe_name = OBJ_NAME(objects[otmp->otyp]);
 
             if (spe_knowledge == spe_Unknown) /* prior to learning */
@@ -1045,7 +1045,7 @@ give_spell(void)
                 pline("Divine knowledge of %s fills your mind!  Spell '%c'.",
                       spe_name, spe_let);
             else
-                Your("knowledge of spell '%c' - %s is %s.",
+                Your("knowledge of prophecy '%c' - %s is %s.",
                      spe_let, spe_name,
                      (spe_knowledge == spe_Forgotten) ? "restored"
                                                       : "refreshed");

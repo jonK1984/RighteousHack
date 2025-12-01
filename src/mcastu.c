@@ -995,7 +995,7 @@ buzzmu(struct monst *mtmp, struct attack *mattk)
             pline_mon(mtmp, "%s zaps you with a %s!", Monnam(mtmp),
                   flash_str(BZ_OFS_AD(mattk->adtyp), FALSE));
         gb.buzzer = mtmp;
-        buzz(BZ_M_SPELL(BZ_OFS_AD(mattk->adtyp)), (int) mattk->damn,
+        buzz(BZ_M_PBOOK(BZ_OFS_AD(mattk->adtyp)), (int) mattk->damn,
              mtmp->mx, mtmp->my, sgn(gt.tbx), sgn(gt.tby));
         gb.buzzer = 0;
         return M_ATTK_HIT;

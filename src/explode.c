@@ -233,7 +233,7 @@ explode(
                 && type != WAN_DIGGING && type != WAN_SLEEP) {
                 type -= WAN_MAGIC_MISSILE;
                 if (type < 0 || type > 9) {
-                    impossible("explode: wand has bad zap type (%d).", type);
+                    impossible("explode: rod has bad zap type (%d).", type);
                     type = 0;
                 }
             } else
@@ -590,7 +590,7 @@ explode(
     /* Do your injury last */
     if (uhurt) {
         /* give message for any monster-induced explosion
-           or player-induced one other than scroll of fire */
+           or player-induced one other than sealed word of fire */
         if (flags.verbose && (type < 0 || olet != SCROLL_CLASS)) {
             if (do_hallu) { /* (see explanation above) */
                 do {
@@ -961,7 +961,7 @@ splatter_burning_oil(coordxy x, coordxy y, boolean diluted_oil)
 {
     int dmg = d(diluted_oil ? 3 : 4, 4);
 
-/* ZT_SPELL(ZT_FIRE) = ZT_SPELL(AD_FIRE-1) = 10+(2-1) = 11 */
+/* ZT_PBOOK(ZT_FIRE) = ZT_PBOOK(AD_FIRE-1) = 10+(2-1) = 11 */
 #define ZT_SPELL_O_FIRE 11 /* value kludge, see zap.c */
     explode(x, y, ZT_SPELL_O_FIRE, dmg, BURNING_OIL, EXPL_FIERY);
 }

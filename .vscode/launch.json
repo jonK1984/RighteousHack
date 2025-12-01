@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug RighteousHack (Windowed)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/binary/nethack.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/binary",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "build RighteousHack"
+        }
+    ]
+}

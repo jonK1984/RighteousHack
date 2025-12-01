@@ -1053,7 +1053,7 @@ newsym(coordxy x, coordxy y)
          *      (1) A dark location that the hero could see through night
          *          vision.
          *      (2) Darkened while out of the hero's sight.  This can happen
-         *          when cursed scroll of light is read.
+         *          when cursed sealed word of light is read.
          *
          * In either case, we have to manually correct the hero's memory to
          * match waslit.  Deciding when to change waslit is non-trivial.

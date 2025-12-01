@@ -3472,10 +3472,10 @@ find_objtype(lua_State *L, const char *s)
             char class;
         } class_prefixes[] = {
             { "ring of ", RING_CLASS },
-            { "potion of ", POTION_CLASS },
-            { "scroll of ", SCROLL_CLASS },
+            { "anointing oil of ", POTION_CLASS },
+            { "sealed word of ", SCROLL_CLASS },
             { "prophetic book of ", SPBOOK_CLASS },
-            { "wand of ", WAND_CLASS },
+            { "rod of ", WAND_CLASS },
             { NULL, 0 }
         };
 
@@ -3966,7 +3966,7 @@ static const struct {
     { "weapon shop", WEAPONSHOP },
     { "food shop", FOODSHOP },
     { "ring shop", RINGSHOP },
-    { "wand shop", WANDSHOP },
+    { "rod shop", WANDSHOP },
     { "tool shop", TOOLSHOP },
     { "book shop", BOOKSHOP },
     { "health food shop", FODDERSHOP },

@@ -312,7 +312,7 @@ rider_corpse_revival(struct obj *obj, boolean remotely)
     return TRUE;
 }
 
-/* wand of probing zapped down; perhaps hero is levitating while blind */
+/* rod of probing zapped down; perhaps hero is levitating while blind */
 void
 force_decor(boolean via_probing)
 {
@@ -1852,7 +1852,7 @@ pickup_object(
         } else if (!obj->spe && !obj->cursed) {
             obj->spe = 1;
         } else {
-            pline_The("scroll%s %s to dust as you %s %s up.", plur(obj->quan),
+            pline_The("sealed word%s %s to dust as you %s %s up.", plur(obj->quan),
                       otense(obj, "turn"), telekinesis ? "raise" : "pick",
                       (obj->quan == 1L) ? "it" : "them");
             trycall(obj);

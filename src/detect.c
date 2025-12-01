@@ -1367,7 +1367,7 @@ use_crystal_ball(struct obj **optr)
     return;
 }
 
-/* used by magic mapping, clairvoyance, and wand of probing */
+/* used by magic mapping, clairvoyance, and rod of revelation */
 void
 show_map_spot(coordxy x, coordxy y, boolean cnf)
 {
@@ -1603,8 +1603,8 @@ cvt_sdoor_to_door(struct rm *lev)
     lev->arboreal_sdoor = 0; /* clears 'candig' */
 }
 
-/* update the map for something which has just been found by wand of secret
-   door detection or wizard mode ^E; will be called multiple times during a
+/* update the map for something which has just been found by rod of reveal secret things
+ or wizard mode ^E; will be called multiple times during a
    single operation if multiple things of interest are discovered */
 staticfn void
 foundone(coordxy zx, coordxy zy, int glyph)

@@ -387,14 +387,14 @@ learn(void)
     }
 
     Sprintf(splname,
-            objects[booktype].oc_name_known ? "\"%s\"" : "the \"%s\" spell",
+            objects[booktype].oc_name_known ? "\"%s\"" : "the \"%s\" prophecy",
             OBJ_NAME(objects[booktype]));
     for (i = 0; i < MAXSPELL; i++)
         if (spellid(i) == booktype || spellid(i) == NO_SPELL)
             break;
 
     if (i == MAXSPELL) {
-        impossible("Too many spells memorized!");
+        impossible("Too many prophecies memorized!");
     } else if (spellid(i) == booktype) {
         /* normal book can be read and re-read a total of 4 times */
         if (book->spestudied > MAX_SPELL_STUDY) {
@@ -499,7 +499,7 @@ study_book(struct obj *spellbook)
         && booktype != SPE_BLANK_PAPER) {
         You("continue your efforts to %s.",
             (booktype == SPE_NOVEL) ? "read the novel"
-                                    : "memorize the spell");
+                                    : "memorize the prophetic book");
     } else {
         /* KMH -- Simplified this code */
         if (booktype == SPE_BLANK_PAPER) {
@@ -707,7 +707,7 @@ rejectcasting(void)
 }
 
 /*
- * Return TRUE if a spell was picked, with the spell index in the return
+ * Return TRUE if a spell was picked, with the prophecy index in the return
  * parameter.  Otherwise return FALSE.
  */
 staticfn boolean
@@ -777,7 +777,7 @@ getspell(int *spell_no)
             return TRUE;
         }
     }
-    return dospellmenu("Choose which prophecy to think upon...", SPELLMENU_CAST,
+    return dospellmenu("Choose which prophecy to meditate upon...", SPELLMENU_CAST,
                        spell_no);
 }
 
@@ -802,7 +802,7 @@ dowizcast(void)
         add_menu(win, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
                  OBJ_NAME(objects[n]), MENU_ITEMFLAGS_NONE);
     }
-    end_menu(win, "Cast which spell?");
+    end_menu(win, "Meditate upon which prophecy?");
     n = select_menu(win, PICK_ONE, &selected);
     destroy_nhwindow(win);
     if (n > 0) {
@@ -832,21 +832,21 @@ spelltypemnemonic(int skill)
 {
     switch (skill) {
     case P_ATTACK_SPELL:
-        return "attack";
+        return "warfare";
     case P_HEALING_SPELL:
         return "healing";
     case P_DIVINATION_SPELL:
-        return "divination";
+        return "discernment";
     case P_ENCHANTMENT_SPELL:
-        return "enchantment";
+        return "blessing";
     case P_CLERIC_SPELL:
-        return "clerical";
+        return "prayer";
     case P_ESCAPE_SPELL:
-        return "escape";
+        return "deliverance";
     case P_MATTER_SPELL:
-        return "matter";
+        return "creation";
     default:
-        impossible("Unknown spell skill, %d;", skill);
+        impossible("Unknown prophecy skill, %d;", skill);
         return "";
     }
 }
@@ -1035,7 +1035,7 @@ cast_chain_lightning(void)
 
                 gn.notonhead = (mon->mx != gb.bhitpos.x
                                 || mon->my != gb.bhitpos.y);
-                dmg = zhitm(mon, BZ_U_SPELL(AD_ELEC - 1), 2, &unused);
+                dmg = zhitm(mon, BZ_U_PBOOK(AD_ELEC - 1), 2, &unused);
 
                 if (dmg) {
                     /* mon has been damaged, but we haven't yet printed the
@@ -1242,7 +1242,7 @@ spelleffects_check(int spell, int *res, int *energy)
     *energy = SPELL_LEV_PW(spellev(spell)); /* 5 <= energy <= 35 */
 
     /*
-     * Spell casting no longer affects knowledge of the spell. A
+     * Spell casting no longer affects knowledge of the prophecy. A
      * decrement of spell knowledge is done every turn.
      */
     if (spellknow(spell) <= 0) {
@@ -1256,21 +1256,21 @@ spelleffects_check(int spell, int *res, int *energy)
         *res = ECMD_TIME;
         return TRUE;
     } else if (spellknow(spell) <= KEEN / 200) { /* 100 turns left */
-        You("strain to recall the spell.");
+        You("strain to recall the prophecy.");
     } else if (spellknow(spell) <= KEEN / 40) { /* 500 turns left */
-        You("have difficulty remembering the spell.");
+        You("have difficulty remembering the prophecy.");
     } else if (spellknow(spell) <= KEEN / 20) { /* 1000 turns left */
-        Your("knowledge of this spell is growing faint.");
+        Your("knowledge of this prophecy is growing faint.");
     } else if (spellknow(spell) <= KEEN / 10) { /* 2000 turns left */
-        Your("recall of this spell is gradually fading.");
+        Your("recall of this prophecy is gradually fading.");
     }
 
     if (u.uhunger <= 10 && spellid(spell) != SPE_DETECT_FOOD) {
-        You("are too hungry to cast that spell.");
+        You("are too hungry to meditate upon the prophecy.");
         *res = ECMD_OK;
         return TRUE;
     } else if (ACURR(A_STR) < 4 && spellid(spell) != SPE_RESTORE_ABILITY) {
-        You("lack the strength to cast spells.");
+        You("lack the strength to meditate upon prophecies.");
         *res = ECMD_OK;
         return TRUE;
     } else if (check_capacity(
@@ -1296,20 +1296,20 @@ spelleffects_check(int spell, int *res, int *energy)
         if (u.uen < 0)
             u.uen = 0;
         disp.botl = TRUE;
-        *res = ECMD_TIME; /* time is used even if spell doesn't get cast */
+        *res = ECMD_TIME; /* time is used even if prophecy doesn't get cast */
     }
 
     if (*energy > u.uen) {
         /*
-         * Hero has insufficient energy/power to cast the spell.
+         * Hero has insufficient energy/power to medidate upon the prophecy.
          * Augment the message when current energy is at maximum.
-         * "yet": mainly for level 1 characters who already know a spell
+         * "yet": mainly for level 1 characters who already know a prophecy
          * but don't start with enough energy to cast it.
          * "anymore": maximum energy was high enough at some point but
          * isn't now (lost energy when losing levels or polymorphing into
          * new person or had some stripped away by traps or monsters).
          */
-        You("don't have enough energy to cast that spell%s.",
+        You("don't have enough energy to think about that prophecy%s.",
             (u.uen < u.uenmax) ? "" /* not at full energy => normal message */
             : (*energy > u.uenpeak) ? " yet" /* haven't ever had enough */
               : " anymore"); /* once had enough but have lost some since */
@@ -1367,7 +1367,7 @@ spelleffects_check(int spell, int *res, int *energy)
 
     chance = percent_success(spell);
     if (confused || (rnd(100) > chance)) {
-        You("fail to cast the spell correctly.");
+        You("fail to medidate upon the prophecy correctly.");
         u.uen -= *energy / 2;
         disp.botl = TRUE;
         *res = ECMD_TIME;
@@ -1376,8 +1376,8 @@ spelleffects_check(int spell, int *res, int *energy)
     return FALSE;
 }
 
-/* hero casts a spell of type spell_otyp, eg. SPE_SLEEP.
-   hero must know the spell (unless force is TRUE). */
+/* hero medidate upon a prophecy of type spell_otyp, eg. SPE_SLEEP.
+   hero must know the prophecy (unless force is TRUE). */
 int
 spelleffects(int spell_otyp, boolean atme, boolean force)
 {
@@ -1394,7 +1394,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     u.uen -= energy;
     disp.botl = TRUE;
     exercise(A_WIS, TRUE);
-    /* pseudo is a temporary "false" object containing the spell stats */
+    /* pseudo is a temporary "false" object containing the prophecy stats */
     pseudo = mksobj(force ? spell : spellid(spell), FALSE, FALSE);
     pseudo->blessed = pseudo->cursed = 0;
     pseudo->quan = 20L; /* do not let useup get it */
@@ -1408,10 +1408,10 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
 
     switch (otyp) {
     /*
-     * At first spells act as expected.  As the hero increases in skill
-     * with the appropriate spell type, some spells increase in their
+     * At first prophecies act as expected.  As the hero increases in skill
+     * with the appropriate prophecy type, some prophecies increase in their
      * effects, e.g. more damage, further distance, and so on, without
-     * additional cost to the spellcaster.
+     * additional cost to the player.
      */
     case SPE_FIREBALL:
     case SPE_CONE_OF_COLD:
@@ -1424,7 +1424,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
                     if (!u.dx && !u.dy && !u.dz) {
                         if ((damage = zapyourself(pseudo, TRUE)) != 0) {
                             char buf[BUFSZ];
-                            Sprintf(buf, "zapped %sself with a spell",
+                            Sprintf(buf, "zapped %sself with a prophecy",
                                     uhim());
                             losehp(damage, buf, NO_KILLER_PREFIX);
                         }
@@ -1451,7 +1451,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
         FALLTHROUGH;
         /*FALLTHRU*/
 
-    /* these spells are all duplicates of wand effects */
+    /* these spells are all duplicates of rod effects */
     case SPE_FORCE_BOLT:
         physical_damage = TRUE;
         FALLTHROUGH;
@@ -1476,7 +1476,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
         if (objects[otyp].oc_dir != NODIR) {
             if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING) {
                 /* healing and extra healing are actually potion effects,
-                   but they've been extended to take a direction like wands */
+                   but they've been extended to take a direction like rods */
                 if (role_skill >= P_SKILLED)
                     pseudo->blessed = 1;
             }
@@ -1487,7 +1487,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
                 /*
                  * FIXME:  reusing previous direction only makes sense
                  * if there is an actual previous direction.  When there
-                 * isn't one, the spell gets cast at self which is rarely
+                 * isn't one, the prophecy gets cast at self which is rarely
                  * what the player intended.  Unfortunately, the way
                  * spelleffects() is organized means that aborting with
                  * "nevermind" is not an option.
@@ -1498,7 +1498,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
                 if ((damage = zapyourself(pseudo, TRUE)) != 0) {
                     char buf[BUFSZ];
 
-                    Sprintf(buf, "zapped %sself with a spell", uhim());
+                    Sprintf(buf, "zapped %sself with a prophecy", uhim());
                     if (physical_damage)
                         damage = Maybe_Half_Phys(damage);
                     losehp(damage, buf, NO_KILLER_PREFIX);
@@ -1507,7 +1507,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
                 weffects(pseudo);
         } else
             weffects(pseudo);
-        update_inventory(); /* spell may modify inventory */
+        update_inventory(); /* prophecy may modify inventory */
         break;
 
     /* these are all duplicates of scroll effects */
@@ -1541,7 +1541,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     case SPE_INVISIBILITY:
         (void) peffects(pseudo);
         break;
-    /* end of potion-like spells */
+    /* end of potion-like prophecy */
 
     case SPE_CURE_BLINDNESS:
         healup(0, 0, FALSE, TRUE);
@@ -1576,7 +1576,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
         cast_chain_lightning();
         break;
     default:
-        impossible("Unknown spell %d attempted.", spell);
+        impossible("Unknown prophecy %d attempted.", spell);
         obfree(pseudo, (struct obj *) 0);
         return ECMD_OK;
     }
@@ -1652,7 +1652,7 @@ throwspell(void)
         return 0;
     }
 
-    pline("Where do you want to cast the spell?");
+    pline("Where do you want the prophecy to land?");
     cc.x = u.ux;
     cc.y = u.uy;
     getpos_sethilite(display_spell_target_positions,
@@ -1661,12 +1661,12 @@ throwspell(void)
         return 0; /* user pressed ESC */
     clear_nhwindow(WIN_MESSAGE); /* discard any autodescribe feedback */
 
-    /* The number of moves from hero to where the spell drops.*/
+    /* The number of moves from hero to where the prophecy drops.*/
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
-        pline_The("spell dissipates over the distance!");
+        pline_The("The prophecy dissipates over the distance!");
         return 0;
     } else if (u.uswallow) {
-        pline_The("spell is cut short!");
+        pline_The("prophecy is cut short!");
         exercise(A_WIS, FALSE); /* What were you THINKING! */
         u.dx = 0;
         u.dy = 0;
@@ -1952,7 +1952,7 @@ sortspells(void)
         return;
     }
 
-    /* usual case, sort the index rather than the spells themselves */
+    /* usual case, sort the index rather than the prophecies themselves */
     qsort((genericptr_t) gs.spl_orderindx, n,
           sizeof *gs.spl_orderindx, spell_cmp);
     return;
@@ -1987,7 +1987,7 @@ spellsortmenu(void)
                  (i == gs.spl_sortmode) ? MENU_ITEMFLAGS_SELECTED
                                         : MENU_ITEMFLAGS_NONE);
     }
-    end_menu(tmpwin, "View known spells list sorted");
+    end_menu(tmpwin, "View known prophecy list sorted");
 
     n = select_menu(tmpwin, PICK_ONE, &selected);
     destroy_nhwindow(tmpwin);
@@ -2012,15 +2012,15 @@ dovspell(void)
     struct spell spl_tmp;
 
     if (spellid(0) == NO_SPELL) {
-        You("don't know any spells right now.");
+        You("don't know any prophecies right now.");
     } else {
-        while (dospellmenu("Currently known spells",
+        while (dospellmenu("Currently known prophecies",
                            SPELLMENU_VIEW, &splnum)) {
             if (splnum == SPELLMENU_SORT) {
                 if (spellsortmenu())
                     sortspells();
             } else {
-                Sprintf(qbuf, "Reordering spells; swap '%c' with",
+                Sprintf(qbuf, "Reordering prophecies; swap '%c' with",
                         spellet(splnum));
                 if (!dospellmenu(qbuf, splnum, &othnum))
                     break;
@@ -2108,7 +2108,7 @@ dospellmenu(
             /* more than 1 spell, add an extra menu entry */
             any.a_int = SPELLMENU_SORT + 1;
             add_menu(tmpwin, &nul_glyphinfo, &any, '+', 0,
-                     ATR_NONE, clr, "[sort spells]", MENU_ITEMFLAGS_NONE);
+                     ATR_NONE, clr, "[sort prophecies]", MENU_ITEMFLAGS_NONE);
         }
     }
     end_menu(tmpwin, prompt);
@@ -2280,9 +2280,9 @@ spellretention(int idx, char * outbuf)
     } else {
         /*
          * Retention is displayed as a range of percentages of
-         * amount of time left until memory of the spell expires;
+         * amount of time left until memory of the prophecy expires;
          * the precision of the range depends upon hero's skill
-         * in this spell.
+         * in this prophecy.
          *    expert:  2% intervals; 1-2,   3-4,  ...,   99-100;
          *   skilled:  5% intervals; 1-5,   6-10, ...,   95-100;
          *     basic: 10% intervals; 1-10, 11-20, ...,   91-100;
@@ -2315,10 +2315,10 @@ initialspell(struct obj *obj)
             break;
 
     if (i == MAXSPELL) {
-        impossible("Too many spells memorized!");
+        impossible("Too many prophecies memorized!");
     } else if (spellid(i) != NO_SPELL) {
         /* initial inventory shouldn't contain duplicate prophetic books */
-        impossible("Spell %s already known.", OBJ_NAME(objects[otyp]));
+        impossible("Prophecy %s already known.", OBJ_NAME(objects[otyp]));
     } else {
         svs.spl_book[i].sp_id = otyp;
         svs.spl_book[i].sp_lev = objects[otyp].oc_level;
@@ -2369,7 +2369,7 @@ force_learn_spell(short otyp)
         if (spellid(i) == NO_SPELL || spellid(i) == otyp)
             break;
     if (i == MAXSPELL) {
-        impossible("Too many spells memorized");
+        impossible("Too many prophecies memorized");
         return '\0';
     }
     /* for a going-stale or forgotten spell the sp_id and sp_lev assignments

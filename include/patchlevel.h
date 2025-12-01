@@ -36,9 +36,9 @@
 #define DEBUG
 #endif
 
-#define COPYRIGHT_BANNER_A "NetHack, Copyright 1985-2025"
+#define COPYRIGHT_BANNER_A "RighteousHack, Copyright 2025"
 #define COPYRIGHT_BANNER_B \
-    "         By Stichting Mathematisch Centrum and M. Stephenson."
+    "         By jonk1984."
 /* nomakedefs.copyright_banner_c is generated at runtime */
 #define COPYRIGHT_BANNER_C nomakedefs.copyright_banner_c
 #define COPYRIGHT_BANNER_D "         See license for details."

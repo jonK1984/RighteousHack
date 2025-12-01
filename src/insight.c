@@ -207,7 +207,7 @@ enlght_halfdmg(int category, int final)
         category_name = "physical";
         break;
     case HALF_SPDAM:
-        category_name = "spell";
+        category_name = "prophecy";
         break;
     default:
         category_name = "unknown";

@@ -1348,7 +1348,7 @@ hmon_hitmon_misc_obj(
                until after hit message */
             hmd->dryit = (rn2(obj->spe + 1) > 0);
         }
-        /* things like silver wands can arrive here so we
+        /* things like silver rods can arrive here so we
            need another silver check; blessed check too */
         if (hmd->material == SILVER && mon_hates_silver(mon)) {
             hmd->dmg += rnd(20);

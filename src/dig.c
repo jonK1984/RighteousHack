@@ -243,7 +243,7 @@ dig_check(struct monst *madeby, coordxy x, coordxy y)
         return DIGCHECK_FAIL_BOULDER;
     } else if (madeby == BY_OBJECT
                /* the block against existing traps is mainly to
-                  prevent broken wands from turning holes into pits */
+                  prevent broken rods from turning holes into pits */
                && (ttmp || is_pool_or_lava(x, y))) {
         /* digging by player handles pools separately */
         return DIGCHECK_FAIL_OBJ_POOL_OR_TRAP;
@@ -646,7 +646,7 @@ digactualhole(coordxy x, coordxy y, struct monst *madeby, int ttyp)
     struct rm *lev = &levl[x][y];
     struct monst *mtmp = m_at(x, y); /* may be madeby */
     boolean madeby_u = (madeby == BY_YOU), madeby_obj = (madeby == BY_OBJECT),
-            /* BY_OBJECT means the hero broke a wand, so blame her for it */
+            /* BY_OBJECT means the hero broke a rods, so blame her for it */
             heros_fault = (madeby_u || madeby_obj);
     boolean shopdoor, at_u = u_at(x, y), wont_fall = Levitation || Flying;
     int old_typ, old_aligntyp = A_NONE;
@@ -981,7 +981,7 @@ dighole(boolean pit_only, boolean by_magic, coord *cc)
             retval = TRUE;
         }
 
-    /* the following two are here for the wand of digging */
+    /* the following two are here for the rod of digging */
     } else if (IS_THRONE(old_typ)) {
         pline_The("throne is too hard to break apart.");
 
@@ -1371,7 +1371,7 @@ watchman_canseeu(struct monst *mtmp)
  * Town Watchmen frown on damage to the town walls, trees or fountains.
  * It's OK to dig holes in the ground, however.
  * If mtmp is assumed to be a watchman, a watchman is found if mtmp == 0
- * zap == TRUE if wand/spell of digging, FALSE otherwise (chewing)
+ * zap == TRUE if rod/sealed word of digging, FALSE otherwise (chewing)
  */
 void
 watch_dig(struct monst *mtmp, coordxy x, coordxy y, boolean zap)
@@ -1543,7 +1543,7 @@ draft_message(boolean unexpected)
     }
 }
 
-/* digging via wand zap or spell cast */
+/* digging via rod zap or spell cast */
 void
 zap_dig(void)
 {
@@ -1756,7 +1756,7 @@ zap_dig(void)
 /*
  * This checks what is on the surface above the
  * location where an adjacent pit might be created if
- * you're zapping a wand of digging laterally while
+ * you're zapping a rod of digging laterally while
  * down in the pit.
  */
 staticfn int

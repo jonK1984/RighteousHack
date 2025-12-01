@@ -78,7 +78,7 @@ awaken_monsters(int distance)
 }
 
 /*
- * Make monsters fall asleep.  Note that they may resist the spell.
+ * Make monsters fall asleep.  Note that they may resist the prophecy.
  */
 
 staticfn void
@@ -191,7 +191,7 @@ awaken_soldiers(struct monst *bugler  /* monster that played instrument */)
     }
 }
 
-/* Charm monsters in range.  Note that they may resist the spell. */
+/* Charm monsters in range.  Note that they may resist the prophecy. */
 staticfn void
 charm_monsters(int distance)
 {
@@ -209,7 +209,7 @@ charm_monsters(int distance)
         if (mdistu(mtmp) <= distance) {
             /* a shopkeeper can't be tamed but tamedog() pacifies an angry
                one; do that even if mtmp resists in order to behave the same
-               as a non-cursed scroll of taming or spell of charm monster */
+               as a non-cursed sealed word of taming or spell of charm monster */
             if (!resist(mtmp, TOOL_CLASS, 0, NOTELL) || mtmp->isshk)
                 (void) tamedog(mtmp, (struct obj *) 0, TRUE);
         }

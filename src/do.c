@@ -177,7 +177,7 @@ flooreffects(
     /* make sure things like water_damage() have no pointers to follow */
     obj->nobj = obj->nexthere = (struct obj *) 0;
     /* erode_obj() (called from water_damage() or lava_damage()) needs
-       bhitpos, but that was screwing up wand zapping that called us from
+       bhitpos, but that was screwing up rod zapping that called us from
        rloco(), so we now restore bhitpos before we return */
     save_bhitpos = gb.bhitpos;
     gb.bhitpos.x = x, gb.bhitpos.y = y;
@@ -205,7 +205,7 @@ flooreffects(
                        so always credited/blamed the hero but the boulder
                        might have been thrown by a giant or launched by
                        a rolling boulder trap triggered by a monster or
-                       dropped by a scroll of earth read by a monster */
+                       dropped by a sealed word of earth read by a monster */
                     if (svc.context.mon_moving) {
                         /* normally we'd use ohitmon() but it can call
                            drop_throw() which calls flooreffects() */

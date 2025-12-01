@@ -503,7 +503,7 @@ new_angle(struct rm *lev, unsigned char *sv, int row, int col)
  *
  *      + Before a screen redraw, so all positions are renewed. [docrt()]
  *      + Right before the hero arrives on a new level. [goto_level()]
- *      + Right after a scroll of light is read. [litroom()]
+ *      + Right after a sealed word of light is read. [litroom()]
  *      + After an option has changed that affects vision [parseoptions()]
  *      + Right after the hero is swallowed. [gulpmu()]
  *      + Just before bubbles are moved. [movebubbles()]

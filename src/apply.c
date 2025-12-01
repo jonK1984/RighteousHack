@@ -3928,12 +3928,12 @@ do_break_wand(struct obj *obj)
     if (!paranoid_query(ParanoidBreakwand,
                         safe_qbuf(confirm,
                                   "Are you really sure you want to break ",
-                                  "?", obj, yname, ysimple_name, "the wand")))
+                                  "?", obj, yname, ysimple_name, "the rod")))
         return ECMD_OK;
     pline("Raising %s high above your %s, you %s it in two!", yname(obj),
           body_part(HEAD), is_fragile ? "snap" : "break");
 
-    /* [ALI] Do this first so that wand is removed from bill. Otherwise,
+    /* [ALI] Do this first so that rod is removed from bill. Otherwise,
      * the freeinv() below also hides it from setpaid() which causes problems.
      */
     if (obj->unpaid) {
@@ -3955,7 +3955,7 @@ do_break_wand(struct obj *obj)
     /* might have "wrested" a final charge, taking it from 0 to -1;
        if so, we just brought it back up to 0, which wouldn't do much
        below so give it 1..3 charges now, usually making it stronger
-       than an ordinary last charge (the wand is already gone from
+       than an ordinary last charge (the rod is already gone from
        inventory, so perm_invent can't accidentally reveal this) */
     if (!obj->spe)
         obj->spe = rnd(3);
@@ -4077,7 +4077,7 @@ do_break_wand(struct obj *obj)
             continue;
         } else if (x != u.ux || y != u.uy) {
             /*
-             * Wand breakage is targeting a square adjacent to the hero,
+             * Rod breakage is targeting a square adjacent to the hero,
              * which might contain a monster or a pile of objects or both.
              * Handle objects last; avoids having undead turning raise an
              * undead's corpse and then attack resulting undead monster.
@@ -4096,7 +4096,7 @@ do_break_wand(struct obj *obj)
             }
         } else {
             /*
-             * Wand breakage is targeting the hero.  Using xdir[]+ydir[]
+             * Rod breakage is targeting the hero.  Using xdir[]+ydir[]
              * deltas for location selection causes this case to happen
              * after all the surrounding squares have been handled.
              * Process objects first, in case damage is fatal and leaves
@@ -4114,7 +4114,7 @@ do_break_wand(struct obj *obj)
             }
             damage = zapyourself(obj, FALSE);
             if (damage) {
-                Sprintf(buf, "killed %sself by breaking a wand", uhim());
+                Sprintf(buf, "killed %sself by breaking a rod", uhim());
                 losehp(Maybe_Half_Phys(damage), buf, NO_KILLER_PREFIX);
             }
             if (disp.botl)

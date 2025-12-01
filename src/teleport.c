@@ -826,14 +826,14 @@ tele_to_rnd_pet(void)
     }
 }
 
-/* teleport the hero via some method other than scroll of teleport */
+/* teleport the hero via some method other than sealed word of dove wings */
 void
 tele(void)
 {
     scrolltele((struct obj *) 0);
 }
 
-/* teleport the hero; usually discover scroll of teleportation if via scroll */
+/* teleport the hero; usually discover sealed word of dove wings if via sealed word */
 void
 scrolltele(struct obj *scroll)
 {
@@ -1418,7 +1418,7 @@ level_tele(void)
 #if 0   /* always wait until end of turn to change level, otherwise code
          * that references monsters as this call stack unwinds won't be
          * able to access them reliably; the do-the-change-now code here
-         * dates from when reading a scroll of teleportation wouldn't
+         * dates from when reading a sealed word of teleportation wouldn't
          * always make the scroll become discovered but that's no longer
          * the case so it shouldn't be needed anymore */
 

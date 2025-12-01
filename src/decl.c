@@ -248,7 +248,7 @@ static const struct instance_globals_c g_init_c = {
     UNDEFINED_VALUES, /* chosen_windowtype */
     0, /* cmd_key */
     0L, /* command_count */
-    UNDEFINED_PTR, /* current_wand */
+    UNDEFINED_PTR, /* current_rod */
 #ifdef DEF_PAGER
     NULL, /* catmore */
 #endif

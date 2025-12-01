@@ -949,12 +949,12 @@ parse_id(
                         skip_this_one = TRUE;
                     if (!skip_this_one) {
                         if ((i >= WAN_LIGHT) && (i <= WAN_LIGHTNING))
-                            buf2 = "wand of ";
+                            buf2 = "rod of ";
                         else if ((i >= SPE_DIG) && (i < SPE_BLANK_PAPER))
                             buf2 = "prophetic book of ";
                         else if ((i >= SCR_ENCHANT_ARMOR)
                                  && (i <= SCR_STINKING_CLOUD))
-                            buf2 = "scroll of ";
+                            buf2 = "sealed word of ";
                         else if ((i >= POT_GAIN_ABILITY) && (i <= POT_WATER))
                             buf2 = (i == POT_WATER) ? "flask of n"
                                                     : "potion of ";

@@ -28,7 +28,7 @@
  * Possible extensions:
  *      - Open the file MAIL and do fstat instead of stat for efficiency.
  *        (But sh uses stat, so this cannot be too bad.)
- *      - Examine the mail and produce a scroll of mail named "From somebody".
+ *      - Examine the mail and produce a sealed word of mail named "From somebody".
  *      - Invoke MAILREADER in such a way that only this single mail is read.
  *      - Do something to the text when the scroll is enchanted or cancelled.
  *      - Make the daemon always appear at a stairwell, and have it find a
@@ -393,7 +393,7 @@ md_rush(struct monst *md,
     return TRUE;
 }
 
-/* Deliver a scroll of mail. */
+/* Deliver a sealed word of mail. */
 /*ARGSUSED*/
 staticfn void
 newmail(struct mail_info *info)
@@ -572,7 +572,7 @@ ckmailstatus(void)
 #ifndef NO_MAILREADER
                 MSG_MAIL, "I have some mail for you",
 #else
-                /* suppress creation and delivery of scroll of mail */
+                /* suppress creation and delivery of sealed word of mail */
                 MSG_OTHER, "You have some mail in the outside world",
 #endif
                 0, 0

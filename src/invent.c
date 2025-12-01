@@ -3528,7 +3528,7 @@ itemactions(struct obj *otmp)
     /* z: Zap wand */
     if (otmp->oclass == WAND_CLASS)
         ia_addmenu(win, IA_ZAP_OBJ, 'z',
-                   "Zap this wand to release its magic");
+                   "Zap this rod to release its power");
 
     /* ?: Look up an item in the game's database */
     if (ia_checkfile(otmp)) {
@@ -5384,7 +5384,7 @@ useupf(struct obj *obj, long numused)
  */
 static NEARDATA const char *names[] = {
     0, "Illegal objects", "Weapons", "Armor", "Rings", "Amulets", "Tools",
-    "Comestibles", "Potions", "Scrolls", "prophetic books", "Wands", "Coins",
+    "Comestibles", "Potions", "sealed words", "prophetic books", "Rods", "Coins",
     "Gems/Stones", "Boulders/Statues", "Iron balls", "Chains", "Venoms"
 };
 static NEARDATA const char oth_symbols[] = { CONTAINED_SYM, '\0' };
@@ -6037,7 +6037,7 @@ cinv_ansimpleoname(struct obj *obj)
 }
 
 /* Display the contents of a container in inventory style.
-   Used for wand of probing of non-empty containers and statues. */
+   Used for rod of probing of non-empty containers and statues. */
 struct obj *
 display_cinventory(struct obj *obj)
 {

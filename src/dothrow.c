@@ -1558,7 +1558,7 @@ throwit(
             (void) toss_up(obj, rn2(5) && !Underwater);
         } else if (u.dz > 0 && u.usteed && obj->oclass == POTION_CLASS
                    && rn2(6)) {
-            /* alternative to prayer or wand of opening/spell of knock
+            /* alternative to prayer or rod of opening/spell of knock
                for dealing with cursed saddle:  throw holy water > */
             potionhit(u.usteed, obj, POTHIT_HERO_THROW);
         } else {
@@ -2600,7 +2600,7 @@ breakmsg(struct obj *obj, boolean in_view)
 
     to_pieces = "";
     switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
-    default: /* glass or crystal wand */
+    default: /* glass or crystal rod */
         if (obj->oclass != WAND_CLASS)
             impossible("breaking odd object (%d)?", obj->otyp);
         FALLTHROUGH;

@@ -64,7 +64,7 @@ learnscrolltyp(short scrolltyp)
         return FALSE;
 }
 
-/* also called from teleport.c for scroll of teleportation */
+/* also called from teleport.c for sealed word of teleportation */
 void
 learnscroll(struct obj *sobj)
 {
@@ -339,7 +339,7 @@ doread(void)
      * description has to have been seen or magically learned (so only
      * when scroll->dknown is true):  hero recites the label while
      * holding the unfurled scroll.  We deliberately don't require
-     * free hands because that would cripple scroll of remove curse,
+     * free hands because that would cripple sealed word of remove curse,
      * but we ought to be requiring hands or at least limbs.  The
      * recitation could be sub-vocal; actual speech isn't required.
      *
@@ -778,9 +778,9 @@ recharge(struct obj *obj, int curse_bless)
             else
                 obj->spe++;
             if (obj->otyp == WAN_WISHING && obj->spe > 3) {
-                /* wands can't give more than three wishes; this code is
+                /* rods can't give more than three wishes; this code is
                    currently unreachable but left in case the rules for
-                   wands of wishing change in future */
+                   rods of wishing change in future */
                 wand_explode(obj, 1);
                 return;
             }
@@ -1007,7 +1007,7 @@ recharge(struct obj *obj, int curse_bless)
 }
 
 /*
- * Forget some things (e.g. after reading a scroll of amnesia).  When called,
+ * Forget some things (e.g. after reading a sealed word of amnesia).  When called,
  * the following are always forgotten:
  *      - felt ball & chain
  *      - skill training
@@ -1038,7 +1038,7 @@ forget(int howmuch)
         mtmp->meverseen = 0;
 }
 
-/* monster is hit by scroll of taming's effect */
+/* monster is hit by sealed word of taming's effect */
 staticfn int
 maybe_tame(struct monst *mtmp, struct obj *sobj)
 {
@@ -1431,7 +1431,7 @@ seffect_remove_curse(struct obj **sobjp)
                 : "the power of the Force against you!"));
 
     if (scursed) {
-        pline_The("scroll disintegrates.");
+        pline_The("sealed word disintegrates.");
     } else {
         /* 3.7: this used to use a straight
                for (obj = invent; obj; obj = obj->nobj) {}
@@ -1655,7 +1655,7 @@ seffect_genocide(struct obj **sobjp)
                              || objects[otyp].oc_name_known);
 
     if (!already_known)
-        You("have found a scroll of genocide!");
+        You("have found a sealed word of judgement to the wicked!");
     gk.known = TRUE;
     if (sblessed)
         do_class_genocide();
@@ -1807,9 +1807,9 @@ seffect_fire(struct obj **sobjp)
                          makeplural(body_part(HAND)));
         } else {
             monstunseesu(M_SEEN_FIRE);
-            pline_The("scroll catches fire and you burn your %s.",
+            pline_The("sealed word catches fire and you burn your %s.",
                       makeplural(body_part(HAND)));
-            losehp(1, "scroll of fire", KILLED_BY_AN);
+            losehp(1, "sealed word of consuming fire", KILLED_BY_AN);
         }
         return;
     }
@@ -1818,7 +1818,7 @@ seffect_fire(struct obj **sobjp)
     } else {
         if (sblessed) {
             if (!already_known)
-                pline("This is a scroll of fire!");
+                pline("This is a sealed word of comsuming fire!");
             dam *= 5;
             pline("Where do you want to center the explosion?");
             getpos_sethilite(display_stinking_cloud_positions,
@@ -1831,7 +1831,7 @@ seffect_fire(struct obj **sobjp)
             }
         }
         if (u_at(cc.x, cc.y)) {
-            pline_The("scroll erupts in a tower of flame!");
+            pline_The("sealed word erupts in a tower of flame!");
             iflags.last_msg = PLNMSG_TOWER_OF_FLAME; /* for explode() */
             burn_away_slime();
         }
@@ -1922,7 +1922,7 @@ seffect_stinking_cloud(struct obj **sobjp)
                              || objects[otyp].oc_name_known);
 
     if (!already_known)
-        You("have found a scroll of stinking cloud!");
+        You("have found a sealed word of fire and brimstone!");
     gk.known = TRUE;
     do_stinking_cloud(sobj, already_known);
 }
@@ -1931,9 +1931,9 @@ staticfn void
 seffect_blank_paper(struct obj **sobjp UNUSED)
 {
     if (Blind)
-        You("don't remember there being any magic words on this scroll.");
+        You("don't remember there being any words on this sealed word.");
     else
-        pline("This scroll seems to be blank.");
+        pline("This sealed word seems to be blank.");
     gk.known = TRUE;
 }
 
@@ -1989,7 +1989,7 @@ seffect_identify(struct obj **sobjp)
     boolean already_known = (sobj->oclass == SPBOOK_CLASS /* spell */
                              || objects[otyp].oc_name_known);
 
-    if (is_scroll) { /* scroll of identify */
+    if (is_scroll) { /* sealed word of discernment */
         /* known = TRUE; -- handled inline here */
         /* use up the scroll first, before learnscrolltyp() -> makeknown()
            performs perm_invent update; also simplifies empty invent check */
@@ -1998,9 +1998,9 @@ seffect_identify(struct obj **sobjp)
         /* scroll just identifies itself for any scroll read while confused
            or for cursed scroll read without knowing identify yet */
         if (confused || (scursed && !already_known))
-            You("identify this as an identify scroll.");
+            You("identify this as a sealed word of discernment.");
         else if (!already_known)
-            pline("This is an identify scroll.");
+            pline("This is a sealed word of discernment.");
         if (!already_known)
             (void) learnscrolltyp(SCR_IDENTIFY);
         if (confused || (scursed && !already_known))
@@ -2060,7 +2060,7 @@ seffect_magic_mapping(struct obj **sobjp)
     }
 
     if (svl.level.flags.nommap) {
-        Your("%s spins as %s blocks the spell!", body_part(HEAD),
+        Your("%s spins as %s blocks the prophecy!", body_part(HEAD),
              something);
         make_confused(HConfusion + rnd(30), FALSE);
         return;
@@ -2093,7 +2093,7 @@ seffect_mail(struct obj **sobjp)
               odd ? "Postage Due" : "Return to Sender");
         break;
     case 1:
-        /* scroll of mail obtained from bones file or from wishing;
+        /* letter obtained from bones file or from wishing;
            note to the puzzled: the game Larn actually sends you junk
            mail if you win! */
         pline("This seems to be %s.",
@@ -2107,7 +2107,7 @@ seffect_mail(struct obj **sobjp)
         /* unreachable since with MAIL undefined, sobj->spe won't be 0;
            as a precaution, be prepared to give arbitrary feedback;
            caller has already reported that it disappears upon reading */
-        pline("That was a scroll of mail?");
+        pline("That was a letter?");
 #endif
         break;
     }
@@ -2260,7 +2260,7 @@ drop_boulder_on_player(
         newsym(u.ux, u.uy);
     }
     if (dmg)
-        losehp(Maybe_Half_Phys(dmg), "scroll of earth", KILLED_BY_AN);
+        losehp(Maybe_Half_Phys(dmg), "sealed word of shaken earth", KILLED_BY_AN);
 }
 
 boolean
@@ -2450,7 +2450,7 @@ litroom(
                     ++still_lit;
             }
         }
-        /* scroll of light becomes discovered when not blind, so some
+        /* sealed word of light becomes discovered when not blind, so some
            message to justify that is needed */
         if (!Blind) {
             /* for the still_lit case, we don't know at this point whether
@@ -2737,7 +2737,7 @@ do_class_genocide(void)
         }
         if (gameover || u.uhp == -1) {
             svk.killer.format = KILLED_BY_AN;
-            Strcpy(svk.killer.name, "scroll of genocide");
+            Strcpy(svk.killer.name, "sealed word of judgement to the wicked");
             if (gameover)
                 done(GENOCIDED);
         }
@@ -2902,7 +2902,7 @@ do_genocide(
                 Strcpy(svk.killer.name, "imperious order");
             } else { /* selected player deliberately, not confused */
                 svk.killer.format = KILLED_BY_AN;
-                Strcpy(svk.killer.name, "scroll of genocide");
+                Strcpy(svk.killer.name, "sealed word of judgement to the wicked");
             }
 
             /* Polymorphed characters will die as soon as they're rehumanized.

@@ -760,12 +760,12 @@ struct rogueroom {
     int nroom; /* Only meaningful for "real" rooms */
 };
 
-#define NUM_ROLES (13)
+#define NUM_ROLES (6)
 struct role_filter {
     boolean roles[NUM_ROLES + 1];
     short mask;
 };
-#define NUM_RACES (5)
+#define NUM_RACES (1)
 
 struct selectionvar {
     int wid, hei;
@@ -1479,11 +1479,11 @@ typedef uint32_t mmflags_nht;     /* makemon MM_ flags */
 /* hero shooting a wand */
 #define BZ_U_WAND(bztyp) (0 + (bztyp))     /*  0..9  */
 /* hero casting a spell */
-#define BZ_U_SPELL(bztyp) (10 + (bztyp))   /* 10..19 */
+#define BZ_U_PBOOK(bztyp) (10 + (bztyp))   /* 10..19 */
 /* hero breathing as a monster */
 #define BZ_U_BREATH(bztyp) (20 + (bztyp))  /* 20..29 */
 /* monster casting a spell */
-#define BZ_M_SPELL(bztyp) (-10 - (bztyp))  /* -19..-10 */
+#define BZ_M_PBOOK(bztyp) (-10 - (bztyp))  /* -19..-10 */
 /* monster breathing */
 #define BZ_M_BREATH(bztyp) (-20 - (bztyp)) /* -29..-20 */
 /* monster shooting a wand; note: not -9 to -0 because -0 is ambiguous  */

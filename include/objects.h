@@ -1174,7 +1174,7 @@ POTION("water",                 "clear",  0, 0, 80, 100, CLR_CYAN,
            BITS(0, 1, 0, 0, mgc, 0, 0, 0, 0, 0, 0, P_NONE, PAPER),    \
            0, SCROLL_CLASS, prob, 0, 5, cost, 0, 0, 0, 0, 6, \
            HI_PAPER, sn)
-SCROLL("enchant armor",              "ZELGO MER",  1,  63,  80,
+/*SCROLL("enchant armor",              "ZELGO MER",  1,  63,  80,
                                                         SCR_ENCHANT_ARMOR),
 SCROLL("destroy armor",         "JUYED AWK YACC",  1,  45, 100,
                                                         SCR_DESTROY_ARMOR),
@@ -1215,7 +1215,30 @@ SCROLL("punishment",            "VE FORBRYDERNE",  1,  15, 300,
 SCROLL("charging",                "HACKEM MUCHE",  1,  15, 300,
                                                         SCR_CHARGING),
 SCROLL("stinking cloud",             "VELOX NEB",  1,  15, 300,
-                                                        SCR_STINKING_CLOUD),
+                                                        SCR_STINKING_CLOUD),*/
+/* -------------------- SEALED WORDS (formerly scrolls) -------------------- */
+
+SCROLL("spiritual armor",          "PSALM 91:4",      1,  63,  80,  SCR_ENCHANT_ARMOR),
+SCROLL("no covering",              "JOB 26:6",        1,  45, 100,  SCR_DESTROY_ARMOR),
+SCROLL("confound foes",            "PSALM 35:4",      1,  53, 100,  SCR_CONFUSE_MONSTER),
+SCROLL("righteous fear",           "PROVERBS 28:1",   1,  35, 100,  SCR_SCARE_MONSTER),
+SCROLL("remove curse",             "GALATIANS 3:13",   1,  65,  80,  SCR_REMOVE_CURSE),
+SCROLL("iron sharpens iron",       "PROVERBS 27:17",   1,  80,  60,  SCR_ENCHANT_WEAPON),
+SCROLL("heavenly host",            "PSALM 68:17",      1,  45, 200,  SCR_CREATE_MONSTER),
+SCROLL("subdue beast",             "GENESIS 1:28",     1,  15, 200,  SCR_TAMING),
+SCROLL("judgement to the wicked",  "DEUTERONOMY 7:2", 1,  15, 300,  SCR_GENOCIDE),
+SCROLL("light",                    "PSALM 119:105",     1,  90,  50,  SCR_LIGHT),
+SCROLL("dove wings",               "PSALM 55:6",      1,  55, 100,  SCR_TELEPORTATION),
+SCROLL("render unto caesar",       "MATTHEW 22:21",    1,  33, 100,  SCR_GOLD_DETECTION),
+SCROLL("reveal mana",              "EXODUS 16:4",     1,  25, 100,  SCR_FOOD_DETECTION),
+SCROLL("discernment",              "HEBREWS 4:12",     1, 180,  20,  SCR_IDENTIFY),
+SCROLL("path revealed",            "ISAIAH 43:19",     1,  45, 100,  SCR_MAGIC_MAPPING),
+SCROLL("former things forgotten",  "ISAIAH 65:17",     1,  35, 200,  SCR_AMNESIA),
+SCROLL("consuming fire",           "1 KINGS 18:38",    1,  30, 100,  SCR_FIRE),
+SCROLL("shaken earth",             "MATTHEW 27:51",    1,  18, 200,  SCR_EARTH),
+SCROLL("correction",               "HEBREWS 12:6",    1,  15, 300,  SCR_PUNISHMENT),
+SCROLL("renewal",                  "ISAIAH 40:31",     1,  15, 300,  SCR_CHARGING),
+SCROLL("fire and brimstone",       "GENESIS 19:24",    1,  15, 300,  SCR_STINKING_CLOUD),
     /* Extra descriptions, shuffled into use at start of new game.
      * Code in win/share/tilemap.c depends on SCR_STINKING_CLOUD preceding
      * these and on how many of them there are.  If a real scroll gets added
@@ -1264,7 +1287,7 @@ SCROLL("blank paper", "unlabeled",  0,  28,  60, SCR_BLANK_PAPER),
      * out in the process, allowing more than 52 spells be known but keeping
      * only 52 be castable at any given time.]
      */
-#define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color,sn)  \
+#define PBOOK(name,desc,sub,prob,delay,level,mgc,dir,color,sn)  \
     OBJECT(OBJ(name, desc),                                             \
            BITS(0, 0, 0, 0, mgc, 0, 0, 0, 0, 0, dir, sub, PAPER),       \
            0, SPBOOK_CLASS, prob, delay, 50, level * 100,               \
@@ -1280,110 +1303,108 @@ SCROLL("blank paper", "unlabeled",  0,  28,  60, SCR_BLANK_PAPER),
    changing the internal composition from paper to leather makes eating a
    parchment or vellum prophetic book break vegetarian conduct, as it should.) */
 /* === RIGHTEOUSHACK: Fully Christianized Miracle List === */
-#define PAPER LEATHER /* override enum for use in SPELL() expansion */
+#define PAPER LEATHER /* override enum for use in PBOOK() expansion */
 
-SPELL("earthquake",            "parchment",
+PBOOK("move mountains",            "parchment",
       P_MATTER_SPELL,      20,  6, 5, 1, RAY, HI_LEATHER, SPE_DIG),
 MARKER(FIRST_SPELL, SPE_DIG)
 
 /* Ranged divine wrath — order preserved for chain lightning */
-SPELL("hidden arrows",         "vellum",       /* Psalm 64:4 */
+PBOOK("hidden arrows",         "vellum",       /* Psalm 64:4 */
       P_ATTACK_SPELL,      45,  2, 2, 1, RAY, HI_LEATHER, SPE_MAGIC_MISSILE),
 #undef PAPER
-SPELL("fiery tempest",         "ragged",       /* 2 Kings 1:10-12 */
+PBOOK("fiery tempest",         "ragged",       /* 2 Kings 1:10-12 */
       P_ATTACK_SPELL,      20,  4, 4, 1, RAY, HI_PAPER, SPE_FIREBALL),
-SPELL("northern wind",         "dog eared",    /* Job 37:9 */
+PBOOK("northern wind",         "dog eared",    /* Job 37:9 */
       P_ATTACK_SPELL,      10,  7, 4, 1, RAY, HI_PAPER, SPE_CONE_OF_COLD),
-SPELL("tranquility",           "mottled",      /* Psalm 23:2, Mark 4:39 */
+PBOOK("tranquility",           "mottled",      /* Psalm 23:2, Mark 4:39 */
       P_ENCHANTMENT_SPELL, 30,  1, 3, 1, RAY, HI_PAPER, SPE_SLEEP),
-SPELL("finger of judgement",   "stained",      /* Exodus 8:19 */
+PBOOK("finger of judgement",   "stained",      /* Exodus 8:19 */
       P_ATTACK_SPELL,       5, 10, 7, 1, RAY, HI_PAPER, SPE_FINGER_OF_DEATH),
-
-SPELL("light",                 "cloth",        /* Genesis 1:3, John 8:12 */
+PBOOK("light",                 "cloth",        /* Genesis 1:3, John 8:12 */
       P_DIVINATION_SPELL,  45,  1, 1, 1, NODIR, HI_CLOTH, SPE_LIGHT),
-SPELL("reveal foes",           "leathery",     /* Ephesians 6:12 */
+PBOOK("reveal foes",           "leathery",     /* Ephesians 6:12 */
       P_DIVINATION_SPELL,  43,  1, 1, 1, NODIR, HI_LEATHER, SPE_DETECT_MONSTERS),
-
-SPELL("healing",               "white",        /* Isaiah 53:5, James 5:15 */
+PBOOK("healing",               "white",        /* Isaiah 53:5, James 5:15 */
       P_HEALING_SPELL,     40,  2, 1, 1, IMMEDIATE, CLR_WHITE, SPE_HEALING),
-SPELL("door shall be open",    "pink",         /* Matthew 7:7-8 */
+PBOOK("door shall be open",    "pink",         /* Matthew 7:7-8 */
       P_MATTER_SPELL,      25,  1, 1, 1, IMMEDIATE, CLR_BRIGHT_MAGENTA, SPE_KNOCK),
-SPELL("judgement to the wicked","red",         /* Psalm 7:11 */
+PBOOK("rebuke",                "red",         /* Psalm 7:11 */
       P_ATTACK_SPELL,      30,  2, 1, 1, IMMEDIATE, CLR_RED, SPE_FORCE_BOLT),
-SPELL("bewilder",              "orange",       /* Psalm 71:1, confusion of enemies */
+PBOOK("bewilder",              "orange",       /* Psalm 71:1, confusion of enemies */
       P_ENCHANTMENT_SPELL, 49,  2, 1, 1, IMMEDIATE, CLR_ORANGE, SPE_CONFUSE_MONSTER),
-SPELL("cure blindness",        "yellow",       /* John 9:6-7 */
+PBOOK("cure blindness",        "yellow",       /* John 9:6-7 */
       P_HEALING_SPELL,     25,  2, 2, 1, IMMEDIATE, CLR_YELLOW, SPE_CURE_BLINDNESS),
-SPELL("noisome pestilence",    "velvet",       /* Psalm 91:6 */
+PBOOK("noisome pestilence",    "velvet",       /* Psalm 91:6 */
       P_ATTACK_SPELL,      10,  2, 2, 1, IMMEDIATE, CLR_MAGENTA, SPE_DRAIN_LIFE),
-SPELL("staggering wine",       "light green",  /* Psalm 60:3 */
+PBOOK("staggering wine",       "light green",  /* Psalm 60:3 */
       P_ENCHANTMENT_SPELL, 30,  2, 2, 1, IMMEDIATE, CLR_BRIGHT_GREEN, SPE_SLOW_MONSTER),
-SPELL("seal entrance",         "dark green",   /* Matthew 27:66 */
+PBOOK("seal entrance",         "dark green",   /* Matthew 27:66 */
       P_MATTER_SPELL,      25,  3, 2, 1, IMMEDIATE, CLR_GREEN, SPE_WIZARD_LOCK),
-SPELL("heavenly host",         "turquoise",    /* Luke 2:13 */
+PBOOK("heavenly host",         "turquoise",    /* Luke 2:13 */
       P_CLERIC_SPELL,      35,  3, 2, 1, NODIR, CLR_BRIGHT_CYAN, SPE_CREATE_MONSTER),
-SPELL("reveal sustenance",     "cyan",         /* Psalm 145:15 */
+PBOOK("reveal sustenance",     "cyan",         /* Psalm 145:15 */
       P_DIVINATION_SPELL,  30,  3, 2, 1, NODIR, CLR_CYAN, SPE_DETECT_FOOD),
-SPELL("fear of the Lord",      "light blue",   /* Proverbs 1:7 */
+PBOOK("righteous fear",      "light blue",   /* Proverbs 1:7 */
       P_ENCHANTMENT_SPELL, 25,  3, 3, 1, NODIR, CLR_BRIGHT_BLUE, SPE_CAUSE_FEAR),
-SPELL("far sight",             "dark blue",    /* 2 Kings 6:17 */
+PBOOK("far sight",             "dark blue",    /* 2 Kings 6:17 */
       P_DIVINATION_SPELL,  15,  3, 3, 1, NODIR, CLR_BLUE, SPE_CLAIRVOYANCE),
-SPELL("cure sickness",         "indigo",       /* James 5:14-15 */
+PBOOK("cure sickness",         "indigo",       /* James 5:14-15 */
       P_HEALING_SPELL,     32,  3, 3, 1, NODIR, CLR_BLUE, SPE_CURE_SICKNESS),
-SPELL("pacification",          "magenta",      /* Romans 12:18 */
+PBOOK("pacification",          "magenta",      /* Romans 12:18 */
       P_ENCHANTMENT_SPELL, 20,  3, 5, 1, IMMEDIATE, CLR_MAGENTA, SPE_CHARM_MONSTER),
-SPELL("endurance",             "purple",       /* Isaiah 40:31 */
+PBOOK("quickening",             "purple",       /* Isaiah 40:31 */
       P_ESCAPE_SPELL,      33,  4, 3, 1, NODIR, CLR_MAGENTA, SPE_HASTE_SELF),
-SPELL("eye opening",           "violet",       /* 2 Kings 6:17 */
+PBOOK("piercing sight",           "violet",       /* 2 Kings 6:17 */
       P_DIVINATION_SPELL,  20,  4, 3, 1, NODIR, CLR_MAGENTA, SPE_DETECT_UNSEEN),
-SPELL("ascension",             "tan",          /* Acts 1:9 */
+PBOOK("ascension",             "tan",          /* Acts 1:9 */
       P_ESCAPE_SPELL,      20,  4, 4, 1, NODIR, CLR_BROWN, SPE_LEVITATION),
-SPELL("abundant healing",      "plaid",        /* John 10:10 */
+PBOOK("abundant healing",      "plaid",        /* John 10:10 */
       P_HEALING_SPELL,     27,  5, 3, 1, IMMEDIATE, CLR_GREEN, SPE_EXTRA_HEALING),
-SPELL("divine ability",        "light brown",  /* 2 Corinthians 3:5 */
+PBOOK("divine ability",        "light brown",  /* 2 Corinthians 3:5 */
       P_HEALING_SPELL,     25,  5, 4, 1, NODIR, CLR_BROWN, SPE_RESTORE_ABILITY),
-SPELL("concealment",           "dark brown",   /* Psalm 91:1 */
+PBOOK("divine concealment",           "dark brown",   /* Psalm 91:1 */
       P_ESCAPE_SPELL,      20,  5, 4, 1, NODIR, CLR_BROWN, SPE_INVISIBILITY),
-SPELL("render unto Caesar",    "gray",         /* Matthew 22:21 */
+PBOOK("render unto Caesar",    "gray",         /* Matthew 22:21 */
       P_DIVINATION_SPELL,  20,  5, 4, 1, NODIR, CLR_GRAY, SPE_DETECT_TREASURE),
-SPELL("remove curse",          "wrinkled",     /* Galatians 3:13 */
+PBOOK("remove curse",          "wrinkled",     /* Galatians 3:13 */
       P_CLERIC_SPELL,      25,  5, 3, 1, NODIR, HI_PAPER, SPE_REMOVE_CURSE),
-SPELL("path revealed",         "dusty",        /* Psalm 119:105 */
+PBOOK("path revealed",         "dusty",        /* Psalm 119:105 */
       P_DIVINATION_SPELL,  18,  7, 5, 1, NODIR, HI_PAPER, SPE_MAGIC_MAPPING),
-SPELL("discernment",           "bronze",       /* 1 Corinthians 12:10 */
+PBOOK("discernment",           "bronze",       /* 1 Corinthians 12:10 */
       P_DIVINATION_SPELL,  20,  6, 3, 1, NODIR, HI_COPPER, SPE_IDENTIFY),
-SPELL("rebuke evil",           "copper",       /* Luke 4:35 */
+PBOOK("resist evil",           "copper",       /* Luke 4:35 */
       P_CLERIC_SPELL,      16,  8, 6, 1, IMMEDIATE, HI_COPPER, SPE_TURN_UNDEAD),
-SPELL("transformation",        "silver",       /* 2 Corinthians 5:17 */
+PBOOK("transformation",        "silver",       /* 2 Corinthians 5:17 */
       P_MATTER_SPELL,      10,  8, 6, 1, IMMEDIATE, HI_SILVER, SPE_POLYMORPH),
-SPELL("banishment",            "gold",         /* Matthew 8:31-32 */
+PBOOK("banishment",            "gold",         /* Matthew 8:31-32 */
       P_ESCAPE_SPELL,      15,  6, 6, 1, IMMEDIATE, HI_GOLD, SPE_TELEPORT_AWAY),
-SPELL("angelic help",          "glittering",   /* Psalm 91:11 */
+PBOOK("angelic help",          "glittering",   /* Psalm 91:11 */
       P_CLERIC_SPELL,      10,  7, 6, 1, NODIR, CLR_WHITE, SPE_CREATE_FAMILIAR),
-SPELL("cancellation",          "shining",      /* Kept as-is — divine nullification */
+PBOOK("cancellation",          "shining",      /* Kept as-is — divine nullification */
       P_MATTER_SPELL,      15,  8, 7, 1, IMMEDIATE, CLR_WHITE, SPE_CANCELLATION),
-SPELL("spiritual armor",       "dull",         /* Ephesians 6:11-17 */
+PBOOK("protection",       "dull",         /* Ephesians 6:11-17 */
       P_CLERIC_SPELL,      18,  3, 1, 1, NODIR, HI_PAPER, SPE_PROTECTION),
-SPELL("leaping like a deer",   "thin",         /* Isaiah 35:6 */
+PBOOK("leaping like a deer",   "thin",         /* Isaiah 35:6 */
       P_ESCAPE_SPELL,      20,  3, 1, 1, IMMEDIATE, HI_PAPER, SPE_JUMPING),
-SPELL("flesh renewed",         "thick",        /* Ezekiel 36:26 */
+PBOOK("flesh renewed",         "thick",        /* Ezekiel 36:26 */
       P_HEALING_SPELL,     15,  1, 3, 1, IMMEDIATE, HI_PAPER, SPE_STONE_TO_FLESH),
-SPELL("lightning flash",       "checkered",    /* Luke 10:18 */
+PBOOK("lightning flash",       "checkered",    /* Luke 10:18 */
       P_ATTACK_SPELL,      25,  4, 2, 1, NODIR, CLR_GRAY, SPE_CHAIN_LIGHTNING),
 
 #if 0 /* DEFERRED */
 /* from slash'em, create a tame critter which explodes when attacking,
    damaging adjacent creatures--friend or foe--and dying in the process */
-SPELL("flame sphere",    "canvas",
+PBOOK("flame sphere",    "canvas",
       P_MATTER_SPELL,      20,  2, 1, 1, NODIR, CLR_BROWN,
                                                         SPE_FLAME_SPHERE),
-SPELL("freeze sphere",   "hardcover",
+PBOOK("freeze sphere",   "hardcover",
       P_MATTER_SPELL,      20,  2, 1, 1, NODIR, CLR_BROWN,
                                                         SPE_FREEZE_SPHERE),
 #endif
 /* books with fixed descriptions
  */
-SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER,
+PBOOK("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER,
                                                         SPE_BLANK_PAPER),
 /* LAST_SPELL is used to calculate MAXSPELL, allocation size of spl_book[];
    by including blank paper, which has no actual spell, we ensure that
@@ -1407,6 +1428,34 @@ OBJECT(OBJ("Book of the Dead", "papyrus"),
     OBJECT(OBJ(name, typ),                                              \
            BITS(0, 0, 1, 0, mgc, 1, 0, 0, 0, 0, dir, P_NONE, metal),    \
            0, WAND_CLASS, prob, 0, 7, cost, 0, 0, 0, 0, 30, color, sn)
+/* -------------------- RODS OF POWER (formerly wands) -------------------- */
+
+WAND("light",                     "glass",      95, 100, 1, NODIR, GLASS,      HI_GLASS,     WAN_LIGHT),                  /* GENESIS 1 */
+WAND("reveal secret things",      "balsa",      50, 150, 1, NODIR, WOOD,       HI_WOOD,      WAN_SECRET_DOOR_DETECTION),
+WAND("understanding",            "crystal",    15, 150, 1, NODIR, GLASS,      HI_GLASS,     WAN_ENLIGHTENMENT),
+WAND("heavenly host",             "maple",      45, 200, 1, NODIR, WOOD,       HI_WOOD,      WAN_CREATE_MONSTER),
+WAND("ask and ye shall receive",  "pine",        5, 500, 1, NODIR, WOOD,       HI_WOOD,      WAN_WISHING),
+WAND("nothing",                    "oak",        25, 100, 0, IMMEDIATE, WOOD,    HI_WOOD,      WAN_NOTHING),
+WAND("rebuke",                    "ebony",      75, 150, 1, IMMEDIATE, WOOD,    HI_WOOD,      WAN_STRIKING),
+WAND("divine concealment",        "marble",     45, 150, 1, IMMEDIATE, MINERAL, HI_MINERAL,   WAN_MAKE_INVISIBLE),
+WAND("staggering wine",           "tin",        50, 150, 1, IMMEDIATE, METAL,   HI_METAL,     WAN_SLOW_MONSTER),
+WAND("quickening",                "brass",      50, 150, 1, IMMEDIATE, COPPER,  HI_COPPER,    WAN_SPEED_MONSTER),
+WAND("resist evil",               "copper",     50, 150, 1, IMMEDIATE, COPPER,  HI_COPPER,    WAN_UNDEAD_TURNING),
+WAND("transformation",            "silver",     45, 200, 1, IMMEDIATE, SILVER,  HI_SILVER,    WAN_POLYMORPH),
+WAND("cancellation",              "platinum",   45, 200, 1, IMMEDIATE, PLATINUM,CLR_WHITE,   WAN_CANCELLATION),
+WAND("dove wings",                "iridium",    45, 200, 1, IMMEDIATE, METAL,   CLR_BRIGHT_CYAN, WAN_TELEPORTATION),
+WAND("door shall be open",        "zinc",       25, 150, 1, IMMEDIATE, METAL,   HI_METAL,     WAN_OPENING),
+WAND("seal entrance",             "aluminum",   25, 150, 1, IMMEDIATE, METAL,   HI_METAL,     WAN_LOCKING),
+WAND("revelation",                "uranium",    30, 150, 1, IMMEDIATE, METAL,   HI_METAL,     WAN_PROBING),
+WAND("move mountains",            "iron",       55, 150, 1, RAY,       IRON,    HI_METAL,     WAN_DIGGING),
+/* ray wands – order must stay exactly as-is for buzz() */
+WAND("hidden arrows",             "steel",      50, 150, 1, RAY,       IRON,    HI_METAL,     WAN_MAGIC_MISSILE),
+WAND("consuming fire",            "hexagonal",  40, 175, 1, RAY,       IRON,    HI_METAL,     WAN_FIRE),
+WAND("northern wind",             "short",      40, 175, 1, RAY,       IRON,    HI_METAL,     WAN_COLD),
+WAND("tranquility",               "runed",      50, 175, 1, RAY,       IRON,    HI_METAL,     WAN_SLEEP),
+WAND("final judgement",           "long",        5, 500, 1, RAY,       IRON,    HI_METAL,     WAN_DEATH),
+WAND("lightning flash",           "curved",     40, 175, 1, RAY,       IRON,    HI_METAL,     WAN_LIGHTNING),
+/*
 WAND("light",           "glass", 95, 100, 1, NODIR, GLASS, HI_GLASS,
                                                             WAN_LIGHT),
 WAND("secret door detection",
@@ -1443,9 +1492,9 @@ WAND("locking",      "aluminum", 25, 150, 1, IMMEDIATE, METAL, HI_METAL,
 WAND("probing",       "uranium", 30, 150, 1, IMMEDIATE, METAL, HI_METAL,
                                                     WAN_PROBING),
 WAND("digging",          "iron", 55, 150, 1, RAY, IRON, HI_METAL,
-                                                    WAN_DIGGING),
+                                                    WAN_DIGGING),*/
 /* magic missile ... lightning must be in this order; see buzz() */
-WAND("magic missile",   "steel", 50, 150, 1, RAY, IRON, HI_METAL,
+/*WAND("magic missile",   "steel", 50, 150, 1, RAY, IRON, HI_METAL,
                                                     WAN_MAGIC_MISSILE),
 WAND("fire",        "hexagonal", 40, 175, 1, RAY, IRON, HI_METAL,
                                                     WAN_FIRE),
@@ -1456,7 +1505,7 @@ WAND("sleep",           "runed", 50, 175, 1, RAY, IRON, HI_METAL,
 WAND("death",            "long",  5, 500, 1, RAY, IRON, HI_METAL,
                                                     WAN_DEATH),
 WAND("lightning",      "curved", 40, 175, 1, RAY, IRON, HI_METAL,
-                                                    WAN_LIGHTNING),
+                                                    WAN_LIGHTNING),*/
 /* extra descriptions, shuffled into use at start of new game */
 WAND(NoDes,             "forked",  0, 150, 1, 0, WOOD, HI_WOOD, WAN1),
 WAND(NoDes,             "spiked",  0, 150, 1, 0, IRON, HI_METAL, WAN2),

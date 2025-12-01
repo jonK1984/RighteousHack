@@ -2499,14 +2499,14 @@ retouch_object(
             const char *what = killer_xname(obj);
 
             if (ag && !obj->oartifact && !bane) {
-                /* 'obj' is silver; for rings and wands it ended up that
+                /* 'obj' is silver; for rings and rods it ended up that
                    way due to randomization at start of game; showing this
                    game's silver item without stating that it is silver
                    potentially leads to confusion about cause of death */
                 if (obj->oclass == RING_CLASS)
                     what = "a silver ring";
                 else if (obj->oclass == WAND_CLASS)
-                    what = "a silver wand";
+                    what = "a silver rod";
                 /* for anything else, stick with killer_xname() */
             }
             /* damage is somewhat arbitrary; half the usual 1d20 physical

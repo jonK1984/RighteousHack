@@ -826,7 +826,7 @@ ghod_hitsu(struct monst *priest)
     gc.current_wand = 0;
     oldbuzzer = gb.buzzer;
     gb.buzzer = 0;
-    buzz(BZ_M_SPELL(BZ_OFS_AD(AD_ELEC)), 6, x, y, sgn(gt.tbx), sgn(gt.tby));
+    buzz(BZ_M_PBOOK(BZ_OFS_AD(AD_ELEC)), 6, x, y, sgn(gt.tbx), sgn(gt.tby));
     gb.buzzer = oldbuzzer;
     gc.current_wand = oldcurrwand;
     exercise(A_WIS, FALSE);

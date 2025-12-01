@@ -451,7 +451,7 @@ look_at_monster(
     }
     /* if mtmp isn't able to move (other than because it is a type of
        monster that never moves), say so [excerpt from mstatusline() for
-       stethoscope or wand of probing] */
+       stethoscope or rod of probing] */
     if (mtmp->mfrozen)
         /* unfortunately mfrozen covers temporary sleep and being busy
            (donning armor, for instance) as well as paralysis */
@@ -1316,7 +1316,7 @@ do_screen_description(
             found += append_str(out_str, x_str); /* not 'an(x_str)' */
         }
         /* for is_swallow_sym(), we want to list the current symbol's
-           other possibilities (wand for '/', throne for '\\', &c) so
+           other possibilities (rod for '/', throne for '\\', &c) so
            don't jump to the end for the x_str==mon_interior case */
         if (x_str == unreconnoitered)
             goto didlook;

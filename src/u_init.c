@@ -1118,7 +1118,7 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
 
     /*
      * For random objects, do not create certain overly powerful
-     * items: wand of wishing, ring of levitation, or the
+     * items: rod of wishing, ring of levitation, or the
      * polymorph/polymorph control combination.  Specific objects,
      * i.e. the discovery wishing, are still OK.
      * Also, don't get a couple of really useless items.  (Note:
@@ -1241,7 +1241,7 @@ ini_inv_adjust_obj(struct trobj *trop, struct obj *obj)
     obj->owt = weight(obj);
 }
 
-/* initial inventory: wear, wield, learn the spell/obj */
+/* initial inventory: wear, wield, learn the prophecy/obj */
 staticfn void
 ini_inv_use_obj(struct obj *obj)
 {
