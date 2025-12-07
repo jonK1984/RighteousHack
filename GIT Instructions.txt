@@ -1,0 +1,24 @@
+# Load VS tools into THIS PowerShell session
+cmd /c "call `"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`" && set > %TEMP%\env.txt"
+Get-Content "$env:TEMP\env.txt" | Where-Object { $_ -match "^[A-Z_]+=" } | ForEach-Object {
+    $var,$val = $_ -split '=',2
+    Set-Item -Path "Env:$var" -Value $val
+}
+Remove-Item "$env:TEMP\env.txt" -Force
+
+
+cd "C:\Users\jonk_\iCloudDrive\Documents\PROJECTS\RighteousHack\src"
+nmake package
+cd ..\bin
+.\nethack.exe
+
+git remote add origin https://github.com/jonk1984/RighteousHack.git
+
+git add .
+git commit -m "daily changes"
+git push
+
+to undo git add . 
+git restore --staged .
+
+ git push --set-upstream origin righteoushack-0.1

@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "algorithm": "c",
+        "xiosbase": "c",
+        "xlocale": "c",
+        "xutility": "c",
+        "system_error": "c",
+        "defsym.h": "c"
+    }
+}

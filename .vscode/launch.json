@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug RighteousHack (nethack.exe)",
+            "type": "cppvsdbg",                 // VS Windows debugger (best for .exe)
+            "request": "launch",
+            "program": "${workspaceFolder}/binary/nethack.exe",
+            "args": ["-D", "-u", "wizard"],                         // add any startup args here if needed
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/binary",
+            "environment": [],
+            "console": "externalTerminal",    // VERY IMPORTANT – lets you see the game!
+            "preLaunchTask": "build debug"
+        },
+        {
+            "name": "Attach to Running nethack.exe",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
