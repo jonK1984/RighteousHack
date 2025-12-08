@@ -70,8 +70,8 @@ static struct trobj Healer[] = {
     { SCALPEL, 0, WEAPON_CLASS, 1, UNDEF_BLESS },
     { LEATHER_GLOVES, 1, ARMOR_CLASS, 1, UNDEF_BLESS },
     { STETHOSCOPE, 0, TOOL_CLASS, 1, 0 },
-    { POT_HEALING, 0, POTION_CLASS, 4, UNDEF_BLESS },
-    { POT_EXTRA_HEALING, 0, POTION_CLASS, 4, UNDEF_BLESS },
+    { ANO_HEALING, 0, POTION_CLASS, 4, UNDEF_BLESS },
+    { ANO_EXTRA_HEALING, 0, POTION_CLASS, 4, UNDEF_BLESS },
     { WAN_SLEEP, UNDEF_SPE, WAND_CLASS, 1, UNDEF_BLESS },
     /* always blessed, so it's guaranteed readable */
     { SPE_HEALING, 0, SPBOOK_CLASS, 1, 1 },
@@ -97,7 +97,7 @@ static struct trobj Monk[] = {
     { ROBE, 1, ARMOR_CLASS, 1, UNDEF_BLESS },
     { UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, 1 },
     { UNDEF_TYP, UNDEF_SPE, SCROLL_CLASS, 1, UNDEF_BLESS },
-    { POT_HEALING, 0, POTION_CLASS, 3, UNDEF_BLESS },
+    { ANO_HEALING, 0, POTION_CLASS, 3, UNDEF_BLESS },
     { FOOD_RATION, 0, FOOD_CLASS, 3, 0 },
     { APPLE, 0, FOOD_CLASS, 5, UNDEF_BLESS },
     { ORANGE, 0, FOOD_CLASS, 5, UNDEF_BLESS },
@@ -152,7 +152,7 @@ static struct trobj Tourist[] = {
 #define T_DARTS 0
     { DART, 2, WEAPON_CLASS, 25, UNDEF_BLESS }, /* quan is variable */
     { UNDEF_TYP, UNDEF_SPE, FOOD_CLASS, 10, 0 },
-    { POT_EXTRA_HEALING, 0, POTION_CLASS, 2, UNDEF_BLESS },
+    { ANO_EXTRA_HEALING, 0, POTION_CLASS, 2, UNDEF_BLESS },
     { SCR_MAGIC_MAPPING, 0, SCROLL_CLASS, 4, UNDEF_BLESS },
     { HAWAIIAN_SHIRT, 0, ARMOR_CLASS, 1, UNDEF_BLESS },
     { EXPENSIVE_CAMERA, UNDEF_SPE, TOOL_CLASS, 1, 0 },
@@ -665,7 +665,7 @@ u_init_role(void)
         ini_inv(Healer);
         if (!rn2(25))
             ini_inv(Lamp);
-        knows_object(POT_FULL_HEALING, FALSE);
+        knows_object(ANO_FULL_HEALING, FALSE);
         skill_init(Skill_H);
         break;
     case PM_KNIGHT:

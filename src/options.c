@@ -3494,7 +3494,7 @@ optfn_playmode(
         } else if (!strncmpi(op, "explore", 6)
                    || !strncmpi(op, "discovery", 6)) {
             wizard = FALSE, discover = TRUE;
-        } else if (!strncmpi(op, "debug", 5) || !strncmpi(op, "wizard", 6)) {
+        } else if (!strncmpi(op, "debug", 5) || !strncmpi(op, "Elisha", 6)) {
             wizard = TRUE, discover = FALSE;
         } else {
             config_error_add("Invalid value for \"%s\":%s",
@@ -10140,7 +10140,7 @@ set_playmode(void)
 {
     if (wizard) {
         if (authorize_wizard_mode())
-            gp.plnamelen = (int) strlen(strcpy(svp.plname, "wizard"));
+            gp.plnamelen = (int) strlen(strcpy(svp.plname, "Elisha"));
         else
             wizard = FALSE; /* not allowed or not available */
         /* try explore mode if we didn't make it into wizard mode */

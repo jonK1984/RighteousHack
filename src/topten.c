@@ -726,7 +726,7 @@ topten(int how, time_t when)
                 topten_print("");
                 Sprintf(pbuf,
              "Since you were in %s mode, the score list will not be checked.",
-                        wizard ? "wizard" : "discover");
+                        wizard ? "Elisha" : "discover");
                 topten_print(pbuf);
             }
         goto showwin;

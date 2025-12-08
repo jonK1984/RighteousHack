@@ -520,6 +520,83 @@ drink_ok(struct obj *obj)
     return GETOBJ_EXCLUDE;
 }
 
+static int
+anoint_ok(struct obj *obj)
+{
+    if (!obj || obj == &hands_obj)
+        return 0;
+
+    /* Only allow anointing oils */
+    if (obj->oclass == ANOINTING_CLASS)
+        return 1;
+
+    /* Optional: allow dipping weapons in holy oil? */
+    /*
+    if (obj->oclass == WEAPON_CLASS && obj->otyp != DAGGER)
+        return 1;
+    */
+
+    return 0;
+}
+
+int
+doanoint(void)
+{
+    struct obj *otmp;
+
+    /* Modern 3.7 getobj() — uses callback */
+    otmp = getobj("anoint", anoint_ok, GETOBJ_NOFLAGS);
+
+    if (!otmp)
+        return 0;                    /* player canceled */
+    if (otmp == &hands_obj) {
+        You("anoint the air.");
+        return 0;
+    }
+
+    if (otmp->oclass != ANOINTING_CLASS) {
+        You("cannot anoint with %s!", doname(otmp));
+        return 0;
+    }
+
+    /* Holy anointing — James 5:14 */
+    You("anoint yourself with the %s.", doname(otmp));
+
+    /* Reuse all potion effects — healing, blessing, etc. */
+    return doanointeffect(otmp);
+}
+
+/* doanointeffect — apply the effects of anointing with holy oil (James 5:14) */
+int
+doanointeffect(struct obj *otmp)
+{
+    int retval;
+
+    if (!otmp || otmp->oclass != ANOINTING_CLASS) {
+        impossible("doanointeffect: not an anointing oil!");
+        return ECMD_FAIL;
+    }
+
+    otmp->in_use = TRUE;
+
+    /* Holy anointing — no "nothing happens" — the Spirit always moves */
+    pline("The Spirit of the Lord comes upon you!");
+
+    /* Apply the holy effects */
+    if ((retval = aeffects(otmp)) >= 0)
+        return retval ? ECMD_TIME : ECMD_OK;
+
+    /* Always identify on use — this is a sacrament, not a mystery potion */
+    if (!otmp->dknown || !objects[otmp->otyp].oc_name_known) {
+        makeknown(otmp->otyp);
+        more_experienced(0, 10);
+        You("feel enlightened by the Holy Spirit.");
+    }
+
+    useup(otmp);
+    return ECMD_TIME;
+}
+
 /* "Quaffing is like drinking, except you spill more." - Terry Pratchett */
 /* the #quaff command */
 int
@@ -681,7 +758,7 @@ peffect_restore_ability(struct obj *otmp)
            the prophecy or with a unihorn; this is better than full healing
            in that it can restore all of them, not just half, and a
            blessed elixer restores them all at once */
-        if (otmp->otyp == POT_RESTORE_ABILITY && u.ulevel < u.ulevelmax) {
+        if (otmp->otyp == ANO_RESTORE_ABILITY && u.ulevel < u.ulevelmax) {
             do {
                 pluslvl(FALSE);
             } while (u.ulevel < u.ulevelmax && otmp->blessed);
@@ -836,7 +913,7 @@ peffect_see_invisible(struct obj *otmp)
     int msg = Invisible && !Blind;
 
     gp.potion_unkn++;
-    if (otmp->cursed)
+    /*if (otmp->cursed)
         pline("Yecch!  This tastes %s.",
               Hallucination ? "overripe" : "rotten");
     else
@@ -849,7 +926,7 @@ peffect_see_invisible(struct obj *otmp)
         u.uhunger += (otmp->odiluted ? 5 : 10) * (2 + bcsign(otmp));
         newuhs(FALSE);
         return;
-    }
+    }*/
     if (!otmp->cursed) {
         /* Tell them they can see again immediately, which
          * will help them identify the elixer...
@@ -1043,7 +1120,7 @@ peffect_gain_ability(struct obj *otmp)
 staticfn void
 peffect_speed(struct obj *otmp)
 {
-    boolean is_speed = (otmp->otyp == POT_SPEED);
+    boolean is_speed = (otmp->otyp == ANO_SPEED);
 
     /* skip when mounted; heal_legs() would heal steed's legs */
     if (is_speed && Wounded_legs && !otmp->cursed && !u.usteed) {
@@ -1321,11 +1398,78 @@ peffect_polymorph(struct obj *otmp)
     }
 }
 
+/* anointing effects — James 5:14 */
+int
+aeffects(struct obj *otmp)
+{
+    /* All anointing oils use the same effect as their potion counterpart */
+    switch (otmp->otyp) {
+    case ANO_GAIN_ABILITY:
+        pline("And the Spirit of the LORD shall rest upon him... (Isaiah 11:2)");
+        peffect_gain_ability(otmp);
+        break;
+    case ANO_RESTORE_ABILITY:
+        pline("I will restore to you the years that the swarming locust has eaten... (Joel 2:25)");
+        peffect_restore_ability(otmp);
+        break;
+    case ANO_SPEED:
+        pline("He made my feet like the feet of a deer and set me secure on the heights. (2 Samuel 22:34)");
+        peffect_speed(otmp);
+        break;
+    case ANO_INVISIBILITY:
+        pline("For he will hide me in his shelter in the day of trouble; he will conceal me under the cover of his tent. (Psalm 27:5)");
+        peffect_invisibility(otmp);
+        break;
+    case ANO_SEE_INVISIBLE:
+        pline("Open my eyes, that I may behold wondrous things... (Psalm 119:18)");
+        peffect_see_invisible(otmp);
+        break;
+    case ANO_HEALING:
+        pline("...and with his wounds we are healed. (Isaiah 53:5)");
+        peffect_healing(otmp);
+        break;
+    case ANO_EXTRA_HEALING:
+    pline("...for I am the LORD, your healer. (Exodus 15:26)");
+        peffect_extra_healing(otmp);
+        break;
+    case ANO_GAIN_LEVEL:
+        pline("He raises up the poor from the dust; he lifts the needy from the ash heap to make them sit with princes and inherit a seat of honor. (1 Samuel 2:8)");
+        peffect_gain_level(otmp);
+        break;
+    case ANO_ENLIGHTENMENT:
+        pline("When the Spirit of truth comes, he will guide you into all the truth... (John 16:13)");
+        peffect_enlightenment(otmp);
+        break;
+    case ANO_MONSTER_DETECTION:
+        pline("And no creature is hidden from his sight, but all are naked and exposed to the eyes of him to whom we must give account. (Hebrews 4:13)");
+        if (peffect_monster_detection(otmp))
+            return 1;
+        break;
+    case ANO_OBJECT_DETECTION:
+        pline("I will give you the treasures of darkness and the hoards in secret places, that you may know that it is I, the LORD, the God of Israel, who call you by your name. (Isaiah 45:3)");
+        if (peffect_object_detection(otmp))
+            return 1;
+        break;
+    case ANO_GAIN_ENERGY:
+        pline("...who satisfies you with good so that your youth is renewed like the eagle's. (Psalm 103:5)");
+        peffect_gain_energy(otmp);
+        break;
+    case ANO_FULL_HEALING:
+        pline("He heals the brokenhearted and binds up their wounds. (Psalm 147:3)");
+        peffect_full_healing(otmp);
+        break;
+    default:
+        impossible("What a strange anointing oil! (%u)", otmp->otyp);
+        return 0;
+    }
+    return -1;
+}
+
 int
 peffects(struct obj *otmp)
 {
     switch (otmp->otyp) {
-    case POT_RESTORE_ABILITY:
+    case ANO_RESTORE_ABILITY:
     case SPE_RESTORE_ABILITY:
         peffect_restore_ability(otmp);
         break;
@@ -1338,14 +1482,14 @@ peffects(struct obj *otmp)
     case POT_BOOZE:
         peffect_booze(otmp);
         break;
-    case POT_ENLIGHTENMENT:
+    case ANO_ENLIGHTENMENT:
         peffect_enlightenment(otmp);
         break;
     case SPE_INVISIBILITY:
-    case POT_INVISIBILITY:
+    case ANO_INVISIBILITY:
         peffect_invisibility(otmp);
         break;
-    case POT_SEE_INVISIBLE: /* tastes like fruit juice in Rogue */
+    case ANO_SEE_INVISIBLE: /* tastes like fruit juice in Rogue */
     case POT_FRUIT_JUICE:
         peffect_see_invisible(otmp);
         break;
@@ -1355,12 +1499,12 @@ peffects(struct obj *otmp)
     case POT_SLEEPING:
         peffect_sleeping(otmp);
         break;
-    case POT_MONSTER_DETECTION:
+    case ANO_MONSTER_DETECTION:
     case SPE_DETECT_MONSTERS:
         if (peffect_monster_detection(otmp))
             return 1;
         break;
-    case POT_OBJECT_DETECTION:
+    case ANO_OBJECT_DETECTION:
     case SPE_DETECT_TREASURE:
         if (peffect_object_detection(otmp))
             return 1;
@@ -1371,35 +1515,35 @@ peffects(struct obj *otmp)
     case POT_CONFUSION:
         peffect_confusion(otmp);
         break;
-    case POT_GAIN_ABILITY:
+    /*case ANO_GAIN_ABILITY:
         peffect_gain_ability(otmp);
         break;
-    case POT_SPEED:
+    case ANO_SPEED:*/
     case SPE_HASTE_SELF:
         peffect_speed(otmp);
         break;
     case POT_BLINDNESS:
         peffect_blindness(otmp);
         break;
-    case POT_GAIN_LEVEL:
+    /*case ANO_GAIN_LEVEL:
         peffect_gain_level(otmp);
-        break;
-    case POT_HEALING:
+        break;*/
+    case ANO_HEALING:
         peffect_healing(otmp);
         break;
-    case POT_EXTRA_HEALING:
+    /*case ANO_EXTRA_HEALING:
         peffect_extra_healing(otmp);
         break;
-    case POT_FULL_HEALING:
+    case ANO_FULL_HEALING:
         peffect_full_healing(otmp);
-        break;
+        break;*/
     case POT_LEVITATION:
     case SPE_LEVITATION:
         peffect_levitation(otmp);
         break;
-    case POT_GAIN_ENERGY: /* M. Stephenson */
+    /*case ANO_GAIN_ENERGY:
         peffect_gain_energy(otmp);
-        break;
+        break;*/
     case POT_OIL: /* P. Winner */
         peffect_oil(otmp);
         break;
@@ -1720,24 +1864,24 @@ potionhit(struct monst *mon, struct obj *obj, int how)
         boolean angermon = your_fault, cureblind = FALSE;
 
         switch (obj->otyp) {
-        case POT_FULL_HEALING:
+        case ANO_FULL_HEALING:
             cureblind = TRUE;
             FALLTHROUGH;
             /*FALLTHRU*/
-        case POT_EXTRA_HEALING:
+        case ANO_EXTRA_HEALING:
             if (!obj->cursed)
                 cureblind = TRUE;
             FALLTHROUGH;
             /*FALLTHRU*/
-        case POT_HEALING:
+        case ANO_HEALING:
             if (obj->blessed)
                 cureblind = TRUE;
             if (mon->data == &mons[PM_PESTILENCE])
                 goto do_illness;
             FALLTHROUGH;
             /*FALLTHRU*/
-        case POT_RESTORE_ABILITY:
-        case POT_GAIN_ABILITY:
+        case ANO_RESTORE_ABILITY:
+        case ANO_GAIN_ABILITY:
  do_healing:
             angermon = FALSE;
             if (mon->mhp < mon->mhpmax) {
@@ -1772,7 +1916,7 @@ potionhit(struct monst *mon, struct obj *obj, int how)
             if (!resist(mon, POTION_CLASS, 0, NOTELL))
                 mon->mconf = TRUE;
             break;
-        case POT_INVISIBILITY: {
+        case ANO_INVISIBILITY: {
             boolean sawit = canspotmon(mon);
 
             angermon = FALSE;
@@ -1796,7 +1940,7 @@ potionhit(struct monst *mon, struct obj *obj, int how)
                 paralyze_monst(mon, rnd(25));
             }
             break;
-        case POT_SPEED:
+        case ANO_SPEED:
             angermon = FALSE;
             mon_adjust_speed(mon, 1, obj);
             break;
@@ -1868,11 +2012,11 @@ potionhit(struct monst *mon, struct obj *obj, int how)
             (void) bhitm(mon, obj);
             break;
         /*
-        case POT_GAIN_LEVEL:
+        case ANO_GAIN_LEVEL:
         case POT_LEVITATION:
         case POT_FRUIT_JUICE:
-        case POT_MONSTER_DETECTION:
-        case POT_OBJECT_DETECTION:
+        case ANO_MONSTER_DETECTION:
+        case ANO_OBJECT_DETECTION:
             break;
         */
         }
@@ -1929,8 +2073,8 @@ potionbreathe(struct obj *obj)
     case TOWEL:
         pline("Some vapor passes harmlessly around you.");
         break;
-    case POT_RESTORE_ABILITY:
-    case POT_GAIN_ABILITY:
+    case ANO_RESTORE_ABILITY:
+    case ANO_GAIN_ABILITY:
         if (obj->cursed) {
             if (!breathless(gy.youmonst.data)) {
                 pline("Ulch!  That elixer smells terrible!");
@@ -1956,7 +2100,7 @@ potionbreathe(struct obj *obj)
             }
         }
         break;
-    case POT_FULL_HEALING:
+    case ANO_FULL_HEALING:
         if (Upolyd && u.mh < u.mhmax)
             u.mh++, disp.botl = TRUE;
         if (u.uhp < u.uhpmax)
@@ -1964,7 +2108,7 @@ potionbreathe(struct obj *obj)
         cureblind = TRUE;
         FALLTHROUGH;
         /*FALLTHRU*/
-    case POT_EXTRA_HEALING:
+    case ANO_EXTRA_HEALING:
         if (Upolyd && u.mh < u.mhmax)
             u.mh++, disp.botl = TRUE;
         if (u.uhp < u.uhpmax)
@@ -1973,7 +2117,7 @@ potionbreathe(struct obj *obj)
             cureblind = TRUE;
         FALLTHROUGH;
         /*FALLTHRU*/
-    case POT_HEALING:
+    case ANO_HEALING:
         if (Upolyd && u.mh < u.mhmax)
             u.mh++, disp.botl = TRUE;
         if (u.uhp < u.uhpmax)
@@ -2012,7 +2156,7 @@ potionbreathe(struct obj *obj)
             You_feel("somewhat dizzy.");
         make_confused(itimeout_incr(HConfusion, rnd(5)), FALSE);
         break;
-    case POT_INVISIBILITY:
+    case ANO_INVISIBILITY:
         if (!Blind && !Invis) {
             kn++;
             pline("For an instant you %s!",
@@ -2044,7 +2188,7 @@ potionbreathe(struct obj *obj)
             monstseesu(M_SEEN_SLEEP);
         }
         break;
-    case POT_SPEED:
+    case ANO_SPEED:
         if (!Fast)
             Your("knees seem more flexible now.");
         incr_itimeout(&HFast, rnd(5));
@@ -2076,12 +2220,12 @@ potionbreathe(struct obj *obj)
         exercise(A_CON, FALSE);
         break;
     /*
-    case POT_GAIN_LEVEL:
-    case POT_GAIN_ENERGY:
+    case ANO_GAIN_LEVEL:
+    case ANO_GAIN_ENERGY:
     case POT_LEVITATION:
     case POT_FRUIT_JUICE:
-    case POT_MONSTER_DETECTION:
-    case POT_OBJECT_DETECTION:
+    case ANO_MONSTER_DETECTION:
+    case ANO_OBJECT_DETECTION:
     case POT_OIL:
         break;
      */
@@ -2107,9 +2251,9 @@ mixtype(struct obj *o1, struct obj *o2)
 
     /* cut down on the number of cases below */
     if (o1->oclass == POTION_CLASS
-        && (o2typ == POT_GAIN_LEVEL || o2typ == POT_GAIN_ENERGY
-            || o2typ == POT_HEALING || o2typ == POT_EXTRA_HEALING
-            || o2typ == POT_FULL_HEALING || o2typ == POT_ENLIGHTENMENT
+        && (o2typ == ANO_GAIN_LEVEL || o2typ == ANO_GAIN_ENERGY
+            || o2typ == ANO_HEALING || o2typ == ANO_EXTRA_HEALING
+            || o2typ == ANO_FULL_HEALING || o2typ == ANO_ENLIGHTENMENT
             || o2typ == POT_FRUIT_JUICE)) {
         /* swap o1 and o2 */
         o1typ = o2->otyp;
@@ -2117,17 +2261,17 @@ mixtype(struct obj *o1, struct obj *o2)
     }
 
     switch (o1typ) {
-    case POT_HEALING:
-        if (o2typ == POT_SPEED)
-            return POT_EXTRA_HEALING;
+    case ANO_HEALING:
+        if (o2typ == ANO_SPEED)
+            return ANO_EXTRA_HEALING;
         FALLTHROUGH;
         /*FALLTHRU*/
-    case POT_EXTRA_HEALING:
-    case POT_FULL_HEALING:
-        if (o2typ == POT_GAIN_LEVEL || o2typ == POT_GAIN_ENERGY)
-            return (o1typ == POT_HEALING) ? POT_EXTRA_HEALING
-                   : (o1typ == POT_EXTRA_HEALING) ? POT_FULL_HEALING
-                     : POT_GAIN_ABILITY;
+    case ANO_EXTRA_HEALING:
+    case ANO_FULL_HEALING:
+        if (o2typ == ANO_GAIN_LEVEL || o2typ == ANO_GAIN_ENERGY)
+            return (o1typ == ANO_HEALING) ? ANO_EXTRA_HEALING
+                   : (o1typ == ANO_EXTRA_HEALING) ? ANO_FULL_HEALING
+                     : ANO_GAIN_ABILITY;
         FALLTHROUGH;
         /*FALLTHRU*/
     case UNICORN_HORN:
@@ -2144,19 +2288,19 @@ mixtype(struct obj *o1, struct obj *o2)
         if (o2typ == POT_BOOZE)
             return POT_FRUIT_JUICE;
         break;
-    case POT_GAIN_LEVEL:
-    case POT_GAIN_ENERGY:
+    case ANO_GAIN_LEVEL:
+    case ANO_GAIN_ENERGY:
         switch (o2typ) {
         case POT_CONFUSION:
-            return (rn2(3) ? POT_BOOZE : POT_ENLIGHTENMENT);
-        case POT_HEALING:
-            return POT_EXTRA_HEALING;
-        case POT_EXTRA_HEALING:
-            return POT_FULL_HEALING;
-        case POT_FULL_HEALING:
-            return POT_GAIN_ABILITY;
+            return (rn2(3) ? POT_BOOZE : ANO_ENLIGHTENMENT);
+        case ANO_HEALING:
+            return ANO_EXTRA_HEALING;
+        case ANO_EXTRA_HEALING:
+            return ANO_FULL_HEALING;
+        case ANO_FULL_HEALING:
+            return ANO_GAIN_ABILITY;
         case POT_FRUIT_JUICE:
-            return POT_SEE_INVISIBLE;
+            return ANO_SEE_INVISIBLE;
         case POT_BOOZE:
             return POT_HALLUCINATION;
         }
@@ -2165,19 +2309,19 @@ mixtype(struct obj *o1, struct obj *o2)
         switch (o2typ) {
         case POT_SICKNESS:
             return POT_SICKNESS;
-        case POT_ENLIGHTENMENT:
-        case POT_SPEED:
+        case ANO_ENLIGHTENMENT:
+        case ANO_SPEED:
             return POT_BOOZE;
-        case POT_GAIN_LEVEL:
-        case POT_GAIN_ENERGY:
-            return POT_SEE_INVISIBLE;
+        case ANO_GAIN_LEVEL:
+        case ANO_GAIN_ENERGY:
+            return ANO_SEE_INVISIBLE;
         }
         break;
-    case POT_ENLIGHTENMENT:
+    case ANO_ENLIGHTENMENT:
         switch (o2typ) {
         case POT_LEVITATION:
             if (rn2(3))
-                return POT_GAIN_LEVEL;
+                return ANO_GAIN_LEVEL;
             break;
         case POT_FRUIT_JUICE:
             return POT_BOOZE;
@@ -2607,9 +2751,9 @@ potion_dip(struct obj *obj, struct obj *potion)
             poof(potion);
             return ECMD_TIME;
         } else if (obj->opoisoned && !permapoisoned(obj)
-                   && (potion->otyp == POT_HEALING
-                       || potion->otyp == POT_EXTRA_HEALING
-                       || potion->otyp == POT_FULL_HEALING)) {
+                   && (potion->otyp == ANO_HEALING
+                       || potion->otyp == ANO_EXTRA_HEALING
+                       || potion->otyp == ANO_FULL_HEALING)) {
             pline("A coating wears off %s.", the(xname(obj)));
             obj->opoisoned = 0;
             poof(potion);

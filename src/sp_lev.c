@@ -3472,7 +3472,7 @@ find_objtype(lua_State *L, const char *s)
             char class;
         } class_prefixes[] = {
             { "ring of ", RING_CLASS },
-            { "anointing oil of ", POTION_CLASS },
+            { "anointing oil of ", ANOINTING_CLASS },
             { "verse of ", SCROLL_CLASS },
             { "prophetic book of ", SPBOOK_CLASS },
             { "rod of ", WAND_CLASS },

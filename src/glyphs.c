@@ -955,7 +955,7 @@ parse_id(
                         else if ((i >= SCR_ENCHANT_ARMOR)
                                  && (i <= SCR_STINKING_CLOUD))
                             buf2 = "verse of ";
-                        else if ((i >= POT_GAIN_ABILITY) && (i <= POT_WATER))
+                        else if ((i >= ANO_GAIN_ABILITY) && (i <= POT_WATER))
                             buf2 = (i == POT_WATER) ? "flask of n"
                                                     : "elixer of ";
                         else if ((i >= RIN_ADORNMENT)

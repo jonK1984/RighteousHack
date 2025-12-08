@@ -288,7 +288,7 @@ m_initweap(struct monst *mtmp)
                 if (rn2(3))
                     (void) mongets(mtmp, rn2(3) ? LOW_BOOTS : HIGH_BOOTS);
                 if (rn2(3))
-                    (void) mongets(mtmp, POT_HEALING);
+                    (void) mongets(mtmp, ANO_HEALING);
                 break;
             case PM_CHIEFTAIN:
             case PM_PAGE:
@@ -709,11 +709,11 @@ m_initinv(struct monst *mtmp)
                 FALLTHROUGH;
                 /*FALLTHRU*/
             case 1:
-                (void) mongets(mtmp, POT_EXTRA_HEALING);
+                (void) mongets(mtmp, ANO_EXTRA_HEALING);
                 FALLTHROUGH;
                 /*FALLTHRU*/
             case 2:
-                (void) mongets(mtmp, POT_HEALING);
+                (void) mongets(mtmp, ANO_HEALING);
                 FALLTHROUGH;
                 /*FALLTHRU*/
             case 3:
@@ -734,7 +734,7 @@ m_initinv(struct monst *mtmp)
         if (!rn2(2))
             (void) mongets(mtmp, MIRROR);
         if (!rn2(2))
-            (void) mongets(mtmp, POT_OBJECT_DETECTION);
+            (void) mongets(mtmp, ANO_OBJECT_DETECTION);
         break;
     case S_GIANT:
         if (ptr == &mons[PM_MINOTAUR]) {

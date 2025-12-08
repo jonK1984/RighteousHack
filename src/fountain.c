@@ -768,7 +768,7 @@ dipsink(struct obj *obj)
         sink_backs_up(u.ux, u.uy);
         try_call = TRUE;
         break;
-    case POT_OBJECT_DETECTION:
+    case ANO_OBJECT_DETECTION:
         if (!(levl[u.ux][u.uy].looted & S_LRING)) {
             You("sense a ring lost down the drain.");
             try_call = TRUE;
@@ -776,9 +776,9 @@ dipsink(struct obj *obj)
         }
         FALLTHROUGH;
         /* FALLTHRU */
-    case POT_GAIN_LEVEL:
-    case POT_GAIN_ENERGY:
-    case POT_MONSTER_DETECTION:
+    case ANO_GAIN_LEVEL:
+    case ANO_GAIN_ENERGY:
+    case ANO_MONSTER_DETECTION:
     case POT_FRUIT_JUICE:
     case POT_WATER:
         /* potions with no potionbreathe() effects, plus water.  if effects

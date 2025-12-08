@@ -968,7 +968,7 @@ fuzzer_savelife(int how)
                 ++remedies;
             }
             if (!remedies || rn2(3)) {
-                potion = mksobj(POT_RESTORE_ABILITY, TRUE, FALSE);
+                potion = mksobj(ANO_RESTORE_ABILITY, TRUE, FALSE);
                 bless(potion);
                 (void) peffects(potion);
                 obfree(potion, (struct obj *) 0);

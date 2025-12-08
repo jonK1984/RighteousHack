@@ -305,8 +305,8 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
  */
 #define MUSE_SCR_TELEPORTATION 1
 #define MUSE_WAN_TELEPORTATION_SELF 2
-#define MUSE_POT_HEALING 3
-#define MUSE_POT_EXTRA_HEALING 4
+#define MUSE_ANO_HEALING 3
+#define MUSE_ANO_EXTRA_HEALING 4
 #define MUSE_WAN_DIGGING 5
 #define MUSE_TRAPDOOR 6
 #define MUSE_TELEPORT_TRAP 7
@@ -320,7 +320,7 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
 #define MUSE_WAN_TELEPORTATION 15
 #define MUSE_BUGLE 16
 #define MUSE_UNICORN_HORN 17
-#define MUSE_POT_FULL_HEALING 18
+#define MUSE_ANO_FULL_HEALING 18
 #define MUSE_LIZARD_CORPSE 19
 #define MUSE_WAN_UNDEAD_TURNING 20 /* also an offensive item */
 /*
@@ -336,19 +336,19 @@ m_use_healing(struct monst *mtmp)
 {
     struct obj *obj;
 
-    if ((obj = m_carrying(mtmp, POT_FULL_HEALING)) != 0) {
+    if ((obj = m_carrying(mtmp, ANO_FULL_HEALING)) != 0) {
         gm.m.defensive = obj;
-        gm.m.has_defense = MUSE_POT_FULL_HEALING;
+        gm.m.has_defense = MUSE_ANO_FULL_HEALING;
         return TRUE;
     }
-    if ((obj = m_carrying(mtmp, POT_EXTRA_HEALING)) != 0) {
+    if ((obj = m_carrying(mtmp, ANO_EXTRA_HEALING)) != 0) {
         gm.m.defensive = obj;
-        gm.m.has_defense = MUSE_POT_EXTRA_HEALING;
+        gm.m.has_defense = MUSE_ANO_EXTRA_HEALING;
         return TRUE;
     }
-    if ((obj = m_carrying(mtmp, POT_HEALING)) != 0) {
+    if ((obj = m_carrying(mtmp, ANO_HEALING)) != 0) {
         gm.m.defensive = obj;
-        gm.m.has_defense = MUSE_POT_HEALING;
+        gm.m.has_defense = MUSE_ANO_HEALING;
         return TRUE;
     }
     return FALSE;
@@ -704,31 +704,31 @@ find_defensive(struct monst *mtmp, boolean tryescape)
         }
 
         if (mtmp->data != &mons[PM_PESTILENCE]) {
-            nomore(MUSE_POT_FULL_HEALING);
-            if (obj->otyp == POT_FULL_HEALING) {
+            nomore(MUSE_ANO_FULL_HEALING);
+            if (obj->otyp == ANO_FULL_HEALING) {
                 gm.m.defensive = obj;
-                gm.m.has_defense = MUSE_POT_FULL_HEALING;
+                gm.m.has_defense = MUSE_ANO_FULL_HEALING;
             }
-            nomore(MUSE_POT_EXTRA_HEALING);
-            if (obj->otyp == POT_EXTRA_HEALING) {
+            nomore(MUSE_ANO_EXTRA_HEALING);
+            if (obj->otyp == ANO_EXTRA_HEALING) {
                 gm.m.defensive = obj;
-                gm.m.has_defense = MUSE_POT_EXTRA_HEALING;
+                gm.m.has_defense = MUSE_ANO_EXTRA_HEALING;
             }
             nomore(MUSE_WAN_CREATE_MONSTER);
             if (obj->otyp == WAN_CREATE_MONSTER && obj->spe > 0) {
                 gm.m.defensive = obj;
                 gm.m.has_defense = MUSE_WAN_CREATE_MONSTER;
             }
-            nomore(MUSE_POT_HEALING);
-            if (obj->otyp == POT_HEALING) {
+            nomore(MUSE_ANO_HEALING);
+            if (obj->otyp == ANO_HEALING) {
                 gm.m.defensive = obj;
-                gm.m.has_defense = MUSE_POT_HEALING;
+                gm.m.has_defense = MUSE_ANO_HEALING;
             }
         } else { /* Pestilence */
-            nomore(MUSE_POT_FULL_HEALING);
+            nomore(MUSE_ANO_FULL_HEALING);
             if (obj->otyp == POT_SICKNESS) {
                 gm.m.defensive = obj;
-                gm.m.has_defense = MUSE_POT_FULL_HEALING;
+                gm.m.has_defense = MUSE_ANO_FULL_HEALING;
             }
             nomore(MUSE_WAN_CREATE_MONSTER);
             if (obj->otyp == WAN_CREATE_MONSTER && obj->spe > 0) {
@@ -1156,7 +1156,7 @@ use_defensive(struct monst *mtmp)
         /* 0: 'no object' rather than STRANGE_OBJECT; FALSE: obj not seen */
         m_tele(mtmp, vismon, FALSE, 0);
         return 2;
-    case MUSE_POT_HEALING:
+    case MUSE_ANO_HEALING:
         if (!otmp)
             panic(MissingDefensiveItem, "potioh of healing");
         mquaffmsg(mtmp, otmp);
@@ -1167,10 +1167,10 @@ use_defensive(struct monst *mtmp)
         if (vismon)
             pline_mon(mtmp, "%s looks better.", Monnam(mtmp));
         if (oseen)
-            makeknown(POT_HEALING);
+            makeknown(ANO_HEALING);
         m_useup(mtmp, otmp);
         return 2;
-    case MUSE_POT_EXTRA_HEALING:
+    case MUSE_ANO_EXTRA_HEALING:
         if (!otmp)
             panic(MissingDefensiveItem, "potioh of extra healing");
         mquaffmsg(mtmp, otmp);
@@ -1181,10 +1181,10 @@ use_defensive(struct monst *mtmp)
         if (vismon)
             pline_mon(mtmp, "%s looks much better.", Monnam(mtmp));
         if (oseen)
-            makeknown(POT_EXTRA_HEALING);
+            makeknown(ANO_EXTRA_HEALING);
         m_useup(mtmp, otmp);
         return 2;
-    case MUSE_POT_FULL_HEALING:
+    case MUSE_ANO_FULL_HEALING:
         if (!otmp)
             panic(MissingDefensiveItem, "potioh of full healing");
         mquaffmsg(mtmp, otmp);
@@ -1248,11 +1248,11 @@ rnd_defensive_item(struct monst *mtmp)
     case 2:
         return SCR_CREATE_MONSTER;
     case 3:
-        return POT_HEALING;
+        return ANO_HEALING;
     case 4:
-        return POT_EXTRA_HEALING;
+        return ANO_EXTRA_HEALING;
     case 5:
-        return (mtmp->data != &mons[PM_PESTILENCE]) ? POT_FULL_HEALING
+        return (mtmp->data != &mons[PM_PESTILENCE]) ? ANO_FULL_HEALING
                                                     : POT_SICKNESS;
     case 7: /* wand of digging */
         /* usually avoid digging in Sokoban */
@@ -2034,12 +2034,12 @@ rnd_offensive_item(struct monst *mtmp)
     return 0;
 }
 
-#define MUSE_POT_GAIN_LEVEL 1
+#define MUSE_ANO_GAIN_LEVEL 1
 #define MUSE_WAN_MAKE_INVISIBLE 2
-#define MUSE_POT_INVISIBILITY 3
+#define MUSE_ANO_INVISIBILITY 3
 #define MUSE_POLY_TRAP 4
 #define MUSE_WAN_POLYMORPH 5
-#define MUSE_POT_SPEED 6
+#define MUSE_ANO_SPEED 6
 #define MUSE_WAN_SPEED_MONSTER 7
 #define MUSE_BULLWHIP 8
 #define MUSE_POT_POLYMORPH 9
@@ -2121,11 +2121,11 @@ find_misc(struct monst *mtmp)
     for (obj = mtmp->minvent; obj; obj = obj->nobj) {
         /* Monsters shouldn't recognize cursed items; this kludge is
            necessary to prevent serious problems though... */
-        if (obj->otyp == POT_GAIN_LEVEL
+        if (obj->otyp == ANO_GAIN_LEVEL
             && (!obj->cursed
                 || (!mtmp->isgd && !mtmp->isshk && !mtmp->ispriest))) {
             gm.m.misc = obj;
-            gm.m.has_misc = MUSE_POT_GAIN_LEVEL;
+            gm.m.has_misc = MUSE_ANO_GAIN_LEVEL;
         }
         nomore(MUSE_BULLWHIP);
         if (obj->otyp == BULLWHIP && !mtmp->mpeaceful
@@ -2153,12 +2153,12 @@ find_misc(struct monst *mtmp)
             gm.m.misc = obj;
             gm.m.has_misc = MUSE_WAN_MAKE_INVISIBLE;
         }
-        nomore(MUSE_POT_INVISIBILITY);
-        if (obj->otyp == POT_INVISIBILITY && !mtmp->minvis
+        nomore(MUSE_ANO_INVISIBILITY);
+        if (obj->otyp == ANO_INVISIBILITY && !mtmp->minvis
             && !mtmp->invis_blkd && (!mtmp->mpeaceful || See_invisible)
             && (!attacktype(mtmp->data, AT_GAZE) || mtmp->mcan)) {
             gm.m.misc = obj;
-            gm.m.has_misc = MUSE_POT_INVISIBILITY;
+            gm.m.has_misc = MUSE_ANO_INVISIBILITY;
         }
         nomore(MUSE_WAN_SPEED_MONSTER);
         if (obj->otyp == WAN_SPEED_MONSTER && obj->spe > 0
@@ -2166,10 +2166,10 @@ find_misc(struct monst *mtmp)
             gm.m.misc = obj;
             gm.m.has_misc = MUSE_WAN_SPEED_MONSTER;
         }
-        nomore(MUSE_POT_SPEED);
-        if (obj->otyp == POT_SPEED && mtmp->mspeed != MFAST && !mtmp->isgd) {
+        nomore(MUSE_ANO_SPEED);
+        if (obj->otyp == ANO_SPEED && mtmp->mspeed != MFAST && !mtmp->isgd) {
             gm.m.misc = obj;
-            gm.m.has_misc = MUSE_POT_SPEED;
+            gm.m.has_misc = MUSE_ANO_SPEED;
         }
         nomore(MUSE_WAN_POLYMORPH);
         if (obj->otyp == WAN_POLYMORPH && obj->spe > 0
@@ -2348,7 +2348,7 @@ use_misc(struct monst *mtmp)
     oseen = otmp && vismon;
 
     switch (gm.m.has_misc) {
-    case MUSE_POT_GAIN_LEVEL:
+    case MUSE_ANO_GAIN_LEVEL:
         if (!otmp)
             panic(MissingMiscellaneousItem, "elixer of gain level");
         mquaffmsg(mtmp, otmp);
@@ -2384,14 +2384,14 @@ use_misc(struct monst *mtmp)
         if (vismon)
             pline_mon(mtmp, "%s seems more experienced.", Monnam(mtmp));
         if (oseen)
-            makeknown(POT_GAIN_LEVEL);
+            makeknown(ANO_GAIN_LEVEL);
         m_useup(mtmp, otmp);
         if (!grow_up(mtmp, (struct monst *) 0))
             return 1;
         /* grew into genocided monster */
         return 2;
     case MUSE_WAN_MAKE_INVISIBLE:
-    case MUSE_POT_INVISIBILITY:
+    case MUSE_ANO_INVISIBILITY:
         if (!otmp)
             panic(MissingMiscellaneousItem, "elixer of invisibility");
         if (otmp->otyp == WAN_MAKE_INVISIBLE) {
@@ -2414,7 +2414,7 @@ use_misc(struct monst *mtmp)
             if (oseen)
                 makeknown(otmp->otyp);
         }
-        if (otmp->otyp == POT_INVISIBILITY) {
+        if (otmp->otyp == ANO_INVISIBILITY) {
             if (otmp->cursed)
                 you_aggravate(mtmp);
             m_useup(mtmp, otmp);
@@ -2426,7 +2426,7 @@ use_misc(struct monst *mtmp)
         mzapwand(mtmp, otmp, TRUE);
         mon_adjust_speed(mtmp, 1, otmp);
         return 2;
-    case MUSE_POT_SPEED:
+    case MUSE_ANO_SPEED:
         if (!otmp)
             panic(MissingMiscellaneousItem, "elixer of speed");
         mquaffmsg(mtmp, otmp);
@@ -2612,13 +2612,13 @@ rnd_misc_item(struct monst *mtmp)
     case 0:
         if (mtmp->isgd)
             return 0;
-        return rn2(6) ? POT_SPEED : WAN_SPEED_MONSTER;
+        return rn2(6) ? ANO_SPEED : WAN_SPEED_MONSTER;
     case 1:
         if (mtmp->mpeaceful && !See_invisible)
             return 0;
-        return rn2(6) ? POT_INVISIBILITY : WAN_MAKE_INVISIBLE;
+        return rn2(6) ? ANO_INVISIBILITY : WAN_MAKE_INVISIBLE;
     case 2:
-        return POT_GAIN_LEVEL;
+        return ANO_GAIN_LEVEL;
     }
     /*NOTREACHED*/
     return 0;
@@ -2657,10 +2657,10 @@ searches_for_item(struct monst *mon, struct obj *obj)
         || mon->data == &mons[PM_GHOST]) /* don't loot bones piles */
         return FALSE;
 
-    if (typ == WAN_MAKE_INVISIBLE || typ == POT_INVISIBILITY)
+    if (typ == WAN_MAKE_INVISIBLE || typ == ANO_INVISIBILITY)
         return (boolean) (!mon->minvis && !mon->invis_blkd
                           && !attacktype(mon->data, AT_GAZE));
-    if (typ == WAN_SPEED_MONSTER || typ == POT_SPEED)
+    if (typ == WAN_SPEED_MONSTER || typ == ANO_SPEED)
         return (boolean) (mon->mspeed != MFAST);
 
     switch (obj->oclass) {
@@ -2677,9 +2677,9 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return TRUE;
         break;
     case POTION_CLASS:
-        if (typ == POT_HEALING || typ == POT_EXTRA_HEALING
-            || typ == POT_FULL_HEALING || typ == POT_POLYMORPH
-            || typ == POT_GAIN_LEVEL || typ == POT_PARALYSIS
+        if (typ == ANO_HEALING || typ == ANO_EXTRA_HEALING
+            || typ == ANO_FULL_HEALING || typ == POT_POLYMORPH
+            || typ == ANO_GAIN_LEVEL || typ == POT_PARALYSIS
             || typ == POT_SLEEPING || typ == POT_ACID || typ == POT_CONFUSION)
             return TRUE;
         if (typ == POT_BLINDNESS && !attacktype(mon->data, AT_GAZE))

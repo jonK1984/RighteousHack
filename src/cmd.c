@@ -1655,6 +1655,8 @@ struct ext_func_tab extcmdlist[] = {
               doorganize, IFBURIED | AUTOCOMPLETE, NULL },
     { M('A'), "annotate", "name current level",
               donamelevel, IFBURIED | AUTOCOMPLETE | GENERALCMD, NULL },
+    { M('a'), "anoint", "anoint yourself or another with holy oil",
+              doanoint, IFBURIED | AUTOCOMPLETE, NULL },
     { 'a',    "apply", "apply (use) a tool (pick-axe, key, lamp...)",
               doapply, CMD_M_PREFIX, NULL },
     { C('x'), "attributes", "show your attributes",

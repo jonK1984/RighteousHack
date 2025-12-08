@@ -1328,7 +1328,7 @@ cancel_item(struct obj *obj)
         case POTION_CLASS:
             costly_alteration(obj, (otyp != POT_WATER) ? COST_CANCEL
                                    : obj->cursed ? COST_UNCURS : COST_UNBLSS);
-            if (otyp == POT_SICKNESS || otyp == POT_SEE_INVISIBLE) {
+            if (otyp == POT_SICKNESS || otyp == ANO_SEE_INVISIBLE) {
                 /* sickness is "biologically contaminated" fruit juice;
                    cancel it and it just becomes fruit juice...
                    whereas see invisible tastes like "enchanted" fruit
@@ -1853,7 +1853,7 @@ poly_obj(struct obj *obj, int id)
 
     case POTION_CLASS:
         while (otmp->otyp == POT_POLYMORPH)
-            otmp->otyp = rnd_class(POT_GAIN_ABILITY, POT_WATER);
+            otmp->otyp = rnd_class(ANO_GAIN_ABILITY, POT_WATER);
         /* potions of oil use obj->age field differently from other potions */
         if (otmp->otyp == POT_OIL || obj->otyp == POT_OIL)
             fixup_oil(otmp, obj);

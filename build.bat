@@ -41,7 +41,7 @@ if %errorlevel%==3 (
     echo "*** Launching the game (no build) ***"
     if exist binary\nethack.exe (
         echo Starting nethack.exe ...
-        start "" "binary\nethack.exe" -D -u wizard
+        start "" "binary\nethack.exe" -D -u prophet
     ) else (
         echo No binary\nethack.exe found – doing a quick build first...
         cd src

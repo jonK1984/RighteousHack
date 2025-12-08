@@ -1037,9 +1037,9 @@ fill_ordinary_room(
 
             do {
                 static const int supply_items[] = {
-                    POT_EXTRA_HEALING,
-                    POT_SPEED,
-                    POT_GAIN_ENERGY,
+                    ANO_EXTRA_HEALING,
+                    ANO_SPEED,
+                    ANO_GAIN_ENERGY,
                     SCR_ENCHANT_WEAPON,
                     SCR_ENCHANT_ARMOR,
                     SCR_CONFUSE_MONSTER,
@@ -1049,9 +1049,9 @@ fill_ordinary_room(
                 };
 
                 /* 50% this is a elixer of healing */
-                otyp = rn2(2) ? POT_HEALING : ROLL_FROM(supply_items);
+                otyp = rn2(2) ? ANO_HEALING : ROLL_FROM(supply_items);
                 otmp = mksobj(otyp, TRUE, FALSE);
-                if (otyp == POT_HEALING && rn2(2)) {
+                if (otyp == ANO_HEALING && rn2(2)) {
                     otmp->quan = 2;
                     otmp->owt = weight(otmp);
                 }
@@ -1081,7 +1081,7 @@ fill_ordinary_room(
                     SCROLL_CLASS,
                     POTION_CLASS,
                     RING_CLASS,
-                    SPBOOK_no_NOVEL,
+                    ANOINTING_CLASS,
                     SPBOOK_no_NOVEL,
                     SPBOOK_no_NOVEL
                 };

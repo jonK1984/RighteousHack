@@ -221,6 +221,9 @@ obj_typename(int otyp)
     switch (ocl->oc_class) {
     case COIN_CLASS:
         return strcpy(buf, actualn); /* "gold piece" */
+    case ANOINTING_CLASS:
+        Strcpy(buf, "anointing oil");
+        break;
     case POTION_CLASS:
         Strcpy(buf, "elixer");
         break;

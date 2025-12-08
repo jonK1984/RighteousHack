@@ -83,6 +83,7 @@ is_holy_scripture(struct obj *obj)
     return (obj->oclass == SCROLL_CLASS    /* verses */
          || obj->oclass == SPBOOK_CLASS   /* prophetic books */
          || obj->oclass == WAND_CLASS
+         || obj->oclass == ANOINTING_CLASS
          || obj->otyp == MAGIC_MARKER);   /* rods of authority */
 }
 
