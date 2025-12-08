@@ -2542,7 +2542,7 @@ static const char *const wrp[] = {
     "amulet", "propheticbook", "prophetic book", "prophecy",
     /* for non-specific wishes */
     "weapon", "armor",     "tool",       "food",   "comestible", 
-    "anointing", "anointing oil"
+    "anointing oil", "anointing"
 };
 static const char wrpsym[] = { WAND_CLASS,   RING_CLASS,   POTION_CLASS, SCROLL_CLASS, GEM_CLASS,    
                                AMULET_CLASS, SPBOOK_CLASS, SPBOOK_CLASS, SPBOOK_CLASS,
