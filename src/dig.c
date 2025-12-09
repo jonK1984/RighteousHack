@@ -718,7 +718,7 @@ digactualhole(coordxy x, coordxy y, struct monst *madeby, int ttyp)
         pline_The("%s falls into the %s!", furniture, tname);
     /* wrath should immediately follow altar destruction message */
     if (heros_fault && old_typ == ALTAR)
-        desecrate_altar(FALSE, old_aligntyp);
+        pline("placeholder for desecrate_altar");
 
     /* now deal with actual post-trap creation effects */
     if (ttyp == PIT) {
