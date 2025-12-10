@@ -1748,46 +1748,6 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
     }
 }
 
-/* determine prayer results in advance; also used for enlightenment */
-boolean
-can_pray(boolean praying) /* false means no messages should be given */
-{
-    int alignment;
-
-    gp.p_aligntyp = on_altar() ? a_align(u.ux, u.uy) : u.ualign.type;
-    gp.p_trouble = in_trouble();
-
-
-    if (praying)
-        You("begin praying to %s.", align_gname(gp.p_aligntyp));
-
-    
-
-    if (gp.p_aligntyp == A_NONE) /* alter of evil */ {
-        pline("Underneath this altar of great evil, you sense a soul trapped beneath. You must smash it to pieces!");
-        return FALSE;
-    }
-    else if ((gp.p_trouble > 0) ? (u.ublesscnt > 200)   /* big trouble */
-             : (gp.p_trouble < 0) ? (u.ublesscnt > 100) /* minor difficulty */
-               : (u.ublesscnt > 0))                     /* not in trouble */
-        gp.p_type = 0;                     /* too soon... */
-    else if ((int) Luck < 0 || u.ugangr || alignment < 0)
-        gp.p_type = 1; /* too naughty... */
-    else /* alignment >= 0 */ {
-        if (on_altar() && u.ualign.type != gp.p_aligntyp)
-            gp.p_type = 2;
-        else
-            gp.p_type = 3;
-    }
-
-    
-    /* Note:  when !praying, the random factor for neutrals makes the
-       return value a non-deterministic approximation for enlightenment.
-       This case should be uncommon enough to live with... */
-
-    //return !praying ? (boolean) (gp.p_type == 3 && !Inhell) : TRUE;
-    return TRUE;
-}
 
 /* return TRUE if praying revived a pet corpse */
 staticfn boolean
@@ -1864,44 +1824,215 @@ dopray(void)
     return ECMD_TIME;
 }
 
-staticfn int
-prayer_done(void) /* M. Stephenson (1.0.3b) */
+/* pray.c – Prayer system for RighteousHack
+ * All altars are lawful. Prayer is a direct appeal to God for mercy, healing, and favor.
+ * No wrath, no angry gods — only patience, grace, and occasional miracles.
+ */
+
+static int miracle_given_this_prayer = 0; /* track if miracle already granted */
+
+/* Special artifact: The Gospel of Peace (boots) – grants readiness and protection */
+
+/* Forward declaration */
+static void grant_miracle(void);
+
+/*=====================================================================
+ *  can_pray()
+ *  Determines whether a priori whether a prayer will be accepted.
+ *  Now much simpler: only checks timeout and altar status.
+ *====================================================================*/
+boolean
+can_pray(boolean praying) /* false means no messages (e.g. enlightenment) */
 {
-    aligntyp alignment = gp.p_aligntyp;
+    gp.p_aligntyp = on_altar() ? a_align(u.ux, u.uy) : u.ualign.type;
+    gp.p_trouble = in_trouble(); /* uses existing in_trouble() logic */
 
-    u.uinvulnerable = FALSE;
-    
-    if (Inhell) {
-        pline("And the light shineth in darkness; and the darkness comprehended it not. (John 1:5)");
+    if (praying) {
+        You("kneel and begin praying to %s.", align_gname(gp.p_aligntyp));
     }
 
-    if (gp.p_type == 0) {
-        if (on_altar() && u.ualign.type != alignment)
-            (void) water_prayer(FALSE);
-        u.ublesscnt += rnz(250);
-        change_luck(-3);
-        
-    } else if (gp.p_type == 1) {
-        if (on_altar() && u.ualign.type != alignment)
-            (void) water_prayer(FALSE);
-        pline("placeholder for angrygods() deletion");
-    } else if (gp.p_type == 2) {
-        if (water_prayer(FALSE)) {
-            /* attempted water prayer on a non-coaligned altar */
-            u.ublesscnt += rnz(250);
-            change_luck(-3);
-            
-        } else
-            pleased(alignment);
+    /* All altars in RighteousHack are lawful */
+    if (gp.p_aligntyp != A_LAWFUL) {
+        impossible("can_pray: non-lawful altar detected! (bug)");
+        gp.p_aligntyp = A_LAWFUL;
+    }
+
+     /* Too soon — God teaches patience*/
+    if (u.ublesscnt > 0) {
+        //gp.p_type = 0; /* "Be patient, My child." */
+        gp.p_type = 1;
     } else {
-        /* coaligned */
-        if (on_altar()) {
-            (void) pray_revive();
-            (void) water_prayer(TRUE);
-        }
-        pleased(alignment); /* nice */
+        gp.p_type = 1; /* Prayer timeout has passed — ready for grace */
     }
+
+    miracle_given_this_prayer = 0; /* reset per prayer */
+
+    return TRUE; /* always allow prayer attempt; outcome handled in prayer_done() */
+}
+
+/*=====================================================================
+ *  prayer_done()
+ *  Called after the prayer animation. This is where grace is dispensed.
+ *====================================================================*/
+staticfn int
+prayer_done(void)
+{
+    aligntyp alignment = A_LAWFUL; /* only one alignment in RighteousHack */
+    boolean on_altar = on_altar();
+
+    u.uinvulnerable = FALSE; /* will be re-applied only if miracle grants it */
+
+    /* ------------------------------------------------------------------
+     *  1. Altar use: always attempt to bless water (anointing oil
+     * ------------------------------------------------------------------ */
+    if (on_altar) {
+        (void) water_prayer(TRUE); /* blesses potions of water → anointing oil */
+        pline("The altar glows with a soft light as your water is blessed.");
+    }
+
+    /* ------------------------------------------------------------------
+     *   2. Prayer timeout active → gentle reminder to wait
+     * ------------------------------------------------------------------ */
+    if (gp.p_type == 0) {
+        You_feel("that the Lord would have you wait a little longer.");
+        pline("\"Be still, and know that I am God.\" (Psalm 46:10)");
+        u.ublesscnt += rnz(300 + (Luck > 0 ? 100 : 0)); /* longer wait if unlucky */
+        change_luck(-1); /* small humility penalty */
+        return 1;
+    }
+
+    /* ------------------------------------------------------------------
+     *  3. Regular prayer accepted (gp.p_type == 1)
+     *     → Healing of problems + possible favor
+     * ------------------------------------------------------------------ */
+    if (gp.p_type == 1) {
+        //int major = major_trouble();
+        //int minor = minor_trouble();
+        int major = 0;
+        int minor = 0;
+
+        if (major) {
+            /* Major trouble exists */
+            int r = rn2(100);
+            if (r < 20) {
+                /* 20% – fix everything */
+                //fix_worst_trouble(healup_fix_all);
+                pline("A wave of divine peace washes over you!");
+                You_feel("completely restored by God's mercy.");
+            } else if (r < 50) {
+                /* 30% – fix all major troubles */
+                //fix_worst_trouble(healup_fix_major);
+                You_feel("greatly relieved as the heaviest burdens are lifted.");
+            } else {
+                /* 50% – fix one major trouble */
+                //fix_worst_trouble(healup_fix_one_major);
+                You_feel("one heavy burden has been taken from your shoulders.");
+            }
+        } else if (minor) {
+            /* No major trouble, but minor issues exist → 100% fix all minor */
+            //fix_worst_trouble(healup_fix_minor);
+            You_feel("your smaller afflictions fade away.");
+        } else {
+            /* No troubles at all → grant a favor (existing pleased() logic) */
+            pleased(alignment);
+            pline("You feel the warmth of divine favor upon you.");
+        }
+    }
+
+    /* ------------------------------------------------------------------
+     *  4. Miracle chance – 10%, independent of everything else
+     * ------------------------------------------------------------------ */
+    if (!miracle_given_this_prayer && rn2(10) == 0) {
+        grant_miracle();
+    }
+    grant_miracle();
+    /* Final encouragement */
+    if (gp.p_type == 1) {
+        You_feel("heard.");
+        pline("\"Call to me and I will answer you...\" (Jeremiah 33:3)");
+    }
+
+    /* Reset prayer timer for next time */
+    u.ublesscnt += rnz(300);
+
     return 1;
+}
+
+/*=====================================================================
+ *  grant_miracle()
+ *  Called only from prayer_done() when a miracle is granted.
+ *  Implements the Gospel of Peace artifact and other rare blessings.
+ *====================================================================*/
+static void
+grant_miracle(void)
+{
+    struct obj *otmp;
+    boolean has_gospel_boots = FALSE;
+    int r;
+
+    miracle_given_this_prayer = 1;
+
+    /* Check if player already possesses "The Gospel of the Peace" */
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+        if (otmp->oartifact == ART_SHOES_GOSPEL_OF_PEACE) {
+            has_gospel_boots = TRUE;
+            break;
+        }
+    }
+
+    pline("A gentle voice speaks within your heart:");
+    if (has_gospel_boots) {
+        /* Player already has the boots → higher chance of invulnerability */
+        r = rn2(100);
+        if (r < 70) {                                    /* 0..69 */
+            You_feel("completely invulnerable!");
+            u.uinvulnerable = TRUE;
+        } else if (r < 85) {                             /* 70..84 */
+            u.uhpmax += 20;
+            u.uhp += 20;
+            if (u.uhp > u.uhpmax) u.uhp = u.uhpmax;
+            pline("Your vitality surges — the Lord has strengthened your body forever!");
+        } else {                                         /* 85..99 */
+            u.uenmax += 20;
+            u.uen += 20;
+            if (u.uen > u.uenmax) u.uen = u.uenmax;
+            pline("Divine energy flows through you — your spirit is renewed forever!");
+        }
+    } else {
+        /* First miracle tier — includes chance to receive the Gospel boots */
+        r = rn2(100);
+        if (r < 50) {                                     /* 0..49 */
+            You_feel("completely invulnerable!");
+            u.uinvulnerable = TRUE;
+        } else if (r < 80) {                              /* 50..79 */
+            /* Grant "The Gospel of the Peace" */
+            otmp = mksobj(WATER_WALKING_BOOTS, TRUE, FALSE);
+            if (otmp) {
+                otmp = oname(otmp, artiname(ART_SHOES_GOSPEL_OF_PEACE), ONAME_WISH);
+                otmp->spe = 0;
+                otmp->cursed = otmp->blessed = FALSE;
+                otmp->bknown = TRUE;
+                otmp = addinv(otmp);
+                prinv((char *)0, otmp, 0L);
+                pline("A pair of radiant sandals appears at your feet!");
+                pline("\"...and your feet fitted with the readiness");
+                pline("that comes from the gospel of peace.\" (Ephesians 6:15 ESV)");
+            }
+        } else if (r < 90) {                             /* 80..89 */
+            u.uhpmax += 20;
+            u.uhp += 20;
+            if (u.uhp > u.uhpmax) u.uhp = u.uhpmax;
+            pline("Your body is permanently strengthened by the Lord's power!");
+        } else {                                          /* 90..99 */
+            u.uenmax += 20;
+            u.uen += 20;
+            if (u.uen > u.uenmax) u.uen = u.uenmax;
+            pline("Your spirit burns brighter — your energy is permanently increased!");
+        }
+    }
+
+    /* Visual/audio cue */
+    pline_The("air around you shimmers with holy light!");
 }
 
 /* iterable for undead turning by priest/knight */
