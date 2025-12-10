@@ -9,20 +9,6 @@ Play to glorify God, meditate on His Word in the caves of reflection and redempt
 
 RighteousHack uses the NetHack 3.7.0 codebase with Christian reforms. Source at: https://github.com/jonK1984/RighteousHack/tree/righteoushack-0.1
 
-### Windows (Recommended)
-1. Clone the repo: `git clone https://github.com/jonK1984/RighteousHack.git`
-2. `cd RighteousHack`
-3. `git checkout righteoushack-0.1`
-4. Open `C:\Users\jonk_\iCloudDrive\Documents\PROJECTS\RighteousHack` (your local dir).
-5. Compile with Visual Studio or MinGW (sysconf/Windows). Run `makedefs` then `make`.
-6. Binaries in `.\binary\`. Launch with `nethack.exe` (not `nethackW.exe`).
-
-### Sysconf
-Edit `sysconf` for your platform (UNIX, Windows, etc.). Default: TTY or SDL.
-
-### Data Files
-- Ensure `dat/` includes reformed files: `objects.h`, `monsters.h`, etc.
-- Run `makedefs` to regenerate `onames.h`, `date.h`, etc.
 
 ## How to Play
 
