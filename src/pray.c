@@ -1859,8 +1859,8 @@ can_pray(boolean praying) /* false means no messages (e.g. enlightenment) */
 
      /* Too soon — God teaches patience*/
     if (u.ublesscnt > 0) {
-        //gp.p_type = 0; /* "Be patient, My child." */
-        gp.p_type = 1;
+        gp.p_type = 0; /* "Be patient, My child." */
+        //gp.p_type = 1;
     } else {
         gp.p_type = 1; /* Prayer timeout has passed — ready for grace */
     }
@@ -1945,7 +1945,7 @@ prayer_done(void)
     if (!miracle_given_this_prayer && rn2(10) == 0) {
         grant_miracle();
     }
-    grant_miracle();
+    //grant_miracle();
     /* Final encouragement */
     if (gp.p_type == 1) {
         You_feel("heard.");

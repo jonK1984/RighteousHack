@@ -155,6 +155,7 @@ PROJECTILE("crossbow bolt", NoDes,
            1, 55, 1, 2, 4, 6, 0,        IRON, -P_CROSSBOW, HI_METAL,
                                                         CROSSBOW_BOLT),
 
+
 /* missiles that don't use a launcher */
 WEAPON("dart", NoDes,
        1, 1, 0, 60,   1,   2,  3,  2, 0, P,   -P_DART, IRON, HI_METAL,
@@ -273,7 +274,10 @@ WEAPON("two-handed sword", NoDes,
        1, 0, 1, 22, 150,  50, 12,  6, 0, S,   P_TWO_HANDED_SWORD,
                                                             IRON, HI_METAL,
                                                         TWO_HANDED_SWORD),
-        /* +2d6 large */
+WEAPON("doubled-edged blade", NoDes,
+       1, 0, 0, 1,  1,  15,  24, 36, 7, S,   P_LONG_SWORD, IRON, HI_METAL,
+                                                        TWO_EDGED_SWORD),
+      /* +2d6 large */
 WEAPON("katana", "samurai sword",
        0, 0, 0,  4,  40,  80, 10, 12, 1, S,   P_LONG_SWORD, IRON, HI_METAL,
                                                         KATANA),
@@ -552,6 +556,9 @@ DRGN_ARMR("yellow dragon scales",      0, ACID_RES,    500, 7, CLR_YELLOW,
                                                         YELLOW_DRAGON_SCALES),
 #undef DRGN_ARMR
 /* other suits */
+ARMOR("Holy Plate", NoDes,
+      1, 5, 1, ANTIMAGIC, 0, 5, 1, 1, 0, 3,  ARM_SUIT, GLASS, CLR_YELLOW,
+                                                        PLATE_OF_RIGHT),
 ARMOR("plate mail", NoDes,
       1, 0, 1,  0, 44, 5, 450, 600,  3, 2,  ARM_SUIT, IRON, HI_METAL,
                                                         PLATE_MAIL),
@@ -943,6 +950,8 @@ EYEWEAR("towel",            NoDes, 1, BLINDED, 50,  5, 50, CLOTH, CLR_MAGENTA,
 #undef EYEWEAR
 
 /* still other tools */
+TOOL("humble belt",         NoDes, 1, 0, 0, 0,  0,  1,150, LEATHER, HI_LEATHER,
+                                                                BELT),
 TOOL("saddle",              NoDes, 1, 0, 0, 0,  5,200,150, LEATHER, HI_LEATHER,
                                                                 SADDLE),
 TOOL("leash",               NoDes, 1, 0, 0, 0, 65, 12, 20, LEATHER, HI_LEATHER,
