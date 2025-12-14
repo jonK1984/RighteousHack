@@ -276,6 +276,9 @@ u_safe_from_fatal_corpse(struct obj *obj, int tests)
         || ((tests & st_corpse) && obj->otyp != CORPSE)
         || ((tests & st_petrifies) && !touch_petrifies(&mons[obj->corpsenm]))
         || ((tests & st_resists) && Stone_resistance))
+        
+        if (uarms && (objdescr_is(uarms, "ancient shield") ) )
+            pline("The Shield of Faith is preventing you from turning to stone!"); //Shield of Faith prevents stoning
         return TRUE;
     return FALSE;
 }

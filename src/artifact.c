@@ -43,12 +43,16 @@ staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
 staticfn int arti_invoke(struct obj *);
 staticfn boolean Mb_hit(struct monst * magr, struct monst *mdef,
                       struct obj *, int *, int, boolean, char *);
+staticfn boolean sos_hit(struct monst * magr, struct monst *mdef,
+                      struct obj *, int *, int, boolean, char *);                      
 staticfn unsigned long abil_to_spfx(long *) NONNULLARG1;
 staticfn uchar abil_to_adtyp(long *) NONNULLARG1;
 staticfn int glow_strength(int);
 staticfn boolean untouchable(struct obj *, boolean);
 staticfn int count_surround_traps(coordxy, coordxy);
 staticfn void dispose_of_orig_obj(struct obj *);
+
+boolean is_typ_artifact(struct obj *obj);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -348,6 +352,26 @@ artifact_name(
     }
 
     return (char *) 0;
+}
+
+//Created for RighteousHack
+/* Returns TRUE if the object's base type (otyp) corresponds to any defined artifact */
+boolean
+is_typ_artifact(struct obj *obj)
+{
+    boolean isArtifact = FALSE;
+    const struct artifact *a;
+
+    if (!obj)
+        return FALSE;  /* safety check */
+
+    for (a = artilist + 1; a->otyp; a++) {  /* skip the index-0 placeholder entry */
+        if (obj->otyp == a->otyp) {
+            isArtifact = TRUE;
+            break;  /* efficient early exit */
+        }
+    }
+    return isArtifact;
 }
 
 boolean
@@ -868,6 +892,30 @@ set_artifact_intrinsic(
         else
             EReflecting &= ~wp_mask;
     }
+    //Added for Righteous Hack, Shield of Faith prevents Stoning and Fire Resistance
+    if ((spfx & SPFX_STONING)) {
+        if (on)
+            EStone_resistance |= wp_mask;  /* or wp_mask if slot-specific; use FROMARTIFACT for general */
+        else
+            EStone_resistance &= ~wp_mask;
+    }
+    
+    if ((spfx & SPFX_SLEEP_RES)) {
+        if (on)
+            /* Example: boost warning or grant halluc_resist */
+            ESleep_resistance |= wp_mask;  /* or custom E property if new */
+        else
+            ESleep_resistance &= ~wp_mask;
+    }
+    if ((spfx & SPFX_BLIND_RES)) {
+        if (on)
+            /* Example: boost warning or grant halluc_resist */
+            EBlnd_resist |= wp_mask;  /* or custom E property if new */
+        else
+            EBlnd_resist &= ~wp_mask;
+    }
+
+
     if (spfx & SPFX_PROTECT) {
         if (on)
             EProtection |= wp_mask;
@@ -1431,6 +1479,62 @@ Mb_hit(struct monst *magr, /* attacker */
     return result;
 }
 
+/* Special hit function for the Sword of the Spirit (RighteousHack) */
+/* Only the player can wield this artifact */
+staticfn boolean
+sos_hit(struct monst *magr,   /* attacker – will always be &youmonst */
+        struct monst *mdef,   /* defender – monster being struck */
+        struct obj *sword,    /* Sword of the Spirit */
+        int *dmgptr,          /* pointer for extra damage */
+        int dieroll,          /* d20 hit roll – unused here */
+        boolean vis,          /* can the player see the action? */
+        char *hittee)         /* name of target – mon_nam(mdef) */
+{
+    const struct artifact *oart = get_artifact(sword);
+    int ndice, die;
+    int stun_damage;
+    int stun_duration;
+    boolean stunned = FALSE;
+
+    /* Extract the dice from the STUN() definition */
+    if (oart && oart->attk.adtyp == AD_STUN) {
+        ndice = oart->attk.damn;   /* number of dice (e.g., 2) */
+        die   = oart->attk.damd;   /* die size (e.g., 4) */
+    } else {
+        /* Fallback if something is wrong */
+        ndice = 2;
+        die   = 4;
+    }
+    /* Roll the 3d4 extra damage that represents the convicting power of the Word */
+    stun_damage = d(ndice, die);
+    *dmgptr += stun_damage;
+
+    /* Calculate Charisma-scaled stun chance: 25% base → max 75% at Cha 20 */
+    int cha = ACURR(A_CHA);
+    int stun_chance = 25 + ((cha - 3) * 25 / 17);  /* precise linear scaling */
+    if (stun_chance > 75) stun_chance = 75;
+
+    /* Roll to see if the truth convicts and overwhelms the enemy */
+    if (rn2(100) < stun_chance) {
+        stunned = TRUE;
+        stun_duration = stun_damage;  /* duration = total rolled on 3d4 */
+
+        /* Apply paralyze to the monster */
+        paralyze_monst(mdef, stun_duration);
+        
+
+
+        if (vis) {
+            pline("The Sword of the Spirit blazes with holy light as it strikes %s!",
+                  hittee);
+            pline("%s %s overwhelmed by divine truth!",
+                  Monnam(mdef), mdef->mstun > 5 ? "is" : "seems");
+        }
+    } 
+
+    return TRUE;  /* message was always given */
+}
+
 DISABLE_WARNING_FORMAT_NONLITERAL
 
 /* Function used when someone attacks someone else with an artifact
@@ -1534,7 +1638,10 @@ artifact_hit(
 
     if (attacks(AD_STUN, otmp) && dieroll <= MB_MAX_DIEROLL) {
         /* Magicbane's special attacks (possibly modifies hittee[]) */
-        return Mb_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
+        //In RighteousHack there is no MagicBane just stun
+        //return Mb_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
+        return sos_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
+
     }
 
     if (!gs.spec_dbon_applies) {
@@ -2322,6 +2429,9 @@ abil_to_spfx(long *abil)
         { &EHalf_spell_damage, SPFX_HSPDAM },
         { &EHalf_physical_damage, SPFX_HPHDAM },
         { &EReflecting, SPFX_REFLECT },
+        { &EStone_resistance, SPFX_STONING },  /* new entry for RighteousHack*/
+        { &ESleep_resistance, SPFX_SLEEP_RES },  /* new entry for RighteousHack*/
+        { &EBlnd_resist, SPFX_BLIND_RES }
     };
     int k;
 

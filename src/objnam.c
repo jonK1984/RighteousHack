@@ -57,6 +57,7 @@ staticfn void readobjnam_parse_charges(struct _readobjnam_data *);
 staticfn int readobjnam_postparse1(struct _readobjnam_data *);
 staticfn int readobjnam_postparse2(struct _readobjnam_data *);
 staticfn int readobjnam_postparse3(struct _readobjnam_data *);
+staticfn void ensure_uncursed(struct _readobjnam_data *);
 
 struct Jitem {
     int item;
@@ -5373,7 +5374,10 @@ readobjnam(char *bp, struct obj *no_wish)
         /* an artifact name might need capitalization fixing */
         aname = artifact_name(d.name, &objtyp, TRUE);
         if (aname && objtyp == d.otmp->otyp)
+        {
             d.name = aname;
+            ensure_uncursed(&d);
+        }
 
         /* 3.6 tribute - fix up novel */
         if (d.otmp->otyp == SPE_NOVEL
@@ -5420,6 +5424,18 @@ readobjnam(char *bp, struct obj *no_wish)
         d.otmp->owt += WT_IRON_BALL_INCR;
 
     return d.otmp;
+}
+
+staticfn void
+ensure_uncursed(struct _readobjnam_data *d)
+{
+    if (d) {
+        if (d->otmp) {
+            d->otmp->cursed = 0;    /* clear cursed flag on temporary object */
+            //d->otmp->bknown = 1;    /* optional: mark BUC status as known */
+        }
+        d->iscursed = 0;           /* clear the parsed "cursed" request flag */
+    }
 }
 
 int

@@ -195,6 +195,16 @@ Boots_on(void)
     case JUMPING_BOOTS:
     case KICKING_BOOTS:
         break;
+    case SANDALS:
+        /* Sandals also have speed, */
+        /*if (!oldprop && !(HFast & TIMEOUT)) {
+            makeknown(uarmf->otyp);
+            You_feel("yourself speed up%s.",
+                     (oldprop || HFast) ? " a bit more" : "");
+        }*/
+        adj_abon(uarmf, uarmf->spe);
+        break;
+        /* Sandals also have water walking, */
     case WATER_WALKING_BOOTS:
         /*
          * Sequencing issue?  If underwater (perhaps via magical breathing),
@@ -268,7 +278,11 @@ Boots_off(void)
     /* For levitation, float_down() returns if Levitation, so we
      * must do a setworn() _before_ the levitation case.
      */
-    setworn((struct obj *) 0, W_ARMF);
+    if( otyp != SANDALS )
+    {
+        setworn((struct obj *) 0, W_ARMF);
+    }
+    
     switch (otyp) {
     case SPEED_BOOTS:
         if (!Very_fast && !svc.context.takeoff.cancelled_don) {
@@ -276,6 +290,13 @@ Boots_off(void)
             You_feel("yourself slow down%s.", Fast ? " a bit" : "");
         }
         break;
+    case SANDALS:
+        if (!Very_fast && !svc.context.takeoff.cancelled_don) {
+                makeknown(otyp);
+                You_feel("yourself slow down%s.", Fast ? " a bit" : "");
+            }
+        adj_abon(uarmf, -uarmf->spe);
+        setworn((struct obj *) 0, W_ARMF);
     case WATER_WALKING_BOOTS:
         /* check for lava since fireproofed boots make it viable */
         if ((is_pool(u.ux, u.uy) || is_lava(u.ux, u.uy))
@@ -447,6 +468,9 @@ Helmet_on(void)
     case HELM_OF_CAUTION:
         see_monsters();
         break;
+    case DIVINE_COVERING:
+        adj_abon(uarmh, uarmh->spe);
+        break;
     case HELM_OF_BRILLIANCE:
         adj_abon(uarmh, uarmh->spe);
         break;
@@ -544,6 +568,9 @@ Helmet_off(void)
         setworn((struct obj *) 0, W_ARMH);
         see_monsters();
         return 0;
+    case DIVINE_COVERING:
+        adj_abon(uarmh, -uarmh->spe);
+        break;
     case HELM_OF_BRILLIANCE:
         if (!svc.context.takeoff.cancelled_don)
             adj_abon(uarmh, -uarmh->spe);
@@ -708,6 +735,9 @@ Shield_on(void)
        [reflection is handled by setting u.uprops[REFLECTION].extrinsic
        in setworn() called by armor_or_accessory_on() before Shield_on()] */
     switch (uarms->otyp) {
+    case ANCIENT_SHIELD: //Added for RighteousHack
+        adj_abon(uarms, uarms->spe);
+        break;
     case SMALL_SHIELD:
     case ELVEN_SHIELD:
     case URUK_HAI_SHIELD:
@@ -734,6 +764,10 @@ Shield_off(void)
     /* no shield currently requires special handling when taken off, but we
        keep this uncommented in case somebody adds a new one which does */
     switch (uarms->otyp) {
+    case ANCIENT_SHIELD: //Added for RighteousHack
+        if (!svc.context.takeoff.cancelled_don)
+            adj_abon(uarms, -uarms->spe);
+        break;
     case SMALL_SHIELD:
     case ELVEN_SHIELD:
     case URUK_HAI_SHIELD:
@@ -756,6 +790,10 @@ Shirt_on(void)
     /* no shirt currently requires special handling when put on, but we
        keep this uncommented in case somebody adds a new one which does */
     switch (uarmu->otyp) {
+    case BELT:
+        //Added for Belt of Truth
+        adj_abon(uarmu, uarmu->spe);
+        break;
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
         break;
@@ -777,6 +815,10 @@ Shirt_off(void)
     /* no shirt currently requires special handling when taken off, but we
        keep this uncommented in case somebody adds a new one which does */
     switch (uarmu->otyp) {
+    case BELT:
+        //Added for Belt of Truth
+        adj_abon(uarmu, -uarmu->spe);
+        break;
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
         break;
@@ -3268,6 +3310,39 @@ adj_abon(struct obj *otmp, schar delta)
         }
         disp.botl = TRUE;
     }
+    //For Shield of Faith
+    if (uarms && uarms == otmp && otmp->otyp == ANCIENT_SHIELD) {
+        if (delta) {
+            makeknown(uarms->otyp);
+            ABON(A_STR) += (delta);
+        }
+        disp.botl = TRUE;
+    }
+    //For Belt of Truth
+    if (uarmu && uarmu == otmp && otmp->otyp == BELT) {
+        if (delta) {
+            makeknown(uarmu->otyp);
+            ABON(A_INT) += (delta);
+        }
+        disp.botl = TRUE;
+    }
+    //For Helmet of Salvation
+    if (uarmh && uarmh == otmp && otmp->otyp == DIVINE_COVERING) {
+        if (delta) {
+            makeknown(uarmh->otyp);
+            ABON(A_DEX) += (delta);
+        }
+        disp.botl = TRUE;
+    }
+    //For Gosple of the Peace
+    if (uarmf && uarmf == otmp && otmp->otyp == SANDALS) {
+        if (delta) {
+            makeknown(uarmf->otyp);
+            ABON(A_CHA) += (delta);
+        }
+        disp.botl = TRUE;
+    }
+
 }
 
 /* decide whether a worn item is covered up by some other worn item,

@@ -275,7 +275,7 @@ WEAPON("two-handed sword", NoDes,
                                                             IRON, HI_METAL,
                                                         TWO_HANDED_SWORD),
 WEAPON("doubled-edged blade", NoDes,
-       1, 0, 0, 1,  1,  15,  24, 36, 7, S,   P_LONG_SWORD, IRON, HI_METAL,
+       1, 0, 0, 1,  1,  15,  12, 18, 7, S,   P_LONG_SWORD, IRON, HI_METAL,
                                                         TWO_EDGED_SWORD),
       /* +2d6 large */
 WEAPON("katana", "samurai sword",
@@ -475,6 +475,11 @@ HELM("helm of brilliance", "crystal helmet",
         /* used to be iron and shuffled as "etched helmet" but required
            special case for the effect of iron armor on spell casting */
                                                         HELM_OF_BRILLIANCE),
+HELM("divine covering", "divine covering",
+     0, 1,  MAGICAL_BREATHING,  3, 1, 40, 50,  9, 0, GLASS, CLR_YELLOW,
+        /* used to be iron and shuffled as "etched helmet" but required
+           special case for the effect of iron armor on spell casting */
+                                                        DIVINE_COVERING),
 /* with shuffled appearances... */
 HELM("helmet", "plumed helmet",
      0, 0,           0, 10, 1, 30, 10,  9, 0, IRON, HI_METAL,
@@ -556,7 +561,7 @@ DRGN_ARMR("yellow dragon scales",      0, ACID_RES,    500, 7, CLR_YELLOW,
                                                         YELLOW_DRAGON_SCALES),
 #undef DRGN_ARMR
 /* other suits */
-ARMOR("Holy Plate", NoDes,
+ARMOR("gleaming armor", NoDes,
       1, 5, 1, ANTIMAGIC, 0, 5, 1, 1, 0, 3,  ARM_SUIT, GLASS, CLR_YELLOW,
                                                         PLATE_OF_RIGHT),
 ARMOR("plate mail", NoDes,
@@ -612,6 +617,10 @@ ARMOR("Hawaiian shirt", NoDes,
 ARMOR("T-shirt", NoDes,
       1, 0, 0,  0,  2, 0,   5,   2, 10, 0,  ARM_SHIRT, CLOTH, CLR_WHITE,
                                                         T_SHIRT),
+/*For Belt of Truth*/
+ARMOR("humble sash", NoDes,
+      1, 0,  0,  SEE_INVIS,  2, 0,   5,   2, 10, 0,  ARM_SHIRT, LEATHER, HI_LEATHER,
+                                                        BELT),
 
 /* cloaks */
 CLOAK("mummy wrapping", NoDes,
@@ -659,6 +668,9 @@ CLOAK("cloak of displacement", "piece of cloth",
 SHIELD("small shield", NoDes,
        1, 0, 0,          0, 6, 0,  30,  3, 9, 0,  WOOD, HI_WOOD,
                                                         SMALL_SHIELD),
+SHIELD("ancient defense", "ancient defense",
+       1, 5, 0, FREE_ACTION, 0, 0,  5,  1, 9, 0,  GLASS, CLR_BRIGHT_CYAN,
+                                                        ANCIENT_SHIELD),
 SHIELD("elven shield", "blue and green shield",
        0, 0, 0,          0, 2, 0,  40,  7, 8, 0,  WOOD, CLR_GREEN,
                                                         ELVEN_SHIELD),
@@ -697,6 +709,8 @@ GLOVES("gauntlets of dexterity", "fencing gloves",
                                                     GAUNTLETS_OF_DEXTERITY),
 
 /* boots */
+BOOTS("trusty sandals", "trusty sandles",
+      0, 0,          WWALKING, 0, 1, 1,  8, 9, 0, LEATHER, HI_LEATHER, SANDALS),
 BOOTS("low boots", "walking shoes",
       0, 0,          0, 25, 2, 10,  8, 9, 0, LEATHER, HI_LEATHER, LOW_BOOTS),
 BOOTS("iron shoes", "hard shoes",
@@ -950,8 +964,7 @@ EYEWEAR("towel",            NoDes, 1, BLINDED, 50,  5, 50, CLOTH, CLR_MAGENTA,
 #undef EYEWEAR
 
 /* still other tools */
-TOOL("humble belt",         NoDes, 1, 0, 0, 0,  0,  1,150, LEATHER, HI_LEATHER,
-                                                                BELT),
+
 TOOL("saddle",              NoDes, 1, 0, 0, 0,  5,200,150, LEATHER, HI_LEATHER,
                                                                 SADDLE),
 TOOL("leash",               NoDes, 1, 0, 0, 0, 65, 12, 20, LEATHER, HI_LEATHER,

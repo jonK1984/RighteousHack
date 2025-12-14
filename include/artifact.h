@@ -41,6 +41,10 @@
 #define SPFX_XRAY   0x02000000L /* gives X-RAY vision to player */
 #define SPFX_REFLECT 0x04000000L /* Reflection */
 #define SPFX_PROTECT 0x08000000L /* Protection */
+#define SPFX_STONING   0x10000000L  /* immunity to stoning - MOVED to bit 28 (was conflicting with EREGEN) */
+#define SPFX_SLEEP_RES 0x40000000L  /* immunity to sleep (bit 30) */
+#define SPFX_BLIND_RES 0x80000000L  /* immunity to blindness (bit 31) */
+
 
 struct artifact {
     short otyp;

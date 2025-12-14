@@ -306,39 +306,105 @@ static NEARDATA struct artifact artilist[] = {
       NON_PM,
       0, 12, 4000L, NO_COLOR, EYE_OF_THE_AETHIOPICA),
     
-    A("Gosple of the Peace", WATER_WALKING_BOOTS,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,
-      M2_UNDEAD, NO_ATTK, NO_DFNS, CARY(AD_FIRE), ENERGY_BOOST, A_LAWFUL,
+     /*
+    =================================
+      GOSPLE OF THE PEACE
+      Water Walking
+      Haste
+      Fire Resistance
+      Apply to tame
+      +modifier to charisma
+    =================================
+    */
+    A("Gosple of the Peace", SANDALS,
+      (SPFX_NOGEN), 0,
+      0, NO_ATTK, NO_DFNS, CARY(AD_FIRE), TAMING, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, SHOES_GOSPEL_OF_PEACE),
 
+     /*
+    =================================
+      BREASTPLATE OF RIGHTEOUSNESS
+      BASE AC 0
+      Immunity to Drain Life
+      Magic Resistance
+      1/2 Magic Damage
+      Posion/Drain Strength Resistance
+      MC3
+      Apply to use energy
+    =================================
+    */
     A("Breastplate of Righteousness", PLATE_OF_RIGHT,
-      (SPFX_NOGEN | SPFX_REFLECT ), 0,
-      M2_UNDEAD, NO_ATTK, DFNS(AD_PHYS), CARY(AD_DISN), ENERGY_BOOST, A_LAWFUL,
+      (SPFX_NOGEN | SPFX_HSPDAM ), 0,
+      0, NO_ATTK, DRLI(0, 0), CARY(AD_DRST), ENERGY_BOOST, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, PLATE_OF_RIGHTEOUSNESS),
     
+      /*
+    =================================
+      BELT OF TRUTH
+      See Invisibility
+      Better Searching
+      Protection against Sleep
+      Protection Against Hallucination
+      Protection against Blindness
+      +modifier to intelligence
+      Enlightenment when used
+    =================================
+    */
     A("Belt of Truth", BELT,
-      (SPFX_NOGEN | SPFX_REFLECT ), 0,
-      M2_UNDEAD, NO_ATTK, DFNS(AD_PLYS), CARY(AD_BLND), ENLIGHTENING, A_LAWFUL,
+      (SPFX_NOGEN | SPFX_SEARCH | SPFX_SEEK | SPFX_SLEEP_RES | SPFX_BLIND_RES | SPFX_HALRES ), 0,
+      0, NO_ATTK, NO_DFNS, NO_CARY, ENLIGHTENING, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, BELT_OF_TRUTH),
     
+      /*
+    =================================
+      SWORD OF THE SPIRIT
+      Reflection
+      Stun Attack 4d5 (needs work)
+      Increased base damage
+      Better Searching
+      Warning/Aware for boss monsters
+    =================================
+    */
     A("Sword of the Spirit", TWO_EDGED_SWORD,
-      (SPFX_NOGEN | SPFX_REFLECT ), 0,
-      M2_UNDEAD, NO_ATTK, DFNS(AD_PLYS), CARY(AD_BLND), TAMING, A_LAWFUL,
+      (SPFX_NOGEN | SPFX_REFLECT | SPFX_WARN ), 0,
+      M2_NASTY, STUN(2, 4), NO_DFNS, NO_CARY, 0, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, SWORD_OF_THE_SPIRIT),
     
-    A("Helmet of Salvation", HELM_OF_BRILLIANCE,
-      (SPFX_NOGEN | SPFX_REFLECT ), 0,
-      M2_UNDEAD, NO_ATTK, DFNS(AD_PLYS), CARY(AD_BLND), TAMING, A_LAWFUL,
+        /*
+    =================================
+      HELMET OF SALVATION
+      Underwater breathing
+      1/2 physical damage
+      protection against disintigration
+      health regeneration
+      +modifier to dexterity
+    =================================
+    */
+    A("Cap of Salvation", DIVINE_COVERING,
+      (SPFX_NOGEN | SPFX_HPHDAM | SPFX_REGEN), 0,
+      0, NO_ATTK, NO_DFNS, CARY(AD_DISN), HEALING, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, HELMET_OF_SALVATION),
     
-    A("Shield of Faith", SHIELD_OF_REFLECTION,
-      (SPFX_NOGEN | SPFX_HPHDAM ), 0,
-      M2_UNDEAD, NO_ATTK, DFNS(AD_FIRE), CARY(AD_STUN), TAMING, A_LAWFUL,
+    /*
+    =================================
+      SHIELD OF FAITH
+      Free Action
+      Protection against stoning
+      Fire resistance
+      Magic Missile resistance (needs work)
+      +modifier to strength attribute
+      Can heal player when used
+    =================================
+    */
+
+    A("Shield of Faith", ANCIENT_SHIELD,
+      (SPFX_NOGEN | SPFX_STONING ), 0,
+      0, NO_ATTK, DFNS(AD_FIRE), CARY(AD_MAGM), HEALING, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, SHIELD_OF_FAITH),
 

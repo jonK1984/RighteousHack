@@ -28,6 +28,7 @@ staticfn void check_glob(struct obj *, const char *);
 staticfn void sanity_check_worn(struct obj *);
 staticfn void init_oextra(struct oextra *);
 
+
 struct icp {
     int iprob;   /* probability of an item type */
     char iclass; /* item class */
@@ -80,11 +81,15 @@ static const struct oextra zerooextra = DUMMY;
 static boolean
 is_holy_scripture(struct obj *obj)
 {
+    
+
+
     return (obj->oclass == SCROLL_CLASS    /* verses */
          || obj->oclass == SPBOOK_CLASS   /* prophetic books */
-         || obj->oclass == WAND_CLASS
-         || obj->oclass == ANOINTING_CLASS
-         || obj->otyp == MAGIC_MARKER);   /* rods of authority */
+         || obj->oclass == WAND_CLASS /* rods of authority */
+         || obj->oclass == ANOINTING_CLASS /*anointing oils*/
+         || obj->otyp == MAGIC_MARKER  /*scripture writing tools*/
+        );    
 }
 
 staticfn void
@@ -1786,6 +1791,8 @@ unbless(struct obj *otmp)
     if (otmp->lamplit)
         maybe_adjust_light(otmp, old_light);
 }
+
+
 
 void
 curse(struct obj *otmp)

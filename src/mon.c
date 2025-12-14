@@ -3470,13 +3470,14 @@ xkilled(
     mtmp->mhp = 0; /* caller will usually have already done this */
     if (!noconduct) /* KMH, conduct */
         if (!u.uconduct.killer++)
-            livelog_printf(LL_CONDUCT, "killed for the first time");
+            livelog_printf(LL_CONDUCT, "defeated a monster for the first time");
 
+    //RighteousHack - get rid of murderous messages
     if (!nomsg) {
         boolean namedpet = has_mgivenname(mtmp) && !Hallucination;
 
         You("%s %s!",
-            nonliving(mtmp->data) ? "destroy" : "kill",
+            nonliving(mtmp->data) ? "destroy" : "defeat",//"kill",
             !(wasinside || canspotmon(mtmp)) ? "it"
               : !mtmp->mtame ? mon_nam(mtmp)
                 : x_monnam(mtmp, namedpet ? ARTICLE_NONE : ARTICLE_THE,
