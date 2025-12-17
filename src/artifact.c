@@ -2191,6 +2191,36 @@ invoke_blinding_ray(struct obj *obj)
 }
 
 staticfn int
+invoke_quill_paper(struct obj *obj)
+{
+    struct obj *opaper;
+    
+    if (inv_cnt(TRUE) >= 52) {
+        You("have no room for it.");
+        return ECMD_TIME;
+    }
+    opaper = mksobj(SCR_BLANK_PAPER, TRUE, FALSE);
+    if (!opaper) {
+        impossible("Hmm, that's odd. Unable to create blank parchment?");
+        return ECMD_TIME;
+    }
+    opaper->spe = 0;
+    opaper->bknown = TRUE;  // it's blank, but player knows 
+    //hold_another_object(opaper);  // to inventory 
+    /* Add to inventory using the standard safe function */
+    opaper = hold_another_object(opaper, "It slips from your grasp!",
+                                 (const char *)0, (const char *)0);
+
+    /* If somehow dropped (e.g., cursed container), make the type known */
+    if (opaper && opaper->where == OBJ_FLOOR)
+        makeknown(SCR_BLANK_PAPER);
+    makeknown(SCR_BLANK_PAPER);
+    pline("A fine sheet of blank parchment appears by divine provision!");
+    // ESV-inspired: Prov 2:6 "For the LORD gives wisdom; from his mouth come knowledge and understanding."
+    return ECMD_TIME;
+}
+
+staticfn int
 arti_invoke(struct obj *obj)
 {
     const struct artifact *oart;
@@ -2240,6 +2270,7 @@ arti_invoke(struct obj *obj)
             /*FALLTHRU*/
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
+        case QUILL_INVOKE: res = invoke_quill_paper(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

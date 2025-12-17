@@ -253,7 +253,8 @@ dowrite(struct obj *pen)
 
     /* see if there's enough ink */
     basecost = cost(new_obj);
-    if (pen->spe < basecost / 2) {
+    //if (pen->spe < basecost / 2) {
+    if (pen->spe < basecost / 2 && pen->oartifact != ART_QUILL_OF_THE_APOSTLES) {
         Your("marker is too dry to write that!");
         obfree(new_obj, (struct obj *) 0);
         return ECMD_TIME;
@@ -261,17 +262,17 @@ dowrite(struct obj *pen)
 
     /* we're really going to write now, so calculate cost
      */
-    actualcost = rn1(basecost / 2, basecost / 2);
+    /*actualcost = rn1(basecost / 2, basecost / 2);
     curseval = bcsign(pen) + bcsign(paper);
     exercise(A_WIS, TRUE);
-    /* dry out marker */
+    // dry out marker 
     if (pen->spe < actualcost) {
         pen->spe = 0;
         Your("marker dries out!");
-        /* scrolls disappear, prophetic books don't */
+        // scrolls disappear, prophetic books don't 
         if (paper->oclass == SPBOOK_CLASS) {
             pline_The("prophetic book is left unfinished and your writing fades.");
-            update_inventory(); /* pen charges */
+            update_inventory(); // pen charges
         } else {
             pline_The("scroll is now useless and disappears!");
             useup(paper);
@@ -279,8 +280,34 @@ dowrite(struct obj *pen)
         obfree(new_obj, (struct obj *) 0);
         return ECMD_TIME;
     }
-    pen->spe -= actualcost;
-
+    pen->spe -= actualcost;*/
+    /* RIGHTEOUS HACK
+        ARTIFACT QUILL OF THE APOSTLES ALLOWS UNLIMITED WRITING
+    */
+    if (pen->oartifact == ART_QUILL_OF_THE_APOSTLES) {
+        pline("The Quill of the Apostles glows softly; your writing flows by divine inspiration.");
+    } else {
+        /* Normal finite ink */
+        actualcost = rn1(basecost / 2, basecost / 2);
+        curseval = bcsign(pen) + bcsign(paper);
+        exercise(A_WIS, TRUE);
+        /* dry out marker */
+        if (pen->spe < actualcost) {
+            pen->spe = 0;
+            Your("marker dries out!");
+            /* scrolls disappear, prophetic books don't */
+            if (paper->oclass == SPBOOK_CLASS) {
+                pline_The("prophetic book is left unfinished and your writing fades.");
+                update_inventory(); /* pen charges */
+            } else {
+                pline_The("scroll is now useless and disappears!");
+                useup(paper);
+            }
+            obfree(new_obj, (struct obj *) 0);
+            return ECMD_TIME;
+        }
+        pen->spe -= actualcost;
+    }
     /*
      * Writing by name requires that the hero knows the scroll or
      * book type.  One has previously been read (and its effect
@@ -359,8 +386,16 @@ dowrite(struct obj *pen)
         pline_The("prophetic book warps strangely, then turns %s.",
                   new_book_description(new_obj->otyp, namebuf));
     }
+
     new_obj->blessed = (curseval > 0);
-    new_obj->cursed = (curseval < 0);
+    if( pen->oartifact == ART_QUILL_OF_THE_APOSTLES )
+    {
+        //Quill of the apostles always creates blessed verses
+        new_obj->blessed = 1;
+    }
+    
+    //items are NEVER cursed
+    //new_obj->cursed = (curseval < 0);
 #ifdef MAIL_STRUCTURES
     if (new_obj->otyp == SCR_MAIL)
         /* 0: delivered in-game via external event (or randomly for fake mail);

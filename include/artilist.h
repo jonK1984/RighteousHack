@@ -261,6 +261,20 @@ static NEARDATA struct artifact artilist[] = {
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_XRAY), 0, 0, NO_ATTK,
       DFNS(AD_MAGM), NO_CARY, ENLIGHTENING, A_NEUTRAL, PM_MONK, NON_PM,
       0, 12, 2500L, NO_COLOR, EYES_OF_THE_OVERWORLD),
+    
+    /* 
+    =================================
+      QUILL OF THE APOSTLES
+    * Quest reward for Archeologist
+    * Enables unlimited writing of approved scrolls and prophetic books.
+    * Divine ink never runs dry (bypasses spe checks in write.c).
+    * #invoke gives you a free sheet of paper (unlimited paper)
+    =================================
+    */
+    A("Quill of the Apostles", MAGIC_MARKER,
+      (SPFX_NOGEN|SPFX_RESTR), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, QUILL_INVOKE, A_LAWFUL, PM_ARCHEOLOGIST, NON_PM,
+      0, 5, 3000L, CLR_WHITE, QUILL_OF_THE_APOSTLES),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,
