@@ -2356,7 +2356,7 @@ staticfn int invoke_censer( struct obj *obj )
                     ep = newengr(smem * 3);
 
                     //ep = newengr(strlen(engr_text) + 1);
-                    make_engr_at(x, y, engr_text, engr_text,  0L, ENGRAVE);
+                    make_engr_at(x, y, engr_text, engr_text,  0L, BURN);
                     /*ep->engr_x = x;
                     ep->engr_y = y;
                     ep->engr_txt = xstrdup(engr_text);
@@ -2369,7 +2369,7 @@ staticfn int invoke_censer( struct obj *obj )
                     affected = TRUE;
                 } else if (strcmp(ep->engr_txt, engr_text) != 0) {
                     /* Existing engraving; overwrite if different */
-                    make_engr_at(x, y, engr_text, engr_text,  0L, ENGRAVE);
+                    make_engr_at(x, y, engr_text, engr_text,  0L, BURN);
                     /*free(ep->engr_txt);
                     ep->engr_txt = xstrdup(engr_text);
                     ep->engr_time = 0L;
@@ -2424,7 +2424,7 @@ staticfn int invoke_censer( struct obj *obj )
 
             if (found) {
                 int oldx = mtmp->mx, oldy = mtmp->my;
-                
+
                 if (!any_vanished)
                     Strcpy(vanished, mon_nam(mtmp));
                 else
@@ -2442,8 +2442,8 @@ staticfn int invoke_censer( struct obj *obj )
                 if (!any_resisted)
                     Strcpy(resisted, mon_nam(mtmp));
                 else
-                    Strcat(vanished, ", ");
-                    Strcat(vanished, mon_nam(mtmp));
+                    Strcat(resisted, ", ");
+                    Strcat(resisted, mon_nam(mtmp));
                 any_resisted = TRUE;
             }
 

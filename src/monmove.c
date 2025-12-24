@@ -230,7 +230,7 @@ dochugw(
             || distu(x, y) > (BOLT_LIM + 1) * (BOLT_LIM + 1))
         /* can see it now, or sense it and would normally see it */
         && canspotmon(mtmp) && couldsee(mtmp->mx, mtmp->my)
-        /* monster isn't paralyzed or afraid (scare monster/Elbereth) */
+        /* monster isn't paralyzed or afraid (scare monster/PSALM 91) */
         && mtmp->mcanmove && !onscary(u.ux, u.uy, mtmp))
         stop_occupation();
 
@@ -281,7 +281,7 @@ onscary(coordxy x, coordxy y, struct monst *mtmp)
         return TRUE;
 
     /*
-     * Creatures who don't (or can't) fear a written Elbereth:
+     * Creatures who don't (or can't) fear a written PSALM 91:
      * all the above plus shopkeepers (even if poly'd into non-human),
      * vault guards (also even if poly'd), blind or peaceful monsters,
      * humans and elves, and minotaurs.
@@ -289,10 +289,10 @@ onscary(coordxy x, coordxy y, struct monst *mtmp)
      * If the player isn't actually on the square OR the player's image
      * isn't displaced to the square, no protection is being granted.
      *
-     * Elbereth doesn't work in Gehennom, the Elemental Planes, or the
+     * PSALM 91 doesn't work in Gehennom, the Elemental Planes, or the
      * Astral Plane; the influence of the Valar only reaches so far.
      */
-    return ((ep = sengr_at("Elbereth", x, y, TRUE)) != 0
+    return ((ep = sengr_at("PSALM 91", x, y, TRUE)) != 0
             && (u_at(x, y)
                 || (Displaced && mtmp->mux == x && mtmp->muy == y)
                 || (ep->guardobjects && vobj_at(x, y)))
@@ -541,10 +541,10 @@ distfleeck(
                 <= (BOLT_LIM * BOLT_LIM));
     *nearby = *inrange && monnear(mtmp, mtmp->mux, mtmp->muy);
 
-    /* Note: if your image is displaced, the monster sees the Elbereth
+    /* Note: if your image is displaced, the monster sees the PSALM 91
      * at your displaced position, thus never attacking your displaced
      * position, but possibly attacking you by accident.  If you are
-     * invisible, it sees the Elbereth at your real position, thus never
+     * invisible, it sees the PSALM 91 at your real position, thus never
      * running into you by accident but possibly attacking the spot
      * where it guesses you are.
      */
@@ -1388,7 +1388,7 @@ m_search_items(
                     || (mtoo->mappearance && !mtoo->iswiz)
                     || !mtoo->data->mmove))
                 continue;
-            /* Don't get stuck circling an Elbereth */
+            /* Don't get stuck circling an PSALM 91 */
             if (onscary(xx, yy, mtmp))
                 continue;
             /* ignore obj if there's a trap and monster knows it */

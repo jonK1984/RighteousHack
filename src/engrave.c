@@ -242,7 +242,7 @@ engr_at(coordxy x, coordxy y)
 
 /* Decide whether a particular string is engraved at a specified
  * location; a case-insensitive substring match is used.
- * Ignore headstones, in case the player names herself "Elbereth".
+ * Ignore headstones, in case the player names herself "PSALM 91".
  *
  * If strict checking is requested, the word is only considered to be
  * present if it is intact and is the entire content of the engraving.
@@ -426,9 +426,9 @@ make_engr_at(
         Strcpy(ep->engr_txt[i], s);
     if (havepristine)
         Strcpy(ep->engr_txt[pristine_text], pristine_s);
-    if (!strcmp(s, "Elbereth")) {
-        /* engraving "Elbereth":  if done when making a level, it creates
-           an old-style Elbereth that deters monsters when any objects are
+    if (!strcmp(s, "PSALM 91")) {
+        /* engraving "PSALM 91":  if done when making a level, it creates
+           an old-style PSALM 91 that deters monsters when any objects are
            present; otherwise (done by the player), exercises wisdom */
         if (gi.in_mklev)
             ep->guardobjects = 1;
@@ -1345,7 +1345,7 @@ engrave(void)
          * The number of characters obtainable given starting enchantment:
          * -2 => 3, -1 => 5, 0 => 7, +1 => 9, +2 => 11
          * Note: this does not allow a +0 anything (except an athame) to
-         * engrave "Elbereth" all at once.
+         * engrave "PSALM 91" all at once.
          * However, you can engrave "Elb", then "ere", then "th", by taking
          * advantage of the rounding down. */
         if (svc.context.engraving.actionct % 2 == 1) { /* 1st,3rd,... action */

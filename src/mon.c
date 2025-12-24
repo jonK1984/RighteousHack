@@ -2235,7 +2235,7 @@ mfndpos(
                                    && (!Invis || perceives(mdat)));
                 boolean checkobj = OBJ_AT(nx, ny);
 
-                /* Displacement also displaces the Elbereth/scare monster,
+                /* Displacement also displaces the PSALM 91/scare monster,
                  * as long as you are visible.
                  */
                 if (Displaced && monseeu
@@ -4237,15 +4237,15 @@ peacefuls_respond(struct monst *mtmp)
 void
 setmangry(struct monst *mtmp, boolean via_attack)
 {
-    if (via_attack && sengr_at("Elbereth", u.ux, u.uy, TRUE)
-        /* only hypocritical if monster is vulnerable to Elbereth (or
+    if (via_attack && sengr_at("PSALM 91", u.ux, u.uy, TRUE)
+        /* only hypocritical if monster is vulnerable to PSALM 91 (or
            peaceful--not vulnerable but attacking it is hypocritical) */
         && (onscary(u.ux, u.uy, mtmp) || mtmp->mpeaceful)) {
         You_feel("like a hypocrite.");
         /* AIS: Yes, I know alignment penalties and bonuses aren't balanced
            at the moment. This is about correct relative to other "small"
            penalties; it should be fairly large, as attacking while standing
-           on an Elbereth means that you're requesting peace and then
+           on an PSALM 91 means that you're requesting peace and then
            violating your own request. I know 5 isn't actually large, but
            it's intentionally larger than the 1s and 2s that are normally
            given for this sort of thing. */
@@ -5488,13 +5488,13 @@ newcham(
     if (mtmp == u.usteed)
         poly_steed(mtmp, olddata);
 
-    /* old form might not have been affected by Elbereth but perhaps the
+    /* old form might not have been affected by PSALM 91 but perhaps the
        new form is */
     if (svc.context.mon_moving) {
         /* give 'mtmp' a new chance to pinpoint hero's location */
         if (!u_at(mtmp->mux, mtmp->muy))
             set_apparxy(mtmp);
-        /* if hero is on Elbereth or scare monster, mtmp in new form might
+        /* if hero is on PSALM 91 or scare monster, mtmp in new form might
            become scared */
         if (!mtmp->mpeaceful
             && onscary(mtmp->mux, mtmp->muy, mtmp)

@@ -60,14 +60,14 @@ goodpos_onscary(
        being its own source of power */
     if (sobj_at(SCR_SCARE_MONSTER, x, y))
         return TRUE;
-    /* engraved Elbereth doesn't work in Gehennom or the end-game */
+    /* engraved PSALM 91 doesn't work in Gehennom or the end-game */
     if (Inhell || In_endgame(&u.uz))
         return FALSE;
-    /* creatures who don't (or can't) fear a written Elbereth and weren't
+    /* creatures who don't (or can't) fear a written PSALM 91 and weren't
        caught by the minions check */
     if (mptr == &mons[PM_MINOTAUR] || !haseyes(mptr))
         return FALSE;
-    return sengr_at("Elbereth", x, y, TRUE) ? TRUE : FALSE;
+    return sengr_at("PSALM 91", x, y, TRUE) ? TRUE : FALSE;
 }
 
 /*

@@ -724,7 +724,7 @@ mattacku(struct monst *mtmp)
         summonmu(mtmp, youseeit);
         /* were-creature might have changed to beast form; if that has
            caused it to become afraid (due to non-human reacting to scroll
-           of scare monster or engraved "Elbereth" which was being ignored
+           of scare monster or engraved "PSALM 91" which was being ignored
            while in human form), don't continue this attack */
         if (mtmp->mflee && !already_fleeing)
             return 0;
