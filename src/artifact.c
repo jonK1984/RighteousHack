@@ -41,6 +41,9 @@ staticfn int invoke_banish(struct obj *) NONNULLARG1;
 staticfn int invoke_fling_poison(struct obj *) NONNULLARG1;
 staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
+staticfn int invoke_quill_paper(struct obj *) NONNULLARG1;
+staticfn int invoke_handkerchief(struct obj *) NONNULLARG1;
+
 staticfn boolean is_blanket_of_the_heavenly_host(struct obj *obj) NONNULLARG1;
 
 staticfn int arti_invoke(struct obj *);
@@ -2296,6 +2299,203 @@ invoke_quill_paper(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* artifact.c */
+#include "hack.h"
+#include "artifact.h"
+#include "monst.h"
+#include "youprop.h"
+#include "mondata.h"
+#include "obj.h"
+#include "prop.h"
+#include "mextra.h"
+
+/* Invoke function for the Handkerchief of the Apostle Paul */
+staticfn int
+invoke_handkerchief(struct obj *obj)
+{
+    struct monst *mtmp;
+    int x, y, dx, dy;
+    boolean affected = FALSE;
+
+    if (!obj) {
+        impossible("invoke_handkerchief: null object");
+        return ECMD_OK;
+    }
+
+    /* Ensure the artifact is being invoked properly */
+    if (obj->oartifact != ART_HANDKERCHIEF_OF_THE_APOSTLE_PAUL) {
+        pline("Nothing happens.");
+        return ECMD_OK;
+    }
+
+    /* Feedback to the player */
+    pline("The %s glows with a holy light!", xname(obj));
+
+    /* 1. Heal player to 100% */
+    if (u.uhp < u.uhpmax) {
+        u.uhp = u.uhpmax;
+        pline("You feel completely healed!");
+        affected = TRUE;
+    }
+    if (Upolyd && u.mh < u.mhmax) {
+        u.mh = u.mhmax;
+        pline("Your transformed body is restored!");
+        affected = TRUE;
+    }
+
+    /* 2. Clear all ailments */
+    if (Stunned) {
+        make_stunned(0L, FALSE);
+        pline("You are no longer stunned.");
+        affected = TRUE;
+    }
+    if (u.usleep) {
+        u.usleep = 0;
+        pline("You awaken!");
+        affected = TRUE;
+    }
+    if (u.ustuck && !u.uswallow) {
+        u.ustuck = (struct monst *) 0;
+        pline("You are no longer paralyzed.");
+        affected = TRUE;
+    }
+    if (Confusion) {
+        make_confused(0L, FALSE);
+        pline("Your mind clears.");
+        affected = TRUE;
+    }
+    if (Blind) {
+        make_blinded(0L, FALSE);
+        pline("Your vision is restored!");
+        affected = TRUE;
+    }
+    if (Wounded_legs) {
+        heal_legs(0);
+        pline("Your legs feel strong again.");
+        affected = TRUE;
+    }
+    if (Hallucination) {
+        make_hallucinated(0L, FALSE, 0L);
+        pline("Reality reasserts itself.");
+        affected = TRUE;
+    }
+    if (Sick) {
+        make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+        pline("You are cured of your illness!");
+        affected = TRUE;
+    }
+    if (Stoned) {
+        make_stoned(0L, "You feel more limber!", 0, (char *) 0);
+        affected = TRUE;
+    }
+    if (Vomiting) {
+        make_vomiting(0L, FALSE);
+        pline("Your nausea subsides.");
+        affected = TRUE;
+    }
+    if (Strangled) {
+        Strangled = 0L;
+        pline("You can breathe freely again!");
+        affected = TRUE;
+    }
+    if (Slimed) {
+        make_slimed(0L, "The slime disappears!");
+        affected = TRUE;
+    }
+
+    /* Update status line after clearing ailments */
+    disp.botl = TRUE;
+
+    /* 3. Remove curses from all worn items */
+    struct obj *otmp;
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+        if (otmp->owornmask && otmp->cursed) {
+            otmp->cursed = 0;
+            pline("The curse is lifted from your %s!", xname(otmp));
+            affected = TRUE;
+        }
+    }
+
+    /* 4. Knock back and paralyze monsters in a 5x5 area (radius 2) */
+    for (x = u.ux - 2; x <= u.ux + 2; x++) {
+        for (y = u.uy - 2; y <= u.uy + 2; y++) {
+            if (!isok(x, y))
+                continue;
+
+            mtmp = m_at(x, y);
+            if (!mtmp || mtmp->mpeaceful || mtmp->mtame)
+                continue;
+
+            /* Direction vector from player to monster */
+            int orig_dx = x - u.ux;
+            int orig_dy = y - u.uy;
+
+            /* If monster is on the player's square, pick a random diagonal push */
+            if (!orig_dx && !orig_dy) {
+                orig_dx = rn2(2) ? 3 : -3;
+                orig_dy = rn2(2) ? 3 : -3;
+            }
+
+            /* Normalize to the maximum Manhattan distance in the direction */
+            int adx = abs(orig_dx);
+            int ady = abs(orig_dy);
+            int dist = max(adx, ady);
+            if (dist == 0) dist = 1;  /* safety */
+
+            int push_dx = (orig_dx * 3) / dist;   /* full push vector (≈3 squares) */
+            int push_dy = (orig_dy * 3) / dist;
+
+            boolean moved = FALSE;
+            int try_dist;
+
+            /* Try distances 3 → 2 → 1 */
+            for (try_dist = 3; try_dist >= 1; try_dist--) {
+                int newx = x + (push_dx * try_dist) / 3;
+                int newy = y + (push_dy * try_dist) / 3;
+
+                if (isok(newx, newy) &&
+                    !m_at(newx, newy) &&
+                    !IS_WALL(levl[newx][newy].typ) &&
+                    !closed_door(newx, newy) &&
+                    !t_at(newx, newy)) {
+
+                    /* Valid spot found – move the monster */
+                    mhurtle_giant( mtmp, sgn(push_dx), sgn(push_dy), try_dist, TRUE );
+                    
+                    if (try_dist == 3)
+                        pline("%s is flung far backward!", Monnam(mtmp));
+                    else
+                        pline("%s is knocked backward!", Monnam(mtmp));
+
+                    moved = TRUE;
+                    break;
+                }
+            }
+
+            if (!moved) {
+                /* Could not move even 1 square – monster stays put */
+                pline("%s resists being flung!", Monnam(mtmp));
+            }
+
+            /* Paralyze for 5 turns regardless of how far it moved */
+            paralyze_monst(mtmp, 5);
+
+            affected = TRUE;
+        }
+    }
+
+    /* If no effects were applied, give a neutral message */
+    if (!affected) {
+        pline("You feel a faint warmth from the %s.", xname(obj));
+    }
+
+    /* Update the display */
+    vision_recalc(0);
+    see_monsters();
+
+    return ECMD_TIME; /* Takes a turn */
+}
+
 staticfn int
 arti_invoke(struct obj *obj)
 {
@@ -2347,6 +2547,7 @@ arti_invoke(struct obj *obj)
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
         case QUILL_INVOKE: res = invoke_quill_paper(obj); break;
+        case HANDKERCHIEF: res = invoke_handkerchief(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

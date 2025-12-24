@@ -979,7 +979,9 @@ will_hurtle(struct monst *mon, coordxy x, coordxy y)
     if (!isok(x, y))
         return FALSE;
     /* redundant when called by mhurtle() but needed for mhitm_knockback() */
-    if (mon->data->msize >= MZ_HUGE || mon == u.ustuck || mon->mtrapped)
+    /*if (mon->data->msize >= MZ_HUGE || mon == u.ustuck || mon->mtrapped)
+        return FALSE;*/
+    if (mon == u.ustuck || mon->mtrapped)
         return FALSE;
     /*
      * TODO: Treat walls, doors, iron bars, etc. specially
@@ -1126,8 +1128,10 @@ hurtle(int dx, int dy, int range, boolean verbose)
 }
 
 /* Move a monster through the air for a few squares. */
+
+//mhurtle(struct monst *mon, int dx, int dy, int range)
 void
-mhurtle(struct monst *mon, int dx, int dy, int range)
+mhurtle_giant(struct monst *mon, int dx, int dy, int range, boolean throw_giant)
 {
     coord mc, cc;
 
@@ -1139,7 +1143,7 @@ mhurtle(struct monst *mon, int dx, int dy, int range)
     /* Is the monster stuck or too heavy to push?
      * (very large monsters have too much inertia, even floaters and flyers)
      */
-    if (mon->data->msize >= MZ_HUGE || mon == u.ustuck || mon->mtrapped) {
+    if ( (mon->data->msize >= MZ_HUGE || mon == u.ustuck || mon->mtrapped) && !throw_giant ) {
         if (canseemon(mon))
             pline("%s doesn't budge!", Monnam(mon));
         return;
@@ -1151,7 +1155,7 @@ mhurtle(struct monst *mon, int dx, int dy, int range)
     if (!range || (!dx && !dy))
         return; /* paranoia */
     /* don't let grid bugs be hurtled diagonally */
-    if (dx && dy && NODIAG(monsndx(mon->data)))
+    if (dx && dy && ( NODIAG(monsndx(mon->data)) && !throw_giant ) )
         return;
 
     /* undetected monster can be moved by your strike */
@@ -1175,6 +1179,13 @@ mhurtle(struct monst *mon, int dx, int dy, int range)
             (void) minliquid(mon);
     }
     return;
+}
+
+/* Backward-compatibility wrapper for all existing callsites */
+void
+mhurtle(struct monst *mon, int dx, int dy, int range)
+{
+    mhurtle_giant(mon, dx, dy, range, FALSE);
 }
 
 staticfn void

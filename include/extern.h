@@ -109,6 +109,7 @@ extern long timet_delta(time_t, time_t);
 
 extern void do_blinding_ray(struct obj *) NONNULLPTRS;
 extern int doapply(void);
+extern int apply_blanket_of_the_heavenly_host(struct obj *);
 extern int dorub(void);
 extern int dojump(void);
 extern int jump(int);
@@ -821,7 +822,11 @@ extern boolean hurtle_jump(genericptr_t, coordxy, coordxy) NONNULLARG1;
 extern boolean hurtle_step(genericptr_t, coordxy, coordxy) NONNULLARG1;
 extern boolean will_hurtle(struct monst *, coordxy, coordxy) NONNULLARG1;
 extern void hurtle(int, int, int, boolean);
+
 extern void mhurtle(struct monst *, int, int, int) NONNULLARG1;
+/* New */
+extern void mhurtle_giant(struct monst *, int, int, int, boolean) NONNULLARG1;
+
 extern boolean harmless_missile(struct obj *) NONNULLARG1;
 extern boolean throwing_weapon(struct obj *) NONNULLARG1;
 extern void throwit(struct obj *, long, boolean, struct obj *) NONNULLARG1;

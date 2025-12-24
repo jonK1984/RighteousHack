@@ -79,7 +79,8 @@ enum invoke_prop_types {
     FIRESTORM,
     SNOWSTORM,
     BLINDING_RAY,
-    QUILL_INVOKE
+    QUILL_INVOKE,
+    HANDKERCHIEF
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

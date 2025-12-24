@@ -51,7 +51,7 @@ const struct Role roles[NUM_ROLES+1] = {
       PM_HUMAN_MUMMY,
       S_SNAKE,
       S_MUMMY,
-      ART_ORB_OF_DETECTION,
+      ART_APOSTOLIC_WRITING_KIT,
       MH_HUMAN | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 7, 10, 10, 7, 7, 7 },
@@ -91,7 +91,7 @@ const struct Role roles[NUM_ROLES+1] = {
       PM_OCHRE_JELLY,
       S_IMP,
       S_JELLY,
-      ART_MAGIC_MIRROR_OF_MERLIN,
+      ART_BLANKET_OF_THE_HEAVENLY_HOST,
       MH_HUMAN | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 13, 7, 14, 8, 10, 17 },
@@ -131,7 +131,7 @@ const struct Role roles[NUM_ROLES+1] = {
       PM_SNAKE,
       S_RODENT,
       S_YETI,
-      ART_STAFF_OF_AESCULAPIUS,
+      ART_HANDKERCHIEF_OF_THE_APOSTLE_PAUL,
       MH_HUMAN | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 7, 7, 13, 7, 11, 16 },

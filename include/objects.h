@@ -951,6 +951,8 @@ TOOL("mirror",   "looking glass", 0, 0, 0, 0, 45, 13, 10, GLASS, HI_SILVER,
                                                                 MIRROR),
 TOOL("crystal ball", "glass orb", 0, 0, 1, 1, 15,150, 60, GLASS, HI_GLASS,
                                                                 CRYSTAL_BALL),
+TOOL("torn piece of cloth", "torn piece of cloth", 0, 0, 1, 1, 15,150, 60, CLOTH, HI_CLOTH,
+                                                                PIECE_OF_CLOTH),
 /* eyewear - tools which can be worn on the face; (!mrg, !chg, !mgc)
    worn lenses don't confer the Blinded property, blindfolds and towels do;
    wet towel can be used as a weapon but is not a weptool and uses obj->spe

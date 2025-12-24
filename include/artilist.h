@@ -291,6 +291,20 @@ static NEARDATA struct artifact artilist[] = {
       (SPFX_NOGEN ), 0, 0,
       NO_ATTK, NO_DFNS, NO_CARY, TAMING, A_LAWFUL, PM_KNIGHT, NON_PM,
       0, 5, 3000L, CLR_WHITE, BLANKET_OF_THE_HEAVENLY_HOST),
+    
+    /* 
+    =================================
+      HANDKERCHIEF OF THE APOSTLE PAUL
+    * Quest reward for Healer
+    * Passive: 100% immunity to disease
+    * #invoke heals to full, clears all ailments,
+    * all enemies buffed back 5 squares, paralyzed for 5 rounds
+    =================================
+    */
+    A("Handkerchief of the Apostle Paul", PIECE_OF_CLOTH,
+      (SPFX_NOGEN ), 0, 0,
+      NO_ATTK, NO_DFNS, CARY(AD_DISE), HANDKERCHIEF, A_LAWFUL, PM_KNIGHT, NON_PM,
+      0, 5, 3000L, CLR_WHITE, HANDKERCHIEF_OF_THE_APOSTLE_PAUL),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,

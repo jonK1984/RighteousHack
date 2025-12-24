@@ -4479,7 +4479,7 @@ apply_blanket_of_the_heavenly_host(struct obj *saddle )
     
     if (!mtmp || mtmp->data->mlet != S_UNICORN ) {
         pline("The saddle can only be applied to a horse!");
-        return;
+        return ECMD_TIME;
     }
 
     /* Prevent transformation if already a Winged White Horse */
@@ -4489,7 +4489,7 @@ apply_blanket_of_the_heavenly_host(struct obj *saddle )
             remove_worn_item(saddle, FALSE);
         freeinv(saddle);
         put_saddle_on_mon(saddle, mtmp);
-        return;
+        return ECMD_TIME;
     }
 
     /* Transform horse into Winged White Horse of Heaven */
@@ -4520,6 +4520,7 @@ apply_blanket_of_the_heavenly_host(struct obj *saddle )
     } else {
         pline("The transformation fails!");
     }
+    return ECMD_TIME;
 }
 
 /* Keep track of unfixable troubles for purposes of messages saying you feel
