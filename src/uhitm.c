@@ -1015,12 +1015,27 @@ hmon_hitmon_weapon_melee(
     if (artifact_light(obj) && obj->lamplit
         && mon_hates_light(mon))
         hmd->lightobj = TRUE;
-    if (u.usteed && !hmd->thrown && hmd->dmg > 0
+    /*if (u.usteed && !hmd->thrown && hmd->dmg > 0
         && weapon_type(obj) == P_LANCE && mon != u.ustuck) {
         hmd->jousting = joust(mon, obj);
-        /* exercise skill even for minimal damage hits */
+        // exercise skill even for minimal damage hits 
         if (hmd->jousting)
             hmd->train_weapon_skill = TRUE;
+    }*/
+    //RighteousHack Modified so that blanket allows long sword, mace, hammer, and saber to joust
+    //The idea here is these weapon types are also artifacts
+    if (u.usteed && !hmd->thrown && hmd->dmg > 0 && mon != u.ustuck) {
+        struct obj *saddle = u.usteed->minvent ? which_armor(u.usteed, W_SADDLE) : (struct obj *) 0;
+        boolean can_joust = (weapon_type(obj) == P_LANCE ||
+                            (saddle && is_blanket_of_the_heavenly_host(saddle) &&
+                            (weapon_type(obj) == P_LONG_SWORD || weapon_type(obj) == P_MACE || weapon_type(obj) == P_HAMMER || weapon_type(obj) == P_SABER)));
+
+        if (can_joust) {
+            hmd->jousting = joust(mon, obj);
+            /* Exercise skill even for minimal damage hits */
+            if (hmd->jousting)
+                hmd->train_weapon_skill = TRUE;
+        }
     }
     if (hmd->thrown == HMON_THROWN
         && (is_ammo(obj) || is_missile(obj))) {

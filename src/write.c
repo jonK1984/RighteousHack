@@ -254,7 +254,7 @@ dowrite(struct obj *pen)
     /* see if there's enough ink */
     basecost = cost(new_obj);
     //if (pen->spe < basecost / 2) {
-    if (pen->spe < basecost / 2 && pen->oartifact != ART_QUILL_OF_THE_APOSTLES) {
+    if (pen->spe < basecost / 2 && pen->oartifact != ART_APOSTOLIC_WRITING_KIT) {
         Your("marker is too dry to write that!");
         obfree(new_obj, (struct obj *) 0);
         return ECMD_TIME;
@@ -284,7 +284,7 @@ dowrite(struct obj *pen)
     /* RIGHTEOUS HACK
         ARTIFACT QUILL OF THE APOSTLES ALLOWS UNLIMITED WRITING
     */
-    if (pen->oartifact == ART_QUILL_OF_THE_APOSTLES) {
+    if (pen->oartifact == ART_APOSTOLIC_WRITING_KIT) {
         pline("The Quill of the Apostles glows softly; your writing flows by divine inspiration.");
     } else {
         /* Normal finite ink */
@@ -388,7 +388,7 @@ dowrite(struct obj *pen)
     }
 
     new_obj->blessed = (curseval > 0);
-    if( pen->oartifact == ART_QUILL_OF_THE_APOSTLES )
+    if( pen->oartifact == ART_APOSTOLIC_WRITING_KIT )
     {
         //Quill of the apostles always creates blessed verses
         new_obj->blessed = 1;

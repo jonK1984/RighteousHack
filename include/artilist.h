@@ -264,17 +264,33 @@ static NEARDATA struct artifact artilist[] = {
     
     /* 
     =================================
-      QUILL OF THE APOSTLES
+      APOSTOLIC WRITING KIT
     * Quest reward for Archeologist
     * Enables unlimited writing of approved scrolls and prophetic books.
     * Divine ink never runs dry (bypasses spe checks in write.c).
     * #invoke gives you a free sheet of paper (unlimited paper)
     =================================
     */
-    A("Quill of the Apostles", MAGIC_MARKER,
+    A("Apostolic Writing Kit", MAGIC_MARKER,
       (SPFX_NOGEN|SPFX_RESTR), 0, 0,
       NO_ATTK, NO_DFNS, NO_CARY, QUILL_INVOKE, A_LAWFUL, PM_ARCHEOLOGIST, NON_PM,
-      0, 5, 3000L, CLR_WHITE, QUILL_OF_THE_APOSTLES),
+      0, 5, 3000L, CLR_WHITE, APOSTOLIC_WRITING_KIT),
+
+    /* 
+    =================================
+      RIDING BLANKET OF THE HEAVENLY HOST
+    * Quest reward for Knight
+    * 100HP Buff to Horse
+    * Transforms a horse into a firey steed of the heavenly host
+    * Enables jousting and pounding while mounted for the 
+    * following weapon types: Long Sword, Mace, Hammer, Silver Saber
+    * #invoke tames any horses (including unicorns) in a 5x5 area
+    =================================
+    */
+    A("Riding Blanket of the Heavenly Host", SADDLE,
+      (SPFX_NOGEN ), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, TAMING, A_LAWFUL, PM_KNIGHT, NON_PM,
+      0, 5, 3000L, CLR_WHITE, BLANKET_OF_THE_HEAVENLY_HOST),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,

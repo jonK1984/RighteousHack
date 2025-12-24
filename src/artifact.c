@@ -30,6 +30,7 @@ staticfn int spec_applies(const struct artifact *, struct monst *)
 staticfn int invoke_ok(struct obj *);
 staticfn void nothing_special(struct obj *) NONNULLARG1;
 staticfn int invoke_taming(struct obj *) NONNULLARG1;
+staticfn int invoke_white_taming(struct obj *) NONNULLARG1;
 staticfn int invoke_healing(struct obj *) NONNULLARG1;
 staticfn int invoke_energy_boost(struct obj *) NONNULLARG1;
 staticfn int invoke_untrap(struct obj *) NONNULLARG1;
@@ -40,6 +41,8 @@ staticfn int invoke_banish(struct obj *) NONNULLARG1;
 staticfn int invoke_fling_poison(struct obj *) NONNULLARG1;
 staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
+staticfn boolean is_blanket_of_the_heavenly_host(struct obj *obj) NONNULLARG1;
+
 staticfn int arti_invoke(struct obj *);
 staticfn boolean Mb_hit(struct monst * magr, struct monst *mdef,
                       struct obj *, int *, int, boolean, char *);
@@ -1881,6 +1884,79 @@ invoke_taming(struct obj *obj UNUSED)
     return ECMD_TIME;
 }
 
+staticfn boolean
+is_blanket_of_the_heavenly_host(struct obj *obj)
+{
+    return (obj && obj->oartifact == ART_BLANKET_OF_THE_HEAVENLY_HOST);
+}
+
+staticfn int
+invoke_white_taming(struct obj *obj UNUSED)
+{
+    int candidates = 0, results = 0, vis_results = 0;
+    int i, j, bd = 2; /* 5x5 area centered on player */
+    struct monst *mtmp;
+
+    /* Scan for unicorn/horse class monsters */
+    for (i = -bd; i <= bd; i++) {
+        for (j = -bd; j <= bd; j++) {
+            if (!isok(u.ux + i, u.uy + j))
+                continue;
+
+            mtmp = m_at(u.ux + i, u.uy + j);
+            if (!mtmp && !i && !j)
+                mtmp = u.usteed; /* include ridden steed */
+
+            if (mtmp && mtmp->data->mlet == S_UNICORN) {
+                ++candidates;
+
+                /* Directly tame with 100% success */
+                unsigned was_peaceful = mtmp->mpeaceful;
+                int was_tame = mtmp->mtame;
+
+                /* Set monster to tame and peaceful */
+                mtmp->mtame = 15; /* 15 out of 20 tameness, equivalent to high-level taming */
+                mtmp->mpeaceful = 1;
+                
+                /* Critical: create the pet data structure */
+                /* add the pet extension */
+                if (!has_edog(mtmp)) {
+                    newedog(mtmp);
+                    initedog(mtmp, TRUE);
+                } else {
+                    initedog(mtmp, FALSE);
+                }
+
+                /* Special handling for shopkeepers to prevent anger */
+                if (mtmp->isshk) {
+                    make_happy_shk(mtmp, FALSE);
+                }
+
+                /* Count successful taming */
+                if (!was_tame || !was_peaceful) {
+                    results++;
+                    if (canspotmon(mtmp))
+                        vis_results++;
+                }
+            }
+        }
+    }
+
+
+
+    /* Provide feedback */
+    if (!candidates) {
+        You_feel("a holy aura surround you, but no worthy creatures are near.");
+    } else if (results > 0) {
+        pline("A wave of divine peace washes over the nearby horses.");
+        pline("They bow their heads and become completely tame and loyal.");
+        gk.known = TRUE; /* player learns the invoke effect */
+    } else {
+        pline("The divine aura calms already loyal creatures.");
+    }
+    return ECMD_TIME;
+}
+
 staticfn int
 invoke_healing(struct obj *obj)
 {
@@ -2252,7 +2328,7 @@ arti_invoke(struct obj *obj)
         obj->age = svm.moves + rnz(100);
 
         switch (oart->inv_prop) {
-        case TAMING: res = invoke_taming(obj); break;
+        case TAMING: res = invoke_white_taming(obj); break;
         case HEALING: res = invoke_healing(obj); break;
         case ENERGY_BOOST: res = invoke_energy_boost(obj); break;
         case UNTRAP: res = invoke_untrap(obj); break;

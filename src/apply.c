@@ -4146,7 +4146,7 @@ apply_ok(struct obj *obj)
     if (!obj)
         return GETOBJ_EXCLUDE;
 
-    /* all tools, all wands (breaking), all prophetic books (flipping through -
+    /* all tools, all rods (breaking), all prophetic books (flipping through -
        including blank/novel/Book of the Dead) */
     if (obj->oclass == TOOL_CLASS || obj->oclass == WAND_CLASS
         || obj->oclass == SPBOOK_CLASS)
@@ -4156,7 +4156,21 @@ apply_ok(struct obj *obj)
        coin application to the player */
     if (obj->oclass == COIN_CLASS)
         return GETOBJ_DOWNPLAY;
-
+    
+    //If the player is riding on a steed saddled
+    //with the blanket of the heavenly host
+    //then they are able to apply several types of weapons
+    boolean can_apply_via_blanket = FALSE;
+    if (u.usteed) {
+        struct obj *saddle = u.usteed->minvent ? which_armor(u.usteed, W_SADDLE) : (struct obj *) 0;
+        can_apply_via_blanket = (saddle && is_blanket_of_the_heavenly_host(saddle) &&
+                                (weapon_type(obj) == P_LONG_SWORD || weapon_type(obj) == P_MACE || weapon_type(obj) == P_HAMMER || weapon_type(obj) == P_SABER));
+    }
+    if( can_apply_via_blanket )
+    {
+        return GETOBJ_SUGGEST;
+    }
+    
     /* certain weapons */
     if (obj->oclass == WEAPON_CLASS
         && (is_pick(obj) || is_axe(obj) || is_pole(obj)
@@ -4291,7 +4305,12 @@ doapply(void)
         res = use_leash(obj);
         break;
     case SADDLE:
-        res = use_saddle(obj);
+        if (is_blanket_of_the_heavenly_host(obj)) {
+            //struct monst *mtmp = u.usteed ? u.usteed : get_mtmp_at(u.ux, u.uy);
+            res = apply_blanket_of_the_heavenly_host(obj );
+        } else {
+            res = use_saddle(obj);
+        }
         break;
     case MAGIC_WHISTLE:
         use_magic_whistle(obj);
@@ -4399,7 +4418,17 @@ doapply(void)
         /*FALLTHRU*/
     default:
         /* Pole-weapons can strike at a distance */
-        if (is_pole(obj)) {
+
+        //Pounding is allowed for certain weapons if the rider is on
+        //a mount saddled with the blanket of the heavenly host
+        boolean can_pound_via_blanket = FALSE;
+        if (u.usteed) {
+            struct obj *saddle = u.usteed->minvent ? which_armor(u.usteed, W_SADDLE) : (struct obj *) 0;
+            can_pound_via_blanket = (saddle && is_blanket_of_the_heavenly_host(saddle) &&
+                                    (weapon_type(obj) == P_LONG_SWORD || weapon_type(obj) == P_MACE || weapon_type(obj) == P_HAMMER || weapon_type(obj) == P_SABER));
+        }
+
+        if (is_pole(obj) || can_pound_via_blanket) {
             res = use_pole(obj, FALSE);
             break;
         } else if (is_pick(obj) || is_axe(obj)) {
@@ -4415,6 +4444,82 @@ doapply(void)
         res |= arti_speak(obj); /* sets ECMD_TIME bit if artifact speaks */
     }
     return res;
+}
+
+
+int
+apply_blanket_of_the_heavenly_host(struct obj *saddle )
+{
+    struct monst *mtmp;
+
+    if (!u_handsy())
+        return ECMD_OK;
+
+    /* Select an animal */
+    if (u.uswallow || Underwater || !getdir((char *) 0)) {
+        pline1(Never_mind);
+        return ECMD_CANCEL;
+    }
+    if (!u.dx && !u.dy) {
+        pline("Saddle yourself?  Very funny...");
+        return ECMD_OK;
+    }
+    if (!isok(u.ux + u.dx, u.uy + u.dy)
+        || !(mtmp = m_at(u.ux + u.dx, u.uy + u.dy)) || !canspotmon(mtmp)) {
+        pline("I see nobody there.");
+        return ECMD_TIME;
+    }
+
+    /* Is this a valid monster? */
+    if ((mtmp->misc_worn_check & W_SADDLE) != 0L
+        || which_armor(mtmp, W_SADDLE)) {
+        pline("%s doesn't need another one.", Monnam(mtmp));
+        return ECMD_TIME;
+    }
+    
+    if (!mtmp || mtmp->data->mlet != S_UNICORN ) {
+        pline("The saddle can only be applied to a horse!");
+        return;
+    }
+
+    /* Prevent transformation if already a Winged White Horse */
+    if (mtmp->data == &mons[PM_FIREY_STEED_OF_HEAVEN]) {
+        You("put the saddle on %s.", mon_nam(mtmp));
+        if (saddle->owornmask)
+            remove_worn_item(saddle, FALSE);
+        freeinv(saddle);
+        put_saddle_on_mon(saddle, mtmp);
+        return;
+    }
+
+    /* Transform horse into Winged White Horse of Heaven */
+    if (newcham(mtmp, &mons[PM_FIREY_STEED_OF_HEAVEN], NC_SHOW_MSG )) {
+        mtmp->mhp += 100; /* HP buff */
+        mtmp->mhpmax += 100;
+        if (mtmp->mhp > mtmp->mhpmax) mtmp->mhp = mtmp->mhpmax;
+
+        /* Adjust speed based on charisma */
+        int charisma = ABON(A_CHA); /* Assuming charisma is stored here */
+        mtmp->movement = 24 + max(0, charisma - 10);
+
+        /*pline("%s transforms into a majestic Winged White Horse of Heaven!", 
+              Monnam(mtmp));*/
+        
+        /* [intended] steed becomes alert if possible */
+        maybewakesteed(mtmp);
+
+    
+        You("put the saddle on %s.", mon_nam(mtmp));
+        if (saddle->owornmask)
+            remove_worn_item(saddle, FALSE);
+        freeinv(saddle);
+        /* !can_saddle(mtmp) already eliminated above */
+        put_saddle_on_mon(saddle, mtmp);
+    
+
+    } else {
+        pline("The transformation fails!");
+    }
 }
 
 /* Keep track of unfixable troubles for purposes of messages saying you feel
