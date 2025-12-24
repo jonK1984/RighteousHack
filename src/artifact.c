@@ -2309,6 +2309,164 @@ invoke_quill_paper(struct obj *obj)
 #include "prop.h"
 #include "mextra.h"
 
+staticfn int invoke_censer( struct obj *obj )
+{
+    struct monst *mtmp, *mnext;
+    int x, y;
+    boolean affected = FALSE;
+    const char *engr_text = "PSALM 91";
+    char vanished[BUFSZ] = "";
+    char resisted[BUFSZ] = "";
+    boolean any_vanished = FALSE;
+    boolean any_resisted = FALSE;
+
+    if (!obj) {
+        impossible("invoke_censer: null object");
+        return ECMD_OK;
+    }
+
+    /* Ensure the artifact is valid */
+    if (obj->oartifact != ART_GOLDEN_CENSER_OF_INCENSE) {
+        pline("Nothing happens.");
+        return ECMD_OK;
+    }
+
+    /* Visual feedback */
+    pline("The %s emits a cloud of sweet smelling incense!", xname(obj));
+
+    /* 1. Engrave "PSALM 91" on the 5x5 boundary (radius 2) */
+    for (x = u.ux - 2; x <= u.ux + 2; x++) {
+        for (y = u.uy - 2; y <= u.uy + 2; y++) {
+            /* Only engrave on the boundary (outer edges of 5x5) */
+            if (abs(x - u.ux) != 2 && abs(y - u.uy) != 2)
+                continue;
+
+            if (!isok(x, y))
+                continue;
+
+            /* Check if the square can be engraved */
+            if (spot_shows_engravings(x, y) && !IS_WALL(levl[x][y].typ) &&
+                !IS_DOOR(levl[x][y].typ) && levl[x][y].typ != WATER &&
+                levl[x][y].typ != LAVAPOOL && levl[x][y].typ != MOAT) {
+                struct engr *ep = engr_at(x, y);
+
+                /* If no engraving exists, create one */
+                if (!ep) {
+                    unsigned smem = Strlen(engr_text) + 1;
+                    ep = newengr(smem * 3);
+
+                    //ep = newengr(strlen(engr_text) + 1);
+                    make_engr_at(x, y, engr_text, engr_text,  0L, ENGRAVE);
+                    /*ep->engr_x = x;
+                    ep->engr_y = y;
+                    ep->engr_txt = xstrdup(engr_text);
+                    ep->engr_time = 0L; 
+                    ep->engr_type = ENGRAVE;
+                    ep->engr_lth = strlen(engr_text) + 1;
+                    ep->engr_next = head_engr;
+                    head_engr = ep;*/
+                    //pline("The floor at (%d,%d) is engraved with %s!", x, y, engr_text);
+                    affected = TRUE;
+                } else if (strcmp(ep->engr_txt, engr_text) != 0) {
+                    /* Existing engraving; overwrite if different */
+                    make_engr_at(x, y, engr_text, engr_text,  0L, ENGRAVE);
+                    /*free(ep->engr_txt);
+                    ep->engr_txt = xstrdup(engr_text);
+                    ep->engr_time = 0L;
+                    ep->engr_type = ENGRAVE;
+                    ep->engr_lth = strlen(engr_text) + 1;*/
+                    //
+                    affected = TRUE;
+                }
+                /* Update map to show engraving */
+                newsym(x, y);
+                
+            }
+        }
+    }
+    pline("The floor around you is engraved with %s!", engr_text);
+
+    /* 2. Teleport hostile monsters in the 5x5 grid (radius 2) */
+    for (mtmp = fmon; mtmp; mtmp = mnext) {
+        mnext = mtmp->nmon; /* Store next in case mtmp is teleported */
+        if (DEADMONSTER(mtmp) || mtmp->mpeaceful || mtmp->mtame)
+            continue;
+
+        /* Check if monster is in the 5x5 grid */
+        if (abs(mtmp->mx - u.ux) <= 2 && abs(mtmp->my - u.uy) <= 2) {
+            /* Find a random spot outside the 5x5 grid */
+            int tries = 0;
+            boolean found = FALSE;
+            coordxy newx, newy = 0;
+            coordxy x = 0;
+            coordxy y = 0;
+
+            while (tries++ < 100) {
+                x = rnd(COLNO - 1); /* 1..COLNO-1 */
+                y = rn2(ROWNO); /* 0..ROWNO-1 */
+                if (rloc_pos_ok(x, y, mtmp)) /* rejects 'onscary' */
+                {
+                    newx = x;
+                    newy = y;
+                    /* Ensure new position is outside the 5x5 grid */
+                    if (abs(newx - u.ux) > 2 || abs(newy - u.uy) > 2) {
+                        /* Additional checks for validity */
+                        if (isok(newx, newy) && !m_at(newx, newy) &&
+                            !IS_WALL(levl[newx][newy].typ) &&
+                            !closed_door(newx, newy) &&
+                            !t_at(newx, newy)) {
+                            found = TRUE;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (found) {
+                int oldx = mtmp->mx, oldy = mtmp->my;
+                
+                if (!any_vanished)
+                    Strcpy(vanished, mon_nam(mtmp));
+                else
+                    Strcat(vanished, ", ");
+                    Strcat(vanished, mon_nam(mtmp));
+                any_vanished = TRUE;
+                affected = TRUE;
+                
+                rloc_to(mtmp, newx, newy);
+                newsym(oldx, oldy);
+                newsym(newx, newy);
+
+                
+            } else {
+                if (!any_resisted)
+                    Strcpy(resisted, mon_nam(mtmp));
+                else
+                    Strcat(vanished, ", ");
+                    Strcat(vanished, mon_nam(mtmp));
+                any_resisted = TRUE;
+            }
+
+            
+        }
+    }
+
+    if (any_vanished)
+        pline("Vanished in holy smoke: %s.", vanished);
+    if (any_resisted)
+        pline("Resisted the holy incense: %s.", resisted);
+
+    /* Feedback if nothing happened */
+    if (!affected) {
+        pline("The incense wafts harmlessly around you.");
+    }
+
+    /* Update vision and monster display */
+    vision_recalc(0);
+    see_monsters();
+
+    return ECMD_TIME; /* Consumes a turn */
+}
 /* Invoke function for the Handkerchief of the Apostle Paul */
 staticfn int
 invoke_handkerchief(struct obj *obj)
@@ -2548,6 +2706,7 @@ arti_invoke(struct obj *obj)
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
         case QUILL_INVOKE: res = invoke_quill_paper(obj); break;
         case HANDKERCHIEF: res = invoke_handkerchief(obj); break;
+        case CENSERAID: res = invoke_censer(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

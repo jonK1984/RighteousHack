@@ -1650,7 +1650,7 @@ use_lamp(struct obj *obj)
         return;
     }
     /* magic lamps with an spe == 0 (wished for) cannot be lit */
-    if ((!Is_candle(obj) && obj->age == 0)
+    if ((!Is_candle(obj) && obj->age == 0 && obj->oartifact != ART_GOLDEN_CENSER_OF_INCENSE )
         || (obj->otyp == MAGIC_LAMP && obj->spe == 0)) {
         if (obj->otyp == BRASS_LANTERN) {
             if (!Blind)
@@ -4353,6 +4353,7 @@ doapply(void)
     case TALLOW_CANDLE:
         use_candle(&obj);
         break;
+    case THURIBLE:    
     case OIL_LAMP:
     case MAGIC_LAMP:
     case BRASS_LANTERN:

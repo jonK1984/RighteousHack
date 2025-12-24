@@ -1486,7 +1486,7 @@ doname_base(
                     !obj->lamplit ? " attached" : ", lit");
             ConcatF2(bp, 0, " (%d of 7 candle%s)", obj->spe, suffix);
             break;
-        } else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP
+        } else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP || obj->otyp == THURIBLE
                    || obj->otyp == BRASS_LANTERN || Is_candle(obj)) {
             if (Is_candle(obj)) {
                 anything timer;

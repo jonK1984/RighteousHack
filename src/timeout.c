@@ -1715,7 +1715,7 @@ begin_burn(struct obj *obj, boolean already_lit)
     long turns = 0;
     boolean do_timer = TRUE;
 
-    if (obj->age == 0 && obj->otyp != MAGIC_LAMP && !artifact_light(obj))
+    if (obj->age == 0 && obj->otyp != MAGIC_LAMP && obj->oartifact != ART_GOLDEN_CENSER_OF_INCENSE  && !artifact_light(obj))
         return;
 
     switch (obj->otyp) {
@@ -1730,7 +1730,20 @@ begin_burn(struct obj *obj, boolean already_lit)
             turns = (3L * turns + 2L) / 4L;
         radius = 1; /* very dim light */
         break;
-
+    
+    case THURIBLE:
+        if( obj->oartifact == ART_GOLDEN_CENSER_OF_INCENSE )
+        {
+            obj->lamplit = 1;
+            do_timer = FALSE;
+            radius = 5;
+            break;
+        }
+        else
+        {
+            turns = obj->age;
+            break;
+        }
     case BRASS_LANTERN:
     case OIL_LAMP:
         /* magic times are 150, 100, 50, 25, and 0 */
@@ -1809,6 +1822,9 @@ end_burn(struct obj *obj, boolean timer_attached)
     }
 
     if (obj->otyp == MAGIC_LAMP || artifact_light(obj))
+        timer_attached = FALSE;
+
+    if (obj->otyp == THURIBLE && obj->oartifact == ART_GOLDEN_CENSER_OF_INCENSE )
         timer_attached = FALSE;
 
     if (!timer_attached) {

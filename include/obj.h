@@ -381,6 +381,8 @@ struct obj {
 /* Light sources */
 #define Is_candle(otmp) \
     (otmp->otyp == TALLOW_CANDLE || otmp->otyp == WAX_CANDLE)
+#define Is_thurible(otmp) \
+    (otmp->otyp == THURIBLE )
 #define MAX_OIL_IN_FLASK 400 /* maximum amount of oil in a potion of oil */
 
 /* age field of this is relative age rather than absolute; does not include

@@ -1023,6 +1023,11 @@ mksobj_init(struct obj **obj, boolean artif)
             otmp->lamplit = 0;
             blessorcurse(otmp, 2);
             break;
+        case THURIBLE:
+            otmp->spe = 1;
+            otmp->lamplit = 0;
+            otmp->age = (long) rn1(500, 1000);
+            break;
         case CHEST:
         case LARGE_BOX:
             otmp->olocked = !!(rn2(5));

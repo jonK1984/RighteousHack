@@ -306,6 +306,22 @@ static NEARDATA struct artifact artilist[] = {
       NO_ATTK, NO_DFNS, CARY(AD_DISE), HANDKERCHIEF, A_LAWFUL, PM_KNIGHT, NON_PM,
       0, 5, 3000L, CLR_WHITE, HANDKERCHIEF_OF_THE_APOSTLE_PAUL),
 
+    /* 
+    =================================
+      GOLDEN CENSER OF INCENSE
+    * Quest reward for Priest
+    * Passive: 1/3 Prayer Timeout
+    * Passive: Permanent Detect Monsters
+    * Apply: Permanent 11x11 Light Source Centered on Player
+    * #invoke 5x5 Grid Around Player PSALM 91 engraved
+    * All enemies in 5x5 grid teleported to random places in level
+    =================================
+    */
+    A("Golden Censer of Incense", THURIBLE,
+      (SPFX_NOGEN ), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, CENSERAID, A_LAWFUL, PM_CLERIC, NON_PM,
+      0, 5, 3000L, CLR_WHITE, GOLDEN_CENSER_OF_INCENSE),
+
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,
       M2_UNDEAD, NO_ATTK, NO_DFNS, CARY(AD_FIRE), ENERGY_BOOST, A_LAWFUL,
