@@ -81,7 +81,8 @@ enum invoke_prop_types {
     BLINDING_RAY,
     QUILL_INVOKE,
     HANDKERCHIEF,
-    CENSERAID
+    CENSERAID,
+    CORD_HIDE
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

@@ -143,13 +143,13 @@ des.object(object[4],55,11)
 local loc = place:rndcoord(1);
 des.object({ id = "chest", trapped = 0, locked = 1, coord = loc ,
              contents = function()
-                des.object("wishing");
-                des.object("potion of gain level");
+                des.object("ask and ye shall receive");
+                des.object("anointing oil of gain level");
              end
 });
 -- Prevent monsters from eating it.  (@'s never eat objects)
-des.engraving({ coord = loc, type="burn", text="Elbereth" })
-des.object({ id = "scroll of scare monster", coord = loc, buc="cursed" })
+des.engraving({ coord = loc, type="burn", text="PSALM 91" })
+des.object({ id = "verse of righteous fear", coord = loc, buc="blessed" })
 -- The treasure of the lord
 des.object("chest",37,08)
 -- Traps

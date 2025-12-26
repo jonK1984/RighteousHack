@@ -1033,6 +1033,10 @@ WEPTOOL("unicorn horn", NoDes,
         1, 1, 1,  0,  20, 100, 12, 12, PIERCE, P_UNICORN_HORN,
                                                            BONE, CLR_WHITE,
                                                                 UNICORN_HORN),
+WEPTOOL("rope", NoDes,
+        1, 1, 1,  0,  0, 100, 12, 12, WHACK, P_WHIP,
+                                                           CLOTH, CLR_ORANGE,
+                                                                ROPE),
         /* 3.4.1: unicorn horn left classified as "magic" */
 /* two unique tools;
  * not artifacts, despite the comment which used to be here

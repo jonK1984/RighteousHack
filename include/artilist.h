@@ -321,6 +321,18 @@ static NEARDATA struct artifact artilist[] = {
       (SPFX_NOGEN ), 0, 0,
       NO_ATTK, NO_DFNS, NO_CARY, CENSERAID, A_LAWFUL, PM_CLERIC, NON_PM,
       0, 5, 3000L, CLR_WHITE, GOLDEN_CENSER_OF_INCENSE),
+    /* 
+    =================================
+      SCARLET CORD OF RAHAB
+    * Quest reward for Adventurer
+    * apply: Ability to scale walls, trees, secret doors
+    * #invoke: toggle invisibility
+    =================================
+    */
+    A("Scarlet Cord of Rahab", ROPE,
+      (SPFX_NOGEN ), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, INVIS, A_LAWFUL, PM_ROGUE, NON_PM,
+      0, 5, 3000L, CLR_MAGENTA, SCARLET_CORD_OF_RAHAB),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,

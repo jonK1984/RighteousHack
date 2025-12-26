@@ -51,6 +51,8 @@ staticfn int pickup_checks(void);
 staticfn void maybe_wail(void);
 staticfn boolean water_turbulence(coordxy *, coordxy *);
 staticfn int QSORTCALLBACK cmp_weights(const void *, const void *);
+static void ropelogic(void);
+
 
 #define IS_SHOP(x) (svr.rooms[x].rtype >= SHOPBASE)
 
@@ -2672,12 +2674,60 @@ escape_from_sticky_mon(coordxy x, coordxy y)
     return FALSE;
 }
 
+static void
+ropelogic(void)
+{
+    struct obj *otmp;
+    boolean has_cord = FALSE;
+
+    /* Scan inventory for Scarlet Cord of Rahab or any rope */
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+        if (otmp->oartifact == ART_SCARLET_CORD_OF_RAHAB || otmp->otyp == ROPE) {
+            has_cord = TRUE;
+
+             /* Consume ordinary rope if not the artifact */
+            if (otmp->otyp == ROPE && otmp->oartifact != ART_SCARLET_CORD_OF_RAHAB) {
+                if (otmp->quan > 1L) {
+                    otmp->quan--;
+                    pline("One of your ropes is consumed!");
+                } else {
+                    pline("Your rope is consumed!");
+                    useup(otmp); /* Deletes the single rope */
+                }
+                /* Optional: update inventory display */
+                update_inventory();
+            }
+
+            break;
+        }
+    }
+
+    if (has_cord) {
+        pline("You step onto open ground, "
+              "secured by the scarlet cord.");
+        HPasses_walls = 0;
+    } else {
+        int dmg = d(5, 10);
+        pline("You plummet painfully to the ground! Next time try a rope!");
+        pline("Whom the Lord loves He disciplines (Hebrews 12:6 ESV).");
+        losehp(dmg, "falling after jumping off a wall without a rope",
+               KILLED_BY);
+        HPasses_walls = 0;
+    }
+
+    newsym(u.ux, u.uy); /* Refresh display after solidification */
+}
+
 void
 domove(void)
 {
         coordxy ux1 = u.ux, uy1 = u.uy;
 
         gd.domove_succeeded = 0L;
+
+        //Logic for Ropes and Scarlet Cords
+       
+        
         domove_core();
         /* gd.domove_succeeded is available to make assessments now */
         if ((gd.domove_succeeded & (DOMOVE_RUSH | DOMOVE_WALK)) != 0) {
@@ -2687,6 +2737,11 @@ domove(void)
         gd.domove_attempting = 0L;
 
         gk.kickedloc.x = 0, gk.kickedloc.y = 0;
+
+        if (HPasses_walls && levl[u.ux][u.uy].typ >= TREE && levl[u.ux][u.uy].typ != SDOOR) {
+             ropelogic();   /* All cord/rope logic is now here */
+        }
+
 }
 
 staticfn void

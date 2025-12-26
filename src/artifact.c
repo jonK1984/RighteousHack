@@ -2707,6 +2707,7 @@ arti_invoke(struct obj *obj)
         case QUILL_INVOKE: res = invoke_quill_paper(obj); break;
         case HANDKERCHIEF: res = invoke_handkerchief(obj); break;
         case CENSERAID: res = invoke_censer(obj); break;
+        case CORD_HIDE: break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

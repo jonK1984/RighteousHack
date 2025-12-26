@@ -37,6 +37,7 @@ staticfn boolean snickersnee_used_dist_attk(struct obj *);
 staticfn int use_cream_pie(struct obj *);
 staticfn int jelly_ok(struct obj *);
 staticfn int use_royal_jelly(struct obj **);
+staticfn int use_rope(struct obj *obj);
 staticfn int grapple_range(void);
 staticfn boolean can_grapple_location(coordxy, coordxy);
 staticfn void display_grapple_positions(boolean);
@@ -4312,6 +4313,9 @@ doapply(void)
             res = use_saddle(obj);
         }
         break;
+    case ROPE:
+        res = use_rope(obj);
+        break;
     case MAGIC_WHISTLE:
         use_magic_whistle(obj);
         break;
@@ -4447,6 +4451,121 @@ doapply(void)
     return res;
 }
 
+/*
+ * use_rope - Handles applying the Scarlet Cord of Rahab or an ordinary rope.
+ * Prompts the player for an adjacent direction using get_adjacent_loc.
+ *
+ * If PASSES_WALLS is off:
+ *   - Target must be a wall or secret door → enter it (phase/climb in).
+ *   - Otherwise → cancel.
+ *
+ * If PASSES_WALLS is on:
+ *   - Target must be a normal floor tile (ROOM, CORR, etc.) → exit onto it.
+ *   - If target is dangerous (lava, water, known trap, etc.) → confirm.
+ *   - If target is wall, occupied, or invalid → cancel.
+ *
+ * Ordinary ropes are consumed on use; the Scarlet Cord is not.
+ */
+int
+use_rope(struct obj *obj)
+{
+    coord cc;
+    int tx, ty, oldx, oldy;
+    boolean entering = !HPasses_walls;  /* TRUE if starting wall-phase, FALSE if exiting */
+
+    if (!obj)
+        return 0;
+
+    if (obj->oartifact != ART_SCARLET_CORD_OF_RAHAB && obj->otyp != ROPE) {
+        /* This function should only be called for the artifact or rope */
+        impossible("use_rope called with wrong object");
+        return 0;
+    }
+
+    /* Prompt for adjacent direction */
+    if (!get_adjacent_loc((char *)0, "Where do you want to use the cord?",
+                          u.ux, u.uy, &cc)) {
+        return 0;   /* Player aborted or invalid input */
+    }
+    tx = cc.x;
+    ty = cc.y;
+
+    if (entering) {
+        /* Starting the wall-phase: target must be a wall or secret door */
+        if (!IS_WALL(levl[tx][ty].typ) && levl[tx][ty].typ != SDOOR) {
+            pline("There is no wall there to climb!");
+            return 0;
+        }
+
+        pline("You grasp %s and climb into the wall by faith!", the(xname(obj)));
+        HPasses_walls = -1;     /* Indefinite until exiting */
+        
+        oldx = u.ux;
+        oldy = u.uy;
+
+        /* Move player into the wall */
+        u.ux = tx;
+        u.uy = ty;
+        newsym(u.ux, u.uy);
+        newsym(oldx, oldy);
+    } else {
+        /* Exiting the wall-phase: target must be open floor */
+        if (IS_WALL(levl[tx][ty].typ) || levl[tx][ty].typ == SDOOR || IS_TREE(levl[tx][ty].typ)) {
+            pline("You cannot exit into solid stone!");
+            return 0;
+        }
+
+        if (m_at(tx, ty)) {
+            pline("That space is already occupied.");
+            return 0;
+        }
+
+        /* Check for dangerous terrain and confirm if needed */
+        boolean dangerous = FALSE;
+        const char *reason = (char *)0;
+
+        if (is_pool(tx, ty) && !Levitation && !Flying && !is_swimmer(gy.youmonst.data)) {
+            dangerous = TRUE;
+            reason = "water";
+        } else if (is_lava(tx, ty)) {
+            dangerous = TRUE;
+            reason = "lava";
+        } else if (t_at(tx, ty)) {
+            dangerous = TRUE;
+            reason = "a trap";
+        }
+
+        if (dangerous) {
+            char buf[BUFSZ];  /* BUFSZ is a large safe buffer size, typically 1024 */
+            Sprintf(buf, "Really step onto %s?", reason);
+            if (YN(buf) != 'y')
+                return 0;
+        }
+
+        pline("You release %s and step out onto solid ground.", the(xname(obj)));
+        HPasses_walls = 0;
+        newsym(u.ux, u.uy);
+
+        /* Move player out of the wall */
+        u.ux = tx;
+        u.uy = ty;
+        newsym(u.ux, u.uy);
+    }
+
+    /* Consume ordinary rope (Scarlet Cord has unlimited uses) */
+    if (obj->otyp == ROPE && obj->oartifact != ART_SCARLET_CORD_OF_RAHAB) {
+        if (obj->quan > 1L) {
+            obj->quan--;
+            pline("One of your ropes is consumed in the miracle!");
+        } else {
+            pline("Your rope vanishes as it fulfills its purpose!");
+            useup(obj);
+        }
+        update_inventory();
+    }
+
+    return 1;
+}
 
 int
 apply_blanket_of_the_heavenly_host(struct obj *saddle )
