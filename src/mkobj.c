@@ -901,7 +901,7 @@ mksobj_init(struct obj **obj, boolean artif)
             blessorcurse(otmp, 10);
         if (is_poisonable(otmp) && !rn2(100))
             otmp->opoisoned = 1;
-
+        
         if (artif && !rn2(20 + (10 * nartifact_exist()))) {
             /* mk_artifact() with otmp and A_NONE will never return NULL */
             otmp = mk_artifact(otmp, (aligntyp) A_NONE, 99, TRUE);

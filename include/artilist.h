@@ -333,6 +333,21 @@ static NEARDATA struct artifact artilist[] = {
       (SPFX_NOGEN ), 0, 0,
       NO_ATTK, NO_DFNS, NO_CARY, INVIS, A_LAWFUL, PM_ROGUE, NON_PM,
       0, 5, 3000L, CLR_MAGENTA, SCARLET_CORD_OF_RAHAB),
+    
+    /* 
+    =================================
+      STAFF OF SIGNS AND WONDERS
+    * Quest reward for Prophet
+    * apply: converts a non-water tile to water, converts water to dry land.
+    * staff begins with 8 charges, must pray to get more charges
+    * #invoke: AoE Column of fire 5x5 grid centered around player
+    * prayer time reduced by 1/3
+    =================================
+    */
+    A("The Staff of Signs and Wonders", ALMOND_STAVE,
+      (SPFX_NOGEN ), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, COLUMN_OF_FIRE, A_LAWFUL, PM_WIZARD, NON_PM,
+      0, 5, 3000L, CLR_MAGENTA, STAFF_OF_SIGNS_AND_WONDERS),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL | SPFX_PROTECT), 0,

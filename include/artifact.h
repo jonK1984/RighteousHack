@@ -82,7 +82,8 @@ enum invoke_prop_types {
     QUILL_INVOKE,
     HANDKERCHIEF,
     CENSERAID,
-    CORD_HIDE
+    CORD_HIDE,
+    COLUMN_OF_FIRE
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items
@@ -98,6 +99,9 @@ struct arti_info {
     Bitfield(bones, 1);  /* 1 iff came from bones file */
     Bitfield(rndm, 1);   /* 1 iff randomly generated */
 };
+
+#define IS_STAFF_OF_WONDERS(otmp) \
+    ((otmp)->oartifact == ART_STAFF_OF_SIGNS_AND_WONDERS)
 
 /* clang-format on */
 #endif /* ARTIFACT_H */

@@ -5377,6 +5377,8 @@ readobjnam(char *bp, struct obj *no_wish)
         {
             d.name = aname;
             ensure_uncursed(&d);
+
+            
         }
 
         /* 3.6 tribute - fix up novel */
@@ -5389,6 +5391,12 @@ readobjnam(char *bp, struct obj *no_wish)
         if (d.otmp->oartifact || d.name == aname) {
             d.otmp->quan = 1L;
             u.uconduct.wisharti++; /* KMH, conduct */
+
+            //Initialization for staff of wonders
+            if(IS_STAFF_OF_WONDERS(d.otmp))
+            {
+                d.otmp->spe = 8;
+            }
         }
     }
 

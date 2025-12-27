@@ -38,6 +38,9 @@ staticfn int use_cream_pie(struct obj *);
 staticfn int jelly_ok(struct obj *);
 staticfn int use_royal_jelly(struct obj **);
 staticfn int use_rope(struct obj *obj);
+staticfn int use_staff_of_wonders(struct obj *obj);
+staticfn boolean display_staff_of_wonders_positions(int, int, int);
+staticfn int get_valid_staff_of_wonders_position(int, int);
 staticfn int grapple_range(void);
 staticfn boolean can_grapple_location(coordxy, coordxy);
 staticfn void display_grapple_positions(boolean);
@@ -4175,7 +4178,7 @@ apply_ok(struct obj *obj)
     /* certain weapons */
     if (obj->oclass == WEAPON_CLASS
         && (is_pick(obj) || is_axe(obj) || is_pole(obj)
-            || obj->otyp == BULLWHIP))
+            || obj->otyp == BULLWHIP || IS_STAFF_OF_WONDERS(obj) ))
         return GETOBJ_SUGGEST;
 
     if (obj->oclass == POTION_CLASS) {
@@ -4315,6 +4318,12 @@ doapply(void)
         break;
     case ROPE:
         res = use_rope(obj);
+        break;
+    case ALMOND_STAVE:
+        if( IS_STAFF_OF_WONDERS(obj))
+        {
+            res = use_staff_of_wonders(obj);
+        }
         break;
     case MAGIC_WHISTLE:
         use_magic_whistle(obj);
@@ -4565,6 +4574,180 @@ use_rope(struct obj *obj)
     }
 
     return 1;
+}
+
+/*
+ * use_staff_of_wonders()
+ *
+ * Apply effect for the Prophet's quest artifact: the Staff of Signs and Wonders.
+ *
+ * The player is prompted to select a single square within polearm reach
+ * (distance 2–8 from the hero, forming a perimeter around the player).
+ *
+ * The chosen square toggles between water and dry land:
+ *   - If the target is water (POOL or MOAT), it becomes ordinary floor (ROOM).
+ *   - If the target is ordinary floor (ROOM or CORR), it becomes water (POOL).
+ *   - Other terrain types (stone, walls, trees, furniture, etc.) are unaffected,
+ *     but a charge is still consumed for the attempt.
+ *
+ * This mirrors the biblical signs worked through Moses' staff:
+ *   - Parting the Red Sea (water → dry land)
+ *   - Striking the rock at Meribah (though here generalized to creating water)
+ *
+ * Behavior:
+ *   - Requires confirmation before use.
+ *   - Consumes one charge (obj->spe).
+ *   - If the staff is drained, there is a small chance of partial recharge.
+ *   - Provides appropriate scriptural flavor messages.
+ *
+ * Returns ECMD_TIME on successful use (or failed attempt on invalid terrain),
+ * ECMD_CANCEL if the player aborts, or ECMD_FAIL on invalid targeting.
+ */
+
+static int
+use_staff_of_wonders(struct obj *obj)
+{
+    coord cc;
+    int res = ECMD_OK;
+    char qbuf[QBUFSZ];
+    boolean was_water;
+
+    /* Basic usability checks */
+
+    if (obj->spe <= 0) {
+        You("should spend additional time in prayer before using %s.", xname(obj));
+        return ECMD_OK;
+    }
+
+    /* Confirmation prompt */
+    Sprintf(qbuf, "Are you sure you want to apply the %s and work a sign?",
+            xname(obj));
+    if (YN(qbuf) != 'y')
+        return ECMD_CANCEL;
+
+    You("raise the %s toward heaven and pray for the Lord to act.", xname(obj));
+
+    /* Prompt for a single target square within reach (same range as polearms) */
+    pline("Choose the place where the sign will be worked:");
+    cc.x = u.ux;
+    cc.y = u.uy;
+
+    /* Hilite all valid positions in the 5x5 perimeter (radius 2) */
+    getpos_sethilite(display_staff_of_wonders_positions,
+                     get_valid_staff_of_wonders_position);
+
+    if (getpos(&cc, TRUE, "the place to work the sign") < 0)
+        return ECMD_CANCEL;  /* player cancelled with ESC */
+
+    /* Validate distance (same as polearm range: 2 to ~5-6 squares) */
+    if (distu(cc.x, cc.y) > 8) {  /* rough max polearm reach; adjust if needed */
+        pline("Too far away!");
+        return ECMD_FAIL;
+    }
+    if (distu(cc.x, cc.y) < 2) {  /* don't allow player's own square or adjacent */
+        pline("Too close! You must choose a square farther away.");
+        return ECMD_FAIL;
+    }
+    if (!cansee(cc.x, cc.y)) {
+        You("cannot see that spot well enough.");
+        return ECMD_FAIL;
+    }
+
+    const char *terrain_desc = "";
+    boolean converted = FALSE;
+
+    /* Choose description and decide if we can convert this terrain */
+    switch (levl[cc.x][cc.y].typ) {
+        case POOL:
+        case MOAT:
+            terrain_desc = "waters";
+            converted = TRUE;
+            break;
+        case LAVAPOOL:
+            terrain_desc = "burning lava";
+            converted = TRUE;
+            break;
+        case ICE:
+            terrain_desc = "frozen ice";
+            converted = TRUE;
+            break;
+        case ROOM:
+        case CORR:
+            terrain_desc = "dry ground";
+            converted = TRUE;          /* will convert to water instead */
+            break;
+        default:
+            terrain_desc = "terrain";
+            converted = FALSE;
+            break;
+    }
+
+    if (!converted) {
+        You("feel divine power flow through the staff, but the %s here remains unchanged.", terrain_desc);
+        newsym(cc.x, cc.y);
+        obj->spe--;                /* still consume a charge for the attempt */
+        return ECMD_TIME;
+    }
+
+    if (IS_POOL(levl[cc.x][cc.y].typ) || levl[cc.x][cc.y].typ == LAVAPOOL || levl[cc.x][cc.y].typ == ICE) {
+        /* Hostile terrain → dry land */
+        levl[cc.x][cc.y].typ = ROOM;
+        levl[cc.x][cc.y].flags = 0;
+        pline("The %s %s before the power of the Lord, revealing dry ground!",
+              terrain_desc,
+              (levl[cc.x][cc.y].typ == LAVAPOOL) ? "cools and hardens" :
+              (levl[cc.x][cc.y].typ == ICE)   ? "melts away" :
+                                               "parts and recedes");
+    } else {
+        /* Dry land → water */
+        levl[cc.x][cc.y].typ = POOL;
+        levl[cc.x][cc.y].flags = 0;
+        pline("The %s opens and becomes a pool of water at the word of the Lord!",
+              terrain_desc);
+    }
+
+    /* Visual update */
+    newsym(cc.x, cc.y);
+
+    /* Consume one charge */
+    obj->spe--;
+
+    /* Small chance of partial recharge when drained */
+    if (obj->spe <= 0) {
+        obj->spe = 0;
+        if (rn2(10) > 7 ) {
+            pline("%s glows faintly for a moment.", The(xname(obj)));
+            obj->spe = rnd(2);
+        }
+    }
+
+    return ECMD_TIME;
+}
+
+/* Hilite callback: show all reachable squares in the 5x5 perimeter */
+boolean
+display_staff_of_wonders_positions(int x, int y, int glyph)
+{
+    int dist = distu(x, y);
+    if (dist < 2 || dist > 8)  /* exclude player's square and too-far squares */
+        return FALSE;
+    if (!isok(x, y))
+        return FALSE;
+    return TRUE;
+}
+
+/* Validation callback: accept only reachable, visible squares */
+int
+get_valid_staff_of_wonders_position(int x, int y)
+{
+    int dist = distu(x, y);
+    if (dist < 2 || dist > 8)
+        return 0;  /* invalid */
+    if (!isok(x, y))
+        return 0;
+    if (!cansee(x, y))
+        return 0;
+    return 1;  /* valid */
 }
 
 int
