@@ -4615,15 +4615,15 @@ use_staff_of_wonders(struct obj *obj)
     /* Basic usability checks */
 
     if (obj->spe <= 0) {
-        You("should spend additional time in prayer before using %s.", xname(obj));
+        You("should spend additional time in prayer before using the %s.", xname(obj));
         return ECMD_OK;
     }
 
     /* Confirmation prompt */
-    Sprintf(qbuf, "Are you sure you want to apply the %s and work a sign?",
+    /*Sprintf(qbuf, "Are you sure you want to apply the %s and work a sign?",
             xname(obj));
     if (YN(qbuf) != 'y')
-        return ECMD_CANCEL;
+        return ECMD_CANCEL;*/
 
     You("raise the %s toward heaven and pray for the Lord to act.", xname(obj));
 
@@ -4671,6 +4671,7 @@ use_staff_of_wonders(struct obj *obj)
             terrain_desc = "frozen ice";
             converted = TRUE;
             break;
+        case DOOR:
         case ROOM:
         case CORR:
             terrain_desc = "dry ground";

@@ -102,6 +102,8 @@ struct arti_info {
 
 #define IS_STAFF_OF_WONDERS(otmp) \
     ((otmp)->oartifact == ART_STAFF_OF_SIGNS_AND_WONDERS)
+#define IS_GOLDEN_CENSER(otmp) \
+    ((otmp)->oartifact == ART_GOLDEN_CENSER_OF_INCENSE)
 
 /* clang-format on */
 #endif /* ARTIFACT_H */

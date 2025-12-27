@@ -339,12 +339,12 @@ static NEARDATA struct artifact artilist[] = {
       STAFF OF SIGNS AND WONDERS
     * Quest reward for Prophet
     * apply: converts a non-water tile to water, converts water to dry land.
-    * staff begins with 8 charges, must pray to get more charges
+    * staff begins with 8 charges, prayer will get charges back up to 6
     * #invoke: AoE Column of fire 5x5 grid centered around player
     * prayer time reduced by 1/3
     =================================
     */
-    A("The Staff of Signs and Wonders", ALMOND_STAVE,
+    A("Staff of Signs and Wonders", ALMOND_STAVE,
       (SPFX_NOGEN ), 0, 0,
       NO_ATTK, NO_DFNS, NO_CARY, COLUMN_OF_FIRE, A_LAWFUL, PM_WIZARD, NON_PM,
       0, 5, 3000L, CLR_MAGENTA, STAFF_OF_SIGNS_AND_WONDERS),

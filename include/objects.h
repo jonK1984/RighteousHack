@@ -380,7 +380,7 @@ WEAPON("rubber hose", NoDes,
 WEAPON("quarterstaff", "staff",
        0, 0, 1, 11,  40,   5,  6,  6, 0, B,   P_QUARTERSTAFF, WOOD, HI_WOOD,
                                                         QUARTERSTAFF),
-WEAPON("almond wood stave", "stave",
+WEAPON("almond-wood walking stick", "walking stick",
        0, 0, 1, 11,  40,   5,  6,  6, 0, B,   P_QUARTERSTAFF, WOOD, HI_WOOD,
                                                         ALMOND_STAVE),
 /* two-piece */

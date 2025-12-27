@@ -28,6 +28,7 @@ staticfn int eval_offering(struct obj *, aligntyp);
 staticfn void offer_corpse(struct obj *, boolean, aligntyp);
 staticfn boolean pray_revive(void);
 staticfn boolean water_prayer(boolean);
+staticfn void reset_prayer_timer(void);
 staticfn boolean blocked_boulder(int, int);
 
 /* simplify a few tests */
@@ -1168,12 +1169,21 @@ pleased(aligntyp g_align)
             break;
         }
 
+    
+
+    return;
+}
+
+staticfn void
+reset_prayer_timer( void )
+{
     u.ublesscnt = rnz(350);
+    /*
     kick_on_butt = u.uevent.udemigod ? 1 : 0;
     if (u.uevent.uhand_of_elbereth)
         kick_on_butt++;
     if (kick_on_butt)
-        u.ublesscnt += kick_on_butt * rnz(1000);
+        u.ublesscnt += kick_on_butt * rnz(1000);*/
 
     /* Avoid games that go into infinite loops of copy-pasted commands
        with no human interaction; this is a DoS vector against the
@@ -1192,7 +1202,25 @@ pleased(aligntyp g_align)
         u.ublesscnt += (int) incr;
     }
 
-    return;
+    /* The Staff of Wonder or Golden Censer in inventory:
+     * will shorten the time until the next prayer. */
+    {
+        struct obj *artif;
+        for (artif = gi.invent; artif; artif = artif->nobj) {
+            if (IS_STAFF_OF_WONDERS(artif) || IS_GOLDEN_CENSER(artif)) {
+                /* Reduce timeout by approximately 1/3 (divide by 3, integer) */
+                u.ublesscnt = u.ublesscnt / 3;
+                if (u.ublesscnt < 40)  /* enforce reasonable minimum to avoid spamming */
+                    u.ublesscnt = 40;
+                if (Blind)
+                    You_feel("a lingering warmth of divine favor.");
+                else
+                    pline("The presence of the Lord rests upon you longer because of the staff.");
+                update_inventory();
+                break;  /* only one such artifact */
+            }
+        }
+    }
 }
 
 /* either blesses or curses water on the altar,
@@ -1881,7 +1909,7 @@ prayer_done(void)
     boolean on_altar = on_altar();
 
     u.uinvulnerable = FALSE; /* will be re-applied only if miracle grants it */
-
+    
     /* ------------------------------------------------------------------
      *  1. Altar use: always attempt to bless water (anointing oil
      * ------------------------------------------------------------------ */
@@ -1896,8 +1924,8 @@ prayer_done(void)
     if (gp.p_type == 0) {
         You_feel("that the Lord would have you wait a little longer.");
         pline("\"Be still, and know that I am God.\" (Psalm 46:10)");
-        u.ublesscnt += rnz(300 + (Luck > 0 ? 100 : 0)); /* longer wait if unlucky */
-        change_luck(-1); /* small humility penalty */
+        u.ublesscnt += rnz(50 + (Luck > 0 ? 0 : 20)); /* longer wait if unlucky */
+        //change_luck(-1); /* small humility penalty */
         return 1;
     }
 
@@ -1945,15 +1973,35 @@ prayer_done(void)
     if (!miracle_given_this_prayer && rn2(10) == 0) {
         grant_miracle();
     }
-    //grant_miracle();
-    /* Final encouragement */
-    if (gp.p_type == 1) {
-        You_feel("heard.");
-        pline("\"Call to me and I will answer you...\" (Jeremiah 33:3)");
+
+    /* Special favor for the Prophet wielding the Staff of Signs and Wonders:
+     * If carried in inventory and below maximum charges, restore to full power */
+    {
+        struct obj *staff;
+        for (staff = gi.invent; staff; staff = staff->nobj) {
+            if (IS_STAFF_OF_WONDERS(staff) && carried(staff)) {
+                if (staff->spe < 6) {
+                    staff->spe = 6;
+                    if (Blind)
+                        You_feel("the %s grow warm for a moment.", xname(staff));
+                    else
+                        pline("%s glows with divine light.", The(xname(staff)));
+                    update_inventory();
+                }
+                break; /* only one such staff exists */
+            }
+        }
     }
 
+    //grant_miracle();
+    /* Final encouragement */
+    /*if (gp.p_type == 1) {
+        You_feel("heard.");
+        pline("\"Call to me and I will answer you...\" (Jeremiah 33:3)");
+    }*/
+
     /* Reset prayer timer for next time */
-    u.ublesscnt += rnz(300);
+    reset_prayer_timer();
 
     return 1;
 }

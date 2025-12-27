@@ -43,6 +43,7 @@ staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
 staticfn int invoke_quill_paper(struct obj *) NONNULLARG1;
 staticfn int invoke_handkerchief(struct obj *) NONNULLARG1;
+staticfn int invoke_staff_of_wonders(struct obj *) NONNULLARG1;
 
 staticfn boolean is_blanket_of_the_heavenly_host(struct obj *obj) NONNULLARG1;
 
@@ -2300,14 +2301,134 @@ invoke_quill_paper(struct obj *obj)
 }
 
 /* artifact.c */
-#include "hack.h"
+/*#include "hack.h"
 #include "artifact.h"
 #include "monst.h"
 #include "youprop.h"
 #include "mondata.h"
 #include "obj.h"
 #include "prop.h"
-#include "mextra.h"
+#include "mextra.h"*/
+
+staticfn int
+invoke_staff_of_wonders(struct obj *obj)
+{
+    int x, y;
+    int fire_base, elec_base, fire_dmg, elec_dmg;
+   
+    struct monst *mtmp;
+    boolean any_effect = FALSE;
+    char qbuf[QBUFSZ];
+
+    if (!obj) {
+        impossible("invoke_staff_of_wonders: null object");
+        return ECMD_OK;
+    }
+
+
+    /* Confirmation for this powerful divine wrath */
+    Sprintf(qbuf, "Raise the %s to call down a column of fire?", xname(obj));
+    if (YN(qbuf) != 'y')
+        return ECMD_CANCEL;
+
+    /* Biblical invocation */
+    You("raise the %s and cry out, \"O LORD, send fire from heaven!\"", xname(obj));
+    if (!Deaf)
+        Soundeffect(se_thunderclap, 100);
+    
+    explode(u.ux, u.uy, 1, d(1, 4), WAND_CLASS, EXPL_FIERY);
+
+    pline("Fire and brimstone descends from heaven!");
+    
+
+    /* 3x3 AoE centered on player (radius 1) */
+    for (x = u.ux - 1; x <= u.ux + 1; x++) {
+        for (y = u.uy - 1; y <= u.uy + 1; y++) {
+            if (!isok(x, y))
+                continue;
+            if ((mtmp = m_at(x, y)) == 0)
+                continue;  /* no monster */
+
+            /* Skip peaceful/fellow pets (divine fire doesn't harm the faithful) */
+            if (mtmp->mtame || mtmp->mpeaceful)
+                continue;
+
+            any_effect = TRUE;
+            boolean not_killed = TRUE;
+
+            /* Fire damage: 5d5 base */
+            fire_base = 0;
+            for (int i = 0; i < 5; i++)
+                fire_base += rnd(5);
+            {
+                boolean res_fire = resists_fire(mtmp);
+                fire_dmg = fire_base;
+                if (!res_fire)
+                    fire_dmg *= 2;  /* Divine fire burns hotter against unbelievers */
+                if (res_fire)
+                    fire_dmg /= 2;
+            }
+            mtmp->mhp -= fire_dmg;
+            /*if (mtmp->mhp <= 0) {
+                killed(mtmp);
+                not_killed = FALSE;
+            }*/
+
+            /* Lightning damage: 5d5 base */
+            elec_base = 0;
+            for (int i = 0; i < 5; i++)
+                elec_base += rnd(5);
+            {
+                boolean res_elec = resists_elec(mtmp);
+                elec_dmg = elec_base;
+                if (!res_elec)
+                    elec_dmg *= 2;
+                if (res_elec)
+                    elec_dmg /= 2;
+            }
+            mtmp->mhp -= elec_dmg;
+            if (mtmp->mhp <= 0) {
+                killed(mtmp);
+                not_killed = FALSE;
+            }
+
+            /* Paralyze all enemies for 2 rounds */
+            if( not_killed )
+            {
+                paralyze_monst(mtmp, 2);
+                if (flags.verbose && cansee(mtmp->mx, mtmp->my))
+                    pline("%s is paralyzed by divine fear!", Monnam(mtmp));
+            }
+
+            /* Visual explosion at each monster's position */
+            //explodemon(mtmp, EXPL_FIERY, TRUE);
+            
+        }
+    }
+    
+
+    if (!any_effect) {
+        pline("Heavenly fire rages harmlessly around you.");
+    } else {
+        You_feel("the terror of the Lord upon your foes.");
+        if (!Hallucination)
+            pline("As in the days of Elijah, fire consumes the enemies of God. (2 Kings 1:10-12 ESV)");
+    }
+
+    /* Consume one charge */
+    obj->spe--;
+
+    /* Partial recharge chance when drained */
+    if (obj->spe <= 0) {
+        obj->spe = 0;
+        if (rn2(10)) {
+            pline("%s glows faintly with lingering divine power.", The(xname(obj)));
+            obj->spe = rnd(3);
+        }
+    }
+
+    return ECMD_TIME;  /* Consumes a turn */
+}
 
 staticfn int invoke_censer( struct obj *obj )
 {
@@ -2708,7 +2829,7 @@ arti_invoke(struct obj *obj)
         case HANDKERCHIEF: res = invoke_handkerchief(obj); break;
         case CENSERAID: res = invoke_censer(obj); break;
         case CORD_HIDE: break;
-        case COLUMN_OF_FIRE: break;
+        case COLUMN_OF_FIRE: res = invoke_staff_of_wonders(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;
