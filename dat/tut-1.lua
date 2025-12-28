@@ -319,7 +319,7 @@ if (u.uenmax < 5) then
    des.engraving({ coord = { 59,2 }, type = "engrave", text = "Unfortunately you don't have enough energy to cast spells.", degrade = false });
 end
 des.engraving({ coord = { 57,2 }, type = "engrave", text = "Pick up the spellbook with '" .. tut_key("pickup") .. "'", degrade = false });
-des.object({ coord = { 57,2 }, id = "spellbook of light", buc = "blessed" });
+des.object({ coord = { 57,2 }, id = "prophetic book of light", buc = "blessed" });
 des.engraving({ coord = { 55,2 }, type = "engrave", text = "Read the spellbook with '" .. tut_key("read") .. "'", degrade = false });
 des.engraving({ coord = { 53,2 }, type = "engrave", text = "Use '" .. tut_key("cast") .. "' to cast a spell", degrade = false });
 des.region(selection.area(53,01, 59, 3), "unlit");
@@ -327,7 +327,7 @@ des.region(selection.area(53,01, 59, 3), "unlit");
 --
 
 des.engraving({ coord = { 72,2 }, type = "engrave", text = "You \"quaff\" potions with '" .. tut_key("quaff") .. "'", degrade = false });
-des.object({ coord = { 72,2 }, id = "potion of object detection", buc = "blessed" });
+des.object({ coord = { 72,2 }, id = "anointing oil of object detection", buc = "blessed" });
 
 
 ----------------

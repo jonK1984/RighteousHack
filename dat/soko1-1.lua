@@ -106,6 +106,6 @@ else
    des.object({ id="amulet of reflection", coord=pt,
 		buc="not-cursed", achievement=1 });
 end
-des.engraving({ coord = pt, type = "burn", text = "Elbereth" });
-des.object({ id = "scroll of scare monster", coord = pt, buc = "cursed" });
+des.engraving({ coord = pt, type = "burn", text = "PSALM 91" });
+des.object({ id = "verse of righteous fear", coord = pt, buc = "blessed" });
 

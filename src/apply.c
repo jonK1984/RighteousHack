@@ -4625,7 +4625,7 @@ use_staff_of_wonders(struct obj *obj)
     if (YN(qbuf) != 'y')
         return ECMD_CANCEL;*/
 
-    You("raise the %s toward heaven and pray for the Lord to act.", xname(obj));
+    //You("raise the %s toward heaven and pray for the Lord to act.", xname(obj));
 
     /* Prompt for a single target square within reach (same range as polearms) */
     pline("Choose the place where the sign will be worked:");
@@ -4694,17 +4694,22 @@ use_staff_of_wonders(struct obj *obj)
         /* Hostile terrain → dry land */
         levl[cc.x][cc.y].typ = ROOM;
         levl[cc.x][cc.y].flags = 0;
+        
         pline("The %s %s before the power of the Lord, revealing dry ground!",
               terrain_desc,
               (levl[cc.x][cc.y].typ == LAVAPOOL) ? "cools and hardens" :
               (levl[cc.x][cc.y].typ == ICE)   ? "melts away" :
                                                "parts and recedes");
+
+        pline("And Moses stretched out his hand over the sea; and the LORD caused the sea to go back by a strong east wind all that night, and made the sea dry land, and the waters were divided. (Exodus 14:21 KJV)");
     } else {
         /* Dry land → water */
         levl[cc.x][cc.y].typ = POOL;
         levl[cc.x][cc.y].flags = 0;
         pline("The %s opens and becomes a pool of water at the word of the Lord!",
               terrain_desc);
+        pline("Behold, I will stand before thee there upon the rock in Horeb; and thou shalt smite the rock, and there shall come water out of it, that the people may drink. (Exodus 17:6 KJV)");
+        
     }
 
     /* Visual update */
@@ -4717,7 +4722,7 @@ use_staff_of_wonders(struct obj *obj)
     if (obj->spe <= 0) {
         obj->spe = 0;
         if (rn2(10) > 7 ) {
-            pline("%s glows faintly for a moment.", The(xname(obj)));
+            //pline("%s glows faintly for a moment.", The(xname(obj)));
             obj->spe = rnd(2);
         }
     }

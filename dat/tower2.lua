@@ -46,13 +46,13 @@ des.object("water walking boots",place[7])
 des.object("crystal plate mail",place[8])
 
 local spbooks = {
-   "spellbook of invisibility",
-   "spellbook of cone of cold",
-   "spellbook of create familiar",
-   "spellbook of clairvoyance",
-   "spellbook of charm monster",
-   "spellbook of stone to flesh",
-   "spellbook of polymorph"
+   "prophetic book of divine concealment",/**/
+   "prophetic book of northern wind",
+   "prophetic book of angelic help",
+   "prophetic book of far sight",/**/
+   "prophetic book of pacification",
+   "prophetic book of flesh renewed",
+   "prophetic book of transformation"
 }
 shuffle(spbooks);
 des.object(spbooks[1],place[9])

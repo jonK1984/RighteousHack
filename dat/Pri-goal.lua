@@ -30,8 +30,8 @@ des.region(selection.area(00,00,25,10), "unlit")
 -- Stairs
 des.stair("up", 20,05)
 -- Objects [note: eroded=-1 => obj->oerodeproof=1]
-des.object({ id = "helm of brilliance", coord = place[placeidx],
-             buc="blessed", spe=0, eroded=-1, name="The Mitre of Holiness" })
+des.object({ id = "thurible", coord = place[placeidx],
+             buc="blessed", spe=0, eroded=-1, name="Golden Censer of Incense" })
 des.object()
 des.object()
 des.object()

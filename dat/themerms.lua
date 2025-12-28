@@ -787,8 +787,8 @@ xx|.....|xx
             -- "pick-axe", "dwarvish mattock" could be included in the list of
             -- escape items but don't normally generate in containers.
             local escape_items = {
-               "scroll of teleportation", "ring of teleportation",
-               "wand of teleportation", "wand of digging"
+               "verse of dove wings", "ring of teleportation",
+               "rod of dove wings", "rod of move mountains"
             };
             local itm = obj.new(escape_items[math.random(#escape_items)]);
             local itmcls = itm:class()

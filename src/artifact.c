@@ -2300,15 +2300,6 @@ invoke_quill_paper(struct obj *obj)
     return ECMD_TIME;
 }
 
-/* artifact.c */
-/*#include "hack.h"
-#include "artifact.h"
-#include "monst.h"
-#include "youprop.h"
-#include "mondata.h"
-#include "obj.h"
-#include "prop.h"
-#include "mextra.h"*/
 
 staticfn int
 invoke_staff_of_wonders(struct obj *obj)
@@ -2327,18 +2318,16 @@ invoke_staff_of_wonders(struct obj *obj)
 
 
     /* Confirmation for this powerful divine wrath */
-    Sprintf(qbuf, "Raise the %s to call down a column of fire?", xname(obj));
+    Sprintf(qbuf, "Raise the %s?", xname(obj));
     if (YN(qbuf) != 'y')
         return ECMD_CANCEL;
 
     /* Biblical invocation */
-    You("raise the %s and cry out, \"O LORD, send fire from heaven!\"", xname(obj));
+    You("raise the %s and cry out, \"Hear me, O LORD, hear me, that this people may know that thou art the LORD God, and that thou hast turned their heart back again.\"", xname(obj));
     if (!Deaf)
         Soundeffect(se_thunderclap, 100);
     
     explode(u.ux, u.uy, 1, d(1, 4), WAND_CLASS, EXPL_FIERY);
-
-    pline("Fire and brimstone descends from heaven!");
     
 
     /* 3x3 AoE centered on player (radius 1) */
@@ -2408,24 +2397,23 @@ invoke_staff_of_wonders(struct obj *obj)
     
 
     if (!any_effect) {
-        pline("Heavenly fire rages harmlessly around you.");
+        pline("Then the fire of the LORD fell...");
     } else {
-        You_feel("the terror of the Lord upon your foes.");
         if (!Hallucination)
-            pline("As in the days of Elijah, fire consumes the enemies of God. (2 Kings 1:10-12 ESV)");
+            pline("Then the fire of the LORD fell, and consumed the burnt sacrifice, and the wood, and the stones, and the dust, and licked up the water that was in the trench. And when all the people saw it, they fell on their faces: and they said, The LORD, he is the God; the LORD, he is the God. (1 Kings 18:38-39 KJV)");
     }
 
     /* Consume one charge */
-    obj->spe--;
+    //obj->spe--;
 
     /* Partial recharge chance when drained */
-    if (obj->spe <= 0) {
+    /*if (obj->spe <= 0) {
         obj->spe = 0;
         if (rn2(10)) {
             pline("%s glows faintly with lingering divine power.", The(xname(obj)));
             obj->spe = rnd(3);
         }
-    }
+    }*/
 
     return ECMD_TIME;  /* Consumes a turn */
 }

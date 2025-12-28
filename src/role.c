@@ -293,7 +293,7 @@ const struct Role roles[NUM_ROLES+1] = {
       PM_XORN,
       S_BAT,
       S_WRAITH,
-      ART_EYE_OF_THE_AETHIOPICA,
+      ART_STAFF_OF_SIGNS_AND_WONDERS,
       MH_HUMAN | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 7, 10, 7, 7, 7, 7 },

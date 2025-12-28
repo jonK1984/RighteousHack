@@ -15,7 +15,7 @@
 -- The following actions are permitted, but with a luck penalty:
 --   Breaking boulders.
 --   Stone-to-fleshing boulders.
---   Creating new boulders (e.g., with a scroll of earth).
+--   Creating new boulders (e.g., with a verse of shaken earth).
 --   Jumping.
 --   Being pulled by a thrown iron ball.
 --   Hurtling through the air from Newton's 3rd law.
@@ -86,8 +86,8 @@ des.trap("pit",06,10)
 des.trap("pit",07,10)
 
 -- A little help
-des.object("scroll of earth",02,11)
-des.object("scroll of earth",03,11)
+des.object("verse of shaken earth",02,11)
+des.object("verse of shaken earth",03,11)
 
 -- Random objects
 des.object({ class = "%" });

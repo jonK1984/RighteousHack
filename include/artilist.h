@@ -340,7 +340,7 @@ static NEARDATA struct artifact artilist[] = {
     * Quest reward for Prophet
     * apply: converts a non-water tile to water, converts water to dry land.
     * staff begins with 8 charges, prayer will get charges back up to 6
-    * #invoke: AoE Column of fire 5x5 grid centered around player
+    * #invoke: AoE Column of fire 5x5 grid centered around player 5d5 Fire Damage, 5d5 Lightening Damage
     * prayer time reduced by 1/3
     =================================
     */

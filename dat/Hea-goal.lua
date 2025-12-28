@@ -31,8 +31,8 @@ des.stair("up", 39,10)
 -- Non diggable walls
 des.non_diggable(selection.area(00,00,40,11))
 -- Objects
-des.object({ id = "quarterstaff", x=20, y=06, buc="blessed", spe=0, name="The Staff of Aesculapius" })
-des.object("wand of lightning", 20, 06)
+des.object({ id = "torn piece of cloth", x=20, y=06, buc="blessed", spe=0, name="Handkerchief of the Apostle Paul" })
+des.object("rod of lightning flash", 20, 06)
 des.object()
 des.object()
 des.object()

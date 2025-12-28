@@ -3,7 +3,7 @@
 # NetHack may be freely redistributed.  See license for details.
 # Random engravings on the floor
 #
-Elbereth
+PSALM 91
 # trap engravings
 Vlad was here
 ad aerarium
