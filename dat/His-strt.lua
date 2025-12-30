@@ -11,77 +11,69 @@ des.level_flags("noteleport", "hardfloor", "solidify")
 
 des.level_init({ style = "solidfill", fg = " " })
 
+
 -- Overall map: water around a central island/building with dock
+--map size must be 76x20
 des.map([[
-............................................................................
-............................................................................
-............................................................................
-.....................-----------------------------------------------........
-.....................|.............................................|........
-.....................|.............................................|........
-.....................|...............wwwwwwwwwwwwwww...............|........
-.....................|.............ww-----------------ww...........|........
-.....................|............w---|...............|---w.........|........
-.....................|...........w----|.................|----w.......|........
-.....................|..........w-----|...................|-----w.....|........
-.....................|.........w------|---------------------|------w....|........
-.....................|........w-------|.....................|-------w...|........
-.....................|.......w--------|.....................|--------w..|........
-.....................|......w---------|.....................|---------w.|........
-.....................|.....w----------|-----------------------|---------w|........
-.....................|....w-----------|.......................|----------|........
-.....................|...w------------|.......................|----------|........
-.....................|..w-------------|-------------------------|--------|........
-.....................|ww--------------|---------------------------|------|........
-.....................|w---------------------------------------------|------|........
-.....................|-----------------------------------------------|........
-.....................----------------------------------------------------....
-............................................................................
-............................................................................
+|---------------------------------------------------------------------------
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+|............{{{{{{{{................................{{{{{{{{{.............|
+|.............{{{{{{{.................................{{{{{{{{.............|
+|..............{{{{{{..................................{{{{{{{.............|
+|...............{{{{{...................................{{{{{{.............|
+|................{{{{.....................................{{{{.............|
+|.................{{{......................................{{{.............|
+|..................{{.......................................{{.............|
+|...................{........................................{.............|
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+|..........................................................................|
+----------------------------------------------------------------------------
 ]]);
 
--- Fill the outer area with water
-des.replace_terrain({ region = {00,00,75,25}, fromterrain = ".", toterrain = "W" })
+-- Outer area becomes water (harbor around the library island)
+--des.replace_terrain({ region = {00,00,75,19}, fromterrain = ".", toterrain = "W" })
 
--- Building interior: stone floor
-des.region({ region = {22,03,70,22}, lit = 1, type = "ordinary", irregular = true })
+-- Library interior: lit stone floor
+--des.region({ region = {21,03,66,18}, lit = 1, type = "ordinary" })
 
--- Dock (arrival point) - wooden pier extending into water
-des.terrain({ x=30, y=04, typ = "-" })  -- bridge-like dock
-des.terrain({ x=31, y=04, typ = "-" })
-des.terrain({ x=32, y=04, typ = "-" })
-des.terrain({ x=33, y=04, typ = "-" })
+-- Dungeon Description
+des.region(selection.area(00,00,49,15), "lit")
+des.region(selection.area(04,04,45,11), "unlit")
+des.region({ region={06,06,22,09}, lit=1, type="throne", filled=2 })
+des.region(selection.area(27,06,43,09), "lit")
+-- Portal arrival point
+des.levregion({ region = {20,14,20,14}, type="branch" })
 
--- Entrance door to the library
-des.door("open", 33, 05)
+-- Wooden dock extending north into the water
+--des.terrain({ region = {37,02,40,02}, typ = "-" })  -- dock planks
 
--- Quest portal location (player arrives here)
-des.stair("up", 32, 04)  -- treated as portal in quest setup
+-- Main entrance door (north side)
+des.door("open", 38, 04)
 
--- Grand columns inside the hall (stone pillars)
-local columns = {
-    {35,08}, {35,15}, {45,08}, {45,15},
-    {55,08}, {55,15}, {65,08}, {65,15}
-}
-for _, col in ipairs(columns) do
-    des.terrain(col[1], col[2], "|")  -- vertical pillar
-end
+-- Quest portal / arrival point on the dock
+des.stair("up", 38, 02)
 
--- Trees/plants for atmosphere
-des.feature("tree", 28, 10)
-des.feature("tree", 28, 18)
-des.feature("tree", 68, 10)
-des.feature("tree", 68, 18)
+-- Grand marble columns inside the hall
+
+-- Decorative trees for scholarly garden atmosphere
+des.feature("tree", 25, 06)
+des.feature("tree", 25, 13)
+des.feature("tree", 62, 06)
+des.feature("tree", 62, 13)
+des.feature("tree", 43, 10)
 
 -- Bookshelves along the walls (non-diggable walls with objects)
-des.non_diggable({ region = {23,04,69,21} })
+--des.non_diggable({ region = {23,04,69,21} })
 
 -- Place prophetic books on shelves (randomly scattered inside)
-for i = 1, 30 do
-    local x = math.random(25, 68)
-    local y = math.random(06, 20)
-    des.object("prophetic book of move mountains", x, y)  -- in RighteousHack, scrolls can be themed as prophetic writings
-end
+
 
 -- Quest leader: Zenodotus, the Chief Librarian (peaceful human)
 des.monster({
@@ -89,8 +81,7 @@ des.monster({
     x = 46, y = 12,
     peaceful = true,
     historic = true,
-    female = false,
-    name = "Zenodotus"
+    female = false
 })
 
 -- Quest guardians: peaceful scholars/librarians (human archeologists/priests analog)
@@ -106,10 +97,7 @@ des.stair("up", 60, 12)
 -- Stairs down to the Basement (lower quest level)
 des.stair("down", 32, 12)
 
--- Some random traps and minor monsters for flavor (guarding knowledge)
-des.trap("spiked pit", 38, 12)
-des.trap("dart", 50, 16)
-des.trap("magic", 58, 10)
+
 
 -- A few minor hostile creatures lurking (thieves or vandals)
 des.monster("thief", 25, 08)

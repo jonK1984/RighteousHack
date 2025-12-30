@@ -196,7 +196,7 @@ You couldn't quite make out that last message.]],
          text = "You again sense %l demanding your attendance.",
       },
    },
-   Arc = {
+   His = {
       assignquest = {
          synopsis = "[%nC has stolen %o.  Locate %i, defeat %ni, and return %O.]",
          output = "text",

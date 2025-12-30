@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NetHack Map Editor</title>
+<style>
+  body { background-color: #000; color: #fff; font-family: monospace; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+  #menubar { height: 10%; background: #15202b; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; border-bottom: 1px solid #22303c; }
+  .toolbar-row { display: flex; flex-wrap: nowrap; gap: 5px; }
+  .toolbar-row button { background: #22303c; color: #1da1f2; border: 1px solid #38444d; padding: 8px 12px; cursor: pointer; font-family: monospace; min-width: 50px; }
+  .toolbar-row button.selected { background: #1da1f2; color: #fff; }
+  #main { flex: 1; display: flex; }
+  #left, #right { flex: 1; margin: 20px; display: flex; flex-direction: column; }
+  #grid { 
+    display: grid; 
+    grid-template-columns: 50px repeat(76, 16px); 
+    grid-template-rows: 24px repeat(20, 20px); 
+    background: #111; 
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    width: fit-content;
+    margin: 0 auto;
+  }
+  #grid > div { 
+    text-align: center; 
+    line-height: 20px; 
+    overflow: hidden;
+  }
+  .header { color: #888; font-size: 12px; }
+  .cell { 
+    cursor: pointer; 
+    font-size: 16px; 
+    border: 1px solid #222;
+  }
+  .cell:hover { background: #333; }
+  #textarea { flex: 1; background: #15202b; color: #fff; border: 1px solid #38444d; font-family: monospace; font-size: 14px; resize: none; }
+  #copybtn { margin-top: 10px; padding: 10px; background: #1da1f2; color: #fff; border: none; cursor: pointer; font-size: 16px; }
+  #position { text-align: center; color: #1da1f2; margin-top: 10px; font-size: 14px; }
+  .error { color: red; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="menubar">
+  <div class="toolbar-row" id="char-row"></div>
+  <div class="toolbar-row" id="shape-row"></div>
+</div>
+<div id="main">
+  <div id="left">
+    <div id="grid"></div>
+    <div id="position">Cursor: --,--</div>
+  </div>
+  <div id="right">
+    <textarea id="textarea" spellcheck="false"></textarea>
+    <button id="copybtn">Copy to Clipboard</button>
+    <div id="errormsg" class="error"></div>
+  </div>
+</div>
+
+<script>
+const ROWS = 20;
+const COLS = 76;
+
+let map = Array.from({length: ROWS}, () => Array(COLS).fill(' '));
+let currentChar = ' ';
+let currentShape = 'point'; // 'point', 'large', 'rectangle', 'triangle', 'circle', 'fill'
+
+let dragStart = null; // {x, y} for rectangle/triangle/circle start point
+
+const charButtons = [
+  {ch: ' ', name: 'Stone / Space'},
+  {ch: '#', name: 'Corridor'},
+  {ch: '.', name: 'Room floor'},
+  {ch: '-', name: 'Horizontal wall'},
+  {ch: '|', name: 'Vertical wall'},
+  {ch: '+', name: 'Door'},
+  {ch: 'A', name: 'Air'},
+  {ch: 'C', name: 'Cloud'},
+  {ch: 'S', name: 'Secret door'},
+  {ch: '{', name: 'Fountain'},
+  {ch: '\\', name: 'Throne'},
+  {ch: 'K', name: 'Sink'},
+  {ch: '}', name: 'Moat'},
+  {ch: 'P', name: 'Pool'},
+  {ch: 'L', name: 'Lava pool'},
+  {ch: 'I', name: 'Ice'},
+  {ch: 'W', name: 'Water'},
+  {ch: 'T', name: 'Tree'},
+  {ch: 'F', name: 'Iron bars'},
+];
+
+const shapeButtons = [
+  {id: 'point', label: 'Point'},
+  {id: 'large', label: 'Large 4×4'},
+  {id: 'rectangle', label: 'Rectangle'},
+  {id: 'triangle', label: 'Triangle'},
+  {id: 'circle', label: 'Circle'},
+  {id: 'fill', label: 'Fill'},
+];
+
+const charRow = document.getElementById('char-row');
+charButtons.forEach(btn => {
+  const b = document.createElement('button');
+  b.textContent = btn.ch === ' ' ? '[space]' : btn.ch;
+  b.title = btn.name;
+  b.onclick = () => {
+    charRow.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    currentChar = btn.ch;
+  };
+  charRow.appendChild(b);
+});
+charRow.firstChild.classList.add('selected');
+
+const shapeRow = document.getElementById('shape-row');
+shapeButtons.forEach(btn => {
+  const b = document.createElement('button');
+  b.textContent = btn.label;
+  b.onclick = () => {
+    shapeRow.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    currentShape = btn.id;
+    dragStart = null; // reset on tool change
+  };
+  shapeRow.appendChild(b);
+});
+shapeRow.firstChild.classList.add('selected');
+
+const grid = document.getElementById('grid');
+const textarea = document.getElementById('textarea');
+const position = document.getElementById('position');
+const copybtn = document.getElementById('copybtn');
+
+function createGrid() {
+  grid.innerHTML = '';
+  const corner = document.createElement('div');
+  corner.className = 'header';
+  grid.appendChild(corner);
+
+  for (let x = 0; x < COLS; x++) {
+    const h = document.createElement('div');
+    h.textContent = x.toString().padStart(2, '0');
+    h.className = 'header';
+    h.title = x;
+    grid.appendChild(h);
+  }
+
+  for (let y = 0; y < ROWS; y++) {
+    const rh = document.createElement('div');
+    rh.textContent = y.toString().padStart(2, '0');
+    rh.className = 'header';
+    rh.title = y;
+    grid.appendChild(rh);
+
+    for (let x = 0; x < COLS; x++) {
+      const cell = document.createElement('div');
+      cell.textContent = map[y][x];
+      cell.className = 'cell';
+      cell.dataset.x = x;
+      cell.dataset.y = y;
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function updateText() {
+  const lines = map.map(row => row.join('')).join('\n');
+  textarea.value = `des.map([[\n${lines}\n]]);`;
+}
+
+function paint(x, y) {
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+  map[y][x] = currentChar;
+  const cell = grid.querySelector(`div[data-x="${x}"][data-y="${y}"]`);
+  if (cell) cell.textContent = currentChar;
+}
+
+function fillArea(startX, startY) {
+  const target = map[startY][startX];
+  if (target === currentChar) return;
+
+  const queue = [[startX, startY]];
+  const visited = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+
+  while (queue.length) {
+    const [cx, cy] = queue.shift();
+    if (cx < 0 || cx >= COLS || cy < 0 || cy >= ROWS || visited[cy][cx] || map[cy][cx] !== target) continue;
+    visited[cy][cx] = true;
+    paint(cx, cy);
+    queue.push([cx-1, cy], [cx+1, cy], [cx, cy-1], [cx, cy+1]);
+  }
+}
+
+function drawShape(x1, y1, x2, y2) {
+  const xmin = Math.max(0, Math.min(x1, x2));
+  const xmax = Math.min(COLS-1, Math.max(x1, x2));
+  const ymin = Math.max(0, Math.min(y1, y2));
+  const ymax = Math.min(ROWS-1, Math.max(y1, y2));
+
+  if (currentShape === 'rectangle') {
+    for (let y = ymin; y <= ymax; y++) {
+      for (let x = xmin; x <= xmax; x++) paint(x, y);
+    }
+  } else if (currentShape === 'circle') {
+    const cx = (xmin + xmax) / 2;
+    const cy = (ymin + ymax) / 2;
+    const rx = (xmax - xmin) / 2;
+    const ry = (ymax - ymin) / 2;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const dx = (x - cx) / rx;
+        const dy = (y - cy) / ry;
+        if (dx*dx + dy*dy <= 1) paint(x, y);
+      }
+    }
+  } else if (currentShape === 'triangle') {
+    // Right triangle with hypotenuse from top-left to bottom-right of bounding box
+    for (let y = ymin; y <= ymax; y++) {
+      const rowStart = xmin + Math.floor((y - ymin) * (xmax - xmin) / (ymax - ymin));
+      for (let x = rowStart; x <= xmax; x++) paint(x, y);
+    }
+  }
+}
+
+let isDragging = false;
+
+grid.addEventListener('mousedown', e => {
+  if (!e.target.classList.contains('cell')) return;
+  const x = parseInt(e.target.dataset.x);
+  const y = parseInt(e.target.dataset.y);
+  position.textContent = `Cursor: ${x},${y}`;
+
+  if (currentShape === 'fill') {
+    fillArea(x, y);
+    updateText();
+    return;
+  }
+
+  isDragging = true;
+  dragStart = {x, y};
+
+  if (currentShape === 'point') {
+    paint(x, y);
+  } else if (currentShape === 'large') {
+    for (let dy = -1; dy <= 2; dy++) {
+      for (let dx = -1; dx <= 2; dx++) {
+        paint(x + dx, y + dy);
+      }
+    }
+  }
+  updateText();
+});
+
+grid.addEventListener('mousemove', e => {
+  if (!e.target.classList.contains('cell')) return;
+  const x = parseInt(e.target.dataset.x);
+  const y = parseInt(e.target.dataset.y);
+  position.textContent = `Cursor: ${x},${y}`;
+
+  if (isDragging && dragStart && ['rectangle', 'triangle', 'circle'].includes(currentShape)) {
+    // Temporary: clear previous preview not implemented; just apply on mouseup
+  } else if (isDragging && currentShape === 'point') {
+    paint(x, y);
+  } else if (isDragging && currentShape === 'large') {
+    for (let dy = -1; dy <= 2; dy++) {
+      for (let dx = -1; dx <= 2; dx++) {
+        paint(x + dx, y + dy);
+      }
+    }
+  }
+  updateText();
+});
+
+grid.addEventListener('mouseup', e => {
+  if (!isDragging || !dragStart) {
+    isDragging = false;
+    return;
+  }
+  if (e.target.classList.contains('cell')) {
+    const x = parseInt(e.target.dataset.x);
+    const y = parseInt(e.target.dataset.y);
+    if (['rectangle', 'triangle', 'circle'].includes(currentShape)) {
+      drawShape(dragStart.x, dragStart.y, x, y);
+      updateText();
+    }
+  }
+  isDragging = false;
+  dragStart = null;
+});
+
+grid.addEventListener('mouseleave', () => {
+  isDragging = false;
+  dragStart = null;
+  position.textContent = 'Cursor: --,--';
+});
+
+grid.addEventListener('selectstart', e => e.preventDefault());
+
+copybtn.onclick = () => {
+  navigator.clipboard.writeText(textarea.value)
+    .then(() => alert('Copied to clipboard!'))
+    .catch(() => alert('Copy failed - select and copy manually'));
+};
+
+createGrid();
+updateText();
+</script>
+</body>
+</html>
