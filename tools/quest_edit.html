@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RighteousHack Quest.lua Editor</title>
+    <style>
+        /* X.com (Twitter) dark mode color scheme */
+        body {
+            background-color: #000000;
+            color: #e7e9ea;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #header {
+            background-color: #000000;
+            border-bottom: 1px solid #2f3336;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        button {
+            background-color: #1d9bf0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #1a8cd8;
+        }
+        #insert-menu {
+            position: relative;
+        }
+        #insert-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #16181c;
+            border: 1px solid #2f3336;
+            border-radius: 8px;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+        #insert-dropdown.show {
+            display: block;
+        }
+        #insert-dropdown button {
+            display: block;
+            width: 100%;
+            background: none;
+            color: #e7e9ea;
+            text-align: left;
+            padding: 10px;
+            border-radius: 0;
+        }
+        #insert-dropdown button:hover {
+            background-color: #1d9bf0;
+        }
+        #container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        #tree {
+            width: 400px;
+            background-color: #010409;
+            border-right: 1px solid #2f3336;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        #editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #editor {
+            flex: 1;
+            background-color: #16181c;
+            color: #e7e9ea;
+            border: 1px solid #2f3336;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: none;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .placeholder {
+            background-color: #1d9bf020;
+            color: #1d9bf0;
+            padding: 1px 4px;
+            border-radius: 4px;
+            cursor: help;
+        }
+        ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        li {
+            margin: 4px 0;
+        }
+        .node {
+            cursor: pointer;
+            user-select: none;
+        }
+        .node:hover {
+            background-color: #16181c;
+            border-radius: 4px;
+        }
+        .expander {
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .key {
+            color: #79c0ff;
+            margin-right: 8px;
+        }
+        .value-preview {
+            color: #7ee787;
+            font-style: italic;
+        }
+        .selected {
+            background-color: #1d9bf0 !important;
+            border-radius: 4px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>RighteousHack Quest.lua Editor</h1>
+        <input type="file" id="load-file" accept=".lua" style="display:none;">
+        <button onclick="document.getElementById('load-file').click();">Load quest.lua</button>
+        <button onclick="saveLua()">Save as quest.lua</button>
+        <div id="insert-menu">
+            <button onclick="toggleDropdown()">Insert Placeholder ▼</button>
+            <div id="insert-dropdown">
+                <button onclick="insertPlaceholder('%H')">%H - Quest home (e.g. "your home")</button>
+                <button onclick="insertPlaceholder('%l')">%l - Leader title (lowercase)</button>
+                <button onclick="insertPlaceholder('%n')">%n - Nemesis name</button>
+                <button onclick="insertPlaceholder('%r')">%r - Rank/title</button>
+                <button onclick="insertPlaceholder('%s')">%s - "sir"/"lady" (gendered)</button>
+                <button onclick="insertPlaceholder('%S')">%S - "Sir"/"Lady" (capitalized)</button>
+                <button onclick="insertPlaceholder('%Z')">%Z - Quest home (capitalized)</button>
+                <button onclick="insertPlaceholder('%p')">%p - Player name</button>
+                <button onclick="insertPlaceholder('%c')">%c - Player character (pl_character)</button>
+                <button onclick="insertPlaceholder('%%')">%% - Literal %</button>
+                <button onclick="insertPlaceholder('%C')">%C - Capitalized player character</button>
+            </div>
+        </div>
+    </div>
+    <div id="container">
+        <div id="tree"></div>
+        <div id="editor-panel">
+            <h2>Editing: <span id="path-display">—</span></h2>
+            <textarea id="editor" spellcheck="false"></textarea>
+        </div>
+    </div>
+
+    <script>
+        let data = null;
+        let currentPath = null; // array of keys/indices to current editable string
+
+        const placeholders = {
+            '%H': 'Quest home description (e.g. "your home")',
+            '%l': 'Quest leader title (lowercase)',
+            '%n': 'Quest nemesis name',
+            '%r': 'Player rank/title',
+            '%s': '"sir" or "lady" based on gender',
+            '%S': '"Sir" or "Lady" based on gender',
+            '%Z': 'Quest home description (capitalized)',
+            '%p': 'Player name',
+            '%c': 'Player character name (pl_character)',
+            '%C': 'Capitalized player character name',
+            '%%': 'Literal percent sign'
+        };
+
+        function toggleDropdown() {
+            document.getElementById('insert-dropdown').classList.toggle('show');
+        }
+
+        // Close dropdown if clicked outside
+        window.onclick = function(e) {
+            if (!e.target.matches('#insert-menu button')) {
+                document.getElementById('insert-dropdown').classList.remove('show');
+            }
+        }
+
+        function insertPlaceholder(code) {
+            const editor = document.getElementById('editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            editor.value = text.slice(0, start) + code + text.slice(end);
+            editor.focus();
+            editor.setSelectionRange(start + code.length, start + code.length);
+            updateDataFromEditor();
+            renderEditor(); // re-highlight
+            toggleDropdown();
+        }
+
+        function highlightPlaceholders(text) {
+            let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            for (const ph in placeholders) {
+                const regex = new RegExp(ph.replace(/%/g, '\\%'), 'g');
+                html = html.replace(regex, `<span class="placeholder" title="${placeholders[ph]}">${ph}</span>`);
+            }
+            return html;
+        }
+
+        function renderValue(value) {
+            if (typeof value === 'string') {
+                return `<span class="value-preview">"${highlightPlaceholders(value.substring(0, 100))}${value.length > 100 ? '...' : ''}"</span>`;
+            } else if (Array.isArray(value)) {
+                return `<span class="value-preview">[array, ${value.length} items]</span>`;
+            } else if (typeof value === 'object' && value !== null) {
+                return `<span class="value-preview">{object, ${Object.keys(value).length} keys}</span>`;
+            }
+            return String(value);
+        }
+
+        function buildTree(obj, path = [], parentUl = document.getElementById('tree')) {
+            parentUl.innerHTML = '';
+            if (typeof obj !== 'object' || obj === null) return;
+
+            const ul = document.createElement('ul');
+            parentUl.appendChild(ul);
+
+            for (const key in obj) {
+                const li = document.createElement('li');
+                const node = document.createElement('div');
+                node.className = 'node';
+
+                const value = obj[key];
+                const isContainer = typeof value === 'object' && value !== null;
+                const isEditableString = typeof value === 'string';
+
+                const expander = document.createElement('span');
+                expander.className = 'expander';
+                expander.textContent = isContainer ? '▼' : ' ';
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'key';
+                keySpan.textContent = key;
+
+                const preview = document.createElement('span');
+                preview.innerHTML = renderValue(value);
+
+                node.appendChild(expander);
+                node.appendChild(keySpan);
+                node.appendChild(preview);
+
+                if (isContainer) {
+                    node.onclick = (e) => {
+                        e.stopPropagation();
+                        const childUl = li.querySelector('ul');
+                        if (childUl) {
+                            childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none';
+                            expander.textContent = childUl.style.display === 'none' ? '▶' : '▼';
+                        }
+                    };
+                }
+
+                if (isEditableString) {
+                    node.onclick = (e) => {
+                        e.stopPropagation();
+                        selectNode([...path, key]);
+                    };
+                }
+
+                li.appendChild(node);
+
+                if (isContainer) {
+                    const childUl = document.createElement('ul');
+                    childUl.style.display = 'block';
+                    buildTree(value, [...path, key], childUl);
+                    li.appendChild(childUl);
+                }
+
+                ul.appendChild(li);
+            }
+        }
+
+        function selectNode(path) {
+            currentPath = path;
+            const value = path.reduce((o, k) => o[k], data);
+            document.getElementById('path-display').textContent = path.join(' → ');
+            renderEditor(value);
+            // highlight selected node
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            // simple highlight by path (not perfect, but works for demo)
+        }
+
+        function renderEditor(text = '') {
+            const editor = document.getElementById('editor');
+            editor.value = text;
+            // placeholders already highlighted via title on hover
+        }
+
+        document.getElementById('editor').addEventListener('input', () => {
+            updateDataFromEditor();
+            // re-build preview in tree (simple: rebuild whole tree)
+            buildTree(data);
+            if (currentPath) selectNode(currentPath);
+        });
+
+        function updateDataFromEditor() {
+            if (!currentPath) return;
+            const editor = document.getElementById('editor');
+            let obj = data;
+            for (let i = 0; i < currentPath.length - 1; i++) {
+                obj = obj[currentPath[i]];
+            }
+            obj[currentPath[currentPath.length - 1]] = editor.value;
+        }
+
+        function reconstructLua(obj, indent = 0) {
+            const spaces = '  '.repeat(indent);
+            if (typeof obj === 'string') {
+                // escape properly for Lua multi-line string
+                return `[==[${obj}]==]`;
+            }
+            if (Array.isArray(obj)) {
+                if (obj.length === 0) return '{}';
+                let lines = ['{'];
+                for (const item of obj) {
+                    lines.push(spaces + '  ' + reconstructLua(item, indent + 1) + ',');
+                }
+                lines.push(spaces + '}');
+                return lines.join('\n');
+            }
+            if (typeof obj === 'object' && obj !== null) {
+                let lines = ['{'];
+                for (const key in obj) {
+                    const val = reconstructLua(obj[key], indent + 1);
+                    lines.push(`${spaces}  ["${key}"] = ${val},`);
+                }
+                lines.push(spaces + '}');
+                return lines.join('\n');
+            }
+            return String(obj);
+        }
+
+        function saveLua() {
+            if (!data) {
+                alert('No data loaded!');
+                return;
+            }
+            const luaText = '-- Edited RighteousHack quest.lua\nreturn ' + reconstructLua(data);
+            const blob = new Blob([luaText], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'quest.lua';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+       document.getElementById('load-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+            try {
+                let content = ev.target.result;
+
+                // Remove all comments (-- until end of line)
+                content = content.replace(/--.*$/gm, '').trim();
+
+                // Find the start of the main table
+                const startIdx = content.indexOf('questtext = {');
+                if (startIdx === -1) {
+                    throw new Error('Could not find "questtext = {" in the file.');
+                }
+
+                // Skip to after the opening {
+                let pos = startIdx + content.substring(startIdx).indexOf('{') + 1;
+
+                // Now parse with balanced braces, skipping long strings
+                let level = 1; // we are inside the outer {
+                let inLongString = false;
+                let longEnd = '';
+                const startPos = pos;
+
+                while (pos < content.length && level > 0) {
+                    const ch = content[pos];
+
+                    if (inLongString) {
+                        // Fast-forward to possible end
+                        const possibleEnd = content.indexOf(longEnd, pos);
+                        if (possibleEnd === -1) {
+                            throw new Error('Unclosed long string in file.');
+                        }
+                        pos = possibleEnd + longEnd.length;
+                        inLongString = false;
+                        continue;
+                    }
+
+                    // Detect long string start
+                    if (content.substr(pos, 2) === '[[') {
+                        inLongString = true;
+                        longEnd = ']]';
+                        pos += 2;
+                        continue;
+                    }
+                    const eqStart = content.indexOf('=[', pos);
+                    if (eqStart !== -1 && content[eqStart - 1] === '[') {
+                        let eqCount = 0;
+                        let j = eqStart + 2;
+                        while (content[j] === '=') {
+                            eqCount++;
+                            j++;
+                        }
+                        if (content[j] === '[') {
+                            inLongString = true;
+                            longEnd = ']' + '='.repeat(eqCount) + ']';
+                            pos = j + 1;
+                            continue;
+                        }
+                    }
+
+                    // Normal brace handling
+                    if (ch === '{') level++;
+                    else if (ch === '}') level--;
+
+                    pos++;
+                }
+
+                if (level !== 0) {
+                    throw new Error('Mismatched braces in questtext table.');
+                }
+
+                const tableSource = content.substring(startPos, pos - 1); // exclude final }
+
+                // Convert to JSON-parseable format
+                let jsonLike = tableSource
+                    .replace(/(\w+)\s*=/g, '"$1":') // unquoted keys
+                    .replace(/\[\[([\s\S]*?)\]\]/g, (m, inner) => {
+                        const escaped = inner
+                            .replace(/\\/g, '\\\\')
+                            .replace(/"/g, '\\"')
+                            .replace(/\r/g, '')
+                            .replace(/\n/g, '\\n');
+                        return `"${escaped}"`;
+                    })
+                    .replace(/\[\=+\[([\s\S]*?)\]\=+\]/g, (m, inner) => {
+                        const escaped = inner
+                            .replace(/\\/g, '\\\\')
+                            .replace(/"/g, '\\"')
+                            .replace(/\r/g, '')
+                            .replace(/\n/g, '\\n');
+                        return `"${escaped}"`;
+                    })
+                    .replace(/,\s*([}\]])/g, '$1') // trailing commas
+                    .replace(/,\s*$/gm, '');
+
+                // Wrap for JSON.parse
+                jsonLike = `{${jsonLike}}`;
+
+                data = JSON.parse(jsonLike);
+
+                buildTree(data);
+                currentPath = null;
+                document.getElementById('path-display').textContent = '—';
+                document.getElementById('editor').innerHTML = '';
+                document.getElementById('status').textContent = 'Loaded successfully!';
+                setTimeout(() => document.getElementById('status').textContent = '', 4000);
+            } catch (err) {
+                alert('Failed to parse quest.lua: ' + err.message);
+                console.error(err);
+                data = null;
+                document.getElementById('tree').innerHTML = '';
+                document.getElementById('editor').innerHTML = '';
+                document.getElementById('path-display').textContent = '—';
+                document.getElementById('status').textContent = 'Parse error';
+            }
+        };
+
+        reader.onerror = () => alert('Error reading file');
+        reader.readAsText(file);
+    });
+    </script>
+</body>
+</html>

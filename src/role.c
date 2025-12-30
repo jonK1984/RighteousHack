@@ -44,7 +44,7 @@ const struct Role roles[NUM_ROLES+1] = {
       "the Tomb of the Toltec Kings",
       PM_ARCHEOLOGIST,
       NON_PM,
-      PM_LORD_CARNARVON,
+      PM_ZENODOTUS,
       PM_STUDENT,
       PM_MINION_OF_HUHETOTL,
       NON_PM,
