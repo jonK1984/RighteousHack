@@ -70,15 +70,132 @@
     background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
   }
   .popup {
-    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 400px;
+    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 650px;
   }
-  .popup input, .popup textarea { width: 100%; margin: 10px 0; background: #000; color: #fff; }
+  .popup input, .popup textarea {  margin: 10px 0; background: #000; color: #fff; }
+  .popup input[type="text"] {
+    width: 100%;
+  }
+  .popup textarea[name="contents"], .popup textarea[name="inventory"] {
+    width: 100%;
+  }
   .popup label { display: block; margin-top: 10px; }
+
+  /* ADD THIS TO YOUR <style> BLOCK */
+  .mon-popup-layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      align-items: flex-start;
+  }
+
+  .mon-input-section {
+      flex: 1;
+      min-width: 300px;
+  }
+
+  .mon-scroll-list {
+      flex: 0 0 250px;              /* fixed width */
+      max-height: 570px;            /* max height of the list – adjusts to content if shorter */
+      overflow-y: auto;
+      background: #22303c;
+      border: 1px solid #1da1f2;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+  }
+
+  .mon-scroll-list .mon-item {
+      padding: 6px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #38444d;
+      transition: background 0.2s;
+  }
+
+  .mon-scroll-list .mon-item:hover {
+      background: #1da1f2;
+      color: #000;
+  }
+
+  .mon-scroll-list .mon-item:last-child {
+      border-bottom: none;
+  }
+
+  .mon-scroll-list .mon-item.match {
+      display: block;
+  }
+
+  .mon-scroll-list .mon-item.no-match {
+      display: none;
+  }
+
+  /* ADD THIS TO YOUR <style> BLOCK */
+  .obj-popup-layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      align-items: flex-start;
+  }
+
+  .obj-input-section {
+      flex: 1;
+      min-width: 300px;
+  }
+
+  .obj-scroll-list {
+      flex: 0 0 300px;              /* slightly wider than monster list */
+      max-height: 650px;
+      overflow-y: auto;
+      background: #22303c;
+      border: 1px solid #1da1f2;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+  }
+
+  .obj-scroll-list .obj-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #38444d;
+      transition: background 0.2s;
+  }
+
+  .obj-scroll-list .obj-item:hover {
+      background: #1da1f2;
+      color: #000;
+  }
+
+  .obj-scroll-list .obj-item:last-child {
+      border-bottom: none;
+  }
+
+  .obj-scroll-list .obj-sym {
+      font-weight: bold;
+      color: #1da1f2;
+      min-width: 20px;
+      text-align: center;
+  }
+
+  .obj-scroll-list .obj-item.artifact {
+      color: #ffdd00;               /* gold tint for artifacts */
+  }
+
+  .obj-scroll-list .obj-item.match {
+      display: flex;
+  }
+
+  .obj-scroll-list .obj-item.no-match {
+      display: none;
+  }
 </style>
 </head>
 <body>
 <div id="menubar">
   <div class="toolbar-row" id="layer-brush-row">
+    <button data-brush="terrain">Terrain</button>
     <button data-brush="light">Light</button>
     <button data-brush="dark">Dark</button>
     <button data-brush="creature">Creature</button>
@@ -100,7 +217,9 @@
       <div id="grid"></div>
       <div id="overlay"></div>
     </div>
-    <div id="position">Cursor: --,--</div>
+
+    <div id="position" style="white-space: pre-line; font-size: 14px; padding: 8px;">>Cursor: --,--</div>
+
   </div>
   <div id="right">
     <h3>Generated Lua Code</h3>
@@ -134,48 +253,90 @@
 </div>
 <div id="popup-overlay">
   <div class="popup" id="creature-popup">
-    <h3>Place Monster</h3>
-    <label>Monster ID: <input type="text" id="mon-id"></label>
-    <label><input type="checkbox" id="mon-peaceful"> Peaceful</label>
-    <label><input type="checkbox" id="mon-historic"> Historic</label>
-    <label><input type="checkbox" id="mon-female"> Female</label>
-    <label>Inventory (Lua code):<br>
-      <textarea id="mon-inventory" rows="6" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
-    </label>
-    <button onclick="confirmCreature()">OK</button>
-    <button onclick="closePopup()">Cancel</button>
+    <div class="mon-popup-layout">
+    <div class="mon-input-section">
+      <h3>Place Monster</h3>
+      <label>Monster ID: <input id="mon-id" name="id" type="text" placeholder='e.g. "archangel" or "Gabriel"'></label>
+
+      <label><input type="checkbox" name="peaceful"> Peaceful</label>
+      <label><input type="checkbox" name="asleep"> Asleep</label>
+
+      <label><input type="checkbox" id="mon-historic" name="historic"> Historic</label>
+      <label>Force gender (check one if needed):</label>
+      <label><input type="checkbox" name="male"> Male</label>
+      <label><input type="checkbox" name="female"> Female</label>
+      <label><input type="checkbox" name="neuter"> Neuter</label>
+
+      <label>Custom name: <input type="text" name="name" placeholder='e.g. "Gabriel"'></label>
+
+      <label>Inventory (Lua code):<br>
+        <textarea id="mon-inventory" rows="6" name="inventory" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
+      </label>
+      <button id='creature-confirm' >OK</button>
+      <button id='creature-cancel' >Cancel</button>
+    </div>
+    <div id="mon-suggestions" class="mon-scroll-list">
+
+    </div>
+  </div>
   </div>
   
   <div class="popup hide" id="object-popup">
+    <div class="obj-popup-layout">
+    <div class="obj-input-section">
     <h3>Place Object</h3>
-    <label>Object ID: <input type="text" id="obj-id"></label>
-    <label>BUC:
-      <select id="obj-buc">
-        <option value="">uncursed</option>
-        <option value="blessed">blessed</option>
-        <option value="cursed">cursed</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="obj-locked"> Locked</label>
-    <label><input type="checkbox" id="obj-trapped"> Trapped</label>
-    <label>Spe: <input type="number" id="obj-spe" value="0"></label>
-    <label>Percent chance (0 = always): <input type="number" id="obj-percent" min="0" max="100" value="0"></label>
+
+    <label>Object ID: <input id="obj-id" name="id" type="text" placeholder='e.g. "anointing oil" or "scroll of light"'></label>
+
+    <label>BUC:</label>
+    <div class="radio-group">
+        <label><input type="radio" name="buc" value="blessed" id="buc-blessed"> Blessed</label>
+        <label><input type="radio" name="buc" value="cursed" id="buc-cursed"> Cursed</label>
+        <label><input type="radio" name="buc" value="uncursed" id="buc-cursed" checked> Uncursed</label>
+        <label><input type="radio" name="buc" value="not-blessed" id="buc-uncursed"> Not Blessed</label>
+        <label><input type="radio" name="buc" value="not-cursed" id="buc-uncursed"> Not Cursed</label>
+    </div>
+    
+    <label>Charges (spe): <input type="number" name="spe" min="-10" max="20" value="0"></label>
+    <label>Quantity: <input type="number" name="quan" min="1" value="1"></label>
+
+    <label><input type="checkbox" name="trapped"> Trapped</label>
+    <label><input type="checkbox" name="locked"> Locked</label>
+
     <label>Contents (for chests, Lua code):<br>
-      <textarea id="obj-contents" rows="6"></textarea>
+      <textarea id="obj-contents" name="contents" rows="6"></textarea>
     </label>
-    <button onclick="confirmObject()">OK</button>
-    <button onclick="closePopup()">Cancel</button>
+
+    <button id='object-confirm' >OK</button>
+    <button id='object-cancel' >Cancel</button>
+    </div>
+
+    <div id="obj-suggestions" class="obj-scroll-list"></div>
+</div>
   </div>
 </div>
+<script src="object_def.js"></script>
+<script src="monster_def.js"></script>
+<script src="terrain_def.js"></script>
+<script src="color_def.js"></script>
 <script>
 
 let currentLayer = 'terrain'; // terrain, lighting, creature, object
 let currentBrush = null; // null, 'light', 'dark', 'creature', 'object'
 let pendingCreature = null; // {x,y} when popup waiting
 let pendingObject = null;   // {x,y} when popup waiting
+let currentCreatureBrush = null;     // the monster name/id that is currently selected
+let currentObjectBrush = null;
 
-const ROWS = 20;
-const COLS = 76;
+const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
+const COLS = 76;   // confirm from grid-template-columns: repeat(76, ...)
+
+const DARK_BG  = '#000000';        // totally black
+const LIGHT_BG = '#0f0f0f';        // slightly brighter for lit cells
+
+// 2D array to quick-access map cell elements (skip headers)
+let mapCells = Array.from({length: ROWS}, () => Array(COLS));
+
 const CELL_W = 16;
 const CELL_H = 20;
 
@@ -186,6 +347,9 @@ let layers = {
   object: []     // array of object configs
 };
 layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill(' '));
+layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
+layers.creature =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
+layers.object =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
 
 let visibleLayers = {
   terrain: true,
@@ -204,6 +368,27 @@ let currentFillMode = 'solid';
 let dragStart = null;
 let currentHoverX = -1;
 let currentHoverY = -1;
+
+// === DEFAULTS FOR LUA OMISSION (add new keys here when you add new inputs) ===
+const monsterDefaults = {
+    peaceful: false,
+    asleep: false,
+    male: false,
+    female: false,
+    neuter: false,
+    // name: '' (strings omitted when empty anyway)
+    // add future booleans here with false
+};
+
+// === UPDATE objectDefaults (remove old blessed/cursed, add buc default) ===
+const objectDefaults = {
+    trapped: false,
+    locked: false,
+    spe: 0,
+    quan: 1,
+    buc: "uncursed",       // ← new default
+    // ... any future defaults ...
+};
 
 const charButtons = [
   {ch: ' ', name: 'Stone / Space'}, {ch: '#', name: 'Corridor'}, {ch: '.', name: 'Room floor'},
@@ -228,6 +413,99 @@ const fillButtons = [
   {id: 'outline', label: 'Outline'},
 ];
 
+// === POPULATE AND FILTER THE MONSTER LIST ===
+let monListItems = []; // will hold pre-created DOM elements for performance
+let objListItems = []; // pre-created DOM elements for performance
+
+function populateMonsterList(filter = '') {
+    const list = document.getElementById('mon-suggestions');
+    if (list.children.length === 0) {
+        // First time: create all items once
+        const sortedNames = Object.keys(allMonsters).sort((a, b) => a.localeCompare(b));
+        sortedNames.forEach(name => {
+            const item = document.createElement('div');
+            const thisMonster = allMonsters[name];
+            item.className = 'mon-item';
+            item.textContent = thisMonster.id;
+            item.dataset.name = name;
+            
+            
+
+            item.addEventListener('click', () => {
+                document.getElementById('mon-id').value = thisMonster.id;
+                // Optional: auto-scroll selected item into view
+                item.scrollIntoView({ block: 'nearest' });
+                // Keep focus on input for further typing if desired
+                document.getElementById('mon-id').focus();
+            });
+
+            list.appendChild(item);
+            monListItems.push(item);
+        });
+    }
+
+    // Always filter (even on first populate with empty filter)
+    const lowerFilter = filter.toLowerCase();
+    monListItems.forEach(item => {
+        const name = item.dataset.name;
+        if (name.includes(lowerFilter)) {
+            item.classList.remove('no-match');
+            item.classList.add('match');
+        } else {
+            item.classList.remove('match');
+            item.classList.add('no-match');
+        }
+    });
+}
+
+function populateObjectList(filter = '') {
+    const list = document.getElementById('obj-suggestions');
+    if (list.children.length === 0) {
+        // First open: create all items once, sorted alphabetically
+        const sortedNames = Object.keys(allObjects).sort((a, b) => a.localeCompare(b));
+        sortedNames.forEach(name => {
+            const obj = allObjects[name];
+            const item = document.createElement('div');
+            item.className = 'obj-item' + (obj.is_artifact ? ' artifact' : '');
+            item.dataset.name = name;
+
+            const symSpan = document.createElement('span');
+            symSpan.className = 'obj-sym';
+            symSpan.textContent = obj.symbol;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+
+            item.appendChild(symSpan);
+            item.appendChild(nameSpan);
+
+            item.addEventListener('click', () => {
+                document.getElementById('obj-id').value = name;
+                item.scrollIntoView({ block: 'nearest' });
+                document.getElementById('obj-id').focus();
+            });
+
+            list.appendChild(item);
+            objListItems.push(item);
+        });
+    }
+
+    // Filter (case-insensitive includes)
+    const lowerFilter = filter.toLowerCase();
+    objListItems.forEach(item => {
+        const name = item.dataset.name;
+        if (name.includes(lowerFilter)) {
+            item.classList.remove('no-match');
+            item.classList.add('match');
+        } else {
+            item.classList.remove('match');
+            item.classList.add('no-match');
+        }
+    });
+}
+
+
+
 // Deselect all char buttons when layer brush selected, and vice versa
 function deselectAllChars() {
   document.querySelectorAll('#char-row button.selected').forEach(b => b.classList.remove('selected'));
@@ -239,25 +517,160 @@ function deselectAllBrushes() {
   currentBrush = null;
 }
 
-document.querySelectorAll('#layer-brush-row button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.classList.contains('selected')) {
-      btn.classList.remove('selected');
-      currentBrush = null;
-    } else {
-      deselectAllBrushes();
-      deselectAllChars();
-      btn.classList.add('selected');
-      currentBrush = btn.dataset.brush;
-      currentLayer = (currentBrush === 'light' || currentBrush === 'dark') ? 'lighting' :
-                     currentBrush === 'creature' ? 'creature' : 'object';
-      // Auto-show the target layer
-      visibleLayers[currentLayer] = true;
-      document.querySelector(`#layer-show-hide-row button[data-layer="${currentLayer}"]`).style.background = '#22303c';
-      document.getElementById(currentLayer + '-code').classList.remove('hide');
-    }
-  });
+// === CREATURE CONFIRM HANDLER (replace existing creature-confirm handler) ===
+// === UPDATED CONFIRM HANDLERS ===
+document.getElementById('creature-confirm').addEventListener('click', () => {
+    const brush = collectBrushFromPopup('#creature-popup');
+    if (!brush) return;
+
+    currentCreatureBrush = brush;
+
+    document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
+    currentBrush = 'creature';
+    document.querySelector('button[data-brush="creature"]').classList.add('selected');
+
+    hideCreaturePopup();
+    renderLayers();
 });
+
+
+
+// === CREATURE CANCEL (unchanged except clearing inputs is optional) ===
+document.getElementById('creature-cancel').addEventListener('click', () => {
+    hideCreaturePopup();
+    // leaves currentCreatureBrush intact – user keeps last selection
+});
+
+// === OBJECT CONFIRM HANDLER (replace your existing object-confirm click handler) ===
+document.getElementById('object-confirm').addEventListener('click', () => {
+    const brush = collectBrushFromPopup('#object-popup');
+    if (!brush) return;
+
+    currentObjectBrush = brush;
+
+    document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
+    currentBrush = 'object';
+    document.querySelector('button[data-brush="object"]').classList.add('selected');
+
+    hideObjectPopup();
+    renderLayers();
+});
+
+// === OBJECT CANCEL HANDLER (unchanged except hide) ===
+document.getElementById('object-cancel').addEventListener('click', () => {
+    hideObjectPopup();
+    // leaves currentObjectBrush unchanged so user keeps last selection
+});
+
+// === RE-WRITTEN BRUSH BUTTON HANDLER ===
+document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const brush = this.dataset.brush;
+
+        // ----- Determine which layer we are editing (keeps your original logic) -----
+        let layer = brush;
+        switch (brush) {
+            case 'terrain':
+            case 'creature':
+            case 'object':
+                layer = brush;
+                break;
+            case 'light':
+            case 'dark':
+                layer = 'lighting';
+                break;
+            default:
+                layer = 'terrain';
+        }
+        currentLayer = layer;
+        visibleLayers[currentLayer] = true;
+
+        // ----- Remove highlight from every brush button -----
+        document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b =>
+            b.classList.remove('selected')
+        );
+
+        // ----- Special modal brushes (creature & object) -----
+        if (brush === 'creature') {
+            hideObjectPopup();
+            showCreaturePopup();
+            document.getElementById('mon-id').value = currentCreatureBrush || '';
+            document.getElementById('mon-id').focus();
+            return;                                      // do NOT highlight yet
+        }
+
+        if (brush === 'object') {
+            hideCreaturePopup();
+            showObjectPopup();
+
+            return;                                      // do NOT highlight yet
+        }
+
+        // ----- All other brushes (terrain, light, dark, etc.) -----
+        currentBrush = brush;
+        currentCreatureBrush = null;
+        currentObjectBrush = null;
+        this.classList.add('selected');
+        hideCreaturePopup();
+        hideObjectPopup();
+    });
+});
+
+// === UPDATE showCreaturePopup() (replace your existing version) ===
+// === UPDATED SHOW POPUP FUNCTIONS ===
+function showCreaturePopup() {
+    document.getElementById('creature-popup').parentNode.style.display = 'flex';
+    prefillPopupFromBrush('#creature-popup', currentCreatureBrush);
+
+    // Populate/full list on open
+    populateMonsterList('');
+
+    // Focus input and select its content for easy replacement
+    document.getElementById('creature-popup').classList.remove('hide');
+    const input = document.querySelector('#creature-popup [name="id"]');
+    input.focus();
+    input.select();
+}
+
+// === FILTER ON INPUT ===
+document.getElementById('mon-id').addEventListener('input', (e) => {
+    const filter = e.target.value.trim();
+    populateMonsterList(filter);
+});
+
+
+function hideCreaturePopup() {
+    document.getElementById('creature-popup').parentNode.style.display = 'none';
+    document.getElementById('creature-popup').classList.add('hide');
+}
+
+// === UPDATE showObjectPopup() TO INITIALIZE THE LIST ===
+function showObjectPopup() {
+    document.getElementById('object-popup').parentNode.style.display = 'flex';
+    prefillPopupFromBrush('#object-popup', currentObjectBrush);
+
+    // Full list on open
+    populateObjectList('');
+
+    document.getElementById('object-popup').classList.remove('hide');
+
+    const input = document.querySelector('#object-popup [name="id"]');
+    input.focus();
+    input.select();
+}
+
+// === FILTER ON INPUT ===
+document.getElementById('obj-id').addEventListener('input', (e) => {
+    const filter = e.target.value.trim();
+    populateObjectList(filter);
+});
+
+
+function hideObjectPopup() {
+    document.getElementById('object-popup').parentNode.style.display = 'none';
+    document.getElementById('object-popup').classList.add('hide');
+}
+
 
 // Modify existing char-row clicks to deselect brushes
 // (add to each char button click: deselectAllBrushes(); )
@@ -294,9 +707,13 @@ document.querySelectorAll('#layer-show-hide-row button').forEach(btn => {
   btn.addEventListener('click', () => {
     const layer = btn.dataset.layer;
     visibleLayers[layer] = !visibleLayers[layer];
+
     btn.style.background = visibleLayers[layer] ? '#22303c' : '#0d1117';
-    document.getElementById(layer + '-code').classList.toggle('hide', !visibleLayers[layer]);
-    // Also optionally hide/show painted elements on grid if you render them visually
+    //document.getElementById(layer + '-code').classList.toggle('hide', !visibleLayers[layer]);
+
+    //After setting the visibility flag, re-render the map
+    renderLayers();
+
   });
 });
 
@@ -317,105 +734,256 @@ function createGrid() {
     const rh = document.createElement('div'); rh.textContent = y.toString().padStart(2,'0'); rh.className = 'header'; rh.title = y; grid.appendChild(rh);
     for (let x = 0; x < COLS; x++) {
       const cell = document.createElement('div');
+      const row = y;
+      const col = x;
       cell.textContent = map[y][x];
       cell.className = 'cell';
       cell.dataset.x = x;
       cell.dataset.y = y;
       grid.appendChild(cell);
+
+      // assuming your loop uses row/col counters starting at 0 for header
+      if (row => 0 && col >= 0) {  // actual map cells (skip row/col labels)
+        const mapY = row;
+        const mapX = col;
+        mapCells[mapY][mapX] = cell;
+      }
+
+      cell.addEventListener('mouseenter', () => {
+        if (isDragging) {
+          renderLayers();   // refreshes the visual after any virtual-grid changes
+        }
+      });
+
+
     }
   }
 }
-/*
-function updateText() {
-  const lines = map.map(row => row.join('')).join('\n');
-  textarea.value = `des.map([[\n${lines}\n]]);`;
-}*/
 
-function updateText() {
-  // Terrain (existing map output)
-  /*let terrainLines = [];
-  for (let y = 0; y < ROWS; y++) {
-    let line = '';
-    for (let x = 0; x < COLS; x++) {
-      const painted = layers.terrain.find(p => p.x === x && p.y === y);
-      line += painted ? painted.char : ' ';
+// === DYNAMIC BRUSH COLLECTION HELPERS ===
+// === UPDATE collectBrushFromPopup() TO HANDLE RADIO BUTTONS ===
+function collectBrushFromPopup(popupSelector) {
+    const inputs = document.querySelectorAll(`${popupSelector} [name]`);
+    const brush = {};
+
+    let idSet = false;
+
+    // First pass: collect radio groups (only the checked one)
+    const radioNames = new Set();
+    inputs.forEach(input => {
+        if (input.type === 'radio') radioNames.add(input.name);
+    });
+
+    radioNames.forEach(name => {
+        const checked = document.querySelector(`${popupSelector} [name="${name}"]:checked`);
+        if (checked) {
+            brush[name] = checked.value;
+        }
+    });
+
+    // Second pass: everything else (checkboxes, text, number)
+    inputs.forEach(input => {
+        if (input.type === 'radio') return; // already handled
+
+        let val;
+        if (input.type === 'checkbox') {
+            val = input.checked;
+        } else if (input.type === 'number') {
+            val = input.value === '' ? 0 : Number(input.value);
+        } else {
+            val = input.value.trim();
+        }
+
+        if (input.name === 'id') {
+            if (val) idSet = true;
+            else return; // abort if no id
+        }
+
+        // Store non-default-like values; always store booleans/numbers for correct pre-fill
+        if (val !== '' && val !== false && val !== null && val !== undefined) {
+            brush[input.name] = val;
+        } else if (input.type === 'checkbox') {
+            brush[input.name] = false;
+        } else if (input.type === 'number') {
+            brush[input.name] = 0;
+        }
+    });
+
+    // Ensure buc has a value (fallback to default if somehow missing)
+    if (!brush.hasOwnProperty('buc')) brush.buc = "uncursed";
+
+    if (!idSet) {
+        alert('ID is required.');
+        return null;
     }
-    terrainLines.push('"' + line + '"');
-  }*/
-  const lines = layers.terrain.map(row => row.join('')).join('\n');
-  document.getElementById('terrain-textarea').value = `des.map([[\n${lines}\n]]);`;
 
+    return brush;
+}
+
+// === UPDATE prefillPopupFromBrush() TO HANDLE RADIO BUTTONS ===
+function prefillPopupFromBrush(popupSelector, brush) {
+    const inputs = document.querySelectorAll(`${popupSelector} [name]`);
+
+    inputs.forEach(input => {
+        const key = input.name;
+
+        if (input.type === 'radio') {
+            // Check the radio that matches the stored value (or default)
+            const targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '');
+            input.checked = (input.value === targetValue);
+        } else if (input.type === 'checkbox') {
+            input.checked = !!(brush && brush[key]);
+        } else if (input.type === 'number') {
+            input.value = (brush && brush.hasOwnProperty(key)) ? brush[key] : (input.getAttribute('value') || '0');
+        } else {
+            input.value = (brush && brush[key]) || '';
+        }
+    });
+}
+
+// === generateTerrainLUA() FUNCTION ===
+function generateTerrainLUA()
+{
+  const lines = layers.terrain.map(row => row.join('')).join('\n');
+  return `des.map([[\n${lines}\n]]);`;
+}
+
+// === generateObjectLUA() FUNCTION ===
+function generateObjectLUA() {
+    let lua = '';
+
+    for (let y = 0; y < 20; y++) {
+        for (let x = 0; x < 76; x++) {
+            const obj = layers.object[y][x];
+            if (!obj || !obj.id) continue;
+
+            const props = [];
+            for (const key in obj) {
+                if (key === 'id') continue;
+
+                const val = obj[key];
+                const def = objectDefaults[key];
+
+                if (val === def || val === '' || val === false && def === false) continue;
+
+                if (typeof val === 'boolean') {
+                    if (val === (objectDefaults[key] ?? false)) continue;  // omit default (false → nothing)
+                    props.push(`${key} = ${val ? 1 : 0}`);                   // checked → = 1, unchecked but non-default → = 0
+                } else if (typeof val === 'string' && val) {
+                    props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
+                } else if (typeof val === 'number') {
+                    if (key === 'spe' && val === 0) continue;          // spe 0 is default
+                    if (key === 'quan' && val === 1) continue;         // quantity 1 is default
+                    props.push(`${key} = ${val}`);
+                }
+            }
+
+            let line = `des.object({ id = "${obj.id}", x = ${x + 1}, y = ${y + 1}`;
+            if (props.length) line += ', ' + props.join(', ');
+            line += ' })\n';
+            lua += line;
+        }
+    }
+    return lua;
+}
+
+// === NEW generateCreatureLUA() FUNCTION ===
+function generateCreatureLUA() {
+    let lua = '';
+
+    for (let y = 0; y < 20; y++) {
+        for (let x = 0; x < 76; x++) {
+            const mon = layers.creature[y][x];
+            if (!mon || !mon.id) continue;
+
+            const props = [];
+            for (const key in mon) {
+                if (key === 'id') continue;
+
+                const val = mon[key];
+                const def = monsterDefaults[key];
+
+                // Skip obvious defaults
+                if (val === def || val === '' || val === false && def === false) continue;
+
+                if (typeof val === 'boolean') {
+                    if (val === (monsterDefaults[key] ?? false)) continue;  // omit default (false → nothing)
+                    props.push(`${key} = ${val ? 1 : 0}`);                   // checked → = 1, unchecked but non-default → = 0
+                } else if (typeof val === 'string' && val) {
+                    props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
+                } else if (typeof val === 'number' && val !== 0) {     // include non-zero numbers
+                    props.push(`${key} = ${val}`);
+                }
+                // Add more types here if needed (e.g. arrays for inventory later)
+            }
+
+            let line = `des.monster({ id = "${mon.id}", x = ${x + 1}, y = ${y + 1}`;
+            if (props.length) line += ', ' + props.join(', ');
+            line += ' })\n';
+            lua += line;
+        }
+    }
+    return lua;
+}
+
+function updateText() {
+
+  // Update Terrain Text
+  const terrainText = generateTerrainLUA();
+  document.getElementById('terrain-textarea').value = terrainText;
+
+  // Update Object Text
+  const objectText = generateObjectLUA();
+  document.getElementById('object-textarea').value = objectText;
+
+  const creatureText = generateCreatureLUA();
+  document.getElementById('creature-textarea').value = creatureText;
+
+  
   // Lighting
-  let lightingLines = layers.lighting.map(l => 
+  /*let lightingLines = layers.lighting.map(l => 
     `des.region(selection.area(${pad(l.area.x1)},${pad(l.area.y1)},${pad(l.area.x2)},${pad(l.area.y2)}), "${l.type}")`
   ).join('\n');
-  document.getElementById('lighting-textarea').value = lightingLines;
+  document.getElementById('lighting-textarea').value = lightingLines;*/
 
-  // Creatures
-  let creatureLines = layers.creature.map(m => {
-    if (m.inventory) {
-      return `des.monster({ id = "${m.id}", coord = {${pad(m.x)}, ${pad(m.y)}},${m.peaceful?' peaceful = true,':''}${m.historic?' historic = true,':''}${m.female?' female = true,':''}\n    inventory = function()\n${m.inventory.split('\n').map(ln=> '       '+ln).join('\n')}\n    end })`;
-    } else {
-      let opts = '';
-      if (m.peaceful) opts += ', peaceful = true';
-      if (m.historic) opts += ', historic = true';
-      if (m.female) opts += ', female = true';
-      return `des.monster({ id = "${m.id}", coord = {${pad(m.x)}, ${pad(m.y)}${opts} })`;
-    }
-  }).join('\n');
-  document.getElementById('creature-textarea').value = creatureLines || '-- no monsters --';
-
-  // Objects
-  let objectLines = layers.object.map(o => {
-    if (o.percent > 0) {
-      let inner = `des.object({ id = "${o.id}", coord = {${pad(o.x)}, ${pad(o.y)}}${o.buc?`, buc="${o.buc}"`:''}${o.spe!==0?`, spe=${o.spe}`:''}${o.locked?`, locked = ${o.locked}`:''}${o.trapped?`, trapped = ${o.trapped}`:''} })`;
-      return `if percent(${o.percent}) then\n   ${inner}\nend`;
-    } else if (o.contents && o.id === 'chest') {
-      return `des.object({ id = "chest", coord = {${pad(o.x)}, ${pad(o.y)}}, locked = ${o.locked}, trapped = ${o.trapped},\n    contents = function()\n${o.contents.split('\n').map(ln=> '       '+ln).join('\n')}\n    end })`;
-    } else {
-      return `des.object({ id = "${o.id}", coord = {${pad(o.x)}, ${pad(o.y)}}${o.buc?`, buc="${o.buc}"`:''}${o.spe!==0?`, spe=${o.spe}`:''}${o.locked?`, locked = ${o.locked}`:''}${o.trapped?`, trapped = ${o.trapped}`:''} })`;
-    }
-  }).join('\n');
-  document.getElementById('object-textarea').value = objectLines || '-- no objects --';
+  
 }
 
 function pad(n) { return n < 10 ? '0'+n : n; } // for 2-digit coords
-/*
-function paint(x, y) {
-  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
-  map[y][x] = currentChar;
-  const cell = grid.querySelector(`div[data-x="${x}"][data-y="${y}"]`);
-  if (cell) cell.textContent = currentChar;
-}*/
+
 function paint(x, y) {
   if (currentChar && currentLayer === 'terrain') {
-    // Existing terrain painting
-    /*const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-    cell.textContent = currentChar;
-    layers.terrain.push({char: currentChar, x, y});*/
+
+    //Terrain painting
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
     layers.terrain[y][x] = currentChar;
-    const cell = grid.querySelector(`div[data-x="${x}"][data-y="${y}"]`);
-    if (cell) cell.textContent = currentChar;
+
   } else if (currentBrush === 'light' || currentBrush === 'dark') {
     // Simple rectangle region for lit/unlit
     if (!dragStart) return;
     const x1 = Math.min(dragStart.x, x), x2 = Math.max(dragStart.x, x);
     const y1 = Math.min(dragStart.y, y), y2 = Math.max(dragStart.y, y);
     const type = currentBrush === 'light' ? 'lit' : 'unlit';
-    layers.lighting.push({type, area: {x1,y1,x2,y2}});
+
+    for (let yy = y1; yy <= y2; yy++) {
+      layers.lighting[yy].fill(type, x1, x2 + 1);
+    }
+
+    //layers.lighting.push({type, area: {x1,y1,x2,y2}});
   } else if (currentBrush === 'creature') {
-    pendingCreature = {x, y};
-    document.getElementById('creature-popup').parentNode.style.display = 'flex';
-    document.getElementById('mon-id').focus();
-    return; // wait for popup confirm
-  } else if (currentBrush === 'object') {
-    pendingObject = {x, y};
-    document.getElementById('object-popup').classList.remove('hide');
-    document.getElementById('object-popup').parentNode.style.display = 'flex';
-    document.getElementById('obj-id').focus();
-    return;
+        if (!currentCreatureBrush || !currentCreatureBrush.id) return;
+
+        // Clone so later popup changes don't affect already-placed monsters
+        layers.creature[y][x] = { ...currentCreatureBrush };   // spread clone
+
+  } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
+  else if (currentBrush === 'object') {
+    if (!currentObjectBrush || !currentObjectBrush.id) return;
+
+    // Clone the template so future brush changes don't affect already-placed objects
+    layers.object[y][x] = { ...currentObjectBrush };
   }
+
   updateText();
 }
 
@@ -545,6 +1113,45 @@ function fillArea(startX, startY) {
   }
 }
 
+// === NEW FUNCTION TO UPDATE CURSOR INFO WITH ALL LAYERS ===
+function updateCursorInfo(x, y) {
+    let lines = [];
+
+    lines.push(`Cursor: ${x}, ${y} <br>`);
+
+    // Terrain: symbol + description
+    const terrainType = layers.terrain[y]?.[x] || 'none';
+    const terrainChar = getTerrainChar ? getTerrainChar(terrainType) : '.'; // use your existing function if available
+    const terrainDesc = terrainDescriptions[terrainType] || terrainType;
+    lines.push(`Terrain: ${terrainChar} - ${terrainDesc}`);
+
+    // Object
+    const obj = layers.object[y]?.[x];
+    const objId = obj ? (obj.id || 'unknown') : 'none';
+    lines.push(`Object: ${objId}`);
+
+    // Monster (creature layer)
+    const mon = layers.creature[y]?.[x];
+    const monId = mon ? (mon.id || 'unknown') : 'none';
+    lines.push(`Monster: ${monId}`);
+
+    // Lighting (assuming layers.lighting[y][x] stores 'lit', 'dark', or null/undefined)
+    // Adjust if your lighting layer uses different values (e.g., true/false or 'light'/'dark')
+    const lightVal = layers.lighting?.[y]?.[x];
+    const lighting = (lightVal === 'lit' || lightVal === true) ? 'lit' :
+                     (lightVal === 'dark' || lightVal === false) ? 'unlit' :
+                     'none';  // fallback if no lighting layer
+    lines.push(`Lighting: ${lighting}`);
+
+    // Join with <br> for HTML display
+    const infoHtml = lines.join('<br>');
+    return infoHtml;
+    // Use innerHTML to render line breaks (safer than textContent + \n for consistency)
+    //document.getElementById('position').innerHTML = infoHtml;
+}
+
+
+
 let isDragging = false;
 
 grid.addEventListener('mousedown', e => {
@@ -552,7 +1159,7 @@ grid.addEventListener('mousedown', e => {
   const x = parseInt(e.target.dataset.x);
   const y = parseInt(e.target.dataset.y);
   currentHoverX = x; currentHoverY = y;
-  position.textContent = `Cursor: ${x},${y}`;
+  position.innerHTML = updateCursorInfo(x, y);
 
   if (currentShape === 'fill') { fillArea(x, y); updateText(); return; }
 
@@ -566,14 +1173,16 @@ grid.addEventListener('mousedown', e => {
         paint(x + dx, y + dy);
   }
   updateText();
+  renderLayers();
 });
+
 
 grid.addEventListener('mousemove', e => {
   if (!e.target.classList.contains('cell')) return;
   const x = parseInt(e.target.dataset.x);
   const y = parseInt(e.target.dataset.y);
   currentHoverX = x; currentHoverY = y;
-  position.textContent = `Cursor: ${x},${y}`;
+  position.innerHTML = updateCursorInfo(x, y);
   showPreview();
 
   if (isDragging) {
@@ -582,6 +1191,7 @@ grid.addEventListener('mousemove', e => {
       for (let dy = -1; dy <= 2; dy++)
         for (let dx = -1; dx <= 2; dx++)
           paint(x + dx, y + dy);
+        
     }
   }
 });
@@ -595,6 +1205,7 @@ grid.addEventListener('mouseup', e => {
   }
   //Always update text upon mouseup
   updateText();
+  renderLayers();
   isDragging = false;
   dragStart = null;
 });
@@ -622,58 +1233,120 @@ document.getElementById('copy-all-btn').onclick = () => {
   navigator.clipboard.writeText(all.trim());
 };
 
-document.querySelectorAll('#layer-show-hide-row button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const layer = btn.dataset.layer;
-    visibleLayers[layer] = !visibleLayers[layer];
-    btn.style.background = visibleLayers[layer] ? '#22303c' : '#0d1117';
-    document.getElementById(layer + '-code').classList.toggle('hide', !visibleLayers[layer]);
-    // Also optionally hide/show painted elements on grid if you render them visually
-  });
-});
 
-function closePopup() {
-  document.getElementById('popup-overlay').style.display = 'none';
-  document.querySelectorAll('.popup').forEach(p => p.classList.add('hide'));
-  pendingCreature = pendingObject = null;
+function renderLayers() {
+  // Helper to convert a color token (e.g. "CLR_RED", "HI_DOMESTIC", "NO_COLOR") to an rgb() string
+  function getColorRGB(token) {
+    // "None" appears in a few object entries – treat it the same as missing/NO_COLOR
+    if (!token || token === "None" || token === "NO_COLOR") {
+      return "#ffffff"; // bright white – safe default for uncolored things
+    }
+    const entry = colorTable[token];
+    if (entry && entry.RGB) {
+      return `rgb(${entry.RGB.r}, ${entry.RGB.g}, ${entry.RGB.b})`;
+    }
+    // Fallback for any unknown token
+    return "#ffffff";
+  }
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const cell = mapCells[y][x];
+      if (!cell) continue;
+
+      let displayChar = ' ';
+      let displayColor = "#ffffff"; // default foreground (white)
+      let displayLight = DARK_BG;
+
+      // ----- Terrain layer (base) -----
+      if (visibleLayers.terrain && layers.terrain[y][x]) {
+        const terrId = layers.terrain[y][x];
+        const terr = allTerrains[terrId] || allTerrains["stone"]; // safe fallback
+        displayChar = terr.symbol || ' ';
+        displayColor = getColorRGB(terr.color);
+      }
+
+      // ----- Object layer (overrides terrain char + color) -----
+      if (visibleLayers.object && layers.object[y][x]) {
+        const objId = layers.object[y][x];
+        const obj = allObjects[objId];
+        if (obj) {
+          // Use the symbol you already have from getObjectChar if you prefer,
+          // but allObjects now contains the correct symbol directly
+          displayChar = obj.symbol || '?';
+          if (obj.color) {
+            displayColor = getColorRGB(obj.color);
+          }
+          // If the object has no explicit color, keep the terrain color underneath
+        }
+      }
+
+      // ----- Creature/Monster layer (overrides object char + color) -----
+      if (visibleLayers.creature && layers.creature[y][x]) {
+        const monId = layers.creature[y][x];
+        const mon = allMonsters[monId];
+        if (mon) {
+          displayChar = mon.symbol || 'm';
+          if (mon.color) {
+            displayColor = getColorRGB(mon.color);
+          }
+          // If the monster has no explicit color, keep the previous layer's color
+        }
+      }
+
+      // ----- Lighting layer (background only) -----
+      if (visibleLayers.lighting) {
+        displayLight = layers.lighting[y][x] === 'lit' ? LIGHT_BG : DARK_BG;
+      }
+
+      // ----- Final render to the cell -----
+      cell.textContent = displayChar;
+      cell.style.color = displayColor;         // foreground (uses color_def.js)
+      cell.style.backgroundColor = displayLight;
+    }
+  }
 }
 
-function confirmCreature() {
-  if (!pendingCreature) return;
-  const cfg = {
-    id: document.getElementById('mon-id').value.trim() || 'soldier',
-    x: pendingCreature.x,
-    y: pendingCreature.y,
-    peaceful: document.getElementById('mon-peaceful').checked,
-    historic: document.getElementById('mon-historic').checked,
-    female: document.getElementById('mon-female').checked,
-    inventory: document.getElementById('mon-inventory').value.trim()
-  };
-  layers.creature.push(cfg);
-  closePopup();
-  updateText();
+// === UPDATE getObjectChar() TO WORK WITH STRUCTURED OBJECTS ===
+function getObjectChar(input) {
+    let id = '';
+
+    if (typeof input === 'object' && input !== null && input.id) {
+        id = input.id.trim().toLowerCase();            // structured monster from layers.creature
+    } else if (typeof input === 'string') {
+        id = input.trim().toLowerCase();                // legacy string fallback
+    }
+
+    if (!id) return '?';
+
+    // Direct lookup in the canonical allMonsters table generated from the fork
+    const monster = allObjects[id];
+
+    // Return the exact symbol defined in defsym.h for this monster (via monsters.h mapping)
+    return monster ? monster.symbol : '?';             // fallback to generic 'm' if unknown
 }
 
-function confirmObject() {
-  if (!pendingObject) return;
-  const percent = parseInt(document.getElementById('obj-percent').value) || 0;
-  const cfg = {
-    id: document.getElementById('obj-id').value.trim() || 'chest',
-    x: pendingObject.x,
-    y: pendingObject.y,
-    buc: document.getElementById('obj-buc').value,
-    spe: parseInt(document.getElementById('obj-spe').value) || 0,
-    locked: document.getElementById('obj-locked').checked ? 1 : 0,
-    trapped: document.getElementById('obj-trapped').checked ? 1 : 0,
-    percent: percent,
-    contents: document.getElementById('obj-contents').value.trim()
-  };
-  layers.object.push(cfg);
-  closePopup();
-  updateText();
+// === getMonsterChar() USING allMonsters ===
+function getMonsterChar(input) {
+    let id = '';
+
+    if (typeof input === 'object' && input !== null && input.id) {
+        id = input.id.trim().toLowerCase();            // structured monster from layers.creature
+    } else if (typeof input === 'string') {
+        id = input.trim().toLowerCase();                // legacy string fallback
+    }
+
+    if (!id) return 'm';
+
+    // Direct lookup in the canonical allMonsters table generated from the fork
+    const monster = allMonsters[id];
+
+    // Return the exact symbol defined in defsym.h for this monster (via monsters.h mapping)
+    return monster ? monster.symbol : 'm';             // fallback to generic 'm' if unknown
 }
 
 createGrid();
+renderLayers();  // initial render
 updateText();
 </script>
 </body>
