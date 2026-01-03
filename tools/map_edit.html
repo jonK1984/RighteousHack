@@ -3,193 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>NetHack Map Editor</title>
+<link rel="stylesheet" href="map_edit.css">
 <style>
-  body { background-color: #000; color: #fff; font-family: monospace; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
-  #menubar { height: 10%; min-height: 230px; #15202b; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; border-bottom: 1px solid #22303c; }
-  .toolbar-row { display: flex; flex-wrap: nowrap; gap: 5px; }
-  .toolbar-row button { background: #22303c; color: #1da1f2; border: 1px solid #38444d; padding: 8px 12px; cursor: pointer; font-family: monospace; min-width: 50px; }
-  .toolbar-row button.selected { background: #1da1f2; color: #fff; }
-  #main { flex: 1; display: flex; }
-  #left, #right { flex: 1; margin: 20px; display: flex; flex-direction: column; }
-  #grid { 
-    position: relative;
-    display: grid; 
-    grid-template-columns: 50px repeat(76, 16px); 
-    grid-template-rows: 24px repeat(20, 20px); 
-    background: #111; 
-    user-select: none;
-    width: fit-content;
-    margin: 0 auto;
-  }
-  #grid > div { 
-    text-align: center; 
-    line-height: 20px; 
-    overflow: hidden;
-    position: relative;
-  }
-  .header { color: #888; font-size: 12px; }
-  .cell { 
-    cursor: pointer; 
-    font-size: 16px; 
-    border: 1px solid #222;
-  }
-  .preview { 
-    position: absolute; 
-    border: 2px solid rgba(29, 161, 242, 0.6); 
-    pointer-events: none; 
-    background: rgba(29, 161, 242, 0.1);
-    box-sizing: border-box;
-  }
-  #overlay { 
-    position: absolute; 
-    top: 24px; left: 50px;
-    pointer-events: none;
-  }
-  #terrain-textarea {
-    width: 590px;
-    height: 358px;
-  }
-  #textarea { flex: 1; background: #15202b; color: #fff; border: 1px solid #38444d; font-family: monospace; font-size: 14px; resize: none; }
-  #copybtn { margin-top: 10px; padding: 10px; background: #1da1f2; color: #fff; border: none; cursor: pointer; font-size: 16px; }
-  #position { text-align: center; color: #1da1f2; margin-top: 10px; font-size: 14px; }
-  .error { color: red; margin-top: 10px; }
-
-  .layer-code { 
-    margin-top: 20px; 
-    border: 1px solid #38444d; 
-    padding: 10px; 
-    background: #15202b; 
-  }
-  .layer-code h3 { margin: 0 0 10px 0; font-size: 14px; }
-  .layer-code textarea { width: 100%; height: 150px; background: #000; color: #fff; border: none; font-family: monospace; }
-  .hide { display: none; }
-
-  /* Popup styling */
-  #popup-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
-  }
-  .popup {
-    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 650px;
-  }
-  .popup input, .popup textarea {  margin: 10px 0; background: #000; color: #fff; }
-  .popup input[type="text"] {
-    width: 100%;
-  }
-  .popup textarea[name="contents"], .popup textarea[name="inventory"] {
-    width: 100%;
-  }
-  .popup label { display: block; margin-top: 10px; }
-
-  /* ADD THIS TO YOUR <style> BLOCK */
-  .mon-popup-layout {
-      display: flex;
-      gap: 20px;
-      width: 100%;
-      align-items: flex-start;
-  }
-
-  .mon-input-section {
-      flex: 1;
-      min-width: 300px;
-  }
-
-  .mon-scroll-list {
-      flex: 0 0 250px;              /* fixed width */
-      max-height: 570px;            /* max height of the list – adjusts to content if shorter */
-      overflow-y: auto;
-      background: #22303c;
-      border: 1px solid #1da1f2;
-      border-radius: 6px;
-      padding: 8px;
-      font-size: 14px;
-  }
-
-  .mon-scroll-list .mon-item {
-      padding: 6px 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #38444d;
-      transition: background 0.2s;
-  }
-
-  .mon-scroll-list .mon-item:hover {
-      background: #1da1f2;
-      color: #000;
-  }
-
-  .mon-scroll-list .mon-item:last-child {
-      border-bottom: none;
-  }
-
-  .mon-scroll-list .mon-item.match {
-      display: block;
-  }
-
-  .mon-scroll-list .mon-item.no-match {
-      display: none;
-  }
-
-  /* ADD THIS TO YOUR <style> BLOCK */
-  .obj-popup-layout {
-      display: flex;
-      gap: 20px;
-      width: 100%;
-      align-items: flex-start;
-  }
-
-  .obj-input-section {
-      flex: 1;
-      min-width: 300px;
-  }
-
-  .obj-scroll-list {
-      flex: 0 0 300px;              /* slightly wider than monster list */
-      max-height: 650px;
-      overflow-y: auto;
-      background: #22303c;
-      border: 1px solid #1da1f2;
-      border-radius: 6px;
-      padding: 8px;
-      font-size: 14px;
-  }
-
-  .obj-scroll-list .obj-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #38444d;
-      transition: background 0.2s;
-  }
-
-  .obj-scroll-list .obj-item:hover {
-      background: #1da1f2;
-      color: #000;
-  }
-
-  .obj-scroll-list .obj-item:last-child {
-      border-bottom: none;
-  }
-
-  .obj-scroll-list .obj-sym {
-      font-weight: bold;
-      color: #1da1f2;
-      min-width: 20px;
-      text-align: center;
-  }
-
-  .obj-scroll-list .obj-item.artifact {
-      color: #ffdd00;               /* gold tint for artifacts */
-  }
-
-  .obj-scroll-list .obj-item.match {
-      display: flex;
-  }
-
-  .obj-scroll-list .obj-item.no-match {
-      display: none;
-  }
 </style>
 </head>
 <body>
@@ -200,6 +15,7 @@
     <button data-brush="dark">Dark</button>
     <button data-brush="monster">Monster</button>
     <button data-brush="object">Object</button>
+    <button data-brush="features">Features</button>   
   </div>
   <div class="toolbar-row" id="char-row"></div>
   <div class="toolbar-row" id="shape-row"></div>
@@ -209,6 +25,7 @@
     <button data-layer="lighting">Lighting</button>
     <button data-layer="monster">Monster</button>
     <button data-layer="object">Object</button>
+    <button data-layer="features">Features</button>
   </div>
   <div id="current-brush-label" style="margin: 8px 0; font-weight: bold; color: #1da1f2;">
       Selected brush: <span id="brush-display">None</span>
@@ -255,29 +72,39 @@
       <button class="refresh" data-type="objects" title="Regenerate Objects LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
-    
+    <div id="feature-code" class="layer-code">
+        <div class="code-header">Features Layer</div>
+        <textarea id="features-textarea" readonly></textarea>
+        <button onclick="copyLayer('features')">Copy Objects</button>
+        <button class="refresh" data-type="features" title="Regenerate Features LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
+    </div>
+        
   </div>
 </div>
 <div id="popup-overlay">
   <div class="popup" id="monster-popup">
-    <div class="mon-popup-layout">
-    <div class="mon-input-section">
+    <div class="monster-popup-layout">
+    <div class="monster-input-section">
       <h3>Place Monster</h3>
-      <label>Monster ID: <input id="mon-id" name="id" type="text" placeholder='e.g. "archangel" or "Gabriel"'></label>
+      <div class="radio-group">
+        <label><input type="radio" id="monster-select-id" name="monsterSelectMode" value="id" checked> Select by specific monster ID</label><br>
+        <label><input type="radio" id="monster-select-class" name="monsterSelectMode" value="class"> Select by monster class</label>
+      </div>
+      <label>Monster ID: <input id="monster-id" name="id" type="text" placeholder='e.g. "archangel" or "Gabriel"'></label>
 
       <label><input type="checkbox" name="peaceful"> Peaceful</label>
       <label><input type="checkbox" name="asleep"> Asleep</label>
 
-      <label><input type="checkbox" id="mon-historic" name="historic"> Historic</label>
+      <label><input type="checkbox" id="monster-historic" name="historic"> Historic</label>
       <label>Force gender (check one if needed):</label>
       <label><input type="checkbox" name="male"> Male</label>
       <label><input type="checkbox" name="female"> Female</label>
       <label><input type="checkbox" name="neuter"> Neuter</label>
 
-      <label>Custom name: <input type="text" name="name" placeholder='e.g. "Gabriel"'></label>
+      <label>Custom name: <input id="monster-custom-name" type="text" name="name" placeholder='e.g. "Gabriel"'></label>
 
       <label>Inventory (Lua code):<br>
-        <textarea id="mon-inventory" rows="6" name="inventory" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
+        <textarea id="monster-inventory" rows="6" name="inventory" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
       </label>
       <button id='monster-confirm' >OK</button>
       <button id='monster-cancel' >Cancel</button>
@@ -286,12 +113,30 @@
           ERASER (removes monsters)
       </button>
     </div>
-    <div id="mon-suggestions" class="mon-scroll-list">
+    <div id="monster-suggestions" class="monster-scroll-list">
 
     </div>
   </div>
   </div>
   
+  <!-- Features Popup -->
+  <div id="feature-popup" class="popup" style="display:none;">
+      <div class="popup-header">Feature Brush Selector</div>
+      <div class="popup-content" style="display:flex;">
+          <!-- Left: Feature list -->
+          <div id="feature-list" class="scroll-list" style="width:45%;"></div>
+
+          <!-- Right: Context-sensitive options -->
+          <div id="feature-options" style="width:55%; padding-left:10px;">
+              <div id="feature-options-content"></div>
+              <div style="margin-top:20px;">
+                  <button id="feature-confirm">OK</button>
+                  <button id="feature-cancel">Cancel</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
   <div class="popup hide" id="object-popup">
     <div class="obj-popup-layout">
     <div class="obj-input-section">
@@ -303,9 +148,9 @@
     <div class="radio-group">
         <label><input type="radio" name="buc" value="blessed" id="buc-blessed"> Blessed</label>
         <label><input type="radio" name="buc" value="cursed" id="buc-cursed"> Cursed</label>
-        <label><input type="radio" name="buc" value="uncursed" id="buc-cursed" checked> Uncursed</label>
-        <label><input type="radio" name="buc" value="not-blessed" id="buc-uncursed"> Not Blessed</label>
-        <label><input type="radio" name="buc" value="not-cursed" id="buc-uncursed"> Not Cursed</label>
+        <label><input type="radio" name="buc" value="uncursed" id="buc-uncursed" checked> Uncursed</label>
+        <label><input type="radio" name="buc" value="not-blessed" id="buc-not-blessed"> Not Blessed</label>
+        <label><input type="radio" name="buc" value="not-cursed" id="buc-not-cursed"> Not Cursed</label>
     </div>
     
     <label>Charges (spe): <input type="number" name="spe" min="-10" max="20" value="0"></label>
@@ -334,14 +179,17 @@
 <script src="monster_def.js"></script>
 <script src="terrain_def.js"></script>
 <script src="color_def.js"></script>
+<script src="feature_def.js"></script>
 <script>
 
 let currentLayer = 'terrain'; // terrain, lighting, monster, object
 let currentBrush = null; // null, 'light', 'dark', 'monster', 'object'
 let pendingMonster = null; // {x,y} when popup waiting
 let pendingObject = null;   // {x,y} when popup waiting
-let currentMonsterBrush = null;     // the monster name/id that is currently selected
+let currentMonsterMode = 'id';           // 'id' or 'class'
+let currentMonsterBrush = null;
 let currentObjectBrush = null;
+let currentFeatureBrush = null;
 
 const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
 const COLS = 76;   // confirm from grid-template-columns: repeat(76, ...)
@@ -359,7 +207,8 @@ let layers = {
   terrain: [],   // array of {char, x, y}
   lighting: [],  // array of {type:'lit'|'unlit', area:{x1,y1,x2,y2}}
   monster: [],  // array of monster configs
-  object: []     // array of object configs
+  object: [],     // array of object configs
+  features:  []
 };
 layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
 layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
@@ -370,7 +219,8 @@ let visibleLayers = {
   terrain: true,
   lighting: true,
   monster: true,
-  object: true
+  object: true,
+  features: true   
 };
 
 
@@ -386,6 +236,7 @@ let currentHoverY = -1;
 
 // === DEFAULTS FOR LUA OMISSION (add new keys here when you add new inputs) ===
 const monsterDefaults = {
+    monsterSelectMode: "id",
     peaceful: false,
     asleep: false,
     male: false,
@@ -403,6 +254,15 @@ const objectDefaults = {
     quan: 1,
     buc: "uncursed",       // ← new default
     // ... any future defaults ...
+};
+
+const brushAllowedShapes = {
+    terrain: null,   // null = show ALL shape buttons
+    object: null,
+    monster: null,
+    light: ['rectangle'],     // only rectangle allowed
+    dark: ['rectangle'],      // only rectangle allowed
+    features: null            // show all initially; per-feature locking already exists
 };
 
 const shapeButtons = [
@@ -423,6 +283,25 @@ const fillButtons = [
 let monListItems = []; // will hold pre-created DOM elements for performance
 let objListItems = []; // pre-created DOM elements for performance
 
+function setShape(shape) {
+    if (!shape) return;
+
+    currentShape = shape;
+
+    // Visually select the button
+    document.querySelectorAll('#shape-row button').forEach(btn => {
+        const btnShape = btn.dataset.shape;
+        if (btnShape === shape) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+
+    // Optional: update any brush label that shows current shape
+    updateBrushLabel();
+}
+
 // === Helper: update the label that shows the current brush ===
 function updateBrushLabel() {
     let text = "None";
@@ -432,67 +311,132 @@ function updateBrushLabel() {
         text = currentObjectBrush ? `Object: ${currentObjectBrush.id}` : "Object: ERASER";
     } else if (currentBrush === 'monster') {
         text = currentMonsterBrush ? `Monster: ${currentMonsterBrush.id}` : "Monster: ERASER";
-    } else if (currentBrush) {
+    } else if (currentBrush === 'features') {
+    if (currentFeatureBrush && currentFeatureBrush.def.isEraser) {
+          currentBrushText = 'Features: Eraser';
+      } else if (currentFeatureBrush) {
+          currentBrushText = `Features: ${currentFeatureBrush.def.name}`;
+      } else {
+          currentBrushText = 'Features: (none)';
+      }
+    }else if (currentBrush) {
         text = currentBrush.charAt(0).toUpperCase() + currentBrush.slice(1);
     }
     document.getElementById('brush-display').textContent = text;
 }
 
 // === Helper: select a brush mode (terrain / object / monster) ===
+/*
 function selectBrush(mode) {
     if (currentBrush === mode) return; // already selected
 
     currentBrush = mode;
+
+    if (mode === 'features') {
+        //showFeaturePopup();
+        // Hide disallowed stroke buttons
+        document.querySelectorAll('#shape-row button').forEach(btn => {
+            const shape = btn.dataset.shape;
+            const allowed = currentFeatureBrush ? currentFeatureBrush.def.stroke : null;
+            btn.style.display = (allowed === null || shape === allowed || shape === 'erase') ? 'inline-block' : 'none';
+        });
+    }
 
     // Update .selected class on mode buttons (adjust selector if yours is different)
     document.querySelectorAll('[data-brush]').forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.brush === mode);
     });
 
+}*/
+function selectBrush(type) {
+    currentBrush = type;
+    // ... your existing code for highlighting button, showing popups, etc. ...
+
+    if (type === 'light' || type === 'dark') {
+        updateShapeButtons(brushAllowedShapes[type]);   // forces rectangle only
+    } else if (type === 'features') {
+        updateShapeButtons(null);                        // show all until a feature is picked
+    } else {
+        // terrain, object, monster
+        updateShapeButtons(null);                        // show all shapes
+    }
+
+    updateBrushLabel();
 }
 
 
 
 function populateMonsterList(filter = '') {
-    const list = document.getElementById('mon-suggestions');
-    if (list.children.length === 0) {
-        // First time: create all items once
-        const sortedNames = Object.keys(allMonsters).sort((a, b) => a.localeCompare(b));
-        sortedNames.forEach(name => {
-            const item = document.createElement('div');
-            const thisMonster = allMonsters[name];
-            item.className = 'mon-item';
-            item.textContent = thisMonster.id;
-            item.dataset.name = name;
-            
-            
+    const listDiv = document.getElementById('monster-suggestions');
+    listDiv.innerHTML = '';
 
-            item.addEventListener('click', () => {
-                document.getElementById('mon-id').value = thisMonster.id;
-                // Optional: auto-scroll selected item into view
-                item.scrollIntoView({ block: 'nearest' });
-                // Keep focus on input for further typing if desired
-                document.getElementById('mon-id').focus();
-            });
-
-            list.appendChild(item);
-            monListItems.push(item);
-        });
-    }
-
-    // Always filter (even on first populate with empty filter)
     const lowerFilter = filter.toLowerCase();
-    monListItems.forEach(item => {
-        const name = item.dataset.name;
-        if (name.includes(lowerFilter)) {
-            item.classList.remove('no-match');
-            item.classList.add('match');
+    let source = currentMonsterMode === 'id'
+                 ? Object.entries(allMonsters)
+                 : allMonsterClasses;
+
+    source.forEach(entry => {
+        let key, displayText;
+
+        if (currentMonsterMode === 'id') {
+            const [id, mon] = entry;
+            key = id;
+            displayText = `${id} [${mon.symbol || ''}] – ${mon.class1 || ''}${mon.class2 ? ' ' + mon.class2 : ''}`;
         } else {
-            item.classList.remove('match');
-            item.classList.add('no-match');
+            key = entry.class;
+            displayText = `${entry.class} – ${entry.desc}`;
         }
+
+        if (filter && !displayText.toLowerCase().includes(lowerFilter)) return;
+
+        const item = document.createElement('div');
+        item.className = 'monster-item';
+        item.textContent = displayText;
+        item.dataset.key = key;                 // stores either monster id or class symbol
+        item.dataset.mode = currentMonsterMode; // remember which mode created it
+        item.dataset.name = entry;
+
+        item.addEventListener('click', () => {
+
+            document.getElementById('monster-id').value = key;
+            // Optional: auto-scroll selected item into view
+            item.scrollIntoView({ block: 'nearest' });
+            // Keep focus on input for further typing if desired
+            document.getElementById('monster-id').focus();
+
+            document.querySelectorAll('#monster-suggestions .obj-item.selected')
+                    .forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+        });
+
+        listDiv.appendChild(item);
     });
 }
+
+
+// Radio button change
+document.querySelectorAll('input[name="monsterSelectMode"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        currentMonsterMode = e.target.value;
+
+        // Enable/disable custom name & inventory fields
+        document.getElementById('monster-custom-name').disabled   = (currentMonsterMode === 'class');
+        document.getElementById('monster-inventory').disabled      = (currentMonsterMode === 'class');
+
+        // Clear fields when switching to class mode
+        if (currentMonsterMode === 'class') {
+            document.getElementById('monster-custom-name').value = '';
+            document.getElementById('monster-inventory').value = '';
+        }
+
+        populateMonsterList(document.getElementById('monster-search')?.value || '');
+    });
+});
+
+// Existing search input (adjust ID if different)
+document.getElementById('monster-search')?.addEventListener('input', (e) => {
+    populateMonsterList(e.target.value);
+});
 
 function populateObjectList(filter = '') {
     const list = document.getElementById('obj-suggestions');
@@ -540,7 +484,246 @@ function populateObjectList(filter = '') {
     });
 }
 
+// Double-click to select + confirm in Object popup
+document.getElementById('obj-suggestions').addEventListener('dblclick', (e) => {
+    const item = e.target.closest('.obj-item');
+    if (item) {
+        // Simulate single-click selection first
+        document.querySelectorAll('#obj-suggestions .obj-item.selected')
+                .forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
 
+        // Then act as if user clicked the confirm button
+        document.getElementById('object-confirm')?.click()
+             || confirmObjectSelection();   // fallback if you use a function instead of button
+    }
+});
+
+function confirmMonsterSelection() {
+    const selected = document.querySelector('#monster-suggestions .obj-item.selected');
+    if (!selected) return;
+
+    const key  = selected.dataset.key;
+    const mode = selected.dataset.mode;
+
+    if (mode === 'class') {
+        currentMonsterBrush = {
+            type: 'class',
+            classSym: key
+            // name and inventory are intentionally omitted
+        };
+    } else { // 'id'
+        currentMonsterBrush = {
+            type: 'id',
+            id: key,
+            name: document.getElementById('monster-custom-name').value || null,
+            inventory: document.getElementById('monster-inventory').value || null
+        };
+    }
+
+    updateBrushLabel();       // your existing function that shows current brush
+    hideMonsterPopup();
+}
+
+// Double-click to select + confirm in Monster popup
+document.getElementById('monster-suggestions').addEventListener('dblclick', (e) => {
+    const item = e.target.closest('.obj-item');
+    if (item) {
+        // Simulate single-click selection first
+        document.querySelectorAll('#monster-suggestions .obj-item.selected')
+                .forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+
+        // Then act as if user clicked the confirm button
+        document.getElementById('monster-confirm')?.click()
+             || confirmMonsterSelection();   // fallback if you use a function
+    }
+});
+
+function showFeaturePopup() {
+    document.getElementById('feature-popup').parentNode.style.display = 'flex';
+
+    populateFeatureList();
+    document.getElementById('feature-popup').style.display = 'block';
+    document.getElementById('feature-popup').classList.remove('hide');
+}
+
+function hideFeaturePopup() {
+    document.getElementById('feature-popup').parentNode.style.display = 'none';
+    document.getElementById('feature-popup').style.display = 'none';
+    document.getElementById('feature-popup').classList.add('hide');
+}
+
+function populateFeatureList() {
+    const list = document.getElementById('feature-list');
+    list.innerHTML = '';
+
+    // Sort alphabetically, but force Eraser to the top
+    const sorted = allFeatures.slice().sort((a, b) => {
+        if (a.isEraser) return -1;
+        if (b.isEraser) return 1;
+        return a.name.localeCompare(b.name);
+    });
+
+    sorted.forEach(feat => {
+        const div = document.createElement('div');
+        div.className = 'obj-item';
+        div.textContent = feat.name;
+        div.onclick = () => selectFeature(feat);
+        list.appendChild(div);
+    });
+}
+
+function selectFeature(feat) {
+    // Highlight selection
+    document.querySelectorAll('#feature-list .obj-item').forEach(i => i.classList.remove('selected'));
+    event.target.classList.add('selected');
+
+    currentFeatureBrush = {
+        def: feat,
+        options: feat.options ? JSON.parse(JSON.stringify(feat.options)) : {}
+    };
+
+    if (feat.isEraser) {
+        // Eraser-specific UI
+        document.getElementById('feature-options-content').innerHTML =
+            '<p style="color:#ff8888;font-weight:bold;">Eraser mode active – click a cell to remove all features there.</p>';
+        updateShapeButtons('point');
+    } else {
+        // Normal feature – show options as before
+        renderFeatureOptions(feat);
+        updateShapeButtons(feat.stroke);
+    }
+
+    updateBrushLabel();
+}
+
+function updateShapeButtons(allowed) {
+    // 'allowed' can be null (show all) or an array of allowed data-shape values
+    document.querySelectorAll('#shape-row button').forEach(btn => {
+        const shape = btn.dataset.shape;
+        if (!shape) return; // safety
+
+        const isAllowed = (allowed === null || allowed.includes(shape));
+        btn.style.display = isAllowed ? 'inline-block' : 'none';
+    });
+
+    // If exactly one shape is allowed, auto-select it (unless already selected)
+    if (Array.isArray(allowed) && allowed.length === 1) {
+        const onlyShape = allowed[0];
+        if (currentShape !== onlyShape) {
+            setShape(onlyShape);
+        }
+    }
+}
+
+function renderFeatureOptions(feat) {
+    const container = document.getElementById('feature-options-content');
+    container.innerHTML = '';
+
+    if (feat.trapList) {
+        // Special trap list
+        const trapDiv = document.createElement('div');
+        trapDiv.id = 'trap-list';
+        trapTypes.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'obj-item';
+            item.innerHTML = `<span style="color:${t.color}">${t.sym}</span> ${t.name}`;
+            item.onclick = () => {
+                currentFeatureBrush.options.trapType = t.type;
+                currentFeatureBrush.symbol = t.sym;
+                currentFeatureBrush.color = t.color;
+            };
+            trapDiv.appendChild(item);
+        });
+        container.appendChild(trapDiv);
+        return;
+    }
+
+    // Generic option rendering
+    Object.keys(feat.options).forEach(key => {
+        const val = feat.options[key];
+        if (Array.isArray(val)) {
+            // Radio buttons
+            const label = document.createElement('label');
+            label.textContent = key + ': ';
+            container.appendChild(label);
+            val.forEach(opt => {
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = key;
+                radio.value = opt;
+                if (opt === currentFeatureBrush.options[key]) radio.checked = true;
+                radio.onchange = () => currentFeatureBrush.options[key] = opt;
+                const span = document.createElement('span');
+                span.textContent = opt;
+                container.appendChild(radio);
+                container.appendChild(span);
+                container.appendChild(document.createElement('br'));
+            });
+        } else if (typeof val === 'boolean') {
+            // Checkbox
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = currentFeatureBrush.options[key];
+            cb.onchange = () => currentFeatureBrush.options[key] = cb.checked;
+            const label = document.createElement('label');
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(' ' + key));
+            container.appendChild(label);
+            container.appendChild(document.createElement('br'));
+        } else {
+            // Text input / textarea
+            const label = document.createElement('label');
+            label.textContent = key + ': ';
+            container.appendChild(label);
+            if (key === 'contents') {
+                const ta = document.createElement('textarea');
+                ta.rows = 8;
+                ta.value = currentFeatureBrush.options[key];
+                ta.oninput = (e) => currentFeatureBrush.options[key] = e.target.value;
+                container.appendChild(ta);
+            } else {
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.value = currentFeatureBrush.options[key];
+                inp.oninput = (e) => currentFeatureBrush.options[key] = e.target.value;
+                container.appendChild(inp);
+            }
+            container.appendChild(document.createElement('br'));
+        }
+    });
+}
+
+function clearFeatureBrush() {
+    currentFeatureBrush = null;
+    updateShapeButtons(null);
+    updateBrushLabel();
+}
+
+document.getElementById('feature-confirm').onclick = () => {
+    if (currentFeatureBrush && !currentFeatureBrush.def.isEraser) {
+        updateShapeButtons([currentFeatureBrush.def.stroke]);
+    }
+    if(currentFeatureBrush && currentFeatureBrush.def.isEraser)
+    {
+      updateShapeButtons(['point']);
+    }
+    updateBrushLabel();
+
+    currentBrush = 'features';
+    //document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
+    //document.querySelector('button[data-brush="features"]').classList.add('selected');
+    
+    hideFeaturePopup();
+};
+
+
+
+document.getElementById('feature-cancel').onclick = () => {
+    currentFeatureBrush = null;
+    hideFeaturePopup();
+};
 
 // Deselect all char buttons when layer brush selected, and vice versa
 function deselectAllChars() {
@@ -633,16 +816,25 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
         // ----- Special modal brushes (monster & object) -----
         if (brush === 'monster') {
             hideObjectPopup();
+            hideFeaturePopup();
             showMonsterPopup();
-            document.getElementById('mon-id').value = currentMonsterBrush || '';
-            document.getElementById('mon-id').focus();
+            document.getElementById('monster-id').value = currentMonsterBrush?.id || '';
+            document.getElementById('monster-id').focus();
             return;                                      // do NOT highlight yet
         }
 
         if (brush === 'object') {
             hideMonsterPopup();
+            hideFeaturePopup();
             showObjectPopup();
 
+            return;                                      // do NOT highlight yet
+        }
+
+        if (brush === 'features') {
+            hideMonsterPopup();
+            hideObjectPopup();
+            showFeaturePopup();
             return;                                      // do NOT highlight yet
         }
 
@@ -673,7 +865,7 @@ function showMonsterPopup() {
 }
 
 // === FILTER ON INPUT ===
-document.getElementById('mon-id').addEventListener('input', (e) => {
+document.getElementById('monster-id').addEventListener('input', (e) => {
     const filter = e.target.value.trim();
     populateMonsterList(filter);
 });
@@ -742,6 +934,7 @@ const shapeRow = document.getElementById('shape-row');
 shapeButtons.forEach(btn => {
   const b = document.createElement('button');
   b.textContent = btn.label;
+  b.dataset.shape = btn.id;
   b.onclick = () => { shapeRow.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); currentShape = btn.id; clearPreview(); };
   shapeRow.appendChild(b);
 });
@@ -760,8 +953,8 @@ document.querySelectorAll('#layer-show-hide-row button').forEach(btn => {
   btn.addEventListener('click', () => {
     const layer = btn.dataset.layer;
     visibleLayers[layer] = !visibleLayers[layer];
-
-    btn.style.background = visibleLayers[layer] ? '#22303c' : '#0d1117';
+    btn.classList.toggle('selected', visibleLayers[layer]);
+    //btn.style.background = visibleLayers[layer] ? '#22303c' : '#0d1117';
     //document.getElementById(layer + '-code').classList.toggle('hide', !visibleLayers[layer]);
 
     //After setting the visibility flag, re-render the map
@@ -863,7 +1056,7 @@ function collectBrushFromPopup(popupSelector) {
     });
 
     // Ensure buc has a value (fallback to default if somehow missing)
-    if (!brush.hasOwnProperty('buc')) brush.buc = "uncursed";
+    //if (!brush.hasOwnProperty('buc')) brush.buc = "uncursed";
 
     if (!idSet) {
         alert('ID is required.');
@@ -882,7 +1075,11 @@ function prefillPopupFromBrush(popupSelector, brush) {
 
         if (input.type === 'radio') {
             // Check the radio that matches the stored value (or default)
-            const targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '');
+            //let targetValue = '';
+            //if( key == 'buc' ) targetValue = 'uncursed';
+            //else if( key == 'currentMonsterBrush' ) targetValue = 'id';
+            //else targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '');
+            const targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '') || (key === 'monsterSelectMode' ? 'id' : '');
             input.checked = (input.value === targetValue);
         } else if (input.type === 'checkbox') {
             input.checked = !!(brush && brush[key]);
@@ -904,6 +1101,18 @@ function generateTerrainLUA() {
 
     return `des.map([[\n${lines}\n]]);`;
 }
+
+function generateFeaturesLua() {
+    let lines = [];
+    layers.features.forEach(f => {
+        if (f.lua) lines.push(f.lua(f));
+        else if (f.def.name === "Trap") lines.push(`des.trap("${f.trapType}"${f.x !== undefined ? `,${f.x},${f.y}` : ''})`);
+        // add any special cases here
+    });
+    return lines.join('\n');
+}
+
+// Call this whenever layers.features changes (after painting, load, etc.)
 
 // === generateObjectLUA() FUNCTION ===
 function generateObjectLUA() {
@@ -974,8 +1183,30 @@ function generateMonsterLUA() {
                 // Add more types here if needed (e.g. arrays for inventory later)
             }
 
-            let line = `des.monster({ id = "${mon.id}", x = ${x + 1}, y = ${y + 1}`;
-            if (props.length) line += ', ' + props.join(', ');
+            xyText = `x = ${x + 1}, y = ${y + 1}`
+            let classOrIDText = '';
+            let nameText = '';
+            let invText = '';
+            let boolOptions = '';
+
+            for (const key in mon) 
+            {
+              const value = mon[key];
+              if (typeof value === 'boolean' && value === true) {
+                  boolOptions += `${key} = 1, `;
+                }
+            }
+
+            if (mon.monsterSelectMode === 'class') {
+                classOrIDText = `class = "${mon.id}",`;
+            } else {
+                classOrIDText = `id = "${mon.id}",`; 
+                if( mon.name) nameText = `name = "${mon.name}"`;
+                if( mon.inventory) invText = `inventory = ${mon.inventory}`;
+            }
+
+            let line = `des.monster({ ${classOrIDText} ${boolOptions} ${nameText} ${invText} ${xyText}`;
+            //if (props.length) line += ', ' + props.join(', ');
             line += ' })\n';
             lua += line;
         }
@@ -1073,7 +1304,8 @@ const generateFunctions = {
     terrain:  generateTerrainLUA,   // existing
     objects:  generateObjectLUA,   // you will need to write this similar to terrain
     monsters: generateMonsterLUA,  // you will need to write this
-    lighting: generateLightLUA      // the one we wrote earlier
+    lighting: generateLightLUA,      // the one we wrote earlier
+    features: generateFeaturesLua
 };
 
 document.querySelectorAll('.refresh').forEach(btn => {
@@ -1108,6 +1340,9 @@ function updateText( updateLight = false) {
     const lightingText = generateLightLUA();
     document.getElementById('lighting-textarea').value = lightingText;
   }
+
+  const featuresText = generateFeaturesLua();
+  document.getElementById('features-textarea').value = featuresText;
   /*let lightingLines = layers.lighting.map(l => 
     `des.region(selection.area(${pad(l.area.x1)},${pad(l.area.y1)},${pad(l.area.x2)},${pad(l.area.y2)}), "${l.type}")`
   ).join('\n');
@@ -1154,6 +1389,38 @@ function paint(x, y) {
       layers.object[y][x] = { ...currentObjectBrush };
     }
   }
+  else if (currentBrush === 'features' && currentFeatureBrush && currentFeatureBrush.def.stroke === 'point' ) {
+      const cellX = x;
+      const cellY = y;
+
+      if (currentFeatureBrush.def.isEraser) {
+        // ----- ERASER MODE -----
+        if (currentShape === 'point') {
+            const featuresToRemove = getFeaturesAtXY(cellX, cellY);
+            if (featuresToRemove.length > 0) {
+                layers.features = layers.features.filter(f => !featuresToRemove.includes(f));
+                //renderLayers();
+                //generateFeatureLua();   // refresh code textarea
+            }
+        }
+      }
+      else {
+        const feat = {
+            def: currentFeatureBrush.def.name,
+            lua: currentFeatureBrush.def.lua,
+            x: cellX, y: cellY,
+            area: null,
+            w: null,
+            h: null,
+            ...currentFeatureBrush.options
+        };
+        if (currentFeatureBrush.def.symbol || currentFeatureBrush.symbol) {
+            feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
+            feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
+        }
+        layers.features.push(feat);
+    }
+  }
 
   updateText();
 }
@@ -1190,7 +1457,42 @@ function showPreview() {
   overlay.appendChild(preview);
 }
 
+function paintFeatureRect (xmin, xmax, ymin, ymax)
+{ 
+  //Saftey Check
+  if( currentBrush == 'features' && currentFeatureBrush.def.stroke == 'rectangle' )
+  {
+
+    const x1 = xmin, x2 = xmax;
+    const y1 =ymin, y2 = ymax;
+    const feat = {
+        def: currentFeatureBrush.def.name,
+        lua: currentFeatureBrush.def.lua,
+        dither: currentFeatureBrush.def.dither,
+        ditherColor: currentFeatureBrush.def.ditherColor,
+        x: x1, y: y1,
+        area: `${x1},${y1},${x2},${y2}`,
+        w: Math.abs(x2 - x1) + 1,
+        h: Math.abs(y2 - x1) + 1,
+        ...currentFeatureBrush.options
+        };
+        if (currentFeatureBrush.def.symbol) {
+            feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
+            feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
+        }
+        layers.features.push(feat);
+  }
+}
+
 function drawRectangle(xmin, xmax, ymin, ymax) {
+
+  //Special case if a feature is being drawn with a rectangle
+  if( currentBrush == 'features' && currentFeatureBrush.def.stroke == 'rectangle' )
+  {
+    paintFeatureRect(xmin, xmax, ymin, ymax);
+    return;
+  }
+
   if (currentFillMode === 'solid') {
     for (let y = ymin; y <= ymax; y++)
       for (let x = xmin; x <= xmax; x++) paint(x, y);
@@ -1284,6 +1586,33 @@ function fillArea(startX, startY) {
   }
 }
 
+function getFeaturesAtXY(x, y) {
+    const matchingFeatures = [];
+
+    layers.features.forEach(feature => {
+        // Rectangle / area features (stored as "x1,y1,x2,y2" string)
+        if (feature.area) {
+            const [x1, y1, x2, y2] = feature.area.split(',').map(Number);
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                matchingFeatures.push(feature);
+            }
+        }
+        // Point features (single cell)
+        else if (feature.x !== undefined && feature.y !== undefined) {
+            if (feature.x === x && feature.y === y) {
+                matchingFeatures.push(feature);
+            }
+        }
+    });
+
+    return matchingFeatures; // Array of feature objects at this coordinate (can be empty)
+}
+
 // === NEW FUNCTION TO UPDATE CURSOR INFO WITH ALL LAYERS ===
 function updateCursorInfo(x, y) {
     let lines = [];
@@ -1314,6 +1643,14 @@ function updateCursorInfo(x, y) {
                      'none';  // fallback if no lighting layer
     lines.push(`Lighting: ${lighting}`);
 
+    featList = getFeaturesAtXY(x, y);
+    if( featList )
+    {
+      featList.forEach( (feat, indx) => {
+        const typeStr = feat.type ? ` | ${feat.type}` : ( feat.trapType ? ` | ${feat.trapType}` : '' );
+        lines.push(`Feature #${indx+1}: ${feat.def} ${typeStr}`);
+      });
+    }
     // Join with <br> for HTML display
     const infoHtml = lines.join('<br>');
     return infoHtml;
@@ -1414,10 +1751,19 @@ document.getElementById('copy-all-btn').onclick = () => {
   navigator.clipboard.writeText(all.trim());
 };
 
+function getDitherPattern(type, colorName) {
+    const color = colorTable[colorName]?.desc || '#fff';
+    const patterns = {
+        'dense-dots': `repeating-linear-gradient(45deg, ${color} 0px, ${color} 2px, transparent 2px, transparent 4px)`,
+        'sparse-dots': `repeating-linear-gradient(45deg, ${color} 0px, ${color} 1px, transparent 1px, transparent 8px)`,
+        'diagonal': `repeating-linear-gradient(45deg, ${color} 0px, ${color} 3px, transparent 3px, transparent 6px)`,
+        'horizontal-dash': `repeating-linear-gradient(90deg, ${color} 0px, ${color} 6px, transparent 6px, transparent 12px)`,
+        'crosshatch': `linear-gradient(45deg, ${color} 25%, transparent 25%, transparent 75%, ${color} 75%), linear-gradient(45deg, ${color} 25%, transparent 25%, transparent 75%, ${color} 75%)`
+    };
+    return patterns[type] || 'none';
+}
 
-function renderLayers() {
-  // Helper to convert a color token (e.g. "CLR_RED", "HI_DOMESTIC", "NO_COLOR") to an rgb() string
-  function getColorRGB(token) {
+function getColorRGB(token) {
     // "None" appears in a few object entries – treat it the same as missing/NO_COLOR
     if (!token || token === "None" || token === "NO_COLOR") {
       return "#ffffff"; // bright white – safe default for uncolored things
@@ -1430,6 +1776,11 @@ function renderLayers() {
     return "#ffffff";
   }
 
+function renderLayers() {
+  // Helper to convert a color token (e.g. "CLR_RED", "HI_DOMESTIC", "NO_COLOR") to an rgb() string
+  
+
+  
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const cell = mapCells[y][x];
@@ -1437,7 +1788,7 @@ function renderLayers() {
 
       let displayChar = ' ';
       let displayColor = "#ffffff"; // default foreground (white)
-      let displayLight = DARK_BG;
+
 
       // ----- Terrain layer (base) -----
       if (visibleLayers.terrain && layers.terrain[y][x]) {
@@ -1446,6 +1797,43 @@ function renderLayers() {
         displayChar = terr.symbol || ' ';
         displayColor = getColorRGB(terr.color);
       }
+
+      cell.textContent = displayChar;
+      cell.style.color = displayColor;
+      cell.style.background = 'none';
+    }
+  }
+
+  if (visibleLayers.features) {
+      layers.features.forEach(f => {
+          if (f.area) { // rectangle dither
+              const [x1,y1,x2,y2] = f.area.split(',').map(Number);
+              for (let xx = Math.min(x1,x2); xx <= Math.max(x1,x2); xx++) {
+                  for (let yy = Math.min(y1,y2); yy <= Math.max(y1,y2); yy++) {
+                      //const cell = document.querySelector(`.grid-cell[data-x="${xx}"][data-y="${yy}"]`);
+                      const cell = mapCells[yy][xx];
+                      if (cell) {
+                          cell.style.background = getDitherPattern(f.dither, f.ditherColor);
+                      }
+                  }
+              }
+          } else { // point symbol
+              //const cell = document.querySelector(`.grid-cell[data-x="${f.x}"][data-y="${f.y}"]`);
+              const cell = mapCells[f.y][f.x];
+              if (cell) {
+                  cell.textContent = f.symbol || f.def.symbol;
+                  cell.style.color = getColorRGB(f.color || f.def.color || 'CLR_WHITE');
+              }
+          }
+      });
+  }
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const cell = mapCells[y][x];
+      let displayChar = cell.textContent;
+      let displayColor = cell.style.color; // default foreground (white)
+      let displayLight = DARK_BG;
 
       // ----- Object layer (overrides terrain char + color) -----
       if (visibleLayers.object && layers.object[y][x]) {
@@ -1464,15 +1852,28 @@ function renderLayers() {
 
       // ----- Monster/Monster layer (overrides object char + color) -----
       if (visibleLayers.monster && layers.monster[y][x]) {
-        const monId = layers.monster[y][x].id.toLowerCase();
-        const mon = allMonsters[monId];
-        if (mon) {
-          displayChar = mon.symbol || 'm';
-          if (mon.color) {
-            displayColor = getColorRGB(mon.color);
-          }
-          // If the monster has no explicit color, keep the previous layer's color
+
+        const monBrush = layers.monster[y][x];
+        const monId = monBrush.id.toLowerCase();
+        
+        if( monBrush.monsterSelectMode == "class" )
+        {
+            displayChar = monBrush.id || 'm';
+            displayColor = getColorRGB('CLR_WHITE');
         }
+        else
+        {
+          const mon = allMonsters[monId];
+          if (mon) 
+          {
+            displayChar = mon.symbol || 'm';
+            if (mon.color) {
+              displayColor = getColorRGB(mon.color);
+            }
+            // If the monster has no explicit color, keep the previous layer's color
+          }
+        }
+        
       }
 
       // ----- Lighting layer (background only) -----
@@ -1486,6 +1887,9 @@ function renderLayers() {
       cell.style.backgroundColor = displayLight;
     }
   }
+
+    
+
 }
 
 // === UPDATE getObjectChar() TO WORK WITH STRUCTURED OBJECTS ===

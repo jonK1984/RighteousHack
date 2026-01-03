@@ -1,0 +1,214 @@
+
+  body { background-color: #000; color: #fff; font-family: monospace; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+  #menubar { height: 10%; min-height: 230px; #15202b; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; border-bottom: 1px solid #22303c; }
+  .toolbar-row { display: flex; flex-wrap: nowrap; gap: 5px; }
+  .toolbar-row button { background: #22303c; color: #1da1f2; border: 1px solid #38444d; padding: 8px 12px; cursor: pointer; font-family: monospace; min-width: 50px; }
+  .toolbar-row button.selected { background: #1da1f2; color: #fff; }
+  #main { flex: 1; display: flex; }
+  #left, #right { flex: 1; margin: 20px; display: flex; flex-direction: column; }
+  #grid { 
+    position: relative;
+    display: grid; 
+    grid-template-columns: 50px repeat(76, 16px); 
+    grid-template-rows: 24px repeat(20, 20px); 
+    background: #111; 
+    user-select: none;
+    width: fit-content;
+    margin: 0 auto;
+  }
+  #grid > div { 
+    text-align: center; 
+    line-height: 20px; 
+    overflow: hidden;
+    position: relative;
+  }
+  .header { color: #888; font-size: 12px; }
+  .cell { 
+    cursor: pointer; 
+    font-size: 16px; 
+    border: 1px solid #222;
+  }
+  .preview { 
+    position: absolute; 
+    border: 2px solid rgba(29, 161, 242, 0.6); 
+    pointer-events: none; 
+    background: rgba(29, 161, 242, 0.1);
+    box-sizing: border-box;
+  }
+  #overlay { 
+    position: absolute; 
+    top: 24px; left: 50px;
+    pointer-events: none;
+  }
+  #terrain-textarea {
+    width: 590px;
+    height: 358px;
+  }
+  #textarea { flex: 1; background: #15202b; color: #fff; border: 1px solid #38444d; font-family: monospace; font-size: 14px; resize: none; }
+  #copybtn { margin-top: 10px; padding: 10px; background: #1da1f2; color: #fff; border: none; cursor: pointer; font-size: 16px; }
+  #position { text-align: center; color: #1da1f2; margin-top: 10px; font-size: 14px; }
+  .error { color: red; margin-top: 10px; }
+
+  .layer-code { 
+    margin-top: 20px; 
+    border: 1px solid #38444d; 
+    padding: 10px; 
+    background: #15202b; 
+  }
+  .layer-code h3 { margin: 0 0 10px 0; font-size: 14px; }
+  .layer-code textarea { width: 100%; height: 150px; background: #000; color: #fff; border: none; font-family: monospace; }
+  .hide { display: none; }
+
+  /* Popup styling */
+  #popup-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
+  }
+  .popup {
+    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 700px;
+  }
+  .popup input, .popup textarea {  margin: 10px 0; background: #000; color: #fff; }
+  .popup input[type="text"] {
+    width: 100%;
+  }
+  .popup textarea[name="contents"], .popup textarea[name="inventory"] {
+    width: 100%;
+  }
+  .popup label { display: block; margin-top: 10px; }
+
+  /* ADD THIS TO YOUR <style> BLOCK */
+  .monster-popup-layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      align-items: flex-start;
+  }
+
+  .monster-input-section {
+      flex: 1;
+      min-width: 300px;
+  }
+
+  .monster-scroll-list {
+      flex: 0 0 300px;              /* fixed width */
+      max-height: 680px;            /* max height of the list – adjusts to content if shorter */
+      overflow-y: auto;
+      background: #22303c;
+      border: 1px solid #1da1f2;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+  }
+
+  .monster-scroll-list .monster-item {
+      padding: 6px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #38444d;
+      transition: background 0.2s;
+  }
+
+  .monster-scroll-list .monster-item:hover {
+      background: #1da1f2;
+      color: #000;
+  }
+
+  .monster-scroll-list .monster-item:last-child {
+      border-bottom: none;
+  }
+
+  .monster-scroll-list .monster-item.match {
+      display: block;
+  }
+
+  .monster-scroll-list .monster-item.no-match {
+      display: none;
+  }
+
+  /* ADD THIS TO YOUR <style> BLOCK */
+  .obj-popup-layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      align-items: flex-start;
+  }
+
+  .obj-input-section {
+      flex: 1;
+      min-width: 300px;
+  }
+
+  .obj-scroll-list {
+      flex: 0 0 300px;              /* slightly wider than monster list */
+      max-height: 650px;
+      overflow-y: auto;
+      background: #22303c;
+      border: 1px solid #1da1f2;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+  }
+
+  .obj-scroll-list .obj-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #38444d;
+      transition: background 0.2s;
+  }
+
+  .obj-scroll-list .obj-item:hover {
+      background: #1da1f2;
+      color: #000;
+  }
+
+  .obj-scroll-list .obj-item:last-child {
+      border-bottom: none;
+  }
+
+  .obj-scroll-list .obj-sym {
+      font-weight: bold;
+      color: #1da1f2;
+      min-width: 20px;
+      text-align: center;
+  }
+
+  .obj-scroll-list .obj-item.artifact {
+      color: #ffdd00;               /* gold tint for artifacts */
+  }
+
+  .obj-scroll-list .obj-item.match {
+      display: flex;
+  }
+
+  .obj-scroll-list .obj-item.no-match {
+      display: none;
+  }
+
+#feature-list .obj-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #38444d;
+}
+#feature-list .obj-item.selected {
+    background: #1da1f2;
+    color: #000;
+}
+#feature-list .obj-item:hover {
+    background: #1da1f2;
+    color: #000;
+}
+
+#feature-options label {
+    display: block;
+    margin: 8px 0;
+}
+#feature-options input[type="text"],
+#feature-options textarea {
+    width: 100%;
+    background: #22303c;
+    color: #fff;
+    border: 1px solid #38444d;
+    padding: 4px;
+}
