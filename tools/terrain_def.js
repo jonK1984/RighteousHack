@@ -143,7 +143,7 @@ const allTerrains = {
     "id": "match_wall",
     "color": "CLR_GRAY"
   },
-  "stone": {
+  "boulder": {
     "lua": "\0",
     "symbol": "\0",
     "id": "stone (boulder)",

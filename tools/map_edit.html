@@ -198,7 +198,7 @@
     <button data-brush="terrain">Terrain</button>
     <button data-brush="light">Light</button>
     <button data-brush="dark">Dark</button>
-    <button data-brush="creature">Creature</button>
+    <button data-brush="monster">Monster</button>
     <button data-brush="object">Object</button>
   </div>
   <div class="toolbar-row" id="char-row"></div>
@@ -207,8 +207,11 @@
   <div class="toolbar-row" id="layer-show-hide-row">
     <button data-layer="terrain" class="selected">Terrain</button>
     <button data-layer="lighting">Lighting</button>
-    <button data-layer="creature">Creature</button>
+    <button data-layer="monster">Monster</button>
     <button data-layer="object">Object</button>
+  </div>
+  <div id="current-brush-label" style="margin: 8px 0; font-weight: bold; color: #1da1f2;">
+      Selected brush: <span id="brush-display">None</span>
   </div>
 </div>
 <div id="main">
@@ -228,31 +231,35 @@
       <h3>Terrain Layer</h3>
       <textarea id="terrain-textarea" readonly></textarea>
       <button onclick="copyLayer('terrain')">Copy Terrain</button>
+      <button class="refresh" data-type="terrain" title="Regenerate Terrain LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
     <div id="lighting-code" class="layer-code ">
       <h3>Lighting Layer</h3>
       <textarea id="lighting-textarea" readonly></textarea>
       <button onclick="copyLayer('lighting')">Copy Lighting</button>
+      <button class="refresh" data-type="lighting" title="Regenerate Lighting LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
-    <div id="creature-code" class="layer-code ">
-      <h3>Creature Layer</h3>
-      <textarea id="creature-textarea" readonly></textarea>
-      <button onclick="copyLayer('creature')">Copy Creatures</button>
+    <div id="monster-code" class="layer-code ">
+      <h3>Monster Layer</h3>
+      <textarea id="monster-textarea" readonly></textarea>
+      <button onclick="copyLayer('monster')">Copy Monsters</button>
+      <button class="refresh" data-type="monsters" title="Regenerate Monsters LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
     <div id="object-code" class="layer-code ">
       <h3>Object Layer</h3>
       <textarea id="object-textarea" readonly></textarea>
       <button onclick="copyLayer('object')">Copy Objects</button>
+      <button class="refresh" data-type="objects" title="Regenerate Objects LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
     
   </div>
 </div>
 <div id="popup-overlay">
-  <div class="popup" id="creature-popup">
+  <div class="popup" id="monster-popup">
     <div class="mon-popup-layout">
     <div class="mon-input-section">
       <h3>Place Monster</h3>
@@ -272,8 +279,12 @@
       <label>Inventory (Lua code):<br>
         <textarea id="mon-inventory" rows="6" name="inventory" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
       </label>
-      <button id='creature-confirm' >OK</button>
-      <button id='creature-cancel' >Cancel</button>
+      <button id='monster-confirm' >OK</button>
+      <button id='monster-cancel' >Cancel</button>
+      <!-- Monster eraser (same pattern) -->
+      <button id="monster-eraser" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">
+          ERASER (removes monsters)
+      </button>
     </div>
     <div id="mon-suggestions" class="mon-scroll-list">
 
@@ -309,6 +320,10 @@
 
     <button id='object-confirm' >OK</button>
     <button id='object-cancel' >Cancel</button>
+    <button id="object-eraser" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">
+        ERASER (removes objects)
+    </button>
+
     </div>
 
     <div id="obj-suggestions" class="obj-scroll-list"></div>
@@ -321,11 +336,11 @@
 <script src="color_def.js"></script>
 <script>
 
-let currentLayer = 'terrain'; // terrain, lighting, creature, object
-let currentBrush = null; // null, 'light', 'dark', 'creature', 'object'
-let pendingCreature = null; // {x,y} when popup waiting
+let currentLayer = 'terrain'; // terrain, lighting, monster, object
+let currentBrush = null; // null, 'light', 'dark', 'monster', 'object'
+let pendingMonster = null; // {x,y} when popup waiting
 let pendingObject = null;   // {x,y} when popup waiting
-let currentCreatureBrush = null;     // the monster name/id that is currently selected
+let currentMonsterBrush = null;     // the monster name/id that is currently selected
 let currentObjectBrush = null;
 
 const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
@@ -343,18 +358,18 @@ const CELL_H = 20;
 let layers = {
   terrain: [],   // array of {char, x, y}
   lighting: [],  // array of {type:'lit'|'unlit', area:{x1,y1,x2,y2}}
-  creature: [],  // array of monster configs
+  monster: [],  // array of monster configs
   object: []     // array of object configs
 };
-layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill(' '));
+layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
 layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
-layers.creature =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
+layers.monster =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
 layers.object =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
 
 let visibleLayers = {
   terrain: true,
   lighting: true,
-  creature: true,
+  monster: true,
   object: true
 };
 
@@ -390,15 +405,6 @@ const objectDefaults = {
     // ... any future defaults ...
 };
 
-const charButtons = [
-  {ch: ' ', name: 'Stone / Space'}, {ch: '#', name: 'Corridor'}, {ch: '.', name: 'Room floor'},
-  {ch: '-', name: 'Horizontal wall'}, {ch: '|', name: 'Vertical wall'}, {ch: '+', name: 'Door'},
-  {ch: 'A', name: 'Air'}, {ch: 'C', name: 'Cloud'}, {ch: 'S', name: 'Secret door'},
-  {ch: '{', name: 'Fountain'}, {ch: '\\', name: 'Throne'}, {ch: 'K', name: 'Sink'},
-  {ch: '}', name: 'Moat'}, {ch: 'P', name: 'Pool'}, {ch: 'L', name: 'Lava pool'},
-  {ch: 'I', name: 'Ice'}, {ch: 'W', name: 'Water'}, {ch: 'T', name: 'Tree'}, {ch: 'F', name: 'Iron bars'},
-];
-
 const shapeButtons = [
   {id: 'point', label: 'Point'},
   {id: 'large', label: 'Large 4×4'},
@@ -416,6 +422,36 @@ const fillButtons = [
 // === POPULATE AND FILTER THE MONSTER LIST ===
 let monListItems = []; // will hold pre-created DOM elements for performance
 let objListItems = []; // pre-created DOM elements for performance
+
+// === Helper: update the label that shows the current brush ===
+function updateBrushLabel() {
+    let text = "None";
+    if (currentBrush === 'terrain' && currentTerrain) {
+        text = `Terrain: ${allTerrains[currentTerrain].id}`;
+    } else if (currentBrush === 'object') {
+        text = currentObjectBrush ? `Object: ${currentObjectBrush.id}` : "Object: ERASER";
+    } else if (currentBrush === 'monster') {
+        text = currentMonsterBrush ? `Monster: ${currentMonsterBrush.id}` : "Monster: ERASER";
+    } else if (currentBrush) {
+        text = currentBrush.charAt(0).toUpperCase() + currentBrush.slice(1);
+    }
+    document.getElementById('brush-display').textContent = text;
+}
+
+// === Helper: select a brush mode (terrain / object / monster) ===
+function selectBrush(mode) {
+    if (currentBrush === mode) return; // already selected
+
+    currentBrush = mode;
+
+    // Update .selected class on mode buttons (adjust selector if yours is different)
+    document.querySelectorAll('[data-brush]').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.brush === mode);
+    });
+
+}
+
+
 
 function populateMonsterList(filter = '') {
     const list = document.getElementById('mon-suggestions');
@@ -517,36 +553,40 @@ function deselectAllBrushes() {
   currentBrush = null;
 }
 
-// === CREATURE CONFIRM HANDLER (replace existing creature-confirm handler) ===
+// === CREATURE CONFIRM HANDLER (replace existing monster-confirm handler) ===
 // === UPDATED CONFIRM HANDLERS ===
-document.getElementById('creature-confirm').addEventListener('click', () => {
-    const brush = collectBrushFromPopup('#creature-popup');
+document.getElementById('monster-confirm').addEventListener('click', () => {
+    const brush = collectBrushFromPopup('#monster-popup');
     if (!brush) return;
 
-    currentCreatureBrush = brush;
+    selectBrush('monster');
+    currentMonsterBrush = brush;
+    updateBrushLabel();
 
     document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
-    currentBrush = 'creature';
-    document.querySelector('button[data-brush="creature"]').classList.add('selected');
+    currentBrush = 'monster';
+    document.querySelector('button[data-brush="monster"]').classList.add('selected');
 
-    hideCreaturePopup();
+    hideMonsterPopup();
     renderLayers();
 });
 
 
 
 // === CREATURE CANCEL (unchanged except clearing inputs is optional) ===
-document.getElementById('creature-cancel').addEventListener('click', () => {
-    hideCreaturePopup();
-    // leaves currentCreatureBrush intact – user keeps last selection
+document.getElementById('monster-cancel').addEventListener('click', () => {
+    hideMonsterPopup();
+    // leaves currentMonsterBrush intact – user keeps last selection
 });
 
 // === OBJECT CONFIRM HANDLER (replace your existing object-confirm click handler) ===
 document.getElementById('object-confirm').addEventListener('click', () => {
     const brush = collectBrushFromPopup('#object-popup');
     if (!brush) return;
-
+    selectBrush('object');
     currentObjectBrush = brush;
+    updateBrushLabel();
+    
 
     document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
     currentBrush = 'object';
@@ -571,7 +611,7 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
         let layer = brush;
         switch (brush) {
             case 'terrain':
-            case 'creature':
+            case 'monster':
             case 'object':
                 layer = brush;
                 break;
@@ -590,17 +630,17 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
             b.classList.remove('selected')
         );
 
-        // ----- Special modal brushes (creature & object) -----
-        if (brush === 'creature') {
+        // ----- Special modal brushes (monster & object) -----
+        if (brush === 'monster') {
             hideObjectPopup();
-            showCreaturePopup();
-            document.getElementById('mon-id').value = currentCreatureBrush || '';
+            showMonsterPopup();
+            document.getElementById('mon-id').value = currentMonsterBrush || '';
             document.getElementById('mon-id').focus();
             return;                                      // do NOT highlight yet
         }
 
         if (brush === 'object') {
-            hideCreaturePopup();
+            hideMonsterPopup();
             showObjectPopup();
 
             return;                                      // do NOT highlight yet
@@ -608,26 +648,26 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
 
         // ----- All other brushes (terrain, light, dark, etc.) -----
         currentBrush = brush;
-        currentCreatureBrush = null;
+        currentMonsterBrush = null;
         currentObjectBrush = null;
         this.classList.add('selected');
-        hideCreaturePopup();
+        hideMonsterPopup();
         hideObjectPopup();
     });
 });
 
-// === UPDATE showCreaturePopup() (replace your existing version) ===
+// === UPDATE showMonsterPopup() (replace your existing version) ===
 // === UPDATED SHOW POPUP FUNCTIONS ===
-function showCreaturePopup() {
-    document.getElementById('creature-popup').parentNode.style.display = 'flex';
-    prefillPopupFromBrush('#creature-popup', currentCreatureBrush);
+function showMonsterPopup() {
+    document.getElementById('monster-popup').parentNode.style.display = 'flex';
+    prefillPopupFromBrush('#monster-popup', currentMonsterBrush);
 
     // Populate/full list on open
     populateMonsterList('');
 
     // Focus input and select its content for easy replacement
-    document.getElementById('creature-popup').classList.remove('hide');
-    const input = document.querySelector('#creature-popup [name="id"]');
+    document.getElementById('monster-popup').classList.remove('hide');
+    const input = document.querySelector('#monster-popup [name="id"]');
     input.focus();
     input.select();
 }
@@ -639,9 +679,9 @@ document.getElementById('mon-id').addEventListener('input', (e) => {
 });
 
 
-function hideCreaturePopup() {
-    document.getElementById('creature-popup').parentNode.style.display = 'none';
-    document.getElementById('creature-popup').classList.add('hide');
+function hideMonsterPopup() {
+    document.getElementById('monster-popup').parentNode.style.display = 'none';
+    document.getElementById('monster-popup').classList.add('hide');
 }
 
 // === UPDATE showObjectPopup() TO INITIALIZE THE LIST ===
@@ -674,16 +714,29 @@ function hideObjectPopup() {
 
 // Modify existing char-row clicks to deselect brushes
 // (add to each char button click: deselectAllBrushes(); )
-
+// === 1. Auto-select terrain mode when a terrain char button is clicked ===
+// Assuming your terrain symbol buttons have class "terrain-char" and data-terrain attribute
 const charRow = document.getElementById('char-row');
-charButtons.forEach(btn => {
+Object.keys(allTerrains).forEach(key => {
+  const terr = allTerrains[key];
   const b = document.createElement('button');
-  b.textContent = btn.ch === ' ' ? '[space]' : btn.ch;
-  b.title = btn.name;
-  b.onclick = () => { charRow.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); currentChar = btn.ch; };
+  b.textContent = terr.lua === ' ' ? '[space]' : terr.lua;
+  b.title = terr.id;
+  b.onclick = () => { 
+    charRow.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); 
+    b.classList.add('selected'); 
+    currentChar = key;
+    if (key && allTerrains[key]) {
+          selectBrush('terrain');               // <-- forces terrain mode
+          currentTerrain = key;
+
+          updateBrushLabel();
+      }
+  };
   charRow.appendChild(b);
 });
 charRow.firstChild.classList.add('selected');
+
 
 const shapeRow = document.getElementById('shape-row');
 shapeButtons.forEach(btn => {
@@ -842,10 +895,14 @@ function prefillPopupFromBrush(popupSelector, brush) {
 }
 
 // === generateTerrainLUA() FUNCTION ===
-function generateTerrainLUA()
-{
-  const lines = layers.terrain.map(row => row.join('')).join('\n');
-  return `des.map([[\n${lines}\n]]);`;
+function generateTerrainLUA() {
+    const lines = layers.terrain
+        .map(row => 
+            row.map(cell => allTerrains[cell].lua).join('')   // join cells into one row string
+        )
+        .join('\n');                                          // join rows with newlines
+
+    return `des.map([[\n${lines}\n]]);`;
 }
 
 // === generateObjectLUA() FUNCTION ===
@@ -887,13 +944,13 @@ function generateObjectLUA() {
     return lua;
 }
 
-// === NEW generateCreatureLUA() FUNCTION ===
-function generateCreatureLUA() {
+// === NEW generateMonsterLUA() FUNCTION ===
+function generateMonsterLUA() {
     let lua = '';
 
     for (let y = 0; y < 20; y++) {
         for (let x = 0; x < 76; x++) {
-            const mon = layers.creature[y][x];
+            const mon = layers.monster[y][x];
             if (!mon || !mon.id) continue;
 
             const props = [];
@@ -926,7 +983,111 @@ function generateCreatureLUA() {
     return lua;
 }
 
-function updateText() {
+// === generateLightLUA() FUNCTION ===
+function generateLightLUA() {
+    if (!layers.lighting || layers.lighting.length === 0) return '';
+
+    const rows = layers.lighting.length;
+    const cols = layers.lighting[0].length;
+
+    const pad = n => String(n).padStart(2, '0');
+
+    // Helper: cover a binary grid (true = needs this tag) with maximal rectangles
+    function getCoveringRects(tagGrid) {  // tagGrid is boolean[][]
+        const rects = [];
+        const remaining = tagGrid.map(row => row.slice());  // clone
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; ) {
+                if (!remaining[y][x]) {
+                    x++;
+                    continue;
+                }
+
+                // extend right as far as possible on this row
+                let x2 = x;
+                while (x2 + 1 < cols && remaining[y][x2 + 1]) x2++;
+
+                // extend down as far as possible while keeping the full width
+                let y2 = y;
+                while (y2 + 1 < rows) {
+                    let good = true;
+                    for (let xx = x; xx <= x2; xx++) {
+                        if (!remaining[y2 + 1][xx]) {
+                            good = false;
+                            break;
+                        }
+                    }
+                    if (good) y2++;
+                    else break;
+                }
+
+                // record the rectangle
+                rects.push({ x1: x, y1: y, x2, y2 });
+
+                // mark all cells in this rectangle as covered
+                for (let yy = y; yy <= y2; yy++) {
+                    for (let xx = x; xx <= x2; xx++) {
+                        remaining[yy][xx] = false;
+                    }
+                }
+
+                // skip past this rectangle
+                x = x2 + 1;
+            }
+        }
+        return rects;
+    }
+
+    // Rectangles needed if we treat "lit" cells as the ones to explicitly cover
+    const litRects = getCoveringRects(layers.lighting);  // assumes true = lit
+
+    // Rectangles needed if we treat "unlit" cells as the ones to explicitly cover
+    const unlitGrid = layers.lighting.map(row => row.map(cell => !cell));
+    const unlitRects = getCoveringRects(unlitGrid);
+
+    // Option 1: whole map lit, override with unlit rectangles
+    const optionLitBg = [
+        `des.region(selection.area(${pad(0)},${pad(0)},${pad(cols-1)},${pad(rows-1)}), "lit")`
+    ];
+    for (const r of unlitRects) {
+        optionLitBg.push(`des.region(selection.area(${pad(r.x1)},${pad(r.y1)},${pad(r.x2)},${pad(r.y2)}), "unlit")`);
+    }
+
+    // Option 2: whole map unlit, override with lit rectangles
+    const optionUnlitBg = [
+        `des.region(selection.area(${pad(0)},${pad(0)},${pad(cols-1)},${pad(rows-1)}), "unlit")`
+    ];
+    for (const r of litRects) {
+        optionUnlitBg.push(`des.region(selection.area(${pad(r.x1)},${pad(r.y1)},${pad(r.x2)},${pad(r.y2)}), "lit")`);
+    }
+
+    // Choose the option with fewer statements
+    const chosen = optionLitBg.length <= optionUnlitBg.length ? optionLitBg : optionUnlitBg;
+
+    return chosen.join('\n');
+}
+
+// === Refresh button handler ===
+const generateFunctions = {
+    terrain:  generateTerrainLUA,   // existing
+    objects:  generateObjectLUA,   // you will need to write this similar to terrain
+    monsters: generateMonsterLUA,  // you will need to write this
+    lighting: generateLightLUA      // the one we wrote earlier
+};
+
+document.querySelectorAll('.refresh').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        const textareaId = 'lua-' + type;
+        const ta = document.getElementById(textareaId);
+        if (ta && generateFunctions[type]) {
+            ta.value = generateFunctions[type]();
+        }
+    });
+});
+
+function updateText( updateLight = false) {
 
   // Update Terrain Text
   const terrainText = generateTerrainLUA();
@@ -936,11 +1097,17 @@ function updateText() {
   const objectText = generateObjectLUA();
   document.getElementById('object-textarea').value = objectText;
 
-  const creatureText = generateCreatureLUA();
-  document.getElementById('creature-textarea').value = creatureText;
+  const monsterText = generateMonsterLUA();
+  document.getElementById('monster-textarea').value = monsterText;
 
   
   // Lighting
+  // Lighting update is CPU intensive so don't do it by default
+  if( updateLight )
+  {
+    const lightingText = generateLightLUA();
+    document.getElementById('lighting-textarea').value = lightingText;
+  }
   /*let lightingLines = layers.lighting.map(l => 
     `des.region(selection.area(${pad(l.area.x1)},${pad(l.area.y1)},${pad(l.area.x2)},${pad(l.area.y2)}), "${l.type}")`
   ).join('\n');
@@ -952,7 +1119,7 @@ function updateText() {
 function pad(n) { return n < 10 ? '0'+n : n; } // for 2-digit coords
 
 function paint(x, y) {
-  if (currentChar && currentLayer === 'terrain') {
+  if (currentChar && currentBrush === 'terrain') {
 
     //Terrain painting
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
@@ -970,18 +1137,22 @@ function paint(x, y) {
     }
 
     //layers.lighting.push({type, area: {x1,y1,x2,y2}});
-  } else if (currentBrush === 'creature') {
-        if (!currentCreatureBrush || !currentCreatureBrush.id) return;
-
-        // Clone so later popup changes don't affect already-placed monsters
-        layers.creature[y][x] = { ...currentCreatureBrush };   // spread clone
+  } else if (currentBrush === 'monster') {
+        if (currentMonsterBrush === null) {
+          layers.monster[y][x] = null;   // or ''
+        } else {
+          // Clone so later popup changes don't affect already-placed monsters
+          layers.monster[y][x] = { ...currentMonsterBrush };   // spread clone
+        }
 
   } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
   else if (currentBrush === 'object') {
-    if (!currentObjectBrush || !currentObjectBrush.id) return;
-
-    // Clone the template so future brush changes don't affect already-placed objects
-    layers.object[y][x] = { ...currentObjectBrush };
+    if (currentObjectBrush === null) {
+        layers.objects[y][x] = null;   // or '' depending on how you store empty
+    } else {
+      // Clone the template so future brush changes don't affect already-placed objects
+      layers.object[y][x] = { ...currentObjectBrush };
+    }
   }
 
   updateText();
@@ -1121,8 +1292,8 @@ function updateCursorInfo(x, y) {
 
     // Terrain: symbol + description
     const terrainType = layers.terrain[y]?.[x] || 'none';
-    const terrainChar = getTerrainChar ? getTerrainChar(terrainType) : '.'; // use your existing function if available
-    const terrainDesc = terrainDescriptions[terrainType] || terrainType;
+    const terrainChar = allTerrains[terrainType] ? allTerrains[terrainType].symbol : ' '; // use your existing function if available
+    const terrainDesc = allTerrains[terrainType].id || 'null';
     lines.push(`Terrain: ${terrainChar} - ${terrainDesc}`);
 
     // Object
@@ -1130,8 +1301,8 @@ function updateCursorInfo(x, y) {
     const objId = obj ? (obj.id || 'unknown') : 'none';
     lines.push(`Object: ${objId}`);
 
-    // Monster (creature layer)
-    const mon = layers.creature[y]?.[x];
+    // Monster (monster layer)
+    const mon = layers.monster[y]?.[x];
     const monId = mon ? (mon.id || 'unknown') : 'none';
     lines.push(`Monster: ${monId}`);
 
@@ -1172,7 +1343,9 @@ grid.addEventListener('mousedown', e => {
       for (let dx = -1; dx <= 2; dx++)
         paint(x + dx, y + dy);
   }
+  
   updateText();
+
   renderLayers();
 });
 
@@ -1204,7 +1377,15 @@ grid.addEventListener('mouseup', e => {
     clearPreview();
   }
   //Always update text upon mouseup
-  updateText();
+  if( currentBrush === 'light' || currentBrush === 'dark' )
+  {
+    updateText( true );
+  }
+  else
+  {
+
+    updateText();
+  }
   renderLayers();
   isDragging = false;
   dragStart = null;
@@ -1225,7 +1406,7 @@ function copyLayer(layer) {
 
 document.getElementById('copy-all-btn').onclick = () => {
   let all = '';
-  ['terrain','lighting','creature','object'].forEach(l => {
+  ['terrain','lighting','monster','object'].forEach(l => {
     if (visibleLayers[l]) {
       all += `-- ${l.toUpperCase()} LAYER --\n` + document.getElementById(l + '-textarea').value + '\n\n';
     }
@@ -1268,7 +1449,7 @@ function renderLayers() {
 
       // ----- Object layer (overrides terrain char + color) -----
       if (visibleLayers.object && layers.object[y][x]) {
-        const objId = layers.object[y][x];
+        const objId = layers.object[y][x].id.toLowerCase();
         const obj = allObjects[objId];
         if (obj) {
           // Use the symbol you already have from getObjectChar if you prefer,
@@ -1281,9 +1462,9 @@ function renderLayers() {
         }
       }
 
-      // ----- Creature/Monster layer (overrides object char + color) -----
-      if (visibleLayers.creature && layers.creature[y][x]) {
-        const monId = layers.creature[y][x];
+      // ----- Monster/Monster layer (overrides object char + color) -----
+      if (visibleLayers.monster && layers.monster[y][x]) {
+        const monId = layers.monster[y][x].id.toLowerCase();
         const mon = allMonsters[monId];
         if (mon) {
           displayChar = mon.symbol || 'm';
@@ -1312,7 +1493,7 @@ function getObjectChar(input) {
     let id = '';
 
     if (typeof input === 'object' && input !== null && input.id) {
-        id = input.id.trim().toLowerCase();            // structured monster from layers.creature
+        id = input.id.trim().toLowerCase();            // structured monster from layers.monster
     } else if (typeof input === 'string') {
         id = input.trim().toLowerCase();                // legacy string fallback
     }
@@ -1331,7 +1512,7 @@ function getMonsterChar(input) {
     let id = '';
 
     if (typeof input === 'object' && input !== null && input.id) {
-        id = input.id.trim().toLowerCase();            // structured monster from layers.creature
+        id = input.id.trim().toLowerCase();            // structured monster from layers.monster
     } else if (typeof input === 'string') {
         id = input.trim().toLowerCase();                // legacy string fallback
     }
@@ -1345,9 +1526,31 @@ function getMonsterChar(input) {
     return monster ? monster.symbol : 'm';             // fallback to generic 'm' if unknown
 }
 
+// === Object eraser handler (add inside your object popup click logic) ===
+document.getElementById('object-eraser').addEventListener('click', () => {
+    currentObjectBrush = null;         // null means erase
+    selectBrush('object');        // ensure we are in object mode
+    // optional: highlight the eraser button
+    document.querySelectorAll('#object-popup .palette-button').forEach(b => b.classList.remove('selected'));
+    document.getElementById('object-eraser').classList.add('selected');
+    updateBrushLabel();
+    hideObjectPopup();
+    // close popup if you want: document.getElementById('object-popup').style.display = 'none';
+});
+
+// Monster eraser handler
+document.getElementById('monster-eraser').addEventListener('click', () => {
+    currentMonsterBrush = null;
+    selectBrush('monster');
+    document.querySelectorAll('#monster-popup .palette-button').forEach(b => b.classList.remove('selected'));
+    document.getElementById('monster-eraser').classList.add('selected');
+    updateBrushLabel();
+    hideMonsterPopup();
+});
+
 createGrid();
 renderLayers();  // initial render
-updateText();
+updateText( true);
 </script>
 </body>
 </html>
