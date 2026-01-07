@@ -7,26 +7,77 @@ BASE_COLOR_PATTERN = r'(CLR_[A-Z_]+|HI_[A-Z_]+)'
 # Color tokens used in artifacts (adds NO_COLOR, which appears frequently)
 ARTI_COLOR_PATTERN = r'(NO_COLOR|CLR_[A-Z_]+|HI_[A-Z_]+)'
 
+def remove_block_comments(text: str) -> str:
+    """
+    Remove all C-style block comments (/* ... */) from the input string.
+    Everything else (code, whitespace, newlines outside comments) is preserved exactly.
+    Does NOT handle // line comments (only block comments as requested).
+    Assumes no /* or */ inside string literals (safe for NetHack headers).
+    If a comment is unclosed, everything from /* to the end of the string is removed.
+    """
+    result = []
+    i = 0
+    length = len(text)
+
+    while i < length:
+        # Look for start of block comment
+        if text[i:i+2] == '/*':
+            # Skip the entire comment (including /* and */ delimiters)
+            i += 2
+            while i < length and text[i:i+2] != '*/':
+                i += 1
+            if i < length:
+                i += 2  # skip past the closing */
+            # Do NOT append anything for the comment (removes it completely)
+        else:
+            # Normal character — copy it unchanged
+            result.append(text[i])
+            i += 1
+
+    return ''.join(result)
+
 def parse_object_classes(defsym_path):
     """
-    Parse defsym.h for OBJCLASS lines (object classes).
-    Returns dict: base_macro.lower() -> {'symbol': sym, 'class1': desc1, 'class2': desc2}
+    Parse defsym.h for OBJCLASS and OBJCLASS2 lines (object classes).
+    Returns dict: base_macro.lower() -> {'symbol': sym_char, 'class1': desc1, 'class2': desc2}
+    Handles:
+    - Symbol as 'X', 0xED, or decimal
+    - Optional extra argument in OBJCLASS2
+    - Optional second description
+    - Skips commented-out lines
     """
     class_dict = {}
-    # Handles OBJCLASS(num, 'sym', MACRO, S_macro, "desc1"[, "desc2"])
-    pattern = re.compile(r'OBJCLASS\s*\(\s*\d+\s*,\s*\'(.)\'\s*,\s*(\w+)\s*,\s*S_\w+\s*,\s*"([^"]+)"\s*(?:,\s*"([^"]*)")?\s*\)')
+    # Anchor to line start to avoid matching inside comments
+    pattern = re.compile(
+        r'^\s*OBJCLASS(?:2)?\s*\(\s*\d+\s*,\s*'
+        r'(?:\'(.)\'|0x([0-9A-Fa-f]+)|(\d+))\s*,\s*'
+        r'(\w+)\s*(?:\s*,\s*\w+\s*)?\s*,\s*S_\w+\s*,\s*'
+        r'"([^"]+)"\s*(?:,\s*"([^"]*)")?\s*\)',
+        re.MULTILINE
+    )
 
     content = Path(defsym_path).read_text(encoding='utf-8')
     for match in pattern.finditer(content):
-        sym = match.group(1)
-        macro = match.group(2).lower()
-        desc1 = match.group(3).lower()
-        desc2 = (match.group(4) or "").lower()
+        sym_char = match.group(1)
+        sym_hex = match.group(2)
+        sym_dec = match.group(3)
+        macro = match.group(4)
+        class1 = match.group(5)
+        class2 = match.group(6) if match.group(6) else ""
 
-        class_dict[macro] = {
+        if sym_char:
+            sym = sym_char
+        elif sym_hex:
+            sym = bytes([int(sym_hex, 16)]).decode('cp437')
+        elif sym_dec:
+            sym = bytes([int(sym_hex)]).decode('cp437')
+        else:
+            continue  # skip if no symbol found
+
+        class_dict[macro.lower()] = {
             'symbol': sym,
-            'class1': desc1,
-            'class2': desc2
+            'class1': class1,
+            'class2': class2
         }
 
     return class_dict
@@ -36,76 +87,118 @@ def parse_base_objects(objects_path, class_dict):
     sn_to_class_key = {}
 
     content = Path(objects_path).read_text(encoding='utf-8')
-
+    content = remove_block_comments( content )
     patterns = [
     # ROD → wand (name in group 1, color in group 2, sn in group 3)
     (r'ROD\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'wand'),  # added color group index (3rd position in tuple)
+     1, 3, 2, 'wand', 'rod'),  # added color group index (3rd position in tuple)
 
     # ANOINTING → potion (name 1, color 2, sn 3)
     (r'ANOINTING\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'potion'),
+     1, 3, 2, 'anointing', 'anointing oil'),
 
-    # PROJECTILE → weapon (name 1, color 2, sn 3)
-    (r'PROJECTILE\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'weapon'),
+    # ANOINTING → potion (name 1, color 2, sn 3)
+    (r'POTION\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+     1, 3, 2, 'potion', 'elixer'),
+
+    # Projectile family (handles second param as quoted string or NoDes + multi-line params)
+    (r'PROJECTILE\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'weapon', ''),
 
     # WEAPON → weapon (name 1, color 2, sn 3)
-    (r'WEAPON\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'weapon'),
+    (r'WEAPON\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR|HI_[A-Z_]+)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'weapon', ''),
 
     # BOW → weapon (name 1, color 2, sn 3)
     (r'BOW\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'weapon'),
+     1, 3, 2, 'weapon', ''),
+
+    # ARMOR family (handles two quoted strings + multi-line params)
+    (r'ARMOR\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
+
+    # Boots family only (handles two quoted strings + multi-line params)
+    (r'BOOTS\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
+
+    # Gloves family only (handles two quoted strings + multi-line params)
+    (r'GLOVES\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
+
+    # Shield family only (handles two quoted strings + multi-line params)
+    (r'SHIELD\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
+
+    # Cloak family only (handles second param as quoted string or NoDes + multi-line params)
+    (r'CLOAK\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
+
+    # Helm family only (handles two quoted strings + multi-line params)
+    (r'HELM\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'armor', ''),
 
     # Armor family (macro in 1, name in 2, color in 3, sn in 4)
-    (r'(HELM|ARMOR|DRGN_ARMR|CLOAK|SHIELD|GLOVES|BOOTS)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     2, 4, 3, 'armor'),
+    (r'(DRGN_ARMR)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+     2, 4, 3, 'armor', ''),
 
-    # RING → ring (name 1, color 2, sn 3)
-    (r'RING\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'ring'),
+    # Ring family (handles second param as quoted string or potential NoDes + multi-line params)
+    (r'RING\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'ring', 'ring'),
 
     # AMULET → amulet (color is hardcoded HI_METAL in the macro—no variable color arg)
     # Optional color group (may be None); keep original but make color capture optional
     (r'AMULET\s*\(\s*"([^"]+)"\s*,.*?\s*(?:,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*)?,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'amulet'),  # color group 2 is now optional
+     1, 3, 2, 'amulet', 'amulet'),  # color group 2 is now optional
 
     # TOOL family (macro in 1, name in 2, color in 3, sn in 4)
     (r'(TOOL|CONTAINER|EYEWEAR|WEPTOOL)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     2, 4, 3, 'tool'),
+     2, 4, 3, 'tool', ''),
 
     # FOOD → food (name 1, color 2, sn 3)
     (r'FOOD\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'food'),
+     1, 3, 2, 'food', ''),
 
-    # SCROLL → scroll (color is hardcoded HI_PAPER in the macro—no variable)
-    (r'SCROLL\s*\(\s*"([^"]+)"\s*,.*?\s*(?:,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*)?,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'scroll'),
+    # Scroll family (second param is Bible verse appearance; no color param — hardcoded HI_PAPER)
+    (r'SCROLL\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 2, 'HI_PAPER', 'scroll', 'verse'),
 
-    # PBOOK → spbook (assume similar to SCROLL/TOOL; adjust if needed)
-    (r'PBOOK\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'spbook'),
+
+    # PBOOK family (second param is appearance string + trailing comment; color is variable)
+    (r'PBOOK\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, 'spbook', 'prophetic book'),
 
     # GEM → gem (name 1, color 2, sn 3)
     (r'GEM\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'gem'),
+     1, 3, 2, 'gem', ''),
 
     # ROCK → rock (name 1, color 2, sn 3)
     (r'ROCK\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'rock'),
+     1, 3, 2, 'rock', ''),
 
     # Direct OBJECT (nested OBJ; name 1, class skipped, color 3, sn 4)
     # This is trickier due to nesting—captures color before final sn
-    (r'OBJECT\s*\(\s*OBJ\s*\(\s*"([^"]+)"\s*,[^\)]*\)\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 4, 3, None),
+    # OBJECT family (handles inner OBJ("name", NoDes|"appearance") + multi-line params + variable color)
+    (r'OBJECT\s*\(\s*OBJ\s*\(\s*"([^"]+)"\s*,[\s\S]*?\)\s*,[\s\S]*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 3, 2, None, ''),
+
+    # Coin family (hardcoded color HI_GOLD; no color param in macro)
+    (r'COIN\s*\(\s*"([^"]+)"\s*,[\s\S]*?\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    1, 2, 'HI_GOLD', 'coin', ''),
+
     ]
 
-    for regex, name_g, sn_g, item_color_indx, class_key_fixed in patterns:
+    for regex, name_g, sn_g, item_color_indx, class_key_fixed, name_prefix in patterns:
+        if class_key_fixed == 'coin':
+            print('coin')
         for match in re.finditer(regex, content):
             name = match.group(name_g).strip().lower()
             sn = match.group(sn_g)
-            color_token = match.group(item_color_indx)
+            if name_prefix == 'verse':
+                color_token = item_color_indx
+            elif sn == 'GOLD_PIECE':
+                color_token = item_color_indx
+            else:
+                color_token = match.group(item_color_indx)
             
             if class_key_fixed is not None:
                 class_key = class_key_fixed
@@ -123,13 +216,18 @@ def parse_base_objects(objects_path, class_dict):
                 sym = '?'
                 c1 = class_key
                 c2 = ''
-
-            all_objects[name] = {
+            if name_prefix != '': 
+                reference = name_prefix + ' of ' + name
+            else:
+                reference = name
+                    
+            all_objects[reference] = {
                 'id': name,
                 'symbol': sym,
                 'class1': c1,
                 'class2': c2,
                 'item_class_str': class_key_fixed,
+                'sn': sn,
                 'is_artifact': False,
                 'color': color_token
             }
@@ -138,11 +236,34 @@ def parse_base_objects(objects_path, class_dict):
 
     return all_objects, sn_to_class_key
 
+def get_class_info(class_dict: dict, class_key: str) -> dict:
+    """
+    Look up the full class entry by matching class_key to the 'sn' field.
+    Returns the matching entry if found, otherwise a safe default.
+    Assumes class_dict values are dicts containing at least 'sn'.
+    """
+    for entry in class_dict.values():
+        if entry.get('sn') == class_key:
+            return entry
+    # Default fallback if no match
+    return {'symbol': '?', 'class1': 'unknown', 'class2': ''}
+
 def parse_artifacts(artilist_file, sn_to_class_key, class_dict):
     artifacts = {}
 
     content = Path(artilist_file).read_text(encoding='utf-8')
 
+    # Updated pattern:
+    # Group 1 → artifact name ("Belt of Truth")
+    # Group 2 → base object macro (BELT, DIVINE_COVERING, ANCIENT_SHIELD, etc.)
+    # Group 3 → color token (NO_COLOR, CLR_..., HI_...)
+    # Group 4 → unique artifact macro (BELT_OF_TRUTH, HELMET_OF_SALVATION, etc.)
+    arti_pattern = re.compile(
+        r'A\s*\(\s*"([^"]+)"\s*,\s*([A-Z_0-9_]+)\s*,[\s\S]*?'  # name + base macro + skip everything in between
+        r',\s*' + ARTI_COLOR_PATTERN + r'\s*,\s*([A-Z_0-9_]+)\s*\)',  # color + final artifact macro
+        re.DOTALL
+    )
+    '''
     arti_pattern = re.compile(
         r'A\s*\(\s*"([^"]+)"'              # artifact name → group 1
         r'.*?'                             # non-greedy skip
@@ -150,16 +271,19 @@ def parse_artifacts(artilist_file, sn_to_class_key, class_dict):
         r'\s*([A-Z_0-9_]+)\s*\)'            # bn/sn → group 3
         , re.DOTALL
     )
+    '''
 
     for match in arti_pattern.finditer(content):
         raw_name = match.group(1).strip()
-        color_token = match.group(2)
+        base_name = match.group(2)
+        color_token = match.group(3)
         sn = match.group(3)
 
         name = raw_name.lower()
 
         # Class resolution same as base objects
-        class_key = sn_to_class_key.get(sn, "unknown")
+        class_key = sn_to_class_key.get(base_name, "unknown")
+       
         class_info = class_dict.get(class_key, {'symbol': '?', 'class1': 'unknown', 'class2': ''})
 
         artifacts[name] = {
@@ -187,7 +311,7 @@ def output_js(all_objs, output_path):
             esc_sym = js_escape(o['symbol'])
             esc_c1 = js_escape(o['class1'])
             esc_c2 = js_escape(o['class2'])
-            f.write(f'    "{esc_id}": {{\n')
+            f.write(f'    "{name}": {{\n')
             f.write(f'        id: "{esc_id}",\n')
             f.write(f'        symbol: "{esc_sym}",\n')
             f.write(f'        class1: "{esc_c1}",\n')

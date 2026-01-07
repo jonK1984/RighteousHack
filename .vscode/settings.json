@@ -6,5 +6,6 @@
         "xutility": "c",
         "system_error": "c",
         "defsym.h": "c"
-    }
+    },
+    "liveServer.settings.port": 5501
 }
