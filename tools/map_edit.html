@@ -1114,12 +1114,14 @@ function hideInitPopup() {
 document.getElementById("init-ok").addEventListener("click", () => {
     // copy temp → permanent state
     initState = structuredClone(tempState);
-    generateInitLua();
+
+    updateText();
     hideInitPopup();
 });
 
 document.getElementById("init-cancel").addEventListener("click", () => {
     hideInitPopup(); // changes are discarded
+    updateText();
 });
 
 document.getElementById("init-erase").addEventListener("click", () => {
@@ -1140,7 +1142,7 @@ document.getElementById("init-erase").addEventListener("click", () => {
     };
     tempState = structuredClone(initState);
     populateInitPopup();
-    generateInitLua();
+    updateText();
 });
 
 // ------------------------------------------------------------------
@@ -1649,6 +1651,10 @@ document.querySelectorAll('.refresh').forEach(btn => {
 
 function updateText( updateLight = false) {
 
+  // Update Initialization Code Text
+  const initText = generateInitLua()
+  document.getElementById('init-textarea').value = initText;
+
   // Update Terrain Text
   const terrainText = generateTerrainLUA();
   document.getElementById('terrain-textarea').value = terrainText;
@@ -1671,6 +1677,9 @@ function updateText( updateLight = false) {
 
   const featuresText = generateFeaturesLua();
   document.getElementById('features-textarea').value = featuresText;
+
+  
+
   /*let lightingLines = layers.lighting.map(l => 
     `des.region(selection.area(${pad(l.area.x1)},${pad(l.area.y1)},${pad(l.area.x2)},${pad(l.area.y2)}), "${l.type}")`
   ).join('\n');
