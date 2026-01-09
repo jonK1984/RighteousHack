@@ -1,3 +1,28 @@
+const allLVLFlags = [
+    { flag: "noteleport",   desc: "Prevents teleporting" },
+    { flag: "hardfloor",    desc: "Prevents digging down" },
+    { flag: "nommap",       desc: "Prevents magic mapping" },
+    { flag: "shortsighted", desc: "Prevents monsters from seeing the hero from far away" },
+    { flag: "arboreal",     desc: "Notionally an outdoor map; replaces solid stone with trees" },
+    { flag: "mazelevel",    desc: "" },
+    { flag: "shroud",       desc: "Unseen locations are not remembered (blank instead of dark glyphs)" },
+    { flag: "graveyard",    desc: "Treats the level as a graveyard (sounds, undead corpse chance)" },
+    { flag: "icedpools",    desc: "Ice becomes frozen pools instead of moats" },
+    { flag: "corrmaze",     desc: "" },
+    { flag: "premapped",    desc: "Map, traps and boulders revealed on entrance" },
+    { flag: "sokoban",      desc: "Level has special Sokoban rules" },
+    { flag: "solidify",     desc: "Areas outside the map are undiggable/unphaseable" },
+    { flag: "inaccessibles",desc: "Connect generated inaccessible areas to the accessible part" },
+    { flag: "noflip",       desc: "Prevent flipping the level" },
+    { flag: "noflipx",      desc: "Prevent horizontal flipping" },
+    { flag: "noflipy",      desc: "Prevent vertical flipping" },
+    { flag: "nomongen",     desc: "Prevents random monster generation" },
+    { flag: "nodeathdrops", desc: "Monsters do not drop corpses or random death drops" },
+    { flag: "fumaroles",    desc: "Lava emits poison gas clouds" },
+    { flag: "stormy",       desc: "Clouds create random lightning bolts" }
+    // hot / cold / temperate are handled separately with radios
+];
+
 const allFeatures = [
     {
         name: "Eraser",

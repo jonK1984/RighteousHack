@@ -65,7 +65,13 @@
     background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
   }
   .popup {
-    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 700px;
+    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 700px; max-height: 750px; 
+  }
+
+  #init-popup-container {
+      max-height: 650px;
+      overflow-y: auto;
+      overflow-x: hidden;
   }
   .popup input, .popup textarea {  margin: 10px 0; background: #000; color: #fff; }
   .popup input[type="text"] {
