@@ -9,6 +9,9 @@
 </head>
 <body>
 <div id="menubar">
+  <div class="toolbar-row" id="load-tools-row">
+    <button id="load-lua-btn">Load Lua Map</button>
+  </div>
   <div class="toolbar-row" id="layer-brush-row">
     <button data-brush="terrain">Terrain</button>
     <button data-brush="light">Light</button>
@@ -243,6 +246,7 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js"></script>
 <script src="object_def.js"></script>
 <script src="monster_def.js"></script>
 <script src="terrain_def.js"></script>
@@ -2289,9 +2293,44 @@ document.getElementById('monster-eraser').addEventListener('click', () => {
     hideMonsterPopup();
 });
 
+// Add this code to the main <script> block in map_edit.html (anywhere after the existing event listeners, before the closing
+
+document.getElementById('load-lua-btn').addEventListener('click', () => {
+    // Create a hidden file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.lua';               // Restrict to .lua files
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const luaText = ev.target.result;
+            if (typeof loadLUAMap === 'function') {
+                loadLUAMap(luaText);            // Parse and load into the editor
+            } else {
+                alert('loadLUAMap function not found – make sure loadLUAMap.js is included.');
+            }
+        };
+        reader.onerror = () => {
+            alert('Error reading file: ' + reader.error);
+        };
+        reader.readAsText(file);
+    };
+
+    // Trigger the file picker
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);   // Clean up
+});
+
 createGrid();
 renderLayers();  // initial render
 updateText( true);
 </script>
+<script src="loadLUAMap.js"></script>
 </body>
 </html>
