@@ -19,7 +19,8 @@
     <button data-brush="monster">Monster</button>
     <button data-brush="object">Object</button>
     <button data-brush="features">Features</button> 
-    <button data-brush="init">Map Init</button>  
+    <button data-brush="init">Map Init</button>
+    <button data-brush="eraser">Eraser</button>  
   </div>
   <div class="toolbar-row" id="char-row"></div>
   <div class="toolbar-row" id="shape-row"></div>
@@ -262,6 +263,7 @@ let currentMonsterMode = 'id';           // 'id' or 'class'
 let currentMonsterBrush = null;
 let currentObjectBrush = null;
 let currentFeatureBrush = null;
+let currentLightingBrush = null;   // will be 'light' or 'dark'
 
 const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
 const COLS = 76;   // confirm from grid-template-columns: repeat(76, ...)
@@ -283,9 +285,14 @@ let layers = {
   features:  []
 };
 layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
-layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
+//layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
 layers.monster =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
 layers.object =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
+
+const LIGHTING_OVERLAY = {
+    light: 'rgba(255, 245, 200, 0.10)',   // soft yellow tint for lit areas
+    dark:  'rgba(0, 0, 0, 0.55)'          // dark overlay for unlit areas
+};
 
 let visibleLayers = {
   terrain: true,
@@ -688,7 +695,7 @@ function selectFeature(feat) {
         updateShapeButtons('point');
     } else {
         // Normal feature – show options as before
-        renderFeatureOptions(feat);
+        //renderFeatureOptions(feat);
         updateShapeButtons(feat.stroke);
     }
 
@@ -910,6 +917,19 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
             b.classList.remove('selected')
         );
 
+        if (brush === 'light' || brush === 'dark') {
+            // deselect all other brushes in this row
+            
+            btn.classList.add('selected');
+            currentShape = 'rectangle';
+            currentBrush = 'lighting';               // main brush type
+            currentLightingBrush = brush;  // 'light' or 'dark'
+
+            // Visually select the rectangle button (adjust selector as needed)
+            document.querySelectorAll('#shape-row button').forEach(b => b.classList.remove('selected'));
+            document.querySelector('#shape-row button[data-shape="rectangle"]').classList.add('selected');
+            return;
+        }
         // ----- Special modal brushes (monster & object) -----
         if (brush === 'monster') {
             hideInitPopup();
@@ -944,8 +964,20 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
             hideFeaturePopup();
             showInitPopup();
             return;
-        } 
+        }
+        
+        if (brush === 'eraser') {
+            // Deselect all other brushes in this row
+            btn.classList.add('selected');
+            document.querySelectorAll('#shape-row button').forEach(b => b.classList.remove('selected'));
+            document.querySelector('#shape-row button[data-shape="point"]').classList.add('selected');
 
+            currentBrush = 'eraser';           // your existing variable for active brush
+            currentShape = 'point';
+            // No need to set a sub-brush; eraser is simple
+            // Optionally force point shape (single cell) if you don't want rectangle erase:
+            // currentShape = 'point';
+        }
         // ----- All other brushes (terrain, light, dark, etc.) -----
         currentBrush = brush;
         currentMonsterBrush = null;
@@ -1553,87 +1585,20 @@ function generateMonsterLUA() {
 
 // === generateLightLUA() FUNCTION ===
 function generateLightLUA() {
-    if (!layers.lighting || layers.lighting.length === 0) return '';
+    if (layers.lighting.length === 0) return '';
 
-    const rows = layers.lighting.length;
-    const cols = layers.lighting[0].length;
+    const lines = ['-- Lighting regions'];
+    layers.lighting.forEach(rect => {
+        const litStr = rect.lit ? 'lit' : 'unlit';
+        // Use zero-padded coordinates to match your example style
+        const x1 = rect.x1.toString().padStart(2, '0');
+        const y1 = rect.y1.toString().padStart(2, '0');
+        const x2 = rect.x2.toString().padStart(2, '0');
+        const y2 = rect.y2.toString().padStart(2, '0');
+        lines.push(`des.region(selection.area(${x1},${y1},${x2},${y2}), "${litStr}")`);
+    });
 
-    const pad = n => String(n).padStart(2, '0');
-
-    // Helper: cover a binary grid (true = needs this tag) with maximal rectangles
-    function getCoveringRects(tagGrid) {  // tagGrid is boolean[][]
-        const rects = [];
-        const remaining = tagGrid.map(row => row.slice());  // clone
-
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; ) {
-                if (!remaining[y][x]) {
-                    x++;
-                    continue;
-                }
-
-                // extend right as far as possible on this row
-                let x2 = x;
-                while (x2 + 1 < cols && remaining[y][x2 + 1]) x2++;
-
-                // extend down as far as possible while keeping the full width
-                let y2 = y;
-                while (y2 + 1 < rows) {
-                    let good = true;
-                    for (let xx = x; xx <= x2; xx++) {
-                        if (!remaining[y2 + 1][xx]) {
-                            good = false;
-                            break;
-                        }
-                    }
-                    if (good) y2++;
-                    else break;
-                }
-
-                // record the rectangle
-                rects.push({ x1: x, y1: y, x2, y2 });
-
-                // mark all cells in this rectangle as covered
-                for (let yy = y; yy <= y2; yy++) {
-                    for (let xx = x; xx <= x2; xx++) {
-                        remaining[yy][xx] = false;
-                    }
-                }
-
-                // skip past this rectangle
-                x = x2 + 1;
-            }
-        }
-        return rects;
-    }
-
-    // Rectangles needed if we treat "lit" cells as the ones to explicitly cover
-    const litRects = getCoveringRects(layers.lighting);  // assumes true = lit
-
-    // Rectangles needed if we treat "unlit" cells as the ones to explicitly cover
-    const unlitGrid = layers.lighting.map(row => row.map(cell => !cell));
-    const unlitRects = getCoveringRects(unlitGrid);
-
-    // Option 1: whole map lit, override with unlit rectangles
-    const optionLitBg = [
-        `des.region(selection.area(${pad(0)},${pad(0)},${pad(cols-1)},${pad(rows-1)}), "lit")`
-    ];
-    for (const r of unlitRects) {
-        optionLitBg.push(`des.region(selection.area(${pad(r.x1)},${pad(r.y1)},${pad(r.x2)},${pad(r.y2)}), "unlit")`);
-    }
-
-    // Option 2: whole map unlit, override with lit rectangles
-    const optionUnlitBg = [
-        `des.region(selection.area(${pad(0)},${pad(0)},${pad(cols-1)},${pad(rows-1)}), "unlit")`
-    ];
-    for (const r of litRects) {
-        optionUnlitBg.push(`des.region(selection.area(${pad(r.x1)},${pad(r.y1)},${pad(r.x2)},${pad(r.y2)}), "lit")`);
-    }
-
-    // Choose the option with fewer statements
-    const chosen = optionLitBg.length <= optionUnlitBg.length ? optionLitBg : optionUnlitBg;
-
-    return chosen.join('\n');
+    return lines.join('\n');
 }
 
 // === Refresh button handler ===
@@ -1676,11 +1641,10 @@ function updateText( updateLight = false) {
   
   // Lighting
   // Lighting update is CPU intensive so don't do it by default
-  if( updateLight )
-  {
+  
     const lightingText = generateLightLUA();
     document.getElementById('lighting-textarea').value = lightingText;
-  }
+  
 
   const featuresText = generateFeaturesLua();
   document.getElementById('features-textarea').value = featuresText;
@@ -1695,6 +1659,50 @@ function updateText( updateLight = false) {
   
 }
 
+// 3. Create the erase function
+// Add this function near your other utility functions (e.g., next to getLightingAtXY / getLightingIdxAtXY)
+
+function eraseAt(col, row) {
+    let changed = false;
+    const x = col;
+    const y = row;
+    // --- Erase point-based layers (monsters, objects, features) ---
+    // Monsters (assumed to have .x and .y)
+
+    if( layers.monster[y][x]) layers.monster[y][x] = null;
+    if( layers.object[y][x]) layers.object[y][x] = null;
+    //if (layers.monsters.length !== oldMonsterCount) changed = true;
+
+
+    // Features (assumed to have .x and .y)
+    //const oldFeatCount = layers.features.length;
+    //layers.features = layers.features.filter(f => !(f.x === col && f.y === row));
+    //if (layers.features.length !== oldFeatCount) changed = true;
+
+    const featIndices = getFeaturesIdxAtXY( x, y);
+    if (featIndices.length > 0) {
+        // Remove in reverse order to avoid index shifting
+        featIndices.sort((a, b) => b - a);  // descending
+        featIndices.forEach(idx => layers.features.splice(idx, 1));
+        changed = true;
+    }
+
+    // --- Erase lighting rectangles that overlap this cell ---
+    const lightIndices = getLightingIdxAtXY(x, y);
+    if (lightIndices.length > 0) {
+        // Remove in reverse order to avoid index shifting
+        lightIndices.sort((a, b) => b - a);  // descending
+        lightIndices.forEach(idx => layers.lighting.splice(idx, 1));
+        changed = true;
+    }
+
+    // Refresh if anything was erased
+    if (changed) {
+        renderLayers();
+        updateText(true);   // or whatever function regenerates the Lua preview
+    }
+}
+
 function pad(n) { return n < 10 ? '0'+n : n; } // for 2-digit coords
 
 function paint(x, y) {
@@ -1704,16 +1712,14 @@ function paint(x, y) {
     if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
     layers.terrain[y][x] = currentChar;
 
-  } else if (currentBrush === 'light' || currentBrush === 'dark') {
+  } else if (currentBrush === 'lighting' && currentShape === 'rectangle') {
     // Simple rectangle region for lit/unlit
     if (!dragStart) return;
     const x1 = Math.min(dragStart.x, x), x2 = Math.max(dragStart.x, x);
     const y1 = Math.min(dragStart.y, y), y2 = Math.max(dragStart.y, y);
-    const type = currentBrush === 'light' ? 'lit' : 'unlit';
+    const type = currentLightingBrush === 'light' ? 'lit' : 'unlit';
 
-    for (let yy = y1; yy <= y2; yy++) {
-      layers.lighting[yy].fill(type, x1, x2 + 1);
-    }
+    
 
     //layers.lighting.push({type, area: {x1,y1,x2,y2}});
   } else if (currentBrush === 'monster') {
@@ -1748,6 +1754,7 @@ function paint(x, y) {
             }
         }
       }
+  
       else {
         const feat = {
             def: currentFeatureBrush.def.name,
@@ -1765,6 +1772,11 @@ function paint(x, y) {
         layers.features.push(feat);
     }
   }
+  else if (currentBrush === 'eraser') {
+    eraseAt(x, y);
+    // If you have drag-painting (mousemove while mouse down), this will erase cell-by-cell as you drag
+    return; // prevent any other painting action
+    }
 
   updateText();
 }
@@ -1828,12 +1840,52 @@ function paintFeatureRect (xmin, xmax, ymin, ymax)
   }
 }
 
+function paintLightingRect (xmin, xmax, ymin, ymax)
+{ 
+  //Saftey Check
+  if( currentBrush == 'lighting' && currentShape === 'rectangle' )
+  {
+
+    const x1 = xmin, x2 = xmax;
+    const y1 =ymin, y2 = ymax;
+
+    if (x1 === x2 && y1 === y2) return; // ignore zero-size
+
+    // remove any existing lighting object at this exact cell (max 1 per cell)
+    /*layers.lighting = layers.lighting.filter(
+        obj => !(obj.x === col && obj.y === row)
+    );*/
+
+    // add the new lighting object
+    const isLit = currentLightingBrush === 'light';
+
+    layers.lighting.push({
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        lit: isLit,                                 // boolean for internal use
+        overlayColor: isLit ? LIGHTING_OVERLAY.light : LIGHTING_OVERLAY.dark
+    });
+  }
+}
+
 function drawRectangle(xmin, xmax, ymin, ymax) {
 
   //Special case if a feature is being drawn with a rectangle
   if( currentBrush == 'features' && currentFeatureBrush.def.stroke == 'rectangle' )
   {
     paintFeatureRect(xmin, xmax, ymin, ymax);
+    return;
+  }
+
+  if( currentBrush == 'lighting' && currentShape === 'rectangle' )
+  {
+    paintLightingRect(xmin, xmax, ymin, ymax);
+    return;
+  }
+  if( currentBrush == 'lighting' && currentShape != 'rectangle' )
+  {
     return;
   }
 
@@ -1930,6 +1982,73 @@ function fillArea(startX, startY) {
   }
 }
 
+/**
+ * Returns the lighting state of the cell at (x, y) as a string.
+ * Checks rectangles in reverse order (most recently painted overrides earlier ones).
+ * Possible returns:
+ *   "lit"      - covered by a lit rectangle
+ *   "unlit"    - covered by an unlit rectangle
+ *   "not set"  - no lighting rectangle covers this cell
+ */
+function getLightingAtXY(x, y) {
+    // Iterate backwards so the last-painted rectangle wins
+    for (let i = layers.lighting.length - 1; i >= 0; i--) {
+        const rect = layers.lighting[i];
+        if (x >= rect.x1 && x <= rect.x2 &&
+            y >= rect.y1 && y <= rect.y2) {
+            return rect.lit ? "lit" : "unlit";
+        }
+    }
+    // No rectangle covers this cell
+    return "not set";
+}
+
+/**
+ * Returns an array of indices (in stack order, 0 = bottom) from layers.lighting
+ * whose rectangles cover the cell at (x, y).
+ * Empty array if no rectangles overlap the cell.
+ */
+function getLightingIdxAtXY(x, y) {
+    const indices = [];
+    for (let i = 0; i < layers.lighting.length; i++) {
+        const rect = layers.lighting[i];
+        if (x >= rect.x1 && x <= rect.x2 &&
+            y >= rect.y1 && y <= rect.y2) {
+            indices.push(i);
+        }
+    }
+    return indices;
+}
+
+/**
+ * Returns an array of indices (in stack order, 0 = bottom) from layers.features
+ * whose objects occupy the exact cell at (x, y).
+ * Empty array if no features are at the cell.
+ *
+ * Assumes each feature object has .x and .y properties (single-cell placement,
+ * as is standard for traps, portals, etc. in the editor).
+ */
+function getFeaturesIdxAtXY(x, y) {
+    const indices = [];
+    for (let i = 0; i < layers.features.length; i++) {
+        const feat = layers.features[i];
+        if (feat.area) {
+            const [x1, y1, x2, y2] = feat.area.split(',').map(Number);
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                indices.push(i)
+            }
+        }
+        else if (feat.x === x && feat.y === y) {
+            indices.push(i);
+        }
+    }
+    return indices;
+}
+
 function getFeaturesAtXY(x, y) {
     const matchingFeatures = [];
 
@@ -1981,10 +2100,8 @@ function updateCursorInfo(x, y) {
 
     // Lighting (assuming layers.lighting[y][x] stores 'lit', 'dark', or null/undefined)
     // Adjust if your lighting layer uses different values (e.g., true/false or 'light'/'dark')
-    const lightVal = layers.lighting?.[y]?.[x];
-    const lighting = (lightVal === 'lit' || lightVal === true) ? 'lit' :
-                     (lightVal === 'dark' || lightVal === false) ? 'unlit' :
-                     'none';  // fallback if no lighting layer
+    const lighting = getLightingAtXY(x, y);
+
     lines.push(`Lighting: ${lighting}`);
 
     featList = getFeaturesAtXY(x, y);
@@ -2222,16 +2339,37 @@ function renderLayers() {
       }
 
       // ----- Lighting layer (background only) -----
-      if (visibleLayers.lighting) {
+      /*if (visibleLayers.lighting) {
         displayLight = layers.lighting[y][x] === 'lit' ? LIGHT_BG : DARK_BG;
-      }
+      }*/
 
       // ----- Final render to the cell -----
       cell.textContent = displayChar;
       cell.style.color = displayColor;         // foreground (uses color_def.js)
-      cell.style.backgroundColor = displayLight;
+      //cell.style.backgroundColor = displayLight;
     }
   }
+
+    // Clear all previous lighting overlays first
+    Array.from(grid.children).forEach(cell => {
+        cell.style.backgroundColor = '';
+    });
+
+  if (visibleLayers.lighting) {
+    // Apply rectangles in the order they were painted (later overrides earlier)
+    layers.lighting.forEach(rect => {
+        for (let y = rect.y1; y <= rect.y2; y++) {
+            for (let x = rect.x1; x <= rect.x2; x++) {
+                const index = y * COLS + x;
+                //const cell = grid.children[index];
+                const cell = mapCells[y][x];
+                if (cell) {
+                    cell.style.backgroundColor = rect.overlayColor;
+                }
+            }
+        }
+    });
+}
 
     
 

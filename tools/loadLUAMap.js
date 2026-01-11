@@ -148,8 +148,8 @@ function loadLUAMap(luaText) {
 
     // Initialize layers with default 'stone' terrain
     layers.terrain = Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
-    layers.lighting = Array.from({length: ROWS}, () => Array(COLS).fill(''));
     layers.monster = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+    layers.lighting = [];
     layers.features = [];
 
     initState = {
@@ -202,11 +202,11 @@ function loadLUAMap(luaText) {
                                 for (let x = 0; x < COLS; x++)
                                     layers.terrain[y][x] = symToTerrain[fgKey];
                         }
-                        if (wholeLit) {
+                        /*if (wholeLit) {
                             for (let y = 0; y < ROWS; y++)
                                 for (let x = 0; x < COLS; x++)
                                     layers.lighting[y][x] = 'lit';
-                        }
+                        }*/
                     }
                     break;
 
@@ -241,42 +241,28 @@ function loadLUAMap(luaText) {
                     break;
 
                 case 'region':
-                    let litVal = '';
-                    let rx1, ry1, rx2, ry2;
+                    let rect = null;
+                    let litStr = null;
 
-                    // lit/unlit flag
-                    if (args[args.length - 1]?.type === 'StringLiteral') {
-                        const last = dequote(args[args.length - 1].raw);
-                        if (last === 'lit') litVal = 'lit';
-                        if (last === 'unlit') litVal = 'unlit';
-                    }
+                    args.forEach(arg => {
+                        if (arg.type === 'CallExpression' && arg.base.base.name === 'selection' && arg.base.identifier.name === 'area') {
+                            const vals = arg.arguments.map(a => a.value);
+                            rect = {x1: vals[0], y1: vals[1], x2: vals[2], y2: vals[3]};
+                        }
+                        if (arg.type === 'StringLiteral') {
+                            litStr = dequote(arg.raw);  // "lit" or "unlit"
+                        }
+                    });
 
-                    // Extract coordinates
-                    if (args[0]?.type === 'CallExpression' && args[0].base?.base?.name === 'selection' && args[0].base?.identifier?.name === 'area') {
-                        const a = args[0].arguments;
-                        if (a.length === 4) {
-                            rx1 = a[0].value; ry1 = a[1].value;
-                            rx2 = a[2].value; ry2 = a[3].value;
-                        }
-                    } else if (args[0]?.type === 'TableConstructorExpression') {
-                        for (const field of args[0].fields) {
-                            if (field.key.name === 'region' && field.value.type === 'TableConstructorExpression') {
-                                const r = field.value.fields;
-                                if (r.length === 4) {
-                                    rx1 = r[0].value.value; ry1 = r[1].value.value;
-                                    rx2 = r[2].value.value; ry2 = r[3].value.value;
-                                }
-                            }
-                            if (field.key.name === 'lit' && field.value.value === 1) litVal = 'lit';
-                        }
-                    }
-
-                    if (litVal && typeof rx1 === 'number') {
-                        for (let yy = ry1; yy <= ry2 && yy < ROWS; yy++) {
-                            for (let xx = rx1; xx <= rx2 && xx < COLS; xx++) {
-                                layers.lighting[yy][xx] = litVal;
-                            }
-                        }
+                    if (rect && litStr) {
+                        const isLit = litStr === 'lit';
+                        const overlay = isLit ? LIGHTING_OVERLAY.light : LIGHTING_OVERLAY.dark;
+                        layers.lighting.push({
+                            x1: rect.x1, y1: rect.y1, x2: rect.x2, y2: rect.y2,
+                            lit: isLit,
+                            overlayColor: overlay
+                        });
+                        
                     }
                     break;
 
@@ -360,12 +346,12 @@ function loadLUAMap(luaText) {
                 case 'feature':
                     if (args.length === 3 && args[0].type === 'StringLiteral' &&
                         args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
-                        const type = args[0].value;
+                        const type = dequote(args[0].raw);
                         const x = args[1].value;
                         const y = args[2].value;
-
+                        if( !type || x == null || y == null) return;
                         // Find matching feature from allFeatures
-                        const feat = allFeatures.find(f => f.type.toLowerCase() === type.toLowerCase() || f.name.toLowerCase() === type.toLowerCase());
+                        const feat = allFeatures.find(f => f.type?.toLowerCase() === type.toLowerCase() || f.name.toLowerCase() === type.toLowerCase());
                         
                         let luaBrush = {...getFeatureBrushByName(feat.name)};
                         luaBrush.x = x;

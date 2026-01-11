@@ -161,6 +161,27 @@ const allFeatures = [
         lua: (f) => `des.stair("up", ${f.x},${f.y})`
     },
     {
+        name: "Tree",
+        stroke: "point",
+        symbol: "#",
+        color: "CLR_GREEN",
+        lua: (f) => `des.feature("tree", ${f.x},${f.y})`
+    },
+    {
+        name: "Fountain",
+        stroke: "point",
+        symbol: "{",
+        color: "CLR_BRIGHT_BLUE",
+        lua: (f) => `des.feature("fountain", ${f.x},${f.y})`
+    },
+    {
+        name: "Sink",
+        stroke: "point",
+        symbol: "{",
+        color: "CLR_WHITE",
+        lua: (f) => `des.feature("sink", ${f.x},${f.y})`
+    },
+    {
         name: "Teleport Region",
         stroke: "rectangle",
         dither: "diagonal",          // distinct pattern
