@@ -1131,7 +1131,7 @@ document.getElementById("init-cancel").addEventListener("click", () => {
 document.getElementById("init-erase").addEventListener("click", () => {
     // reset everything to defaults
     initState = {
-        flags: new Set(),
+        flags: {},
         style: "",
         fg: "",
         bg: "",
@@ -1395,14 +1395,7 @@ function prefillPopupFromBrush(popupSelector, brush) {
 function generateInitLua() {
     const lines = [];
 
-    // ----- level_flags -----
-    const flags = [...initState.flags];
-    if (initState.temp === "hot") flags.push("hot");
-    if (initState.temp === "cold") flags.push("cold");
-
-    if (flags.length > 0) {
-        lines.push(`des.level_flags("${flags.join('", "')}");`);
-    }
+    
 
     // ----- level_init -----
     const opts = [];
@@ -1421,6 +1414,16 @@ function generateInitLua() {
     if (opts.length > 0) {
         lines.push(`des.level_init({ ${opts.join(", ")} });`);
     }
+
+    // ----- level_flags -----
+    const flags = {...initState.flags};
+    if (initState.temp === "hot") flags.push("hot");
+    if (initState.temp === "cold") flags.push("cold");
+    const flagStr = Object.keys(flags)
+        .map(key => `"${key}"`)           // wrap each key in quotes
+        .join(', ');                      // join with comma + space
+
+    lines.push(`des.level_flags(${flagStr});`);
 
     return lines.join("\n");
 }
@@ -1478,7 +1481,7 @@ function generateObjectLUA() {
                 }
             }
 
-            let line = `des.object({ id = "${obj.id}", x = ${x + 1}, y = ${y + 1}`;
+            let line = `des.object({ id = "${obj.id}", x = ${x}, y = ${y}`;
             if (props.length) line += ', ' + props.join(', ');
             line += ' })\n';
             lua += line;
@@ -1517,7 +1520,7 @@ function generateMonsterLUA() {
                 // Add more types here if needed (e.g. arrays for inventory later)
             }
 
-            xyText = `x = ${x + 1}, y = ${y + 1}`
+            xyText = `x = ${x}, y = ${y}`
             let classOrIDText = '';
             let nameText = '';
             let invText = '';
@@ -2158,7 +2161,8 @@ function renderLayers() {
                       }
                   }
               }
-          } else { // point symbol
+          } else if (f.y && f.x)
+          { // point symbol
               //const cell = document.querySelector(`.grid-cell[data-x="${f.x}"][data-y="${f.y}"]`);
               const cell = mapCells[f.y][f.x];
               if (cell) {

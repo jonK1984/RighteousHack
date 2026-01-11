@@ -23,6 +23,14 @@ const allLVLFlags = [
     // hot / cold / temperate are handled separately with radios
 ];
 
+function getFeatureBrushByName(name) {
+    return allFeatures.find(feature => feature.name === name);
+}
+
+function getTrapTypeByName(name) {
+    return trapTypes.find(trap => trap.name === name);
+}
+
 const allFeatures = [
     {
         name: "Eraser",
@@ -49,7 +57,7 @@ const allFeatures = [
         options: {
             state: ["secret", "closed", "locked", "open"]
         },
-        lua: (f) => `des.door({ coord = { ${f.x},${f.y} }, state = "${f.state}" });`
+        lua: (f) => `des.door({ coord = { ${f.x},${f.y} }, state = "${f.options.state}" });`
     },
     {
         name: "Drawbridge",
@@ -174,7 +182,15 @@ const allFeatures = [
         name: "Trap",
         stroke: "point",
         trapList: true,              // flag for special handling
-        lua: (f) => `des.trap("${f.trapType}",${f.x},${f.y})`
+        lua: (f) => `des.trap(${
+            [
+            f.trapType ? `"${f.trapType}"` : '',
+            f.x !== undefined && f.y !== undefined ? `${f.x},${f.y}` : ''
+            ]
+            .filter(Boolean)
+            .join(', ')
+        })`
+        
     }
 ];
 

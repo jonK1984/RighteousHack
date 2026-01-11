@@ -29,7 +29,7 @@ if (typeof allTerrains !== 'undefined') {
 }
 
 // Safety overrides for the most common symbols (in case allTerrains is incomplete)
-Object.assign(symToTerrain, {
+/*Object.assign(symToTerrain, {
     ' ': 'stone',
     '.': 'room',
     '#': 'corr',
@@ -43,7 +43,7 @@ Object.assign(symToTerrain, {
     '^': 'tree',     // arboreal levels use ^ for trees
     '_': 'altar',
     '`': 'grave'
-});
+});*/
 
 function buildLookups() {
     // Monsters
@@ -150,7 +150,7 @@ function loadLUAMap(luaText) {
     layers.terrain = Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
     layers.lighting = Array.from({length: ROWS}, () => Array(COLS).fill(''));
     layers.monster = Array.from({length: ROWS}, () => Array(COLS).fill(null));
-    layers.features = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+    layers.features = [];
 
     initState = {
         style: "",
@@ -182,23 +182,25 @@ function loadLUAMap(luaText) {
                         const table = args[0];
                         let solidfill = false;
                         let fgChar = ' ';
+                        let bgChar = ' ';
                         let wholeLit = false;
 
                         for (const field of table.fields) {
                             const key = field.key.name || field.key.value;
                             const val = field.value;
-                            const value = dequote( val.raw );
+                            const value = val.value ? val.value : dequote( val.raw );
+                            initState[key] = value
                             if (key === 'style' && value === 'solidfill') solidfill = true;
                             if (key === 'fg' && val.type === 'StringLiteral') fgChar = value;
-                            if (key === 'lit' && int(value) === 1) wholeLit = true;
+                            if (key === 'bg' && val.type === 'StringLiteral') bgChar = value;
+                            if (key === 'lit' && val.value === 1) wholeLit = true;
                         }
 
                         if (solidfill) {
-                            const fgKey = symToTerrain[fgChar] || 'stone';
-                            initState.fg = fgKey;
+                            const fgKey = initState['fg'] || 'stone';
                             for (let y = 0; y < ROWS; y++)
                                 for (let x = 0; x < COLS; x++)
-                                    layers.terrain[y][x] = fgKey;
+                                    layers.terrain[y][x] = symToTerrain[fgKey];
                         }
                         if (wholeLit) {
                             for (let y = 0; y < ROWS; y++)
@@ -209,23 +211,26 @@ function loadLUAMap(luaText) {
                     break;
 
                 case 'level_flags':
-                    if (args[0]?.type === 'StringLiteral') {
-                        initState.flags = dequote(args[0].raw)
-                            .split(',')
-                            .map(s => s.trim())
-                            .filter(Boolean);
+                    args.forEach( arg => {
+                        if (arg?.type === 'StringLiteral') {
+                            key = dequote(arg.raw);
+                            initState.flags[key] = true;
                     }
+
+                    });
+                    
                     break;
 
                 case 'map':
                     if (args[0]?.type === 'StringLiteral' && args[0].raw.startsWith('[[')) {
-                        const mapContent = args[0].value; // Clean content without [[ ]]
+                        const mapContent = dequote(args[0].raw); // Clean content without [[ ]]
                         const lines = mapContent.split(/\r?\n/);
 
                         let y = 0;
                         for (let line of lines) {
+                            if( line == '[[' || line == ']]') continue;
                             if (y >= ROWS) break;
-                            line = line.replace(/^\|?/, ''); // Optional leading |
+                            //line = line.replace(/^\|?/, ''); // Optional leading |
                             for (let x = 0; x < COLS; x++) {
                                 const ch = x < line.length ? line[x] : ' ';
                                 layers.terrain[y][x] = symToTerrain[ch] || 'stone';
@@ -241,13 +246,13 @@ function loadLUAMap(luaText) {
 
                     // lit/unlit flag
                     if (args[args.length - 1]?.type === 'StringLiteral') {
-                        const last = args[args.length - 1].value;
+                        const last = dequote(args[args.length - 1].raw);
                         if (last === 'lit') litVal = 'lit';
                         if (last === 'unlit') litVal = 'unlit';
                     }
 
                     // Extract coordinates
-                    if (args[0]?.type === 'CallExpression' && args[0].base?.name === 'selection' && args[0].indexer?.value === 'area') {
+                    if (args[0]?.type === 'CallExpression' && args[0].base?.base?.name === 'selection' && args[0].base?.identifier?.name === 'area') {
                         const a = args[0].arguments;
                         if (a.length === 4) {
                             rx1 = a[0].value; ry1 = a[1].value;
@@ -358,89 +363,183 @@ function loadLUAMap(luaText) {
                         const type = args[0].value;
                         const x = args[1].value;
                         const y = args[2].value;
-                        const sym = getFeatureSym(type);
-                        const key = symToTerrain[sym] || 'room'; // Assume placed on floor
-                        if (y < ROWS && x < COLS) layers.terrain[y][x] = key;
+
+                        // Find matching feature from allFeatures
+                        const feat = allFeatures.find(f => f.type.toLowerCase() === type.toLowerCase() || f.name.toLowerCase() === type.toLowerCase());
+                        
+                        let luaBrush = {...getFeatureBrushByName(feat.name)};
+                        luaBrush.x = x;
+                        luaBrush.y = y;
+                        if (feat && y < ROWS && x < COLS) {
+                            layers.features.push(luaBrush);
+                        }
                     }
                     break;
 
                 case 'stair':
                     if (args.length === 3 && args[0].type === 'StringLiteral' &&
                         args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
-                        const dir = args[0].value;
+                        const dir = dequote(args[0].raw);
                         const x = args[1].value;
                         const y = args[2].value;
+
+                        const name = dir === 'up' ? 'Stairs Up' : 'Stairs Down';
                         const sym = dir === 'up' ? '<' : '>';
-                        const key = symToTerrain[sym] || 'room';
-                        if (y < ROWS && x < COLS) layers.terrain[y][x] = key;
+                        const color = 'CLR_GRAY';  // Default from def
+                        let luaBrush = {...getFeatureBrushByName(name)};
+                        luaBrush.x = x;
+                        luaBrush.y = y;
+                        if (y < ROWS && x < COLS) {
+                            layers.features.push(luaBrush);
+                        }
                     }
                     break;
 
                 case 'altar':
                     if (args[0]?.type === 'TableConstructorExpression') {
-                        let ax, ay;
+                        let ax, ay, align = 'noalign';  // Default alignment
+
                         for (const f of args[0].fields) {
                             if (f.key.name === 'x') ax = f.value.value;
                             if (f.key.name === 'y') ay = f.value.value;
+                            if (f.key.name === 'align') align = f.value.value;
                         }
-                        if (typeof ax === 'number' && typeof ay === 'number') {
-                            const key = symToTerrain['_'] || 'altar';
-                            if (ay < ROWS && ax < COLS) layers.terrain[ay][ax] = key;
+
+                        if (typeof ax === 'number' && typeof ay === 'number' && ay < ROWS && ax < COLS) {
+                            layers.features.push({
+                                def: 'Altar',
+                                x: ax,
+                                y: ay,
+                                area: null,
+                                w: null,
+                                h: null,
+                                symbol: '_',
+                                color: 'CLR_GRAY'  // Default
+                            });
                         }
                     }
                     break;
 
                 case 'door':
-                    if (args[0]?.type === 'TableConstructorExpression') {
-                        let dx, dy;
-                        for (const f of args[0].fields) {
-                            if (f.key.name === 'x') dx = f.value.value;
-                            if (f.key.name === 'y') dy = f.value.value;
-                        }
-                        if (typeof dx === 'number' && typeof dy === 'number') {
-                            const key = symToTerrain['+'] || 'door';
-                            if (dy < ROWS && dx < COLS) layers.terrain[dy][dx] = key;
-                        }
+                    let dx, dy, state = 'closed';  // Default state
+                    if (args[0]?.type === 'StringLiteral' &&  args[1]?.type === 'NumericLiteral' &&  args[2]?.type === 'NumericLiteral') {
+                       
+                        if ( args[0]?.type === 'StringLiteral') state = dequote(args[0].raw);
+                        if ( args[1]?.type === 'NumericLiteral') dx = args[1].value;
+                        if ( args[2]?.type === 'NumericLiteral') dy = args[2].value;
+                     
+                    }
+                    if (typeof dx === 'number' && typeof dy === 'number' && dy < ROWS && dx < COLS) {
+                        let luaBrush = {...getFeatureBrushByName('Door')};
+                        luaBrush.x = dx;
+                        luaBrush.y = dy;    
+                        luaBrush.options.state = state; 
+                        layers.features.push(luaBrush);
                     }
                     break;
 
                 case 'object':
                     if (args.length === 3 && args[0].type === 'StringLiteral' &&
                         args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
-                        const id = args[0].value;
+                        let luaBrush = {...objectDefaults};
+                        const objID = dequote(args[0].raw);
+                        luaBrush.id = objID.toLowerCase();
+                        allObjects[luaBrush.id].symbol;
                         const x = args[1].value;
                         const y = args[2].value;
-                        const sym = getObjectSym(id);
-                        const key = symToTerrain[sym] || 'room';
-                        if (y < ROWS && x < COLS) layers.terrain[y][x] = key;
+                        const sym = allObjects[luaBrush.id].symbol;
+                        if (y < ROWS && x < COLS) layers.object[y][x] = luaBrush;
                     }
                     break;
 
                 case 'monster':
                     let monSym = null;
+                    let monID = null;
                     let mx = null, my = null;
-
-                    if (args[0]?.type === 'TableConstructorExpression') {
+                    let inventory = null;
+                    let luaBrush = {...monsterDefaults};
+                    //let peaceful = null;
+                    //parse brackets with multiple arguments
+                    if (args[0]?.type === 'TableConstructorExpression' ) {
                         for (const f of args[0].fields) {
                             if (f.key.name === 'id' && f.value.type === 'StringLiteral')
-                                monSym = getMonsterSym(f.value.value);
+                                monID = dequote(f.value.raw).toLowerCase()
+                                monSym = allMonsters[monID]?.symbol;
+                                if( !monSym) break;
+                                luaBrush.id = monID;
+                            if (f.key.name === 'coord') 
+                            {
+                                mx = f.value.fields[0].value.value;
+                                my = f.value.fields[1].value.value;
+                            }
                             if (f.key.name === 'x') mx = f.value.value;
                             if (f.key.name === 'y') my = f.value.value;
+                            if (f.key.name === 'peaceful') luaBrush.peaceful = f.value.value;
+                            if (f.key.name === 'inventory') {
+                                console.log('inventory!');
+                                inventory='';
+                            }
                         }
+                    //Simple Monster ID/sym, x, y
                     } else if (args.length >= 3) {
                         const firstArg = args[0];
-                        const firstVal = firstArg.type === 'StringLiteral' ? firstArg.value : String(firstArg.value);
-                        monSym = getMonsterSym(firstVal);
+                        const firstVal = firstArg.type === 'StringLiteral' ? dequote(firstArg.raw) : String(firstArg.value);
+                        const monID = allMonsters[firstVal.toLowerCase()] ? firstVal.toLowerCase() : firstVal;
+                        if(allMonsters[monID])
+                        {
+                            luaBrush.id = monID;
+                            monSym = allMonsters[monID].symbol;
+                        }
+                        else if (getMonsterSym(monID))
+                        {
+                            luaBrush.monsterSelectMode = 'class';
+                            luaBrush.id = monID;
+                            monSym = monID;
+                        }
+                        else
+                        {
+                            //Unknown Monster
+                        }
+                        //monSym = getMonsterSym(firstVal);
                         mx = args[1].value;
                         my = args[2].value;
                     }
 
                     if (monSym && typeof mx === 'number' && typeof my === 'number' &&
                         my < ROWS && mx < COLS) {
-                        layers.monster[my][mx] = monSym;
+                        layers.monster[my][mx] = luaBrush;
                     }
                     break;
+                case 'trap':
+                    let trapType = null;
+                    let x = null;
+                    let y = null;
+                    let luaTrapBrush = {...getFeatureBrushByName('Trap')};
+                    let trapSym = '^';
+                    let trapCol = 'CLR_WHITE';
+                    if (args.length == 3 && args[0]?.type === 'StringLiteral' ) { 
+                        trapType = dequote(args[0].raw);
+                        x = args[1].value;
+                        y = args[2].value;
+                    }
+                    if (args.length == 1 && args[0]?.type === 'StringLiteral' ) { 
+                        trapType = dequote(args[0].raw);
+                    }
+                    
+                    if( x ) luaTrapBrush.x = x;
+                    if( y ) luaTrapBrush.y = y;    
+                    if( trapType ) 
+                    {
+                        luaTrapBrush.trapType = trapType;   
+                        trapObj = getTrapTypeByName(trapType);
+                        trapSym = trapObj.sym;
+                        trapCol = trapObj.color;
+                    }
 
+                    luaTrapBrush.symbol = trapSym; 
+                    luaTrapBrush.color = trapCol;   
+                    layers.features.push(luaTrapBrush);
+                    break;
                 // Add more cases here if new deterministic des. calls appear in levels
             }
         }
