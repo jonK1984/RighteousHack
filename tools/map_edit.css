@@ -218,3 +218,48 @@
     border: 1px solid #38444d;
     padding: 4px;
 }
+#feature-options-content {
+
+    max-height: 550px;
+}
+#trap-list {
+    max-height: 450px;
+}
+#feature-room-scroll-list {
+    max-height: 250px;
+}
+.section-title {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+
+#rnd-container {
+    margin-top: 20px;
+}
+.rnd-section {
+    margin-bottom: 15px;
+}
+.rnd-section h3 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+}
+.rnd-row {
+    display: grid;
+    grid-template-columns: repeat(50, 1fr);
+    height: 40px;               /* match your main cell height + padding */
+    border: 2px solid #444;
+    background: #111;
+    gap: 1px;
+}
+.rnd-cell {
+    background: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+}
+.rnd-cell:hover {
+    background: #333;
+}

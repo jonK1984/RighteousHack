@@ -39,10 +39,24 @@
 <div id="main">
   <div id="left">
     <div style="position:relative;">
+        <h3>Map</h3>
       <div id="grid"></div>
       <div id="overlay"></div>
     </div>
-
+    <div id="rnd-container">
+        <div class="rnd-section">
+            <h3>Random Objects</h3>
+            <div id="object-rnd" class="rnd-row"></div>
+        </div>
+        <div class="rnd-section">
+            <h3>Random Monsters</h3>
+            <div id="monster-rnd" class="rnd-row"></div>
+        </div>
+        <div class="rnd-section">
+            <h3>Random Traps / Features</h3>
+            <div id="feature-rnd" class="rnd-row"></div>
+        </div>
+    </div>
     <div id="position" style="white-space: pre-line; font-size: 14px; padding: 8px;">>Cursor: --,--</div>
 
   </div>
@@ -282,7 +296,9 @@ let layers = {
   lighting: [],  // array of {type:'lit'|'unlit', area:{x1,y1,x2,y2}}
   monster: [],  // array of monster configs
   object: [],     // array of object configs
-  features:  []
+  features:  [],
+  objectRND: [],
+  monsterRND: []
 };
 layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
 //layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
@@ -695,7 +711,7 @@ function selectFeature(feat) {
         updateShapeButtons('point');
     } else {
         // Normal feature – show options as before
-        //renderFeatureOptions(feat);
+        renderFeatureOptions(feat);
         updateShapeButtons(feat.stroke);
     }
 
@@ -726,77 +742,144 @@ function renderFeatureOptions(feat) {
     container.innerHTML = '';
 
     if (feat.trapList) {
-        // Special trap list
-        const trapDiv = document.createElement('div');
-        trapDiv.id = 'trap-list';
+        // ----- Trap selection list (styled like obj-scroll-list) -----
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'section-title';
+        sectionTitle.textContent = 'Traps';
+        container.appendChild(sectionTitle);
+
+        const scrollDiv = document.createElement('div');
+        scrollDiv.className = 'obj-scroll-list';   // same scrollable styling as object/monster lists
+        scrollDiv.id = 'trap-list';
+
         trapTypes.forEach(t => {
             const item = document.createElement('div');
             item.className = 'obj-item';
             item.innerHTML = `<span style="color:${t.color}">${t.sym}</span> ${t.name}`;
+
             item.onclick = () => {
+                // remove previous selection
+                scrollDiv.querySelectorAll('.obj-item.selected')
+                        .forEach(el => el.classList.remove('selected'));
+
+                // mark this one as selected
+                item.classList.add('selected');
+
+                // apply to the brush
                 currentFeatureBrush.options.trapType = t.type;
                 currentFeatureBrush.symbol = t.sym;
                 currentFeatureBrush.color = t.color;
-            };
-            trapDiv.appendChild(item);
-        });
-        container.appendChild(trapDiv);
-        return;
-    }
 
-    // Generic option rendering
-    Object.keys(feat.options).forEach(key => {
-        const val = feat.options[key];
-        if (Array.isArray(val)) {
-            // Radio buttons
-            const label = document.createElement('label');
-            label.textContent = key + ': ';
-            container.appendChild(label);
-            val.forEach(opt => {
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = key;
-                radio.value = opt;
-                if (opt === currentFeatureBrush.options[key]) radio.checked = true;
-                radio.onchange = () => currentFeatureBrush.options[key] = opt;
-                const span = document.createElement('span');
-                span.textContent = opt;
-                container.appendChild(radio);
-                container.appendChild(span);
-                container.appendChild(document.createElement('br'));
-            });
-        } else if (typeof val === 'boolean') {
-            // Checkbox
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.checked = currentFeatureBrush.options[key];
-            cb.onchange = () => currentFeatureBrush.options[key] = cb.checked;
-            const label = document.createElement('label');
-            label.appendChild(cb);
-            label.appendChild(document.createTextNode(' ' + key));
-            container.appendChild(label);
-            container.appendChild(document.createElement('br'));
-        } else {
-            // Text input / textarea
-            const label = document.createElement('label');
-            label.textContent = key + ': ';
-            container.appendChild(label);
-            if (key === 'contents') {
-                const ta = document.createElement('textarea');
-                ta.rows = 8;
-                ta.value = currentFeatureBrush.options[key];
-                ta.oninput = (e) => currentFeatureBrush.options[key] = e.target.value;
-                container.appendChild(ta);
-            } else {
-                const inp = document.createElement('input');
-                inp.type = 'text';
-                inp.value = currentFeatureBrush.options[key];
-                inp.oninput = (e) => currentFeatureBrush.options[key] = e.target.value;
-                container.appendChild(inp);
+                // optional: update any preview / status display elsewhere
+                // updateBrushPreview();
+            };
+
+            scrollDiv.appendChild(item);
+
+            // pre-select if this is the current brush setting
+            if (currentFeatureBrush.options.trapType === t.type) {
+                item.classList.add('selected');
             }
-            container.appendChild(document.createElement('br'));
-        }
-    });
+        });
+
+        container.appendChild(scrollDiv);
+        return; // we’re done for this feature
+    }
+    // Generic option rendering
+    if (feat.options) {
+        Object.keys(feat.options).forEach(key => {
+            const val = feat.options[key];
+
+            // Section title for every option (makes the panel consistent)
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'section-title';
+            titleDiv.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1') + ':';
+            container.appendChild(titleDiv);
+
+            if (Array.isArray(val)) {
+                // ---------- ARRAY OPTIONS ----------
+                if (val.length > 4) {
+                    // Scrollable list (same style as trap/object/monster lists)
+                    const scrollDiv = document.createElement('div');
+                    scrollDiv.id = 'feature-room-scroll-list';
+                    scrollDiv.className = 'obj-scroll-list';
+
+                    val.forEach(opt => {
+                        const item = document.createElement('div');
+                        item.className = 'obj-item';
+                        item.textContent = opt;                     // display value
+
+                        item.onclick = () => {
+                            // clear previous selection
+                            scrollDiv.querySelectorAll('.obj-item.selected')
+                                    .forEach(el => el.classList.remove('selected'));
+
+                            // select this one
+                            item.classList.add('selected');
+
+                            // update brush
+                            currentFeatureBrush.options[key] = opt;
+                        };
+
+                        // pre-select current value
+                        if (currentFeatureBrush.options[key] === opt) {
+                            item.classList.add('selected');
+                        }
+
+                        scrollDiv.appendChild(item);
+                    });
+
+                    container.appendChild(scrollDiv);
+                } else {
+                    // Few options → classic radio buttons (no inline "key:" label needed, title already shows it)
+                    val.forEach(opt => {
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = key;                       // groups radios together
+                        radio.value = opt;
+                        if (opt === currentFeatureBrush.options[key]) radio.checked = true;
+
+                        radio.onchange = () => currentFeatureBrush.options[key] = opt;
+
+                        const span = document.createElement('span');
+                        span.textContent = opt;
+
+                        container.appendChild(radio);
+                        container.appendChild(span);
+                        container.appendChild(document.createElement('br'));
+                    });
+                }
+            } else if (typeof val === 'boolean') {
+                // ---------- BOOLEAN (checkbox) ----------
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = currentFeatureBrush.options[key];
+                cb.onchange = () => currentFeatureBrush.options[key] = cb.checked;
+
+                const label = document.createElement('label');
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(' Enable')); // short text since title already names the option
+                container.appendChild(label);
+                container.appendChild(document.createElement('br'));
+            } else {
+                // ---------- TEXT / TEXTAREA ----------
+                if (key === 'contents') {
+                    const ta = document.createElement('textarea');
+                    ta.rows = 8;
+                    ta.value = currentFeatureBrush.options[key] || '';
+                    ta.oninput = e => currentFeatureBrush.options[key] = e.target.value;
+                    container.appendChild(ta);
+                } else {
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.value = currentFeatureBrush.options[key] || '';
+                    inp.oninput = e => currentFeatureBrush.options[key] = e.target.value;
+                    container.appendChild(inp);
+                }
+                container.appendChild(document.createElement('br'));
+            }
+        });
+    }
 }
 
 function clearFeatureBrush() {
@@ -1336,6 +1419,20 @@ function createGrid() {
   }
 }
 
+function createRndGrids() {
+    const types = ['object', 'monster', 'feature'];
+    types.forEach(type => {
+        const grid = document.getElementById(type + '-rnd');
+        for (let i = 0; i < 50; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell rnd-cell';
+            cell.dataset.col = i;
+            cell.dataset.type = type;   // 'object', 'monster', or 'feature'
+            cell.addEventListener('click', handleRndCellClick);
+            grid.appendChild(cell);
+        }
+    });
+}
 // === DYNAMIC BRUSH COLLECTION HELPERS ===
 // === UPDATE collectBrushFromPopup() TO HANDLE RADIO BUTTONS ===
 function collectBrushFromPopup(popupSelector) {
@@ -2237,6 +2334,50 @@ function getColorRGB(token) {
     return "#ffffff";
   }
 
+function renderRNDLayers() {
+    ['object', 'monster', 'feature'].forEach(type => {
+    const grid = document.getElementById(type + '-rnd');
+    let list = (type === 'feature')
+        ? layers.features.filter(f => f.x === undefined && f.y === undefined)
+        : layers[type + 'RND'] || [];
+
+    list = list.slice(0, 50);   // safety cap
+
+    for (let i = 0; i < 50; i++) {
+        const cell = grid.children[i];
+        cell.innerHTML = '';
+        cell.title = '';
+        let displayColor = "#ffffff"; // default foreground (white)
+
+        if (i < list.length) {
+            const item = list[i];
+
+            let html = '';
+            let title = '';
+            if( item.color) displayColor = getColorRGB(item.color);
+            if (type === 'object' || type === 'monster') {
+                html = `<span style="color:${item.color || '#fff'}">${item.sym || '?'}</span>`;
+                title = item.name || '';
+            } else { // feature / trap
+                if (item.trapType !== undefined) {
+                    const t = trapTypes.find(tt => tt.type === item.trapType);
+                    if (t) {
+                        html = `<span style="color:${t.color}">${t.sym}</span>`;
+                        title = t.name;
+                    }
+                } else {
+                    html = item.sym || '?';
+                    title = item.name || 'feature';
+                }
+            }
+
+            cell.innerHTML = html;
+            cell.title = title;
+            cell.style.color = displayColor;  
+        }
+    }
+});
+}
 function renderLayers() {
   // Helper to convert a color token (e.g. "CLR_RED", "HI_DOMESTIC", "NO_COLOR") to an rgb() string
   
@@ -2371,7 +2512,7 @@ function renderLayers() {
     });
 }
 
-    
+renderRNDLayers();
 
 }
 
@@ -2469,7 +2610,99 @@ document.getElementById('load-lua-btn').addEventListener('click', () => {
     document.body.removeChild(fileInput);   // Clean up
 });
 
+function cloneCurrentBrush(type) {
+    if (type === 'object') {
+        return {
+            sym: currentObjectBrush.symbol,     // adjust to your actual property names
+            color: currentObjectBrush.color,
+            name: currentObjectBrush.name,
+            id: currentObjectBrush.id,
+            // copy any other needed fields
+        };
+    } else if (type === 'monster') {
+        return {
+            sym: currentMonsterBrush.symbol,
+            color: currentMonsterBrush.color,
+            name: currentMonsterBrush.name,
+            // etc.
+        };
+    } else { // feature / trap
+        const def = {
+            sym: currentFeatureBrush.symbol,
+            color: currentFeatureBrush.color,
+        };
+        if (currentFeatureBrush.options.trapType !== undefined) {
+            def.trapType = currentFeatureBrush.options.trapType;
+        }
+        // copy options if needed
+        if (currentFeatureBrush.options) def.options = JSON.parse(JSON.stringify(currentFeatureBrush.options));
+        return def;
+    }
+}
+
+function handleRndCellClick(e) {
+    const cell = e.target.closest('.rnd-cell');
+    if (!cell) return;
+
+    const col = parseInt(cell.dataset.col);
+    const type = cell.dataset.type;   // 'object', 'monster', 'feature'
+
+    const isEraser = currentBrush === 'eraser';
+    const brushOk = (type === 'object' && currentBrush === 'object') ||
+                    (type === 'monster' && currentBrush === 'monster') ||
+                    (type === 'features' && currentBrush === 'features');
+
+    if (!isEraser && !brushOk) return;
+
+    // Get the current list (displayed length ≤ 50)
+    let list;
+    if (type === 'feature') {
+        list = layers.features.filter(f => f.x === undefined && f.y === undefined);
+    } else {
+        list = layers[type + 'RND'];
+    }
+
+    if (isEraser) {
+        // Remove the item at this position (shifts later items left)
+        if (col < list.length) {
+            if (type === 'feature') {
+                const featObj = list[col];
+                const realIdx = layers.features.indexOf(featObj);
+                layers.features.splice(realIdx, 1);
+            } else {
+                layers[type + 'RND'].splice(col, 1);
+            }
+        }
+    } else {
+        // Normal brush – replace or append
+        const newDef = cloneCurrentBrush(type);   // you need a small helper, see below
+
+        if (col < list.length) {
+            // Replace existing slot
+            if (type === 'feature') {
+                Object.assign(list[col], newDef);
+            } else {
+                layers[type + 'RND'][col] = newDef;
+            }
+        } else if (col === list.length && list.length < 50) {
+            // Append only when clicking the immediate next slot
+            if (type === 'feature') {
+                delete newDef.x;
+                delete newDef.y;
+                layers.features.push(newDef);
+            } else {
+                layers[type + 'RND'].push(newDef);
+            }
+        }
+        // else ignore (click too far right or list full)
+    }
+
+    renderLayers();
+    updateText(true);
+}
+
 createGrid();
+createRndGrids();
 renderLayers();  // initial render
 updateText( true);
 </script>

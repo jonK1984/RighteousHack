@@ -435,6 +435,16 @@ function loadLUAMap(luaText) {
                         const y = args[2].value;
                         const sym = allObjects[luaBrush.id].symbol;
                         if (y < ROWS && x < COLS) layers.object[y][x] = luaBrush;
+
+                    }
+                    else if (args.length === 1 && args[0].type === 'StringLiteral')
+                    {
+                        let luaBrush = {...objectDefaults};
+                        const objID = dequote(args[0].raw);
+                        luaBrush.class = objID.toLowerCase();
+                        luaBrush.sym = objID.toLowerCase();
+                        layers.objectRND.push(luaBrush);
+                        
                     }
                     break;
 
@@ -489,6 +499,11 @@ function loadLUAMap(luaText) {
                         //monSym = getMonsterSym(firstVal);
                         mx = args[1].value;
                         my = args[2].value;
+                    } else if (args.length == 1 && args[0]?.type === 'StringLiteral') {
+                        const monID = dequote(args[0].raw);
+                        luaBrush.id = monID;
+                        luaBrush.sym = monID;
+                        layers.monsterRND.push(luaBrush);
                     }
 
                     if (monSym && typeof mx === 'number' && typeof my === 'number' &&
