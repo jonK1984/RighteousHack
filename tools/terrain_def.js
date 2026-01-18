@@ -125,10 +125,10 @@ const allTerrains = {
     "id": "ironbars",
     "color": "HI_METAL"
   },
-  "max_type": {
+  "swamp": {
     "lua": "x",
     "symbol": "x",
-    "id": "max_type",
+    "id": "swamp",
     "color": "HI_METAL"
   },
   "crosswall": {

@@ -106,6 +106,55 @@ def parse_monsters(monsters_path: str, sym_dict: dict) -> dict:
             'bn': bn                      # optional, if you need the enum suffix
         }
 
+    mon_pattern2 = re.compile(
+        r'MON\s*\(\s*'                          # MON(
+        r'(?:NAMS\s*\(\s*)?'                    # optional NAMS(
+        r'"([^"]+)"'                            # first name (male or single) → group 1
+        r'(?:\s*,\s*"([^"]+)"'                  # optional second name (female) → group 2
+        r'\s*,\s*"([^"]+)"'                     # optional third name (neutral) → group 3
+        r'\s*\))?'                              # optional closing ) for NAMS
+        r'\s*,\s*'
+        r'(S_\w+)'                              # monster class symbol → group 4
+        r'.*?'                                  # skip everything in between (non-greedy)
+        r',\s*'
+        r'(\d+)'                                # difficulty → group 5
+        r'\s*,\s*'
+        r'(CLR_[A-Z_]+|HI_[A-Z_]+|DRAGON_SILVER|NO_COLOR|)'  # color → group 6 (optional empty)
+        r'\s*,\s*'
+        r'([A-Z_0-9]+)'                         # final enum name → group 7
+        r'\s*\)'                                # closing )
+        , re.DOTALL
+    )
+    
+    for match in mon_pattern2.finditer(content):
+        
+        
+        raw_names = [match.group(1), match.group(2), match.group(3)]
+       
+
+        macro    = match.group(4)
+        bn = match.group(7)
+        color_token      = match.group(6) or "NO_COLOR"
+
+               # from your existing parse_defsym()
+        
+        # Create one entry for each name (exactly what you asked for)
+        for raw_name in raw_names:
+            name = raw_name.lower()
+            if macro not in sym_dict:
+                print(f"Warning: No symbol definition found for {macro} (used by \"{raw_name}\")", file=sys.stderr)
+                continue
+            info = sym_dict[macro] 
+            all_monsters[name] = {
+                'id': name,
+                'class1': info['class1'],
+                'class2': info['class2'],
+                'symbol': info['symbol'],
+                'raw_name': raw_name,
+                'color': color_token,         # e.g. "HI_DOMESTIC" or "CLR_GRAY"
+                'bn': bn                      # optional, if you need the enum suffix
+            }
+
     return all_monsters
 
 

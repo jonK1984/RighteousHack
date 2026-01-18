@@ -31,6 +31,69 @@ function getTrapTypeByName(name) {
     return trapTypes.find(trap => trap.name === name);
 }
 
+/**
+ * Get formatted info for a feature brush (for UI display, tooltips, etc.)
+ * Handles concrete traps/features, random, and unknown cases.
+ *
+ * @param {Object|null} brush - The feature brush (or null/undefined)
+ * @returns {Object}
+ */
+function getFeatureInfo(brush) {
+    if (!brush) {
+        return {
+            symbol: 'Ø',
+            type: 'unknown',
+            description: 'Invalid Feature',
+            color: 'CLR_WHITE',
+            options: null
+        };
+    }
+
+    const info = {
+        symbol: brush.sym || brush.internal?.symbol || '?',
+        type: 'feature',
+        description: brush.name || 'Unnamed Feature',
+        color: brush.color || brush.internal?.color || 'CLR_WHITE',
+        options: null
+    };
+
+    // Trap detection
+    if (brush.trapType !== undefined) {
+        info.type = 'trap';
+        const t = trapTypes.find(tt => tt.type === brush.trapType);
+        if (t) {
+            info.symbol = t.sym;
+            info.color = t.color;
+            info.description = t.name;
+        } else {
+            info.description = `Unknown Trap (${brush.trapType})`;
+        }
+
+        info.options = info.options || [];
+    }
+
+    // General .options (if present on brush)
+    if (brush.options && typeof brush.options === 'object') {
+        info.options = info.options || [];
+        for (const key in brush.options) {
+            if (brush.options.hasOwnProperty(key)) {
+                const val = brush.options[key];
+                info.options.push(`${key}: ${val}`);
+            }
+        }
+    }
+
+    // Random/unknown overrides
+    if (brush.internal?.random) {
+        info.description = 'Random Feature';
+        if (info.type === 'trap') {
+            info.description = 'Random Trap';
+        }
+    }
+
+    return info;
+}
+
 const allFeatures = [
     {
         name: "Eraser",
@@ -43,6 +106,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "_",
         color: "CLR_GRAY",
+        internal: { type: 'feature'},
         options: {
             type: ["altar", "shrine", "sanctum"],
             align: ["1", "2", "3"]
@@ -54,6 +118,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "+",
         color: "CLR_BROWN",
+        internal: { type: 'feature'},
         options: {
             state: ["secret", "closed", "locked", "open"]
         },
@@ -64,6 +129,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "#",
         color: "CLR_BROWN",
+        internal: { type: 'feature'},
         options: {
             dir: ["north", "south", "east", "west"],
             state: ["random", "open", "closed"]
@@ -75,6 +141,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "ε",
         color: "CLR_BRIGHT_BLUE",
+        internal: { type: 'feature'},
         options: { text: "" },
         lua: (f) => `des.engraving({ type="engrave", x=${f.x}, y=${f.y}, text="${f.text}" })`
     },
@@ -83,6 +150,7 @@ const allFeatures = [
         stroke: "point",
         symbol: ">",
         color: "CLR_GRAY",
+        internal: { type: 'feature'},
         lua: (f) => `des.ladder("down", ${f.x},${f.y})`
     },
     {
@@ -90,6 +158,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "<",
         color: "CLR_GRAY",
+        internal: { type: 'feature'},
         lua: (f) => `des.ladder("up", ${f.x},${f.y})`
     },
     {
@@ -97,6 +166,7 @@ const allFeatures = [
         stroke: "rectangle",
         dither: "horizontal-dash",   // distinct pattern
         ditherColor: "CLR_MAGENTA",
+        internal: { type: 'feature'},
         options: {
             type: ["stair-up", "stair-down", "branch", "portal"],
             name: "",
@@ -121,6 +191,7 @@ const allFeatures = [
         dither: "sparse-dots",       // distinct from others
         ditherColor: "CLR_BLUE",
         options: { dir: ["north", "south", "east", "west"] },
+        internal: { type: 'feature'},
         lua: (f) => `des.mazewalk(${f.area.split(',').slice(0,2).join(',')},"${f.dir}")`
     },
     {
@@ -128,6 +199,7 @@ const allFeatures = [
         stroke: "rectangle",
         dither: "dense-dots",
         ditherColor: "CLR_BROWN",
+        internal: { type: 'feature'},
         lua: (f) => `des.non_diggable(selection.area(${f.area}))`
     },
     {
@@ -135,6 +207,7 @@ const allFeatures = [
         stroke: "rectangle",
         dither: "crosshatch",        // distinct pattern
         ditherColor: "CLR_GREEN",
+        internal: { type: 'feature'},
         options: {
             type: ["ordinary","themed","throne","swamp","vault","beehive","morgue","barracks","zoo","delphi","temple","anthole","cocknest","leprehall","shop","armor shop","scroll shop","potion shop","weapon shop","food shop","ring shop","rod shop","tool shop","book shop","health food shop","candle shop"],
             lit: ["lit","unlit"],
@@ -151,6 +224,7 @@ const allFeatures = [
         stroke: "point",
         symbol: ">",
         color: "CLR_GRAY",
+        internal: { type: 'feature'},
         lua: (f) => `des.stair("down", ${f.x},${f.y})`
     },
     {
@@ -158,6 +232,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "<",
         color: "CLR_GRAY",
+        internal: { type: 'feature'},
         lua: (f) => `des.stair("up", ${f.x},${f.y})`
     },
     {
@@ -165,6 +240,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "#",
         color: "CLR_GREEN",
+        internal: { type: 'feature'},
         lua: (f) => `des.feature("tree", ${f.x},${f.y})`
     },
     {
@@ -172,6 +248,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "{",
         color: "CLR_BRIGHT_BLUE",
+        internal: { type: 'feature'},
         lua: (f) => `des.feature("fountain", ${f.x},${f.y})`
     },
     {
@@ -179,6 +256,7 @@ const allFeatures = [
         stroke: "point",
         symbol: "{",
         color: "CLR_WHITE",
+        internal: { type: 'feature'},
         lua: (f) => `des.feature("sink", ${f.x},${f.y})`
     },
     {
@@ -186,6 +264,7 @@ const allFeatures = [
         stroke: "rectangle",
         dither: "diagonal",          // distinct pattern
         ditherColor: "CLR_YELLOW",
+        internal: { type: 'feature'},
         options: {
             region_islev: false,
             exclude: "",
@@ -202,6 +281,7 @@ const allFeatures = [
     {
         name: "Trap",
         stroke: "point",
+        internal: { type: 'feature'},
         trapList: true,              // flag for special handling
         lua: (f) => `des.trap(${
             [

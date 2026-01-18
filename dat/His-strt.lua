@@ -100,7 +100,7 @@ des.stair("down", 32, 12)
 
 
 -- A few minor hostile creatures lurking (thieves or vandals)
-des.monster("thief", 25, 08)
+
 des.monster("hill orc", 67, 15)
 
 -- Gold and minor objects scattered

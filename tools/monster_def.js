@@ -1,3 +1,26 @@
+/**
+ * Look up the description for a monster class character.
+ * Searches allMonsterClasses (from monster_def.js) for a matching .class
+ * and returns the corresponding .desc string.
+ *
+ * @param {string} str - the monster class character (e.g., "D", "A", "@")
+ * @returns {string} description or "Unknown monster class" if not found
+ */
+function getDescFromMonsterClass(str) {
+    if (typeof str !== 'string' || str.length === 0) {
+        return 'Unknown monster class';
+    }
+
+    // allMonsterClasses is the array defined in monster_def.js
+    for (const entry of allMonsterClasses) {
+        if (entry.class === str) {
+            return entry.desc || 'No description';
+        }
+    }
+
+    return 'Unknown monster class';
+}
+
 const allMonsterClasses = [
     { class: "@", desc: "Humans and elves (@)" },
     { class: " ", desc: "ghost ( )" },
@@ -5,56 +28,56 @@ const allMonsterClasses = [
     { class: "&", desc: "demon (&)" },
     { class: ";", desc: "sea monster (;)" },
     { class: ":", desc: "lizard (:)" },
-    { class: "A", desc: "Angelic beings (A)" },
-    { class: "B", desc: "Bats and birds (B)" },
-    { class: "C", desc: "Centaurs (C)" },
-    { class: "D", desc: "Dragons (D)" },
-    { class: "E", desc: "Elementals (E)" },
-    { class: "F", desc: "Fungi and molds (F)" },
-    { class: "G", desc: "Gnomes (G)" },
-    { class: "H", desc: "Giant humanoids (H)" },
+    { class: "A", desc: "Angelic being (A)" },
+    { class: "B", desc: "Bat or bird (B)" },
+    { class: "C", desc: "Centaur (C)" },
+    { class: "D", desc: "Dragon (D)" },
+    { class: "E", desc: "Elemental (E)" },
+    { class: "F", desc: "Fungi or mold (F)" },
+    { class: "G", desc: "Gnome (G)" },
+    { class: "H", desc: "Giant humanoid (H)" },
     { class: "J", desc: "jabberwock (J)" },
     { class: "K", desc: "Keystone Kop (K)" },
     { class: "L", desc: "lich (L)" },
     { class: "M", desc: "mummy (M)" },
     { class: "N", desc: "naga (N)" },
-    { class: "O", desc: "Ogres (O)" },
+    { class: "O", desc: "Ogre (O)" },
     { class: "P", desc: "pudding or ooze (P)" },
     { class: "Q", desc: "quantum mechanic (Q)" },
     { class: "R", desc: "rust monster or disenchanter (R)" },
     { class: "S", desc: "snake (S)" },
-    { class: "T", desc: "Trolls (T)" },
+    { class: "T", desc: "Troll (T)" },
     { class: "U", desc: "umber hulk (U)" },
-    { class: "V", desc: "Vampires (V)" },
+    { class: "V", desc: "Vampire (V)" },
     { class: "W", desc: "wraith (W)" },
     { class: "X", desc: "xorn (X)" },
     { class: "Y", desc: "apelike creature (Y)" },
     { class: "Z", desc: "zombie (Z)" },
-    { class: "a", desc: "Ants, insects, arachnids (a)" },
-    { class: "b", desc: "Blobs, puddings, oozes (b)" },
-    { class: "c", desc: "Cockatrice and basilisk (c)" },
-    { class: "d", desc: "Dogs and other canines (d)" },
-    { class: "e", desc: "Eyes and floating spheres (e)" },
-    { class: "f", desc: "Felines (f)" },
-    { class: "g", desc: "Gargoyles and gremlins (g)" },
-    { class: "h", desc: "Dwarves, hobbits, gnomes (h)" },
-    { class: "i", desc: "Imps and minor demons (i)" },
-    { class: "j", desc: "Jellies (j)" },
-    { class: "k", desc: "Kobolds (k)" },
+    { class: "a", desc: "Ant, insect, or arachnid (a)" },
+    { class: "b", desc: "Blob, pudding, or ooze (b)" },
+    { class: "c", desc: "Cockatrice or basilisk (c)" },
+    { class: "d", desc: "Dog or other canine (d)" },
+    { class: "e", desc: "Eye or floating sphere (e)" },
+    { class: "f", desc: "Feline (f)" },
+    { class: "g", desc: "Gargoyle or gremlin (g)" },
+    { class: "h", desc: "Dwarf, hobbit, or gnome (h)" },
+    { class: "i", desc: "Imp or minor demon (i)" },
+    { class: "j", desc: "Jelly (j)" },
+    { class: "k", desc: "Kobold (k)" },
     { class: "l", desc: "leprechaun (l)" },
     { class: "m", desc: "mimic (m)" },
-    { class: "n", desc: "Nymphs (n)" },
-    { class: "o", desc: "Orcs (o)" },
-    { class: "p", desc: "Piercers (p)" },
-    { class: "q", desc: "Quadrupeds (q)" },
-    { class: "r", desc: "Rodents (r)" },
+    { class: "n", desc: "Nymph (n)" },
+    { class: "o", desc: "Orc (o)" },
+    { class: "p", desc: "Piercer (p)" },
+    { class: "q", desc: "Quadruped (q)" },
+    { class: "r", desc: "Rodent (r)" },
     { class: "s", desc: "arachnid or centipede (s)" },
     { class: "t", desc: "trapper or lurker above (t)" },
     { class: "u", desc: "unicorn or horse (u)" },
     { class: "v", desc: "vortex (v)" },
     { class: "w", desc: "worm (w)" },
     { class: "x", desc: "xan or mythical insect (x)" },
-    { class: "y", desc: "Yellow lights (y)" },
+    { class: "y", desc: "Yellow light (y)" },
     { class: "z", desc: "zruty (z)" }
 ];
 
@@ -93,6 +116,20 @@ const allMonsters = {
         class2: "",
         symbol: "A",
         color: "CLR_YELLOW"
+    },
+    "aligned cleric": {
+        id: "aligned cleric",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_WHITE"
+    },
+    "amorous demon": {
+        id: "amorous demon",
+        class1: "major demon",
+        class2: "",
+        symbol: "&",
+        color: "CLR_GRAY"
     },
     "angel": {
         id: "Angel",
@@ -416,12 +453,33 @@ const allMonsters = {
         symbol: "Y",
         color: "CLR_BLACK"
     },
+    "cave dweller": {
+        id: "cave dweller",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
+    },
     "cave spider": {
         id: "cave spider",
         class1: "arachnid",
         class2: "centipede",
         symbol: "s",
         color: "CLR_GRAY"
+    },
+    "caveman": {
+        id: "caveman",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
+    },
+    "cavewoman": {
+        id: "cavewoman",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
     },
     "centipede": {
         id: "centipede",
@@ -478,6 +536,13 @@ const allMonsters = {
         class2: "",
         symbol: "'",
         color: "CLR_BROWN"
+    },
+    "cleric": {
+        id: "cleric",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
     },
     "cobra": {
         id: "cobra",
@@ -619,12 +684,54 @@ const allMonsters = {
         symbol: "h",
         color: "CLR_RED"
     },
+    "dwarf king": {
+        id: "dwarf king",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "HI_LORD"
+    },
+    "dwarf lady": {
+        id: "dwarf lady",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "CLR_BLUE"
+    },
+    "dwarf leader": {
+        id: "dwarf leader",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "CLR_BLUE"
+    },
+    "dwarf lord": {
+        id: "dwarf lord",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "CLR_BLUE"
+    },
     "dwarf mummy": {
         id: "dwarf mummy",
         class1: "mummy",
         class2: "",
         symbol: "M",
         color: "CLR_RED"
+    },
+    "dwarf queen": {
+        id: "dwarf queen",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "HI_LORD"
+    },
+    "dwarf ruler": {
+        id: "dwarf ruler",
+        class1: "humanoid",
+        class2: "",
+        symbol: "h",
+        color: "HI_LORD"
     },
     "dwarf zombie": {
         id: "dwarf zombie",
@@ -674,6 +781,48 @@ const allMonsters = {
         class2: "",
         symbol: "Z",
         color: "CLR_GREEN"
+    },
+    "elf-lady": {
+        id: "elf-lady",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_BRIGHT_BLUE"
+    },
+    "elf-lord": {
+        id: "elf-lord",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_BRIGHT_BLUE"
+    },
+    "elf-noble": {
+        id: "elf-noble",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_BRIGHT_BLUE"
+    },
+    "elven monarch": {
+        id: "elven monarch",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_LORD"
+    },
+    "elvenking": {
+        id: "Elvenking",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_LORD"
+    },
+    "elvenqueen": {
+        id: "Elvenqueen",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_LORD"
     },
     "elwing": {
         id: "Elwing",
@@ -969,12 +1118,54 @@ const allMonsters = {
         symbol: "G",
         color: "CLR_BROWN"
     },
+    "gnome king": {
+        id: "gnome king",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "HI_LORD"
+    },
+    "gnome lady": {
+        id: "gnome lady",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "CLR_BLUE"
+    },
+    "gnome leader": {
+        id: "gnome leader",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "CLR_BLUE"
+    },
+    "gnome lord": {
+        id: "gnome lord",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "CLR_BLUE"
+    },
     "gnome mummy": {
         id: "gnome mummy",
         class1: "mummy",
         class2: "",
         symbol: "M",
         color: "CLR_RED"
+    },
+    "gnome queen": {
+        id: "gnome queen",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "HI_LORD"
+    },
+    "gnome ruler": {
+        id: "gnome ruler",
+        class1: "gnome",
+        class2: "",
+        symbol: "G",
+        color: "HI_LORD"
     },
     "gnome zombie": {
         id: "gnome zombie",
@@ -1165,6 +1356,27 @@ const allMonsters = {
         symbol: "&",
         color: "CLR_GREEN"
     },
+    "high cleric": {
+        id: "high cleric",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_WHITE"
+    },
+    "high priest": {
+        id: "high priest",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_WHITE"
+    },
+    "high priestess": {
+        id: "high priestess",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "CLR_WHITE"
+    },
     "high-elf": {
         id: "High-elf",
         class1: "human",
@@ -1298,6 +1510,13 @@ const allMonsters = {
         symbol: "i",
         color: "CLR_RED"
     },
+    "incubus": {
+        id: "incubus",
+        class1: "major demon",
+        class2: "",
+        symbol: "&",
+        color: "CLR_GRAY"
+    },
     "iron golem": {
         id: "iron golem",
         class1: "golem",
@@ -1402,6 +1621,27 @@ const allMonsters = {
         class2: "",
         symbol: "k",
         color: "CLR_BROWN"
+    },
+    "kobold lady": {
+        id: "kobold lady",
+        class1: "kobold",
+        class2: "",
+        symbol: "k",
+        color: "HI_LORD"
+    },
+    "kobold leader": {
+        id: "kobold leader",
+        class1: "kobold",
+        class2: "",
+        symbol: "k",
+        color: "HI_LORD"
+    },
+    "kobold lord": {
+        id: "kobold lord",
+        class1: "kobold",
+        class2: "",
+        symbol: "k",
+        color: "HI_LORD"
     },
     "kobold mummy": {
         id: "kobold mummy",
@@ -1802,6 +2042,48 @@ const allMonsters = {
         symbol: "O",
         color: "CLR_BROWN"
     },
+    "ogre king": {
+        id: "ogre king",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "HI_LORD"
+    },
+    "ogre lady": {
+        id: "ogre lady",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "CLR_RED"
+    },
+    "ogre leader": {
+        id: "ogre leader",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "CLR_RED"
+    },
+    "ogre lord": {
+        id: "ogre lord",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "CLR_RED"
+    },
+    "ogre queen": {
+        id: "ogre queen",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "HI_LORD"
+    },
+    "ogre tyrant": {
+        id: "ogre tyrant",
+        class1: "ogre",
+        class2: "",
+        symbol: "O",
+        color: "HI_LORD"
+    },
     "olog-hai": {
         id: "Olog-hai",
         class1: "troll",
@@ -1948,6 +2230,20 @@ const allMonsters = {
         class2: "horse",
         symbol: "u",
         color: "CLR_BROWN"
+    },
+    "priest": {
+        id: "priest",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
+    },
+    "priestess": {
+        id: "priestess",
+        class1: "human",
+        class2: "elf",
+        symbol: "@",
+        color: "HI_DOMESTIC"
     },
     "prisoner": {
         id: "prisoner",
@@ -2313,6 +2609,13 @@ const allMonsters = {
         symbol: "@",
         color: "HI_DOMESTIC"
     },
+    "succubus": {
+        id: "succubus",
+        class1: "major demon",
+        class2: "",
+        symbol: "&",
+        color: "CLR_GRAY"
+    },
     "tengu": {
         id: "tengu",
         class1: "imp",
@@ -2417,6 +2720,27 @@ const allMonsters = {
         class2: "bird",
         symbol: "B",
         color: "CLR_BLACK"
+    },
+    "vampire lady": {
+        id: "vampire lady",
+        class1: "vampire",
+        class2: "",
+        symbol: "V",
+        color: "CLR_BLUE"
+    },
+    "vampire leader": {
+        id: "vampire leader",
+        class1: "vampire",
+        class2: "",
+        symbol: "V",
+        color: "CLR_BLUE"
+    },
+    "vampire lord": {
+        id: "vampire lord",
+        class1: "vampire",
+        class2: "",
+        symbol: "V",
+        color: "CLR_BLUE"
     },
     "vampire mage": {
         id: "vampire mage",
@@ -2706,3 +3030,4 @@ const allMonsters = {
         color: "CLR_BROWN"
     },
 };
+

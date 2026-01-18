@@ -65,7 +65,7 @@
     <button id="copy-all-btn">Copy All Layers</button>
     <!-- other layers ... -->
     <div id="init-code" class="layer-code">
-        <h3>Initialization Lua Code</h3>
+        <h3>Level Initialization Layer</h3>
         <textarea id="init-textarea" readonly></textarea>
         <button onclick="copyLayer('init')">Copy Terrain</button>
         <button class="refresh" data-type="init" title="Regenerate Init LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
@@ -79,6 +79,13 @@
       <button class="refresh" data-type="terrain" title="Regenerate Terrain LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
     </div>
     
+    <div id="luadef-code" class="layer-code">
+      <h3>LUA Coding / Definition Layer</h3>
+      <textarea id="luadef-textarea" readonly></textarea>
+      <button onclick="copyLayer('luadef')">Copy LUA Coding Definitions</button>
+      <button class="refresh" data-type="luadef" title="Regenerate Terrain LUA" style="margin-left: 8px; font-size: 18px;">♻</button>
+    </div>
+
     <div id="lighting-code" class="layer-code ">
       <h3>Lighting Layer</h3>
       <textarea id="lighting-textarea" readonly></textarea>
@@ -298,7 +305,8 @@ let layers = {
   object: [],     // array of object configs
   features:  [],
   objectRND: [],
-  monsterRND: []
+  monsterRND: [],
+  code: []
 };
 layers.terrain =  Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
 //layers.lighting =  Array.from({length: ROWS}, () => Array(COLS).fill(null));
@@ -485,6 +493,59 @@ function selectBrush(type) {
 }
 
 
+/**
+ * Set up mouseover/mouseout listeners for all RND grid cells.
+ * Call once after the grids exist (e.g., in init or after first render).
+ */
+function setupRNDLayerListeners() {
+    const types = ['object', 'monster', 'feature'];
+    const descMap = {
+        object: 'Random Object',
+        monster: 'Random Monster',
+        feature: 'Random Feature'
+    };
+
+    const cursorLabel = document.getElementById('position');
+    if (!cursorLabel) {
+        console.warn("Cursor label element #position not found");
+        return;
+    }
+
+    types.forEach(type => {
+        const grid = document.getElementById(type + '-rnd');
+        if (!grid) {
+            console.warn(`RND grid ${type}-rnd not found`);
+            return;
+        }
+
+        
+
+        for (let i = 0; i < 50; i++) {
+            const cell = grid.children[i];
+            if (!cell) continue;
+
+            
+
+            cell.onmouseover = () => {
+                const list = (type === 'feature')
+                    ? layers.features.filter(f => f.x === undefined && f.y === undefined)
+                    : layers[type + 'RND'] || [];
+
+                // Cap to 50 cells
+                const cappedList = list.slice(0, 50);
+                const brush = (i < cappedList.length) ? cappedList[i] : null;
+
+                const desc = `${descMap[type]} ${i}` || 'Random Item';
+                cursorLabel.innerText = updateCursorInfoBrush(desc, brush);
+            };
+
+            cell.onmouseout = () => {
+                // Reset to default (e.g., current cursor position or empty)
+                cursorLabel.innerText = 'Cursor: Ready'; // or whatever default you use
+            };
+        }
+    });
+}
 
 function populateMonsterList(filter = '') {
     const listDiv = document.getElementById('monster-suggestions');
@@ -1578,105 +1639,303 @@ function generateFeaturesLua() {
     return lines.join('\n');
 }
 
-// Call this whenever layers.features changes (after painting, load, etc.)
+/**
+ * Helper: generate multi-line contents function with each inner object on its own line
+ */
+function generateContentsLua(contents, indent = '') {
+    if (!contents || contents.length === 0) return '';
 
-// === generateObjectLUA() FUNCTION ===
+    let lines = ['function()'];
+    let bodyIndent = indent + '   ';
+
+    for (const innerBrush of contents) {
+        lines.push(bodyIndent + generateSingleObjectLua(innerBrush));
+    }
+
+    lines.push(indent + 'end');
+    return lines.join('\n');
+}
+
+/**
+ * Generate single des.object(...) line
+ * - Simple: always single-line
+ * - Complex without contents: single-line table
+ * - Complex with contents: non-contents props single-line, contents multi-line block
+ */
+function generateSingleObjectLua(brush, x = null, y = null) {
+    if (!brush) return '';
+
+    const mode = brush.internal?.brushMode || 'simple';
+
+    // SIMPLE mode – always single-line
+    if (mode === 'simple') {
+        let line = 'des.object(';
+
+        if (brush.name && brush.name.variable) {
+            line += brush.name.variable;
+        } else if (brush.id) {
+            line += `"${brush.id.replace(/"/g, '\\"')}"`;
+        } else if (brush.class) {
+            line += `"${brush.class.replace(/"/g, '\\"')}"`;
+            //line += brush.class;
+        }
+
+        if (x !== null && y !== null) {
+            if (line.length > 'des.object('.length) line += ', ';
+            line += `${x.toString().padStart(2, '0')}, ${y.toString().padStart(2, '0')}`;
+        }
+
+        line += ')';
+        return line;
+    }
+
+    // COMPLEX mode
+    let props = [];
+
+    if (brush.id) {
+        props.push(`id = "${brush.id.replace(/"/g, '\\"')}"`);
+    }
+
+    if (brush.coord) {
+        if (brush.coord.variable) {
+            props.push(`coord = ${brush.coord.variable}`);
+        } else if (Array.isArray(brush.coord) && brush.coord.length === 2) {
+            const [cx, cy] = brush.coord;
+            props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
+        }
+    } else if (x !== null && y !== null) {
+        props.push(`x = ${x.toString().padStart(2, '0')}`);
+        props.push(`y = ${y.toString().padStart(2, '0')}`);
+    }
+
+    const otherKeys = ['class', 'spe', 'buc', 'name', 'montype', 'historic', 'quantity', 'trapped', 'locked'];
+    for (const key of otherKeys) {
+        if (brush[key] === undefined) continue;
+
+        let val = brush[key];
+        if (typeof val === 'string') {
+            if (key === 'name' && val.variable) {
+                props.push(`name = ${val.variable}`);
+            } else {
+                props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
+            }
+        } else if (typeof val === 'number' || typeof val === 'boolean') {
+            props.push(`${key} = ${val ? 1 : 0}`);
+        }
+    }
+
+    let line = 'des.object({';
+
+    if (props.length) {
+        line += ' ' + props.join(', ') + (brush.contents && brush.contents.length ? ',' : '');
+    }
+
+    if (brush.contents && brush.contents.length > 0) {
+        const contentsLua = generateContentsLua(brush.contents, '');
+        line += ' contents = ' + contentsLua;
+    } else if (props.length) {
+        line += ' ';
+    }
+
+    line += '})';
+    return line;
+}
+
 function generateObjectLUA() {
     let lua = '';
 
+    // Grid objects (with x,y)
     for (let y = 0; y < 20; y++) {
         for (let x = 0; x < 76; x++) {
-            const obj = layers.object[y][x];
-            if (!obj || !obj.id) continue;
-
-            const props = [];
-            for (const key in obj) {
-                if (key === 'id') continue;
-
-                const val = obj[key];
-                const def = objectDefaults[key];
-
-                if (val === def || val === '' || val === false && def === false) continue;
-
-                if (typeof val === 'boolean') {
-                    if (val === (objectDefaults[key] ?? false)) continue;  // omit default (false → nothing)
-                    props.push(`${key} = ${val ? 1 : 0}`);                   // checked → = 1, unchecked but non-default → = 0
-                } else if (typeof val === 'string' && val) {
-                    props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
-                } else if (typeof val === 'number') {
-                    if (key === 'spe' && val === 0) continue;          // spe 0 is default
-                    if (key === 'quan' && val === 1) continue;         // quantity 1 is default
-                    props.push(`${key} = ${val}`);
-                }
-            }
-
-            let line = `des.object({ id = "${obj.id}", x = ${x}, y = ${y}`;
-            if (props.length) line += ', ' + props.join(', ');
-            line += ' })\n';
-            lua += line;
+            const brush = layers.object[y][x];
+            if (!brush) continue;
+            lua += generateSingleObjectLua(brush, x, y) + '\n';
         }
     }
+
+    // Random objects (no x,y)
+    if (layers.objectRND && layers.objectRND.length) {
+        for (const brush of layers.objectRND) {
+            lua += generateSingleObjectLua(brush) + '\n';
+        }
+    }
+
     return lua;
 }
 
-// === NEW generateMonsterLUA() FUNCTION ===
+function generateLUADefLUA() {
+     let lua = '';
+     if (layers.code && layers.code.length) {
+        for (const brush of layers.code) {
+            lua += brush + '\n';
+        }
+    }
+     return lua;
+}
+
+/**
+ * Helper: generate indented des.object lines for monster inventory (recursive)
+ * Reuses generateSingleObjectLua if available, or inline simple version.
+ */
+function generateMonsterInventoryLua(inventory, indent = '') {
+    if (!inventory || inventory.length === 0) return '';
+
+    let lines = ['function()'];
+    let bodyIndent = indent + '   ';
+
+    for (const objBrush of inventory) {
+        // Assume generateSingleObjectLua exists from object generation
+        // Fallback inline if not
+        let objLine;
+        if (typeof generateSingleObjectLua === 'function') {
+            objLine = generateSingleObjectLua(objBrush);
+        } else {
+            // Minimal fallback
+            const props = [];
+            if (objBrush.id) props.push(`id = "${objBrush.id}"`);
+            if (objBrush.spe !== undefined) props.push(`spe = ${objBrush.spe}`);
+            if (objBrush.buc) props.push(`buc = "${objBrush.buc}"`);
+            if (objBrush.name) props.push(`name = "${objBrush.name}"`);
+            objLine = `des.object({ ${props.join(', ')} })`;
+        }
+        lines.push(bodyIndent + objLine);
+    }
+
+    lines.push(indent + 'end');
+    return lines.join('\n');
+}
+
+/**
+ * Helper: generate indented des.object lines for monster inventory (recursive)
+ */
+function generateMonsterInventoryLua(inventory, indent = '') {
+    if (!inventory || inventory.length === 0) return '';
+
+    let lines = ['function()'];
+    let bodyIndent = indent + '   ';
+
+    for (const objBrush of inventory) {
+        let objLine;
+        if (typeof generateSingleObjectLua === 'function') {
+            objLine = generateSingleObjectLua(objBrush);
+        } else {
+            // Fallback minimal
+            const props = [];
+            if (objBrush.id) props.push(`id = "${objBrush.id}"`);
+            if (objBrush.spe !== undefined) props.push(`spe = ${objBrush.spe}`);
+            if (objBrush.buc) props.push(`buc = "${objBrush.buc}"`);
+            if (objBrush.name) props.push(`name = "${objBrush.name}"`);
+            objLine = `des.object({ ${props.join(', ')} })`;
+        }
+        lines.push(bodyIndent + objLine);
+    }
+
+    lines.push(indent + 'end');
+    return lines.join('\n');
+}
+
+/**
+ * Helper: generate single des.monster(...) line
+ * Complex tables are single-line except inventory (multi-line)
+ */
+function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
+    if (!brush) return '';
+
+    const mode = brush.internal?.brushMode || 'simple';
+
+    if (mode === 'simple') {
+        let line = 'des.monster(';
+
+        if (brush.name && brush.name.variable) {
+            line += brush.name.variable;
+        } else if (brush.id) {
+            line += `"${brush.id.replace(/"/g, '\\"')}"`;
+        } else if (brush.class) {
+            line += brush.class;
+        }
+
+        if (gridX !== null && gridY !== null) {
+            if (line.length > 'des.monster('.length) line += ', ';
+            line += `${gridX.toString().padStart(2, '0')}, ${gridY.toString().padStart(2, '0')}`;
+        }
+
+        line += ')';
+        return line;
+    }
+
+    // COMPLEX: single-line table except inventory
+    let props = [];
+
+    if (brush.id) {
+        props.push(`id = "${brush.id.replace(/"/g, '\\"')}"`);
+    }
+
+    if (brush.coord) {
+        if (brush.coord.variable) {
+            props.push(`coord = ${brush.coord.variable}`);
+        } else if (Array.isArray(brush.coord) && brush.coord.length === 2) {
+            const [cx, cy] = brush.coord;
+            props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
+        }
+    } else if (gridX !== null && gridY !== null) {
+        props.push(`x = ${gridX.toString().padStart(2, '0')}`);
+        props.push(`y = ${gridY.toString().padStart(2, '0')}`);
+    }
+
+    const keys = ['class', 'peaceful', 'align', 'appear_as', 'asleep'];
+    for (const key of keys) {
+        if (brush[key] === undefined) continue;
+        let val = brush[key];
+        if (typeof val === 'string') {
+            if (key === 'name' && val.variable) {
+                props.push(`${key} = ${val.variable}`);
+            } else {
+                props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
+            }
+        } else if (typeof val === 'number' || typeof val === 'boolean') {
+            props.push(`${key} = ${val ? 1 : 0}`);
+        }
+    }
+
+    let line = 'des.monster({ ';
+    if (props.length) {
+        line += props.join(', ') + ' ';
+    }
+
+    // Inventory: multi-line
+    if (brush.inventory && brush.inventory.length > 0) {
+        const invLua = generateMonsterInventoryLua(brush.inventory, '');
+        line += `inventory = ${invLua}`;
+    } else if (props.length) {
+        line = line.trim(); // remove trailing space if no inventory
+    }
+
+    line += ' })';
+    return line;
+}
+
+/**
+ * Main: generate all monster Lua (grid + random)
+ */
 function generateMonsterLUA() {
     let lua = '';
 
+    // Grid monsters
     for (let y = 0; y < 20; y++) {
         for (let x = 0; x < 76; x++) {
-            const mon = layers.monster[y][x];
-            if (!mon || !mon.id) continue;
-
-            const props = [];
-            for (const key in mon) {
-                if (key === 'id') continue;
-
-                const val = mon[key];
-                const def = monsterDefaults[key];
-
-                // Skip obvious defaults
-                if (val === def || val === '' || val === false && def === false) continue;
-
-                if (typeof val === 'boolean') {
-                    if (val === (monsterDefaults[key] ?? false)) continue;  // omit default (false → nothing)
-                    props.push(`${key} = ${val ? 1 : 0}`);                   // checked → = 1, unchecked but non-default → = 0
-                } else if (typeof val === 'string' && val) {
-                    props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
-                } else if (typeof val === 'number' && val !== 0) {     // include non-zero numbers
-                    props.push(`${key} = ${val}`);
-                }
-                // Add more types here if needed (e.g. arrays for inventory later)
-            }
-
-            xyText = `x = ${x}, y = ${y}`
-            let classOrIDText = '';
-            let nameText = '';
-            let invText = '';
-            let boolOptions = '';
-
-            for (const key in mon) 
-            {
-              const value = mon[key];
-              if (typeof value === 'boolean' && value === true) {
-                  boolOptions += `${key} = 1, `;
-                }
-            }
-
-            if (mon.monsterSelectMode === 'class') {
-                classOrIDText = `class = "${mon.id}",`;
-            } else {
-                classOrIDText = `id = "${mon.id}",`; 
-                if( mon.name) nameText = `name = "${mon.name}"`;
-                if( mon.inventory) invText = `inventory = ${mon.inventory}`;
-            }
-
-            let line = `des.monster({ ${classOrIDText} ${boolOptions} ${nameText} ${invText} ${xyText}`;
-            //if (props.length) line += ', ' + props.join(', ');
-            line += ' })\n';
-            lua += line;
+            const brush = layers.monster[y][x];
+            if (!brush) continue;
+            lua += generateSingleMonsterLua(brush, x, y) + '\n';
         }
     }
+
+    // Random monsters
+    if (layers.monsterRND && layers.monsterRND.length) {
+        for (const brush of layers.monsterRND) {
+            lua += generateSingleMonsterLua(brush) + '\n';
+        }
+    }
+
     return lua;
 }
 
@@ -1704,7 +1963,8 @@ const generateFunctions = {
     objects:  generateObjectLUA,   // you will need to write this similar to terrain
     monsters: generateMonsterLUA,  // you will need to write this
     lighting: generateLightLUA,      // the one we wrote earlier
-    features: generateFeaturesLua
+    features: generateFeaturesLua,
+    luadef: generateLUADefLUA
 };
 
 document.querySelectorAll('.refresh').forEach(btn => {
@@ -1735,7 +1995,8 @@ function updateText( updateLight = false) {
   const monsterText = generateMonsterLUA();
   document.getElementById('monster-textarea').value = monsterText;
 
-  
+  const LuaDefText = generateLUADefLUA();
+  document.getElementById('luadef-textarea').value = LuaDefText;
   // Lighting
   // Lighting update is CPU intensive so don't do it by default
   
@@ -2173,6 +2434,171 @@ function getFeaturesAtXY(x, y) {
     return matchingFeatures; // Array of feature objects at this coordinate (can be empty)
 }
 
+/**
+ * Get formatted info for a monster brush (for UI display, tooltips, etc.)
+ * Handles concrete, random, variable, and unknown cases gracefully.
+ *
+ * @param {Object} brush - monster brush from getMonsterBrushFromLUAObj
+ * @returns {Object}
+ */
+function getMonsterInfo(brush) {
+    if (!brush || !brush.internal) {
+        return {
+            symbol: '?',
+            class: '?',
+            description: 'None',
+            color: 'CLR_WHITE',
+            status: [],
+            inventory: null
+        };
+    }
+
+    const info = {
+        symbol: getSymbolFromBrush(brush),
+        class: brush.class || '?',
+        description: '',
+        color: brush.internal.color || 'CLR_WHITE',
+        status: [],
+        inventory: null
+    };
+    getDescFromMonsterClass
+    // Description
+    if (brush.id) {
+        info.description = brush.id;
+    } else if (brush.name && brush.name.variable) {
+        info.description = `var "${brush.name.variable}"`;
+    } else if (brush.internal.random) {
+        info.description = 'Random Monster';
+    } else if (brush.class)
+    {
+        info.description = getDescFromMonsterClass(brush.class);
+    }    
+    else {
+        info.description = 'Unknown Monster';
+    }
+
+    // Class fallback from lookup if not explicit
+    if (!brush.class && brush.id) {
+        const mon = getMonsterById(brush.id);
+        if (mon && mon.class1) {
+            info.class = mon.class1; // or whatever field holds class char
+        }
+    }
+
+    // Status properties
+    if (brush.peaceful !== undefined) {
+        info.status.push(brush.peaceful ? 'Peaceful' : 'Hostile');
+    }
+    if (brush.asleep) {
+        info.status.push('Sleeping');
+    }
+    if (brush.align) {
+        info.status.push(`Alignment: ${brush.align}`);
+    }
+    // Add more as needed (appear_as, etc.)
+
+    // Inventory: array of short object descriptions
+    if (brush.inventory && brush.inventory.length > 0) {
+        info.inventory = brush.inventory.map(objBrush => {
+            if (!objBrush) return 'Invalid Item';
+            if (objBrush.id) {
+                let desc = objBrush.id;
+                if (objBrush.buc) desc += ` (${objBrush.buc})`;
+                if (objBrush.spe !== undefined && objBrush.spe !== 0) desc += ` ${objBrush.spe > 0 ? '+' : ''}${objBrush.spe}`;
+                if (objBrush.name) desc += ` "${objBrush.name}"`;
+                return desc;
+            }
+            if (objBrush.name && objBrush.name.variable) {
+                return `Variable Item (${objBrush.name.variable})`;
+            }
+            if (objBrush.class) {
+                return `Random ${objBrush.class} Item`;
+            }
+            return 'Random Item';
+        });
+    }
+
+    return info;
+}
+
+/**
+ * Get formatted info for an object brush (for UI display, tooltips, etc.)
+ * Handles concrete, random, variable, and unknown cases.
+ *
+ * @param {Object} brush - object brush from getObjectBrushFromLUAObj
+ * @returns {Object}
+ */
+function getObjectInfo(brush) {
+    if (!brush || !brush.internal) {
+        return {
+            symbol: '?',
+            class: '?',
+            description: 'None',
+            color: 'CLR_WHITE',
+            status: [],
+            contents: null
+        };
+    }
+
+    const info = {
+        symbol: getSymbolFromBrush(brush),
+        class: brush.class || '?',
+        description: '',
+        color: brush.internal.color || 'CLR_WHITE',
+        status: [],
+        contents: null
+    };
+
+    // Description
+    if (brush.id) {
+        info.description = brush.id;
+    } else if (brush.name && brush.name.variable) {
+        info.description = `var "${brush.name.variable}"`;
+    } else if (brush.internal.random) {
+        info.description = 'Random Object';
+    } else if (brush.class) {
+        info.description = getClassFromSymbol(brush.class);
+    } else {
+        info.description = 'Unknown Object';
+    }
+
+    // Class fallback from lookup
+    if (!brush.class && brush.id) {
+        const obj = getObjectById(brush.id);
+        if (obj && obj.class2) { // adjust field if needed (class1/class2 from your defs)
+            info.class = obj.class2;
+        }
+    }
+
+    // Status properties
+    if (brush.buc) {
+        info.status.push(brush.buc.charAt(0).toUpperCase() + brush.buc.slice(1)); // "Blessed", "Cursed", etc.
+    }
+    if (brush.spe !== undefined && brush.spe !== 0) {
+        info.status.push(`${brush.spe > 0 ? '+' : ''}${brush.spe} Enchantment`);
+    }
+    if (brush.trapped !== undefined) {
+        info.status.push(brush.trapped ? 'Trapped' : 'Not Trapped');
+    }
+    if (brush.locked !== undefined) {
+        info.status.push(brush.locked ? 'Locked' : 'Unlocked');
+    }
+    if (brush.name && typeof brush.name === 'string') {
+        info.status.push(`Named: "${brush.name}"`);
+    }
+    // Add more (quantity, historic, etc.)
+
+    // Contents: recursive short descriptions
+    if (brush.contents && brush.contents.length > 0) {
+        info.contents = brush.contents.map(innerBrush => {
+            const innerInfo = getObjectInfo(innerBrush);
+            return innerInfo.description;
+        });
+    }
+
+    return info;
+}
+
 // === NEW FUNCTION TO UPDATE CURSOR INFO WITH ALL LAYERS ===
 function updateCursorInfo(x, y) {
     let lines = [];
@@ -2183,17 +2609,17 @@ function updateCursorInfo(x, y) {
     const terrainType = layers.terrain[y]?.[x] || 'none';
     const terrainChar = allTerrains[terrainType] ? allTerrains[terrainType].symbol : ' '; // use your existing function if available
     const terrainDesc = allTerrains[terrainType].id || 'null';
-    lines.push(`Terrain: ${terrainChar} - ${terrainDesc}`);
+    lines.push(`Terrain: ${terrainDesc} "${terrainChar}" `);
 
     // Object
-    const obj = layers.object[y]?.[x];
-    const objId = obj ? (obj.id || 'unknown') : 'none';
-    lines.push(`Object: ${objId}`);
+    objectInfo = getObjectInfo(layers.object[y]?.[x]);
+    const objContents = objectInfo.contents ? " (has contents)": "";
+    lines.push(`Object: ${objectInfo.description}${objContents} (${objectInfo.status.join(', ')})`);
 
     // Monster (monster layer)
-    const mon = layers.monster[y]?.[x];
-    const monId = mon ? (mon.id || 'unknown') : 'none';
-    lines.push(`Monster: ${monId}`);
+    const monsterInfo = getMonsterInfo(layers.monster[y]?.[x]);
+    const monInventory = monsterInfo.inventory ? " (has inventory)": "";
+    lines.push(`Monster: ${monsterInfo.description}${monInventory}`);
 
     // Lighting (assuming layers.lighting[y][x] stores 'lit', 'dark', or null/undefined)
     // Adjust if your lighting layer uses different values (e.g., true/false or 'light'/'dark')
@@ -2205,8 +2631,8 @@ function updateCursorInfo(x, y) {
     if( featList )
     {
       featList.forEach( (feat, indx) => {
-        const typeStr = feat.type ? ` | ${feat.type}` : ( feat.trapType ? ` | ${feat.trapType}` : '' );
-        lines.push(`Feature #${indx+1}: ${feat.def} ${typeStr}`);
+        const typeStr = feat.name ? (`${feat.name} | ${ feat.trapType ?  feat.trapType : ''  } `) : '';
+        lines.push(`Feature #${indx+1}: ${typeStr} "${feat.symbol}" `);
       });
     }
     // Join with <br> for HTML display
@@ -2216,7 +2642,53 @@ function updateCursorInfo(x, y) {
     //document.getElementById('position').innerHTML = infoHtml;
 }
 
+/**
+ * Update cursor hover info for RND cells.
+ * Returns a two-line string:
+ *   Line 1: "Cursor: <desc>" (e.g., "Cursor: Random Monster")
+ *   Line 2: Short description of the brush (symbol + name/id/class + status)
+ *
+ * Handles monster and object brushes via getMonsterInfo/getObjectInfo.
+ * Graceful fallbacks for null, random, variable, or unknown brushes.
+ *
+ * @param {string} desc - Context label (e.g., "Random Monster", "Placed Object")
+ * @param {Object|null} obj - The brush object (or null/undefined)
+ * @returns {string} Two-line description (with \n)
+ */
+function updateCursorInfoBrush(desc, obj) {
+    let line1 = `Cursor:\n ${desc || 'Unknown'}`;
 
+    if (!obj || !obj.internal) {
+        return `${line1}\nEmpty`;
+    }
+
+    let line2 = '';
+    const symbol = getSymbolFromBrush(obj);
+
+    if (obj.internal.type === 'monster') {
+        const info = getMonsterInfo(obj);
+        line2 = `${info.description}`;
+        if (info.status.length > 0) {
+            line2 += ` (${info.status.join(', ')})`;
+        }
+    } else if (obj.internal.type === 'object') {
+        // Object (or fallback)
+        const info = getObjectInfo(obj);
+        line2 = `${info.description} "${symbol}" `;
+        if (info.status.length > 0) {
+            line2 += ` (${info.status.join(', ')})`;
+        }
+    }
+    else if (obj.internal.type === 'feature') {
+        const info = getFeatureInfo(obj);
+        line2 = `${info.type} (${info.description}) "${info.symbol}" `;
+        if (info.options.length > 0) {
+            line2 += `\n (${info.options.join(', ')})`;
+        }
+    }
+
+    return `${line1}\n${line2}`;
+}
 
 let isDragging = false;
 
@@ -2336,48 +2808,122 @@ function getColorRGB(token) {
 
 function renderRNDLayers() {
     ['object', 'monster', 'feature'].forEach(type => {
-    const grid = document.getElementById(type + '-rnd');
-    let list = (type === 'feature')
-        ? layers.features.filter(f => f.x === undefined && f.y === undefined)
-        : layers[type + 'RND'] || [];
+        const grid = document.getElementById(type + '-rnd');
+        let list;
 
-    list = list.slice(0, 50);   // safety cap
+        if (type === 'feature') {
+            list = layers.features.filter(f => f.x === undefined && f.y === undefined);
+        } else {
+            list = layers[type + 'RND'] || [];
+        }
 
-    for (let i = 0; i < 50; i++) {
-        const cell = grid.children[i];
-        cell.innerHTML = '';
-        cell.title = '';
-        let displayColor = "#ffffff"; // default foreground (white)
+        list = list.slice(0, 50); // safety cap
 
-        if (i < list.length) {
-            const item = list[i];
+        for (let i = 0; i < 50; i++) {
+            const cell = grid.children[i];
+            cell.innerHTML = '';
+            cell.title = '';
 
-            let html = '';
-            let title = '';
-            if( item.color) displayColor = getColorRGB(item.color);
-            if (type === 'object' || type === 'monster') {
-                html = `<span style="color:${item.color || '#fff'}">${item.sym || '?'}</span>`;
-                title = item.name || '';
-            } else { // feature / trap
-                if (item.trapType !== undefined) {
-                    const t = trapTypes.find(tt => tt.type === item.trapType);
-                    if (t) {
-                        html = `<span style="color:${t.color}">${t.sym}</span>`;
-                        title = t.name;
-                    }
+            if (i >= list.length) continue;
+
+            const brush = list[i];
+
+            // Default fallback
+            let symbol = '?';
+            let colorStr = 'CLR_WHITE';
+            let title = 'Unknown';
+
+            if (brush && brush.internal) {
+                symbol = getSymbolFromBrush(brush);
+                colorStr = brush.internal.color || 'CLR_WHITE';
+
+                // Build title
+                if (brush.id) {
+                    title = brush.id;
+                } else if (brush.class) {
+                    title = brush.class + ' (class)';
+                } else if (brush.name && brush.name.variable) {
+                    title = brush.name.variable + ' (variable)';
+                } else if (brush.internal.random) {
+                    title = 'Random ' + (type === 'monster' ? 'Monster' : 'Object');
                 } else {
-                    html = item.sym || '?';
-                    title = item.name || 'feature';
+                    title = 'Unknown ' + (type === 'monster' ? 'Monster' : 'Object');
                 }
             }
 
-            cell.innerHTML = html;
+            // For features/traps – keep original logic (unchanged brushes)
+            if (type === 'feature') {
+                if (brush.trapType !== undefined) {
+                    const t = trapTypes.find(tt => tt.type === brush.trapType);
+                    if (t) {
+                        symbol = t.sym;
+                        colorStr = t.color;
+                        title = t.name;
+                    }
+                } else if (brush.sym) {
+                    symbol = brush.sym;
+                    title = brush.name || 'feature';
+                }
+            }
+
+            const rgbColor = getColorRGB(colorStr);
+
+            cell.innerHTML = `<span style="color:${rgbColor}">${symbol}</span>`;
             cell.title = title;
-            cell.style.color = displayColor;  
+            cell.style.color = rgbColor; // foreground
+        }
+    });
+}
+
+/**
+ * Get display ASCII symbol for any brush (object or monster).
+ * Uses brush.internal.type to choose lookup table and placeholders.
+ *
+ * Unknown/variable:
+ *   - Object: '§'
+ *   - Monster: 'M' (capital M – distinctive, ASCII-safe, suggests "Monster")
+ *
+ * Random:
+ *   - Object: '*'
+ *   - Monster: 'm' (lowercase m – generic monster)
+ */
+function getSymbolFromBrush(brush) {
+    if (!brush || !brush.internal) return '¿';
+
+    const type = brush.internal.type || 'object';
+
+    // Direct symbol highest priority
+    if (brush.internal.symbol && typeof brush.internal.symbol === 'string') {
+        return brush.internal.symbol;
+    }
+
+    // ID lookup
+    if (brush.id && typeof brush.id === 'string') {
+        let lookup;
+        if (type === 'monster') {
+            lookup = getMonsterById(brush.id);
+        } else {
+            lookup = getObjectById(brush.id);
+        }
+        if (lookup && lookup.symbol) {
+            return lookup.symbol;
         }
     }
-});
+
+    // Class char
+    if (brush.class && typeof brush.class === 'string') {
+        return brush.class;
+    }
+
+    // Variable reference or truly unknown
+    if (brush.name && typeof brush.name === 'object' && brush.name.variable) {
+        return type === 'monster' ? '♠' : '♦';
+    }
+
+    // Random fallback
+    return type === 'monster' ? '♣' : '§';
 }
+
 function renderLayers() {
   // Helper to convert a color token (e.g. "CLR_RED", "HI_DOMESTIC", "NO_COLOR") to an rgb() string
   
@@ -2440,49 +2986,27 @@ function renderLayers() {
 
       // ----- Object layer (overrides terrain char + color) -----
       if (visibleLayers.object && layers.object[y][x]) {
-        const objId = layers.object[y][x].id.toLowerCase();
-        const obj = allObjects[objId];
-        if (obj) {
-          // Use the symbol you already have from getObjectChar if you prefer,
-          // but allObjects now contains the correct symbol directly
-          displayChar = obj.symbol || '?';
-          if (obj.color) {
-            displayColor = getColorRGB(obj.color);
-          }
-          // If the object has no explicit color, keep the terrain color underneath
+
+        displayChar = getSymbolFromBrush( layers.object[y][x] );
+        if ( layers.object[y][x].internal?.color ) {
+            displayColor = getColorRGB(layers.object[y][x].internal?.color);
         }
+        
       }
 
       // ----- Monster/Monster layer (overrides object char + color) -----
       if (visibleLayers.monster && layers.monster[y][x]) {
 
         const monBrush = layers.monster[y][x];
-        const monId = monBrush.id.toLowerCase();
+        displayChar = getSymbolFromBrush(monBrush);
+        if ( monBrush.internal?.color ) {
+            displayColor = getColorRGB( monBrush.internal?.color);
+        }
         
-        if( monBrush.monsterSelectMode == "class" )
-        {
-            displayChar = monBrush.id || 'm';
-            displayColor = getColorRGB('CLR_WHITE');
-        }
-        else
-        {
-          const mon = allMonsters[monId];
-          if (mon) 
-          {
-            displayChar = mon.symbol || 'm';
-            if (mon.color) {
-              displayColor = getColorRGB(mon.color);
-            }
-            // If the monster has no explicit color, keep the previous layer's color
-          }
-        }
         
       }
 
-      // ----- Lighting layer (background only) -----
-      /*if (visibleLayers.lighting) {
-        displayLight = layers.lighting[y][x] === 'lit' ? LIGHT_BG : DARK_BG;
-      }*/
+      
 
       // ----- Final render to the cell -----
       cell.textContent = displayChar;
@@ -2705,6 +3229,7 @@ createGrid();
 createRndGrids();
 renderLayers();  // initial render
 updateText( true);
+setupRNDLayerListeners();
 </script>
 <script src="loadLUAMap.js"></script>
 </body>

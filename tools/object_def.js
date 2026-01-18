@@ -1,3 +1,66 @@
+/**
+ * Look up an object definition by its string ID (case-insensitive).
+ * The allObjects table uses lowercase keys, but Lua .des files often
+ * use mixed-case or title-case strings (e.g. "fedora", "Bullwhip").
+ *
+ * @param {string} objID - the raw ID string from the Lua table (already dequoted)
+ * @returns {Object|null} the matching entry from allObjects, or null if not found
+ */
+function getObjectById(objID) {
+    if (typeof objID !== 'string') return null;
+
+    const lowerID = objID.toLowerCase();
+
+    if (allObjects.hasOwnProperty(lowerID)) {
+        return allObjects[lowerID];
+    }
+
+    // Optional: helpful warning during development/loading
+    console.warn(`Object ID not found in allObjects: "${objID}" (tried "${lowerID}")`);
+    return null;
+}
+
+/**
+ * Look up object class description by symbol.
+ *
+ * @param {string} symbol - The object class symbol (e.g., ')', '[', 'φ')
+ * @returns {string} Class description or 'unknown' if not found
+ */
+function getClassFromSymbol(symbol) {
+    if (typeof symbol !== 'string') {
+        return 'unknown';
+    }
+
+    const entry = allObjClasses.find(cls => cls.symbol === symbol);
+    return entry ? entry.desc : 'unknown';
+}
+
+/**
+ * Global array of object classes for lookup/display.
+ * Each entry: { symbol: string, desc: string }
+ * Mirrors the OBJCLASS macros from the source.
+ */
+const allObjClasses = [
+    { symbol: ']', desc: "illegal object" },
+    { symbol: ')', desc: "weapon" },
+    { symbol: '[', desc: "armor" },
+    { symbol: '=', desc: "ring" },
+    { symbol: '"', desc: "amulet" },
+    { symbol: '(', desc: "tool" },
+    { symbol: '%', desc: "food" },
+    { symbol: '!', desc: "elixer" },
+    { symbol: '?', desc: "verse" },
+    { symbol: '+', desc: "prophetic book" },
+    { symbol: '/', desc: "rod" },
+    { symbol: '$', desc: "coin(s)" },
+    { symbol: '*', desc: "rock" },
+    { symbol: '`', desc: "large stone" },
+    { symbol: '0', desc: "iron ball" },
+    { symbol: '_', desc: "chains" },
+    { symbol: '.', desc: "venom" },
+    { symbol: 'φ', desc: "anointing oil" }  // Greek lowercase phi (U+03C6)
+];
+
 const allObjects = {
     "agate": {
         id: "agate",
