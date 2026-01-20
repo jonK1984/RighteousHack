@@ -47,7 +47,7 @@ const allObjects = {
         is_artifact: false,
         color: "CLR_MAGENTA",
     },
-    "amulet of amulet of change": {
+    "amulet of change": {
         id: "amulet of change",
         symbol: "\"",
         class1: "amulets",
@@ -55,7 +55,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of esp": {
+    "amulet of esp": {
         id: "amulet of esp",
         symbol: "\"",
         class1: "amulets",
@@ -63,7 +63,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of flying": {
+    "amulet of flying": {
         id: "amulet of flying",
         symbol: "\"",
         class1: "amulets",
@@ -71,7 +71,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of guarding": {
+    "amulet of guarding": {
         id: "amulet of guarding",
         symbol: "\"",
         class1: "amulets",
@@ -79,7 +79,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of life saving": {
+    "amulet of life saving": {
         id: "amulet of life saving",
         symbol: "\"",
         class1: "amulets",
@@ -87,7 +87,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of magical breathing": {
+    "amulet of magical breathing": {
         id: "amulet of magical breathing",
         symbol: "\"",
         class1: "amulets",
@@ -95,7 +95,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of reflection": {
+    "amulet of reflection": {
         id: "amulet of reflection",
         symbol: "\"",
         class1: "amulets",
@@ -103,7 +103,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of restful sleep": {
+    "amulet of restful sleep": {
         id: "amulet of restful sleep",
         symbol: "\"",
         class1: "amulets",
@@ -111,7 +111,7 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of strangulation": {
+    "amulet of strangulation": {
         id: "amulet of strangulation",
         symbol: "\"",
         class1: "amulets",
@@ -119,16 +119,8 @@ const allObjects = {
         is_artifact: false,
         color: "None",
     },
-    "amulet of amulet of unchanging": {
+    "amulet of unchanging": {
         id: "amulet of unchanging",
-        symbol: "\"",
-        class1: "amulets",
-        class2: "amulet",
-        is_artifact: false,
-        color: "None",
-    },
-    "amulet of amulet versus poison": {
-        id: "amulet versus poison",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
@@ -142,6 +134,14 @@ const allObjects = {
         class2: "",
         is_artifact: false,
         color: "HI_METAL",
+    },
+    "amulet versus poison": {
+        id: "amulet versus poison",
+        symbol: "\"",
+        class1: "amulets",
+        class2: "amulet",
+        is_artifact: false,
+        color: "None",
     },
     "ancient defense": {
         id: "ancient defense",

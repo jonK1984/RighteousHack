@@ -6,6 +6,9 @@
  * @param {string} str - the monster class character (e.g., "D", "A", "@")
  * @returns {string} description or "Unknown monster class" if not found
  */
+
+const monsterSymMap = {};
+
 function getDescFromMonsterClass(str) {
     if (typeof str !== 'string' || str.length === 0) {
         return 'Unknown monster class';
@@ -19,6 +22,58 @@ function getDescFromMonsterClass(str) {
     }
 
     return 'Unknown monster class';
+}
+
+function getMonsterSym(name) {
+    if (!name) return null;
+    name = name.trim();
+    if (name.length === 1) return name; // class letter
+    const lower = name.toLowerCase();
+    return monsterSymMap[lower] || name.charAt(0).toUpperCase();
+}
+
+/**
+ * Checks whether a given character is a valid monster class symbol.
+ * 
+ * @param {string} char - The single character to validate (e.g. 'A', 'd', ':').
+ *                        Expected to be a string of length 1.
+ * @returns {boolean}   - true if the character matches the .class field of any
+ *                        entry in allMonsterClasses[], false otherwise.
+ */
+function isValidMonsterClass(char) {
+    // Basic sanity - monster classes are always a single character
+    if (typeof char !== 'string' || char.length !== 1) {
+        return false;
+    }
+
+    // Search the master list - uses .some() for early exit as soon as a match is found
+    return allMonsterClasses.some(mc => mc.class === char);
+}
+
+/**
+ * Checks whether a given monster ID string corresponds to a valid monster entry.
+ * 
+ * @param {string} idStr - The monster ID to validate (e.g. "abbot", "angel").
+ *                         Expected to be a non-empty string.
+ * @returns {boolean}    - true if allMonsters[idStr] exists and is a valid monster object,
+ *                         false otherwise.
+ */
+function isValidMonsterID(idStr) {
+    // Basic input validation
+    if (typeof idStr !== 'string' || idStr.length === 0) {
+        return false;
+    }
+
+    const monster = allMonsters[idStr];
+
+    // A valid monster must be a non-null object and have at least an 'id' field
+    // (the example struct always has 'id', 'symbol', etc.)
+    return (
+        monster !== null &&
+        typeof monster === 'object' &&
+        monster.id.toLowerCase() === idStr &&         // ensures the key matches the internal .id
+        typeof monster.symbol === 'string' // basic sanity - every monster has a symbol
+    );
 }
 
 const allMonsterClasses = [

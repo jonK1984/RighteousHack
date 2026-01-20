@@ -36,6 +36,51 @@ function getClassFromSymbol(symbol) {
 }
 
 /**
+ * Checks whether a given object ID string corresponds to a valid object entry.
+ * 
+ * The lookup is case-insensitive (matches the behavior of getObjectById).
+ * 
+ * @param {string} idStr - The object ID to validate (e.g. "apple", "Fedora", "bullwhip").
+ *                         Expected to be a non-empty string.
+ * @returns {boolean}    - true if allObjects contains an entry for the lowercase ID,
+ *                         false otherwise.
+ */
+function isValidObjectID(idStr) {
+    if (typeof idStr !== 'string' || idStr.length === 0) {
+        return false;
+    }
+
+    const lowerID = idStr.toLowerCase();
+
+    const obj = allObjects[lowerID];
+
+    // Basic sanity - the entry must exist and have a matching .id field
+    return (
+        obj !== undefined &&
+        typeof obj === 'object' &&
+        obj.id && obj.id.toLowerCase() === lowerID
+    );
+}
+
+/**
+ * Checks whether a given ASCII symbol is a valid object class symbol.
+ * 
+ * Object class symbols are always a single character (e.g. ')', '[', '%', '(').
+ * 
+ * @param {string} symbol - The single-character symbol to validate.
+ * @returns {boolean}     - true if any entry in allObjClasses has this symbol,
+ *                          false otherwise.
+ */
+function isValidObjectClass(symbol) {
+    if (typeof symbol !== 'string' || symbol.length !== 1) {
+        return false;
+    }
+
+    // Use .some() for early exit as soon as a match is found
+    return allObjClasses.some(cls => cls.symbol === symbol);
+}
+
+/**
  * Global array of object classes for lookup/display.
  * Each entry: { symbol: string, desc: string }
  * Mirrors the OBJCLASS macros from the source.
@@ -110,99 +155,99 @@ const allObjects = {
         is_artifact: false,
         color: "CLR_MAGENTA",
     },
-    "amulet of amulet of change": {
+    "amulet of change": {
         id: "amulet of change",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of esp": {
+    "amulet of esp": {
         id: "amulet of esp",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of flying": {
+    "amulet of flying": {
         id: "amulet of flying",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of guarding": {
+    "amulet of guarding": {
         id: "amulet of guarding",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of life saving": {
+    "amulet of life saving": {
         id: "amulet of life saving",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of magical breathing": {
+    "amulet of magical breathing": {
         id: "amulet of magical breathing",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of reflection": {
+    "amulet of reflection": {
         id: "amulet of reflection",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of restful sleep": {
+    "amulet of restful sleep": {
         id: "amulet of restful sleep",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of strangulation": {
+    "amulet of strangulation": {
         id: "amulet of strangulation",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
-    "amulet of amulet of unchanging": {
+    "amulet of unchanging": {
         id: "amulet of unchanging",
         symbol: "\"",
         class1: "amulets",
         class2: "amulet",
         is_artifact: false,
-        color: "None",
-    },
-    "amulet of amulet versus poison": {
-        id: "amulet versus poison",
-        symbol: "\"",
-        class1: "amulets",
-        class2: "amulet",
-        is_artifact: false,
-        color: "None",
+        color: "HI_METAL",
     },
     "amulet of yendor": {
         id: "amulet of yendor",
         symbol: "?",
         class1: "hi_metal",
         class2: "",
+        is_artifact: false,
+        color: "HI_METAL",
+    },
+    "amulet versus poison": {
+        id: "amulet versus poison",
+        symbol: "\"",
+        class1: "amulets",
+        class2: "amulet",
         is_artifact: false,
         color: "HI_METAL",
     },

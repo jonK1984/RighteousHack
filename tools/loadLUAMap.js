@@ -7,7 +7,7 @@
 //const ROWS = 21;
 
 // Lookup maps built dynamically from the definition files
-const monsterSymMap = {};
+
 const objectSymMap = {};
 const featureSymMap = {};
 
@@ -103,13 +103,7 @@ function buildLookups() {
     Object.assign(featureSymMap, specials);
 }
 
-function getMonsterSym(name) {
-    if (!name) return null;
-    name = name.trim();
-    if (name.length === 1) return name; // class letter
-    const lower = name.toLowerCase();
-    return monsterSymMap[lower] || name.charAt(0).toUpperCase();
-}
+
 
 function getObjectSym(name) {
     if (!name) return null;

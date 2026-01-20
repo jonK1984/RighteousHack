@@ -1,11 +1,11 @@
 
   body { background-color: #000; color: #fff; font-family: monospace; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
-  #menubar { height: 10%; min-height: 230px; #15202b; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; border-bottom: 1px solid #22303c; }
+  #menubar { height: 10%; min-height: 230px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; border-bottom: 1px solid #22303c; }
   .toolbar-row { display: flex; flex-wrap: nowrap; gap: 5px; }
   .toolbar-row button { background: #22303c; color: #1da1f2; border: 1px solid #38444d; padding: 8px 12px; cursor: pointer; font-family: monospace; min-width: 50px; }
   .toolbar-row button.selected { background: #1da1f2; color: #fff; }
   #main { flex: 1; display: flex; }
-  #left, #right { flex: 1; margin: 20px; display: flex; flex-direction: column; }
+  #left, #right { margin: 20px; display: flex; flex-direction: column; }
   #grid { 
     position: relative;
     display: grid; 
@@ -65,7 +65,7 @@
     background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
   }
   .popup {
-    background: #22303c; padding: 20px; border: 1px solid #1da1f2; width: 700px; max-height: 750px; 
+    background: #22303c; padding: 20px; border: 1px solid #1da1f2; min-width: 700px; max-height: 750px; margin: 30px;
   }
 
   #init-popup-container {
@@ -142,17 +142,23 @@
       flex: 1;
       min-width: 300px;
   }
-
-  .obj-scroll-list {
-      flex: 0 0 300px;              /* slightly wider than monster list */
-      max-height: 650px;
-      overflow-y: auto;
-      background: #22303c;
-      border: 1px solid #1da1f2;
-      border-radius: 6px;
-      padding: 8px;
-      font-size: 14px;
+#mon-obj-suggestions {
+    flex: 0 0 600px;        
   }
+#obj-suggestions  {
+    flex: 0 0 300px;        
+  }
+
+.obj-scroll-list {
+    /* slightly wider than monster list */
+    max-height: 650px;
+    overflow-y: auto;
+    background: #22303c;
+    border: 1px solid #1da1f2;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 14px;
+}
 
   .obj-scroll-list .obj-item {
       display: flex;
@@ -262,4 +268,277 @@
 }
 .rnd-cell:hover {
     background: #333;
+}
+
+
+
+
+/* Monster popup – right-hand options panel */
+#monster-popup .options-panel {
+    
+    padding: 15px;
+    border-left: 1px solid #444;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: hidden;           /* no vertical scroll on the panel */
+    overflow-x: auto;             /* horizontal scroll for extra columns */
+    min-width: 420px;             /* keep a reasonable minimum visible width */
+    padding-bottom: 20px;         /* space for horizontal scrollbar */
+}
+
+#monster-popup #monster-options-form {
+    
+    min-width: 630px;            /* ensure it doesn't shrink */
+    column-width: 240px;          /* each column exactly 365px */
+    column-gap: 30px;             /* horizontal space between columns */
+    column-rule: 1px solid #444;  /* the exact 1px vertical border you requested */
+    column-fill: balance;         /* evenly distribute rows across columns for minimal vertical overflow */
+}
+
+#monster-popup .options-panel h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* Keep each option from breaking across columns */
+#monster-popup .option-row {
+    break-inside: avoid-column;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 300px;
+}
+
+#monster-popup .option-row label {
+    display: inline-block;
+    width: 150px;
+    font-weight: normal;
+}
+
+#monster-popup .option-row input[type="text"],
+#monster-popup .option-row input[type="number"] {
+    width: 200px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 4px;
+}
+
+#monster-popup .option-row input[type="number"] {
+    width: 80px;
+}
+
+/* Inventory section */
+#monster-popup .inventory-section,
+#monster-popup .popup-buttons {
+    width: 100%;
+    margin-top: 20px;
+}
+
+#monster-popup .inventory-section h4 {
+    margin: 0 0 8px 0;
+}
+
+#monster-popup #monster-inventory-list {
+    min-height: 80px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border: 1px solid #333;
+    padding: 4px;
+    background: #111;
+}
+
+#monster-popup .inventory-item {
+    padding: 6px;
+    background: #222;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#monster-popup .inventory-item .sym {
+    font-weight: bold;
+    min-width: 30px;
+}
+
+.monster-popup-layout {
+    display: flex;
+    gap: 12px;
+    height: 100%;
+}
+
+.monster-popup-layout > div {
+    /* flex: 1; */
+
+    display: flex;
+    flex-direction: column;
+}
+
+.object-popup-layout {
+    display: flex;
+    gap: 12px;
+    height: 100%;
+}
+
+.object-popup-layout > div {
+    /* flex: 1; */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the scroll lists take up remaining space */
+.monster-scroll-list,
+.object-scroll-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    border: 1px solid #444;
+    background: #111;
+    padding: 4px;
+    max-width: 330px;
+}
+
+/* Optional: give the new right panel a distinct look */
+#inventory-object-panel {
+    min-width: 330px;
+    max-width: 330px;
+    background: #1a1a1a;
+}
+
+
+/*OBJECT STYLES*/
+
+/* OBJECT popup – right-hand options panel */
+#object-popup .options-panel {
+    
+    padding: 15px;
+    border-left: 1px solid #444;
+    box-sizing: border-box;
+    overflow-y: hidden;           /* no vertical scroll on the panel */
+    overflow-x: auto;             /* horizontal scroll for extra columns */
+    min-width: 420px;             /* keep a reasonable minimum visible width */
+    padding-bottom: 20px;         /* space for horizontal scrollbar */
+}
+
+#object-popup #object-options-form {
+    
+    min-width: 830px;            /* ensure it doesn't shrink */
+    column-width: 240px;          /* each column exactly 365px */
+    column-gap: 30px;             /* horizontal space between columns */
+    column-rule: 1px solid #444;  /* the exact 1px vertical border you requested */
+    column-fill: balance;         /* evenly distribute rows across columns for minimal vertical overflow */
+}
+
+#object-popup .options-panel h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* Keep each option from breaking across columns */
+#object-options-form .option-row {
+    break-inside: avoid-column;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 300px;
+}
+
+#object-options-form .option-row label {
+    display: inline-block;
+    width: 150px;
+    font-weight: normal;
+}
+
+#object-options-form .option-row input[type="text"],
+#object-options-form .option-row input[type="number"] {
+    width: 200px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 4px;
+}
+
+#object-options-form .option-row input[type="number"] {
+    width: 80px;
+}
+
+/* Inventory section */
+#object-popup .inventory-section,
+#object-popup .popup-buttons {
+    width: 100%;
+    margin-top: 20px;
+}
+
+#object-popup .inventory-section h4 {
+    margin: 0 0 8px 0;
+}
+
+#object-popup #object-inventory-list {
+    min-height: 80px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border: 1px solid #333;
+    padding: 4px;
+    background: #111;
+}
+
+#object-popup .inventory-item {
+    padding: 6px;
+    background: #222;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#object-popup .inventory-item .sym {
+    font-weight: bold;
+    min-width: 30px;
+}
+
+.object-popup-layout {
+    display: flex;
+    gap: 12px;
+    height: 100%;
+}
+
+.object-popup-layout > div {
+    /* flex: 1; */
+
+    display: flex;
+    flex-direction: column;
+}
+
+.object-popup-layout {
+    display: flex;
+    gap: 12px;
+    height: 100%;
+}
+
+.object-popup-layout > div {
+    /* flex: 1; */
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* Optional: give the new right panel a distinct look */
+#contents-object-panel {
+    min-width: 330px;
+    max-width: 330px;
+    background: #1a1a1a;
+}
+
+#object-popup #object-contents-list {
+    min-height: 80px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border: 1px solid #333;
+    padding: 4px;
+    background: #111;
 }

@@ -148,7 +148,7 @@ def parse_base_objects(objects_path, class_dict):
     # AMULET → amulet (color is hardcoded HI_METAL in the macro—no variable color arg)
     # Optional color group (may be None); keep original but make color capture optional
     (r'AMULET\s*\(\s*"([^"]+)"\s*,.*?\s*(?:,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*)?,\s*([A-Z_0-9_]+)\s*\)', 
-     1, 3, 2, 'amulet', 'amulet'),  # color group 2 is now optional
+     1, 3, 2, 'amulet', ''),  # color group 2 is now optional
 
     # TOOL family (macro in 1, name in 2, color in 3, sn in 4)
     (r'(TOOL|CONTAINER|EYEWEAR|WEPTOOL)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
@@ -188,7 +188,7 @@ def parse_base_objects(objects_path, class_dict):
     ]
 
     for regex, name_g, sn_g, item_color_indx, class_key_fixed, name_prefix in patterns:
-        if class_key_fixed == 'coin':
+        if class_key_fixed == 'amulet':
             print('coin')
         for match in re.finditer(regex, content):
             name = match.group(name_g).strip().lower()

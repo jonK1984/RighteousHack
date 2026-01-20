@@ -38,8 +38,8 @@
 </div>
 <div id="main">
   <div id="left">
+
     <div style="position:relative;">
-        <h3>Map</h3>
       <div id="grid"></div>
       <div id="overlay"></div>
     </div>
@@ -116,157 +116,172 @@
         
   </div>
 </div>
+
+<!-- ############################### -->
+<!-- MASTER POPUP HTML -->
+<!-- ############################### -->
 <div id="popup-overlay">
-  <div class="popup" id="monster-popup">
-    <div class="monster-popup-layout">
-    <div class="monster-input-section">
-      <h3>Place Monster</h3>
-      <div class="radio-group">
-        <label><input type="radio" id="monster-select-id" name="monsterSelectMode" value="id" checked> Select by specific monster ID</label><br>
-        <label><input type="radio" id="monster-select-class" name="monsterSelectMode" value="class"> Select by monster class</label>
-      </div>
-      <label>Monster ID: <input id="monster-id" name="id" type="text" placeholder='e.g. "archangel" or "Gabriel"'></label>
 
-      <label><input type="checkbox" name="peaceful"> Peaceful</label>
-      <label><input type="checkbox" name="asleep"> Asleep</label>
+    <!-- ############################### -->
+    <!-- MONSTER POPUP HTML -->
+    <!-- ############################### -->
+    <div class="popup" id="monster-popup">
 
-      <label><input type="checkbox" id="monster-historic" name="historic"> Historic</label>
-      <label>Force gender (check one if needed):</label>
-      <label><input type="checkbox" name="male"> Male</label>
-      <label><input type="checkbox" name="female"> Female</label>
-      <label><input type="checkbox" name="neuter"> Neuter</label>
+        <div class="monster-popup-layout">
+            <!-- Left column: monster search/suggestions -->
+            <div id="monster-suggestions" class="monster-scroll-list"></div>
 
-      <label>Custom name: <input id="monster-custom-name" type="text" name="name" placeholder='e.g. "Gabriel"'></label>
+            <!-- Middle column: monster options + current inventory -->
+            <div style="display:block">
+                <div class="options-panel">
+                    <h3>Monster Options</h3>
+                    <div id="monster-options-form"></div>
+                </div>
+            
+                <!-- Monster inventory -->
+                <div id="monster-inventory-panel" style="display:block" class="object-popup-layout">
+                    <h3 style="margin: 5px 5px;">Monster Starting Inventory</h3>
 
-      <label>Inventory (Lua code):<br>
-        <textarea id="monster-inventory" rows="6" name="inventory" placeholder="des.object({ id = &quot;club&quot; })\ndes.object(&quot;leather armor&quot;)"></textarea>
-      </label>
-      <button id='monster-confirm' >OK</button>
-      <button id='monster-cancel' >Cancel</button>
-      <!-- Monster eraser (same pattern) -->
-      <button id="monster-eraser" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">
-          ERASER (removes monsters)
-      </button>
+                    <div style="margin-top:10px;margin-bottom:10px;display:inline-block;">
+                        <button id="show-inventory-btn">Show Inventory Popup</button>
+                        <button id="delete-inventory-btn" disabled>Delete Selected Item</button>
+                    </div>
+                    <ul id="monster-inventory-list" style="list-style:none; padding:0; margin:0; min-height: 75px; max-height:75px; overflow-y:auto;"></ul>
+                    
+                </div>
+
+                <div class="popup-buttons">
+                    <button id="monster-ok-btn">OK</button>
+                    <button id="monster-cancel-btn">Cancel</button>
+                    <button id="monster-eraser-btn" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">ERASER (removes monster)</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="monster-suggestions" class="monster-scroll-list">
 
+    <!-- ############################### -->
+    <!-- OBJECT POPUP HTML -->
+    <!-- ############################### -->
+    <div class="popup hide" id="object-popup">
+
+        <div class="object-popup-layout">
+            
+                <!-- Left column: object search/suggestions -->
+                <div id="obj-suggestions" class="obj-scroll-list"></div>
+                <div style="display:block">
+                    <!-- Middle column: monster options + current inventory -->
+                    <div class="options-panel">
+                        <h3>Object Options</h3>
+                        <div id="object-options-form"></div>
+                    </div>
+
+
+                    <!-- Monster inventory -->
+                    <div id="object-contents-panel" style="display:block;max-height: 175px;max-width: 300px;" class="object-popup-layout">
+                        <h3 style="margin: 5px 5px;">Contents</h3>
+
+                        <div style="margin-top:10px;margin-bottom:10px;display:inline-block;">
+                            <button id="add-to-contents-btn">Add to Contents</button>
+                            <button id="delete-contents-btn" disabled>Delete Selected Item</button>
+                        </div>
+                        <ul id="object-contents-list" style="list-style:none; padding:0; margin:0; min-height: 120px; max-height:120px; overflow-y:auto;"></ul>
+                        
+                    </div>
+
+                    <div class="popup-buttons">
+                        <button id="object-ok-btn">OK</button>
+                        <button id="object-cancel-btn">Cancel</button>
+                        <button id="object-eraser-btn" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">ERASER (removes objects)</button>
+                    </div>
+                </div>
+                
+
+        </div>
     </div>
-  </div>
-  </div>
-  
-  <!-- Features Popup -->
-  <div id="feature-popup" class="popup" style="display:none;">
-      <div class="popup-header">Feature Brush Selector</div>
-      <div class="popup-content" style="display:flex;">
-          <!-- Left: Feature list -->
-          <div id="feature-list" class="scroll-list" style="width:45%;"></div>
 
-          <!-- Right: Context-sensitive options -->
-          <div id="feature-options" style="width:55%; padding-left:10px;">
-              <div id="feature-options-content"></div>
-              <div style="margin-top:20px;">
-                  <button id="feature-confirm">OK</button>
-                  <button id="feature-cancel">Cancel</button>
-              </div>
-          </div>
-      </div>
-  </div>
+    <!-- ############################### -->
+    <!-- FEATURES POPUP HTML -->
+    <!-- ############################### -->
+    <div id="feature-popup" class="popup" style="display:none;">
+        <div class="popup-header">Feature Brush Selector</div>
+        <div class="popup-content" style="display:flex;">
+            <!-- Left: Feature list -->
+            <div id="feature-list" class="scroll-list" style="width:45%;"></div>
 
-  <div class="popup hide" id="object-popup">
-    <div class="obj-popup-layout">
-    <div class="obj-input-section">
-    <h3>Place Object</h3>
-
-    <label>Object ID: <input id="obj-id" name="id" type="text" placeholder='e.g. "anointing oil" or "scroll of light"'></label>
-
-    <label>BUC:</label>
-    <div class="radio-group">
-        <label><input type="radio" name="buc" value="blessed" id="buc-blessed"> Blessed</label>
-        <label><input type="radio" name="buc" value="cursed" id="buc-cursed"> Cursed</label>
-        <label><input type="radio" name="buc" value="uncursed" id="buc-uncursed" checked> Uncursed</label>
-        <label><input type="radio" name="buc" value="not-blessed" id="buc-not-blessed"> Not Blessed</label>
-        <label><input type="radio" name="buc" value="not-cursed" id="buc-not-cursed"> Not Cursed</label>
+            <!-- Right: Context-sensitive options -->
+            <div id="feature-options" style="width:55%; padding-left:10px;">
+                <div id="feature-options-content"></div>
+                <div style="margin-top:20px;">
+                    <button id="feature-confirm">OK</button>
+                    <button id="feature-cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
+
     
-    <label>Charges (spe): <input type="number" name="spe" min="-10" max="20" value="0"></label>
-    <label>Quantity: <input type="number" name="quan" min="1" value="1"></label>
 
-    <label><input type="checkbox" name="trapped"> Trapped</label>
-    <label><input type="checkbox" name="locked"> Locked</label>
+    <!-- ############################### -->
+    <!-- LEVEL INITIALIZATION POPUP HTML -->
+    <!-- ############################### -->
+    <div id="init-popup" class="popup">
+        <h3 style="margin-bottom:8px;">Map Initialization</h3>
 
-    <label>Contents (for chests, Lua code):<br>
-      <textarea id="obj-contents" name="contents" rows="6"></textarea>
-    </label>
+        <div id="init-popup-container">
+            <div style="margin-bottom:16px;">
+            <h4>Level Flags</h4>
+            <div id="init-flags-container" style="column-count:2;"></div>
+        </div>
+            <h4>Level Initialization</h4>
 
-    <button id='object-confirm' >OK</button>
-    <button id='object-cancel' >Cancel</button>
-    <button id="object-eraser" class="palette-button" style="background: #400; color: #ff6666; font-weight: bold;">
-        ERASER (removes objects)
-    </button>
+            <div style="margin:8px 0;">
+                <strong>Style:</strong><br>
+                <div id="init-style-radios"></div>
+            </div>
 
-    </div>
+            <div style="margin:8px 0;">
+                <label>Foreground (fg): </label>
+                <input type="text" id="init-fg" maxlength="1" size="2">
+                <label style="margin-left:16px;">Background (bg): </label>
+                <input type="text" id="init-bg" maxlength="1" size="2">
+            </div>
 
-    <div id="obj-suggestions" class="obj-scroll-list"></div>
-  </div>
-  </div>
-  <div id="init-popup" class="popup">
-    <h3 style="margin-bottom:8px;">Map Initialization</h3>
+            <div style="margin:8px 0;">
+                <strong>Booleans:</strong><br>
+                <label><input type="checkbox" id="init-smoothed"> Smoothed</label><br>
+                <label><input type="checkbox" id="init-joined"> Joined</label><br>
+                <label><input type="checkbox" id="init-walled"> Walled</label><br>
+                <label><input type="checkbox" id="init-remove-deadends"> Remove dead ends</label>
+            </div>
 
-    <div id="init-popup-container">
-        <div style="margin-bottom:16px;">
-          <h4>Level Flags</h4>
-          <div id="init-flags-container" style="column-count:2;"></div>
-      </div>
-        <h4>Level Initialization</h4>
+            <div style="margin:8px 0;">
+                <strong>Lit:</strong><br>
+                <label><input type="radio" name="init-lit" value="random" checked> Random (default)</label><br>
+                <label><input type="radio" name="init-lit" value="lit"> Lit (lit=1)</label><br>
+                <label><input type="radio" name="init-lit" value="unlit"> Unlit (lit=0)</label>
+            </div>
 
-        <div style="margin:8px 0;">
-            <strong>Style:</strong><br>
-            <div id="init-style-radios"></div>
+            <div style="margin:8px 0;">
+                <label>Corridor width (1-4): </label>
+                <input type="number" id="init-corrwid" min="1" max="4" style="width:60px;">
+                <label style="margin-left:16px;">Wall thickness (1-3): </label>
+                <input type="number" id="init-wallthick" min="1" max="3" style="width:60px;">
+            </div>
+
+            <div style="margin:8px 0;">
+                <strong>Temperature:</strong><br>
+                <label><input type="radio" name="init-temp" value="temperate" checked> Temperate (default)</label><br>
+                <label><input type="radio" name="init-temp" value="hot"> Hot</label><br>
+                <label><input type="radio" name="init-temp" value="cold"> Cold</label>
+            </div>
         </div>
 
-        <div style="margin:8px 0;">
-            <label>Foreground (fg): </label>
-            <input type="text" id="init-fg" maxlength="1" size="2">
-            <label style="margin-left:16px;">Background (bg): </label>
-            <input type="text" id="init-bg" maxlength="1" size="2">
-        </div>
-
-        <div style="margin:8px 0;">
-            <strong>Booleans:</strong><br>
-            <label><input type="checkbox" id="init-smoothed"> Smoothed</label><br>
-            <label><input type="checkbox" id="init-joined"> Joined</label><br>
-            <label><input type="checkbox" id="init-walled"> Walled</label><br>
-            <label><input type="checkbox" id="init-remove-deadends"> Remove dead ends</label>
-        </div>
-
-        <div style="margin:8px 0;">
-            <strong>Lit:</strong><br>
-            <label><input type="radio" name="init-lit" value="random" checked> Random (default)</label><br>
-            <label><input type="radio" name="init-lit" value="lit"> Lit (lit=1)</label><br>
-            <label><input type="radio" name="init-lit" value="unlit"> Unlit (lit=0)</label>
-        </div>
-
-        <div style="margin:8px 0;">
-            <label>Corridor width (1-4): </label>
-            <input type="number" id="init-corrwid" min="1" max="4" style="width:60px;">
-            <label style="margin-left:16px;">Wall thickness (1-3): </label>
-            <input type="number" id="init-wallthick" min="1" max="3" style="width:60px;">
-        </div>
-
-        <div style="margin:8px 0;">
-            <strong>Temperature:</strong><br>
-            <label><input type="radio" name="init-temp" value="temperate" checked> Temperate (default)</label><br>
-            <label><input type="radio" name="init-temp" value="hot"> Hot</label><br>
-            <label><input type="radio" name="init-temp" value="cold"> Cold</label>
+        <div style="margin-top:16px; text-align:right;">
+            <button id="init-ok">OK</button>
+            <button id="init-cancel">Cancel</button>
+            <button id="init-erase" style="margin-left:16px; color:#f44;">ERASE ALL INIT STATEMENTS</button>
         </div>
     </div>
-
-    <div style="margin-top:16px; text-align:right;">
-        <button id="init-ok">OK</button>
-        <button id="init-cancel">Cancel</button>
-        <button id="init-erase" style="margin-left:16px; color:#f44;">ERASE ALL INIT STATEMENTS</button>
-    </div>
-  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js"></script>
 <script src="object_def.js"></script>
@@ -274,17 +289,27 @@
 <script src="terrain_def.js"></script>
 <script src="color_def.js"></script>
 <script src="feature_def.js"></script>
+<script src="menu_options.js"></script>
 <script>
 
 let currentLayer = 'terrain'; // terrain, lighting, monster, object
 let currentBrush = null; // null, 'light', 'dark', 'monster', 'object'
+let currentBrushType = null;
 let pendingMonster = null; // {x,y} when popup waiting
 let pendingObject = null;   // {x,y} when popup waiting
+let currentTerrain = 'stone';
 let currentMonsterMode = 'id';           // 'id' or 'class'
+let currentObjectMode = 'id';           // 'id' or 'class'
 let currentMonsterBrush = null;
 let currentObjectBrush = null;
 let currentFeatureBrush = null;
 let currentLightingBrush = null;   // will be 'light' or 'dark'
+
+let setObjectPopupTarget = "brush";         // "brush" = normal object brush, "inventory" = adding to monster inventory
+let currentMonPopupInventory = [];          // temporary array while editing a monster
+let currentObjPopupContents = [];          // temporary array while editing a monster
+let selectedInventoryIndex = -1;            // currently selected item in the list (-1 = none)
+let selectedContentsIndex = -1;            // currently selected item in the list (-1 = none)
 
 const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
 const COLS = 76;   // confirm from grid-template-columns: repeat(76, ...)
@@ -362,27 +387,28 @@ let dragStart = null;
 let currentHoverX = -1;
 let currentHoverY = -1;
 
-// === DEFAULTS FOR LUA OMISSION (add new keys here when you add new inputs) ===
-const monsterDefaults = {
-    monsterSelectMode: "id",
-    peaceful: false,
-    asleep: false,
-    male: false,
-    female: false,
-    neuter: false,
-    // name: '' (strings omitted when empty anyway)
-    // add future booleans here with false
+// === BRUSH DEFAULTS (add new keys here when you add new inputs) ===
+const brushDefault = {
+    monster: {
+        internal: {
+            symbol: '♣',
+            color: 'CLR_WHITE',
+            random: true,
+            brushMode: 'complex',
+            type: 'monster'
+        }
+    },
+    object: {
+        internal: {
+             symbol: '§',
+            color: 'CLR_WHITE',
+            random: true,
+            brushMode: 'complex',   // default; overridden below for complex case
+            type: 'object'
+        }
+    }
 };
 
-// === UPDATE objectDefaults (remove old blessed/cursed, add buc default) ===
-const objectDefaults = {
-    trapped: false,
-    locked: false,
-    spe: 0,
-    quan: 1,
-    buc: "uncursed",       // ← new default
-    // ... any future defaults ...
-};
 
 const brushAllowedShapes = {
     terrain: null,   // null = show ALL shape buttons
@@ -579,11 +605,18 @@ function populateMonsterList(filter = '') {
 
         item.addEventListener('click', () => {
 
-            document.getElementById('monster-id').value = key;
+            document.getElementById(`mon-inp-${currentMonsterMode}`).value = key;
+
+            const cb = document.getElementById(`mon-cb-${currentMonsterMode}`);
+
+            //If not already checked, check it
+            if (!cb.checked) { 
+                cb.checked = true; 
+            }
             // Optional: auto-scroll selected item into view
             item.scrollIntoView({ block: 'nearest' });
             // Keep focus on input for further typing if desired
-            document.getElementById('monster-id').focus();
+            document.getElementById('mon-inp-id').focus();
 
             document.querySelectorAll('#monster-suggestions .obj-item.selected')
                     .forEach(i => i.classList.remove('selected'));
@@ -595,32 +628,15 @@ function populateMonsterList(filter = '') {
 }
 
 
-// Radio button change
-document.querySelectorAll('input[name="monsterSelectMode"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        currentMonsterMode = e.target.value;
 
-        // Enable/disable custom name & inventory fields
-        document.getElementById('monster-custom-name').disabled   = (currentMonsterMode === 'class');
-        document.getElementById('monster-inventory').disabled      = (currentMonsterMode === 'class');
 
-        // Clear fields when switching to class mode
-        if (currentMonsterMode === 'class') {
-            document.getElementById('monster-custom-name').value = '';
-            document.getElementById('monster-inventory').value = '';
-        }
+function populateObjectList(filter = '', listID=null) {
+    if( !listID ) 
+    {
+        listID = 'obj-suggestions';
+    }
+    const list = document.getElementById(listID);
 
-        populateMonsterList(document.getElementById('monster-search')?.value || '');
-    });
-});
-
-// Existing search input (adjust ID if different)
-document.getElementById('monster-search')?.addEventListener('input', (e) => {
-    populateMonsterList(e.target.value);
-});
-
-function populateObjectList(filter = '') {
-    const list = document.getElementById('obj-suggestions');
     if (list.children.length === 0) {
         // First open: create all items once, sorted alphabetically
         const sortedNames = Object.keys(allObjects).sort((a, b) => a.localeCompare(b));
@@ -641,10 +657,29 @@ function populateObjectList(filter = '') {
             item.appendChild(nameSpan);
 
             item.addEventListener('click', () => {
-                document.getElementById('obj-id').value = name;
+
+                //Put List Item in correct input box
+                document.getElementById(`obj-inp-${currentObjectMode}`).value = name;
+                const cb = document.getElementById(`obj-cb-${currentMonsterMode}`);
+
+                //If not already checked, check it
+                if (!cb.checked) { 
+                    cb.checked = true; 
+                }
+                
+                //auto-scroll selected item into view
                 item.scrollIntoView({ block: 'nearest' });
-                document.getElementById('obj-id').focus();
+
+                // Keep focus on input for further typing if desired
+                document.getElementById(`obj-inp-${currentObjectMode}`).focus();
+
+                document.querySelectorAll('#obj-suggestions .obj-item.selected')
+                        .forEach(i => i.classList.remove('selected'));
+
+
+                item.classList.add('selected');
             });
+            
 
             list.appendChild(item);
             objListItems.push(item);
@@ -675,7 +710,7 @@ document.getElementById('obj-suggestions').addEventListener('dblclick', (e) => {
         item.classList.add('selected');
 
         // Then act as if user clicked the confirm button
-        document.getElementById('object-confirm')?.click()
+        document.getElementById('object-ok-btn')?.click()
              || confirmObjectSelection();   // fallback if you use a function instead of button
     }
 });
@@ -986,8 +1021,11 @@ function deselectAllBrushes() {
 
 // === CREATURE CONFIRM HANDLER (replace existing monster-confirm handler) ===
 // === UPDATED CONFIRM HANDLERS ===
-document.getElementById('monster-confirm').addEventListener('click', () => {
-    const brush = collectBrushFromPopup('#monster-popup');
+
+document.getElementById('monster-ok-btn').addEventListener('click', () => {
+    currentBrushType = "monster";
+    const brush = collectBrushFromPopup('#monster-options-form');
+
     if (!brush) return;
 
     selectBrush('monster');
@@ -998,38 +1036,97 @@ document.getElementById('monster-confirm').addEventListener('click', () => {
     currentBrush = 'monster';
     document.querySelector('button[data-brush="monster"]').classList.add('selected');
 
+    if (setObjectPopupTarget === "inventory")
+    {
+        setObjectPopupTarget = "brush";
+        hideObjectPopup();
+    }
+
     hideMonsterPopup();
+    
     renderLayers();
 });
 
 
 
 // === CREATURE CANCEL (unchanged except clearing inputs is optional) ===
-document.getElementById('monster-cancel').addEventListener('click', () => {
+document.getElementById('monster-cancel-btn').addEventListener('click', () => {
     hideMonsterPopup();
     // leaves currentMonsterBrush intact – user keeps last selection
 });
 
-// === OBJECT CONFIRM HANDLER (replace your existing object-confirm click handler) ===
-document.getElementById('object-confirm').addEventListener('click', () => {
-    const brush = collectBrushFromPopup('#object-popup');
-    if (!brush) return;
-    selectBrush('object');
-    currentObjectBrush = brush;
-    updateBrushLabel();
-    
+document.getElementById('add-to-contents-btn').addEventListener('click', () => { 
+    setObjectPopupTarget = 'contents';
+    currentBrushType = "object";
 
-    document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
-    currentBrush = 'object';
-    document.querySelector('button[data-brush="object"]').classList.add('selected');
+    const idInput = document.querySelector('#object-popup input[placeholder="Object ID"]') ||
+                    document.querySelector('#object-popup input[type="text"]');
+    if (!idInput) return;
 
-    hideObjectPopup();
-    renderLayers();
+    const brush = collectBrushFromPopup('#object-options-form');
+    if (!brush) {
+        alert(`Unknown object "${rawId}"`);
+        return;
+    }
+
+    currentObjPopupContents.push(brush);
+
+    updateContentsDisplay();
+    idInput.value = '';
+
+});
+
+// === OBJECT CONFIRM HANDLER (replace your existing object-ok-btn click handler) ===
+document.getElementById('object-ok-btn').addEventListener('click', () => {
+    currentBrushType = "object";
+    const idInput = document.querySelector('#object-popup input[placeholder="Object ID"]') ||
+                    document.querySelector('#object-popup input[type="text"]');
+    if (!idInput) return;
+
+    if(setObjectPopupTarget != "inventory") setObjectPopupTarget = "brush";
+
+    const brush = collectBrushFromPopup('#object-options-form');
+
+    if (!brush) {
+        alert(`Unknown object "${rawId}"`);
+        return;
+    }
+
+    if (setObjectPopupTarget === "inventory") {
+        // --- Inventory mode ---
+        currentMonPopupInventory.push(brush);
+
+        updateInventoryDisplay();
+
+        // Clear the form for the next item but keep popup open
+        idInput.value = '';  
+    } else {
+
+
+        selectBrush('object');
+        currentObjectBrush = brush;
+        updateBrushLabel();
+
+        document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
+        currentBrush = 'object';
+        document.querySelector('button[data-brush="object"]').classList.add('selected');
+
+        hideObjectPopup();
+        renderLayers();
+    }
 });
 
 // === OBJECT CANCEL HANDLER (unchanged except hide) ===
-document.getElementById('object-cancel').addEventListener('click', () => {
-    hideObjectPopup();
+document.getElementById('object-cancel-btn').addEventListener('click', () => {
+    if (setObjectPopupTarget === "inventory"){
+        document.getElementById('object-popup').style.display = 'none';
+        setObjectPopupTarget = "brush";   // safety reset
+    }
+    else
+    {
+        hideObjectPopup();
+    }
+        
     // leaves currentObjectBrush unchanged so user keeps last selection
 });
 
@@ -1080,8 +1177,8 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
             hideObjectPopup();
             hideFeaturePopup();
             showMonsterPopup();
-            document.getElementById('monster-id').value = currentMonsterBrush?.id || '';
-            document.getElementById('monster-id').focus();
+            //document.getElementById('monster-id').value = currentMonsterBrush?.id || '';
+            //document.getElementById('monster-id').focus();
             return;                                      // do NOT highlight yet
         }
 
@@ -1142,19 +1239,30 @@ function showMonsterPopup() {
 
     // Populate/full list on open
     populateMonsterList('');
+    //populateObjectList('', 'mon-obj-suggestions');
+
+    if (currentMonsterBrush && Array.isArray(currentMonsterBrush.inventory)) {
+        currentMonPopupInventory = currentMonsterBrush.inventory.map(o => ({...o})); // deep-ish copy
+    } else {
+        currentMonPopupInventory = [];
+    }
+
+    selectedInventoryIndex = -1;
+    updateInventoryDisplay();
 
     // Focus input and select its content for easy replacement
     document.getElementById('monster-popup').classList.remove('hide');
-    const input = document.querySelector('#monster-popup [name="id"]');
+    const input = document.querySelector('#mon-inp-id');
     input.focus();
     input.select();
 }
 
 // === FILTER ON INPUT ===
+/*
 document.getElementById('monster-id').addEventListener('input', (e) => {
     const filter = e.target.value.trim();
     populateMonsterList(filter);
-});
+});*/
 
 
 function hideMonsterPopup() {
@@ -1165,27 +1273,28 @@ function hideMonsterPopup() {
 // === UPDATE showObjectPopup() TO INITIALIZE THE LIST ===
 function showObjectPopup() {
     document.getElementById('object-popup').parentNode.style.display = 'flex';
+    document.getElementById('object-popup').style.display = 'flex';
     prefillPopupFromBrush('#object-popup', currentObjectBrush);
-
+    document.getElementById('object-ok-btn').textContent = 'Ok';
+    selectedContentsIndex = -1;
     // Full list on open
     populateObjectList('');
 
     document.getElementById('object-popup').classList.remove('hide');
 
-    const input = document.querySelector('#object-popup [name="id"]');
-    input.focus();
-    input.select();
+    const input = document.querySelector('#objopt-inp-id');
+    //const input = document.querySelector('#object-popup [name="id"]');
+    //input.focus();
+    //input.select();
 }
 
 // === FILTER ON INPUT ===
-document.getElementById('obj-id').addEventListener('input', (e) => {
-    const filter = e.target.value.trim();
-    populateObjectList(filter);
-});
+
 
 
 function hideObjectPopup() {
     document.getElementById('object-popup').parentNode.style.display = 'none';
+    document.getElementById('object-popup').style.display = 'none';   // or 'block' depending on your CSS
     document.getElementById('object-popup').classList.add('hide');
 }
 
@@ -1497,61 +1606,101 @@ function createRndGrids() {
 // === DYNAMIC BRUSH COLLECTION HELPERS ===
 // === UPDATE collectBrushFromPopup() TO HANDLE RADIO BUTTONS ===
 function collectBrushFromPopup(popupSelector) {
-    const inputs = document.querySelectorAll(`${popupSelector} [name]`);
-    const brush = {};
+    
+    const brushType = currentBrushType;
+    const optIDPre = brushType.slice(0, 3);
+    let isValidIDFN;
+    let isValidClassFN;
 
-    let idSet = false;
+    const isValidID = {
+        monster: isValidMonsterID,
+        object:  isValidObjectID
+    };
 
-    // First pass: collect radio groups (only the checked one)
-    const radioNames = new Set();
-    inputs.forEach(input => {
-        if (input.type === 'radio') radioNames.add(input.name);
-    });
+    const isValidClass = {
+        monster: isValidMonsterClass,
+        object:  isValidObjectClass
+    };
 
-    radioNames.forEach(name => {
-        const checked = document.querySelector(`${popupSelector} [name="${name}"]:checked`);
-        if (checked) {
-            brush[name] = checked.value;
-        }
-    });
-
-    // Second pass: everything else (checkboxes, text, number)
-    inputs.forEach(input => {
-        if (input.type === 'radio') return; // already handled
-
-        let val;
-        if (input.type === 'checkbox') {
-            val = input.checked;
-        } else if (input.type === 'number') {
-            val = input.value === '' ? 0 : Number(input.value);
-        } else {
-            val = input.value.trim();
-        }
-
-        if (input.name === 'id') {
-            if (val) idSet = true;
-            else return; // abort if no id
-        }
-
-        // Store non-default-like values; always store booleans/numbers for correct pre-fill
-        if (val !== '' && val !== false && val !== null && val !== undefined) {
-            brush[input.name] = val;
-        } else if (input.type === 'checkbox') {
-            brush[input.name] = false;
-        } else if (input.type === 'number') {
-            brush[input.name] = 0;
-        }
-    });
-
-    // Ensure buc has a value (fallback to default if somehow missing)
-    //if (!brush.hasOwnProperty('buc')) brush.buc = "uncursed";
-
-    if (!idSet) {
-        alert('ID is required.');
-        return null;
+    const dicts = {
+        monster: allMonsters,
+        object:  allObjects
     }
 
-    return brush;
+    brushCBs = document.querySelectorAll(`${popupSelector} [data-key]`);
+
+    isValidIDFN = isValidID[brushType];
+    isValidClassFN = isValidClass[brushType];
+    objectDict = dicts[brushType];
+
+    if (brushType === "monster" || brushType === "object") {
+
+
+        let brush = structuredClone(brushDefault[brushType]);
+        brushCBs.forEach( (key, idx) => {
+            const idStr = key.id;
+            const parts = idStr.split('-');
+            const elementName = parts[parts.length - 1];   // the final segment
+            if( key.checked )
+            {
+                let value = true; // default for bool
+
+                const inputHDL = document.getElementById( `${optIDPre}-inp-${elementName}`);
+                if( inputHDL?.value ) 
+                {   
+                    
+                    if (inputHDL.type === "text") {
+                        value = inputHDL.value.trim();
+                        if (value === "") return;
+                    } else if (inputHDL.type === "number") {
+                        value =  parseInt(inputHDL.value, 10);
+                        if (isNaN(value)) return;
+                    } else if (inputHDL.type === "select-one") {
+                        value = inputHDL.value.trim();
+                        if (value === "") return;
+                    }
+                    
+                    
+                }
+                brush[elementName] = value;
+
+                
+            }
+            if(currentMonPopupInventory.length > 0 )
+            {
+                brush.inventory = structuredClone(currentMonPopupInventory);
+            }
+            if(currentObjPopupContents.length > 0 && setObjectPopupTarget != "contents" )
+            {
+                brush.contents = structuredClone(currentObjPopupContents);
+            }
+
+        })
+         
+        const brushDef = isValidIDFN(brush?.id) ? objectDict[brush?.id] : null;
+        const brushClassDef = isValidClassFN(brush?.class) ?  brush.class : null;
+
+        if( brushDef )
+        {
+            brush.internal.symbol = brushDef.symbol;
+            brush.internal.color = brushDef.color;
+            brush.internal.random = false;
+        }
+        if( brushClassDef )
+        {
+            brush.internal.symbol = brushClassDef;
+            brush.internal.random = false;
+        }
+
+        if (!brush) return null;
+
+
+        if (currentMonsterInventory.length > 0) {
+            brush.inventory = currentMonsterInventory;
+        }
+
+        return brush;
+    }
 }
 
 // === UPDATE prefillPopupFromBrush() TO HANDLE RADIO BUTTONS ===
@@ -1720,7 +1869,9 @@ function generateSingleObjectLua(brush, x = null, y = null) {
                 props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
             }
         } else if (typeof val === 'number' || typeof val === 'boolean') {
-            props.push(`${key} = ${val ? 1 : 0}`);
+            props.push(`${key} = ${val}`);
+        } else if (typeof val === 'boolean') {
+            props.push(`${key} = ${val ? 'true' : 'false'}`);
         }
     }
 
@@ -1870,6 +2021,10 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
         props.push(`id = "${brush.id.replace(/"/g, '\\"')}"`);
     }
 
+    if (brush.class) {
+        props.push(`class = "${brush.class.replace(/"/g, '\\"')}"`);
+    }
+
     if (brush.coord) {
         if (brush.coord.variable) {
             props.push(`coord = ${brush.coord.variable}`);
@@ -1882,7 +2037,8 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
         props.push(`y = ${gridY.toString().padStart(2, '0')}`);
     }
 
-    const keys = ['class', 'peaceful', 'align', 'appear_as', 'asleep'];
+    const keys = Object.keys(brushOptionDefs['monster']).filter(key => key !== 'id' && key !== 'class');
+    //const keys = ['class', 'peaceful', 'align', 'appear_as', 'asleep'];
     for (const key of keys) {
         if (brush[key] === undefined) continue;
         let val = brush[key];
@@ -1892,8 +2048,11 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
             } else {
                 props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
             }
-        } else if (typeof val === 'number' || typeof val === 'boolean') {
+        } else if (typeof val === 'number') {
             props.push(`${key} = ${val ? 1 : 0}`);
+        } else if (typeof val === 'boolean')
+        {
+            props.push(`${key} = ${val ? 'true' : 'false'}`);
         }
     }
 
@@ -1905,7 +2064,7 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
     // Inventory: multi-line
     if (brush.inventory && brush.inventory.length > 0) {
         const invLua = generateMonsterInventoryLua(brush.inventory, '');
-        line += `inventory = ${invLua}`;
+        line += `, inventory = ${invLua}`;
     } else if (props.length) {
         line = line.trim(); // remove trailing space if no inventory
     }
@@ -3079,26 +3238,27 @@ function getMonsterChar(input) {
 }
 
 // === Object eraser handler (add inside your object popup click logic) ===
-document.getElementById('object-eraser').addEventListener('click', () => {
+document.getElementById('object-eraser-btn').addEventListener('click', () => {
     currentObjectBrush = null;         // null means erase
     selectBrush('object');        // ensure we are in object mode
     // optional: highlight the eraser button
     document.querySelectorAll('#object-popup .palette-button').forEach(b => b.classList.remove('selected'));
-    document.getElementById('object-eraser').classList.add('selected');
+    document.getElementById('object-eraser-btn').classList.add('selected');
     updateBrushLabel();
     hideObjectPopup();
     // close popup if you want: document.getElementById('object-popup').style.display = 'none';
 });
 
 // Monster eraser handler
-document.getElementById('monster-eraser').addEventListener('click', () => {
+document.getElementById('monster-eraser-btn').addEventListener('click', () => {
     currentMonsterBrush = null;
     selectBrush('monster');
     document.querySelectorAll('#monster-popup .palette-button').forEach(b => b.classList.remove('selected'));
-    document.getElementById('monster-eraser').classList.add('selected');
+    document.getElementById('monster-eraser-btn').classList.add('selected');
     updateBrushLabel();
     hideMonsterPopup();
 });
+
 
 // Add this code to the main <script> block in map_edit.html (anywhere after the existing event listeners, before the closing
 
@@ -3229,6 +3389,12 @@ createGrid();
 createRndGrids();
 renderLayers();  // initial render
 updateText( true);
+
+//buildMonsterOptionsForm();
+buildOptionsForm('monster');
+buildOptionsForm('object');
+currentMonsterInventory = [];
+
 setupRNDLayerListeners();
 </script>
 <script src="loadLUAMap.js"></script>
