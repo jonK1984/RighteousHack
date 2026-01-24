@@ -218,70 +218,30 @@
             </div>
         </div>
     </div>
-
+    <!-- END OF FEATURES POPUP HTML -->
     
 
     <!-- ############################### -->
-    <!-- LEVEL INITIALIZATION POPUP HTML -->
+    <!-- LEVEL POPUP HTML -->
     <!-- ############################### -->
-    <div id="init-popup" class="popup">
-        <h3 style="margin-bottom:8px;">Map Initialization</h3>
-
-        <div id="init-popup-container">
-            <div style="margin-bottom:16px;">
-            <h4>Level Flags</h4>
-            <div id="init-flags-container" style="column-count:2;"></div>
+    <div id="level-popup" class="popup" style="display:none;">
+        <div class="popup-title">Level Popup</div>
+        
+        <div class="popup-tabs">
+            <!-- tabs will be injected by JS -->
         </div>
-            <h4>Level Initialization</h4>
-
-            <div style="margin:8px 0;">
-                <strong>Style:</strong><br>
-                <div id="init-style-radios"></div>
-            </div>
-
-            <div style="margin:8px 0;">
-                <label>Foreground (fg): </label>
-                <input type="text" id="init-fg" maxlength="1" size="2">
-                <label style="margin-left:16px;">Background (bg): </label>
-                <input type="text" id="init-bg" maxlength="1" size="2">
-            </div>
-
-            <div style="margin:8px 0;">
-                <strong>Booleans:</strong><br>
-                <label><input type="checkbox" id="init-smoothed"> Smoothed</label><br>
-                <label><input type="checkbox" id="init-joined"> Joined</label><br>
-                <label><input type="checkbox" id="init-walled"> Walled</label><br>
-                <label><input type="checkbox" id="init-remove-deadends"> Remove dead ends</label>
-            </div>
-
-            <div style="margin:8px 0;">
-                <strong>Lit:</strong><br>
-                <label><input type="radio" name="init-lit" value="random" checked> Random (default)</label><br>
-                <label><input type="radio" name="init-lit" value="lit"> Lit (lit=1)</label><br>
-                <label><input type="radio" name="init-lit" value="unlit"> Unlit (lit=0)</label>
-            </div>
-
-            <div style="margin:8px 0;">
-                <label>Corridor width (1-4): </label>
-                <input type="number" id="init-corrwid" min="1" max="4" style="width:60px;">
-                <label style="margin-left:16px;">Wall thickness (1-3): </label>
-                <input type="number" id="init-wallthick" min="1" max="3" style="width:60px;">
-            </div>
-
-            <div style="margin:8px 0;">
-                <strong>Temperature:</strong><br>
-                <label><input type="radio" name="init-temp" value="temperate" checked> Temperate (default)</label><br>
-                <label><input type="radio" name="init-temp" value="hot"> Hot</label><br>
-                <label><input type="radio" name="init-temp" value="cold"> Cold</label>
-            </div>
+        
+        <div id="level-options-form" class="popup-content">
+            <!-- content panels will be injected by JS -->
         </div>
-
-        <div style="margin-top:16px; text-align:right;">
-            <button id="init-ok">OK</button>
-            <button id="init-cancel">Cancel</button>
-            <button id="init-erase" style="margin-left:16px; color:#f44;">ERASE ALL INIT STATEMENTS</button>
+        
+        <div class="popup-buttons">
+            <button id="level-ok-btn">OK</button>
+            <button id="level-cancel-btn">Cancel</button>
         </div>
     </div>
+    <!-- END OF LEVEL POPUP HTML -->
+
 </div>
 <script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js"></script>
 <script src="object_def.js"></script>
@@ -375,7 +335,7 @@ function luaQuote(ch) {
     if (ch === "" || ch === " " || /[^A-Za-z0-9_.]/.test(ch)) {
         return `"${ch}"`;
     }
-    return ch;
+    return `"${ch}"`;
 }
 
 let map = Array.from({length: ROWS}, () => Array(COLS).fill(' '));
@@ -400,14 +360,30 @@ const brushDefault = {
     },
     object: {
         internal: {
-             symbol: '§',
+            symbol: '§',
             color: 'CLR_WHITE',
             random: true,
             brushMode: 'complex',   // default; overridden below for complex case
             type: 'object'
         }
-    }
+    },
+    'level_init': {
+        style: "solidfill",
+        fg: ".",
+        bg: "-"
+    },
+    'level_flags': ["noteleport", "noflipy", "hardfloor"]
 };
+
+// Global brush storage – one top-level entry per brush "name"
+// (monster, object, level_init, level_flags)
+let currentBrushGlobal = {
+    monster: brushDefault['monster'],
+    object: brushDefault['object'],
+    level_init: brushDefault['level_init'],
+    level_flags: brushDefault['level_flags']
+};
+
 
 
 const brushAllowedShapes = {
@@ -462,9 +438,9 @@ function updateBrushLabel() {
     if (currentBrush === 'terrain' && currentTerrain) {
         text = `Terrain: ${allTerrains[currentTerrain].id}`;
     } else if (currentBrush === 'object') {
-        text = currentObjectBrush ? `Object: ${currentObjectBrush.id}` : "Object: ERASER";
+        text = currentBrushGlobal['object'] ? `Object: ${currentBrushGlobal['object'].id}` : "Object: ERASER";
     } else if (currentBrush === 'monster') {
-        text = currentMonsterBrush ? `Monster: ${currentMonsterBrush.id}` : "Monster: ERASER";
+        text = currentBrushGlobal['monster'] ? `Monster: ${currentBrushGlobal['monster'].id}` : "Monster: ERASER";
     } else if (currentBrush === 'features') {
     if (currentFeatureBrush && currentFeatureBrush.def.isEraser) {
           currentBrushText = 'Features: Eraser';
@@ -605,9 +581,9 @@ function populateMonsterList(filter = '') {
 
         item.addEventListener('click', () => {
 
-            document.getElementById(`mon-inp-${currentMonsterMode}`).value = key;
+            document.getElementById(`monster_${currentMonsterMode}_value`).value = key;
 
-            const cb = document.getElementById(`mon-cb-${currentMonsterMode}`);
+            const cb = document.getElementById(`include_monster_${currentMonsterMode}`);
 
             //If not already checked, check it
             if (!cb.checked) { 
@@ -616,7 +592,7 @@ function populateMonsterList(filter = '') {
             // Optional: auto-scroll selected item into view
             item.scrollIntoView({ block: 'nearest' });
             // Keep focus on input for further typing if desired
-            document.getElementById('mon-inp-id').focus();
+            document.getElementById('monster_id_value').focus();
 
             document.querySelectorAll('#monster-suggestions .obj-item.selected')
                     .forEach(i => i.classList.remove('selected'));
@@ -629,7 +605,7 @@ function populateMonsterList(filter = '') {
 
 
 
-
+/*
 function populateObjectList(filter = '', listID=null) {
     if( !listID ) 
     {
@@ -659,8 +635,8 @@ function populateObjectList(filter = '', listID=null) {
             item.addEventListener('click', () => {
 
                 //Put List Item in correct input box
-                document.getElementById(`obj-inp-${currentObjectMode}`).value = name;
-                const cb = document.getElementById(`obj-cb-${currentMonsterMode}`);
+                document.getElementById(`object_${currentObjectMode}_value`).value = name;
+                const cb = document.getElementById(`include_object_${currentMonsterMode}`);
 
                 //If not already checked, check it
                 if (!cb.checked) { 
@@ -671,7 +647,7 @@ function populateObjectList(filter = '', listID=null) {
                 item.scrollIntoView({ block: 'nearest' });
 
                 // Keep focus on input for further typing if desired
-                document.getElementById(`obj-inp-${currentObjectMode}`).focus();
+                document.getElementById(`object_${currentObjectMode}_value`).focus();
 
                 document.querySelectorAll('#obj-suggestions .obj-item.selected')
                         .forEach(i => i.classList.remove('selected'));
@@ -691,6 +667,104 @@ function populateObjectList(filter = '', listID=null) {
     objListItems.forEach(item => {
         const name = item.dataset.name;
         if (name.includes(lowerFilter)) {
+            item.classList.remove('no-match');
+            item.classList.add('match');
+        } else {
+            item.classList.remove('match');
+            item.classList.add('no-match');
+        }
+    });
+}*/
+
+function populateObjectList(filter = '', listID = null) {
+    if (!listID) {
+        listID = 'obj-suggestions';
+    }
+    const list = document.getElementById(listID);
+
+    // Determine expected number of entries for the current mode
+    const expectedCount = (currentObjectMode === "class")
+        ? allObjClasses.length
+        : Object.keys(allObjects).length;
+
+    // If the list is empty OR we switched modes (wrong number of items), rebuild it
+    if (list.children.length === 0 || objListItems.length !== expectedCount || populatedMode !== currentObjectMode) {
+        list.innerHTML = '';
+        objListItems.length = 0;
+        populatedMode = currentObjectMode;
+
+        let entries;
+        if (currentObjectMode === "class") {
+            // Keep the order defined in allObjClasses (matches source order)
+            entries = allObjClasses;
+        } else {
+            // Alphabetical by object name (existing behaviour)
+            entries = Object.keys(allObjects).sort((a, b) => a.localeCompare(b));
+        }
+
+        entries.forEach(ent => {
+            let displayName, filterName, valueToSet, symbol, isArtifact = false;
+
+            if (currentObjectMode === "class") {
+                displayName = ent.desc;
+                filterName   = ent.desc;
+                valueToSet   = ent.symbol;          // class mode → insert the class char (e.g. 'φ', ')')
+                symbol       = ent.symbol;
+            } else {
+                // ent is the object name string
+                const obj = allObjects[ent];
+                displayName = ent;
+                filterName   = ent;
+                valueToSet   = ent;                 // id mode → insert the full object name
+                symbol       = obj.symbol;
+                isArtifact   = !!obj.is_artifact;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'obj-item' + (isArtifact ? ' artifact' : '');
+            item.dataset.filter = filterName.toLowerCase();   // for fast case-insensitive search
+            item.dataset.value  = valueToSet;                 // what goes into the input box
+
+            const symSpan = document.createElement('span');
+            symSpan.className = 'obj-sym';
+            symSpan.textContent = symbol;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = displayName;
+
+            item.appendChild(symSpan);
+            item.appendChild(nameSpan);
+
+            item.addEventListener('click', () => {
+                // Put the correct value (class char or full name) into the active input
+                document.getElementById(`object_${currentObjectMode}_value`).value = item.dataset.value;
+
+                // Ensure the "include" checkbox is ticked
+                const cb = document.getElementById(`include_object_${currentObjectMode}`);
+                if (cb && !cb.checked) {
+                    cb.checked = true;
+                }
+
+                // Visual feedback
+                item.scrollIntoView({ block: 'nearest' });
+                document.getElementById(`object_${currentObjectMode}_value`).focus();
+
+                document.querySelectorAll('#obj-suggestions .obj-item.selected')
+                    .forEach(i => i.classList.remove('selected'));
+
+                item.classList.add('selected');
+            });
+
+            list.appendChild(item);
+            objListItems.push(item);
+        });
+    }
+
+    // Always apply the current filter
+    const lowerFilter = filter.toLowerCase();
+    objListItems.forEach(item => {
+        const matches = item.dataset.filter.includes(lowerFilter);
+        if (matches) {
             item.classList.remove('no-match');
             item.classList.add('match');
         } else {
@@ -723,13 +797,13 @@ function confirmMonsterSelection() {
     const mode = selected.dataset.mode;
 
     if (mode === 'class') {
-        currentMonsterBrush = {
+        currentBrushGlobal['monster'] = {
             type: 'class',
             classSym: key
             // name and inventory are intentionally omitted
         };
     } else { // 'id'
-        currentMonsterBrush = {
+        currentBrushGlobal['monster'] = {
             type: 'id',
             id: key,
             name: document.getElementById('monster-custom-name').value || null,
@@ -1025,11 +1099,12 @@ function deselectAllBrushes() {
 document.getElementById('monster-ok-btn').addEventListener('click', () => {
     currentBrushType = "monster";
     const brush = collectBrushFromPopup('#monster-options-form');
+    currentBrushGlobal['monster'] = brush;
 
     if (!brush) return;
 
     selectBrush('monster');
-    currentMonsterBrush = brush;
+    currentBrushGlobal['monster'] = brush;
     updateBrushLabel();
 
     document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
@@ -1052,8 +1127,22 @@ document.getElementById('monster-ok-btn').addEventListener('click', () => {
 // === CREATURE CANCEL (unchanged except clearing inputs is optional) ===
 document.getElementById('monster-cancel-btn').addEventListener('click', () => {
     hideMonsterPopup();
-    // leaves currentMonsterBrush intact – user keeps last selection
+    // leaves currentBrushGlobal['monster'] intact – user keeps last selection
 });
+
+
+document.getElementById('level-ok-btn').addEventListener('click', () => {
+    collectLevelBrushFromPopup();
+    document.getElementById('level-popup').style.display = 'none';
+    updateText(true); // or whatever refreshes the Lua preview
+    hideLevelPopup();
+});
+
+document.getElementById('level-cancel-btn').addEventListener('click', () => {
+    document.getElementById('level-popup').style.display = 'none';
+    hideLevelPopup();
+});
+
 
 document.getElementById('add-to-contents-btn').addEventListener('click', () => { 
     setObjectPopupTarget = 'contents';
@@ -1104,7 +1193,8 @@ document.getElementById('object-ok-btn').addEventListener('click', () => {
 
 
         selectBrush('object');
-        currentObjectBrush = brush;
+        //currentBrushGlobal['object'] = brush;
+        currentBrushGlobal['object'] = brush;
         updateBrushLabel();
 
         document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
@@ -1127,7 +1217,7 @@ document.getElementById('object-cancel-btn').addEventListener('click', () => {
         hideObjectPopup();
     }
         
-    // leaves currentObjectBrush unchanged so user keeps last selection
+    // leaves currentBrushGlobal['object'] unchanged so user keeps last selection
 });
 
 // === RE-WRITTEN BRUSH BUTTON HANDLER ===
@@ -1173,17 +1263,17 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
         }
         // ----- Special modal brushes (monster & object) -----
         if (brush === 'monster') {
-            hideInitPopup();
+            hideLevelPopup();
             hideObjectPopup();
             hideFeaturePopup();
             showMonsterPopup();
-            //document.getElementById('monster-id').value = currentMonsterBrush?.id || '';
+            //document.getElementById('monster-id').value = currentBrushGlobal['monster']?.id || '';
             //document.getElementById('monster-id').focus();
             return;                                      // do NOT highlight yet
         }
 
         if (brush === 'object') {
-            hideInitPopup();
+            hideLevelPopup();
             hideMonsterPopup();
             hideFeaturePopup();
             showObjectPopup();
@@ -1192,7 +1282,7 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
         }
 
         if (brush === 'features') {
-            hideInitPopup();
+            hideLevelPopup();
             hideMonsterPopup();
             hideObjectPopup();
             showFeaturePopup();
@@ -1221,10 +1311,10 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
         }
         // ----- All other brushes (terrain, light, dark, etc.) -----
         currentBrush = brush;
-        currentMonsterBrush = null;
-        currentObjectBrush = null;
+        currentBrushGlobal['monster'] = null;
+        currentBrushGlobal['object'] = null;
         this.classList.add('selected');
-        hideInitPopup();
+        hideLevelPopup();
         hideMonsterPopup();
         hideObjectPopup();
         hideFeaturePopup();
@@ -1235,14 +1325,15 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
 // === UPDATED SHOW POPUP FUNCTIONS ===
 function showMonsterPopup() {
     document.getElementById('monster-popup').parentNode.style.display = 'flex';
-    prefillPopupFromBrush('#monster-popup', currentMonsterBrush);
+
+    //restore Popup Options from the current Brush
+    restorePanelOptions('monster');
 
     // Populate/full list on open
     populateMonsterList('');
-    //populateObjectList('', 'mon-obj-suggestions');
 
-    if (currentMonsterBrush && Array.isArray(currentMonsterBrush.inventory)) {
-        currentMonPopupInventory = currentMonsterBrush.inventory.map(o => ({...o})); // deep-ish copy
+    if (currentBrushGlobal['monster'] && Array.isArray(currentBrushGlobal['monster'].inventory)) {
+        currentMonPopupInventory = currentBrushGlobal['monster'].inventory.map(o => ({...o})); // deep-ish copy
     } else {
         currentMonPopupInventory = [];
     }
@@ -1252,7 +1343,7 @@ function showMonsterPopup() {
 
     // Focus input and select its content for easy replacement
     document.getElementById('monster-popup').classList.remove('hide');
-    const input = document.querySelector('#mon-inp-id');
+    const input = document.querySelector('#monster_id_value');
     input.focus();
     input.select();
 }
@@ -1274,7 +1365,7 @@ function hideMonsterPopup() {
 function showObjectPopup() {
     document.getElementById('object-popup').parentNode.style.display = 'flex';
     document.getElementById('object-popup').style.display = 'flex';
-    prefillPopupFromBrush('#object-popup', currentObjectBrush);
+    prefillPopupFromBrush('#object-popup', currentBrushGlobal['object']);
     document.getElementById('object-ok-btn').textContent = 'Ok';
     selectedContentsIndex = -1;
     // Full list on open
@@ -1304,7 +1395,9 @@ function hideObjectPopup() {
 function populateInitPopup() {
     // flags
     document.querySelectorAll("#init-flags-container input[type=checkbox]").forEach(cb => {
-        cb.checked = tempState.flags.has(cb.dataset.flag);
+        if (cb.dataset && cb.dataset.flag) {
+            cb.checked = tempState.flags.includes(cb.dataset.flag);
+        }
     });
 
     // style radios
@@ -1324,7 +1417,7 @@ function populateInitPopup() {
     document.getElementById("init-remove-deadends").checked = !tempState.deadends;
 
     // lit radios
-    document.querySelector(`input[name="init-lit"][value="${tempState.lit}"]`).checked = true;
+    //document.querySelector(`input[name="init-lit"][value="${tempState.lit}"]`).checked = true;
 
     // numeric
     document.getElementById("init-corrwid").value   = tempState.corrwid > 0 ? tempState.corrwid : "";
@@ -1337,6 +1430,7 @@ function populateInitPopup() {
 // ------------------------------------------------------------------
 // Build flag checkboxes and style radios dynamically
 // ------------------------------------------------------------------
+/*
 function buildInitPopup() {
     const flagContainer = document.getElementById("init-flags-container");
     allLVLFlags.forEach(item => {
@@ -1372,18 +1466,23 @@ function buildInitPopup() {
         label.appendChild(document.createTextNode(st || " (none / omit style)"));
         styleContainer.appendChild(label);
     });
-}
+}*/
 
 // ------------------------------------------------------------------
 // Show the popup
 // ------------------------------------------------------------------
 function showInitPopup() {
-    tempState = structuredClone(initState); // deep copy
-    populateInitPopup();
-    document.getElementById('init-popup').parentNode.style.display = 'flex';
-    document.getElementById("init-popup").style.display = "block";
+    //tempState = structuredClone(initState); // deep copy
 
-    document.getElementById('init-popup').classList.remove('hide');
+    currentBrushType = 'level';
+    buildOptionsForm('level');
+    document.getElementById('level-popup').style.display = 'flex';
+
+    //populateInitPopup();
+    document.getElementById('level-popup').parentNode.style.display = 'flex';
+    document.getElementById("level-popup").style.display = "block";
+
+    document.getElementById('level-popup').classList.remove('hide');
 
 
 }
@@ -1391,25 +1490,26 @@ function showInitPopup() {
 // ------------------------------------------------------------------
 // Hide popup
 // ------------------------------------------------------------------
-function hideInitPopup() {
+function hideLevelPopup() {
 
-    document.getElementById('init-popup').parentNode.style.display = 'none';
-    document.getElementById('init-popup').classList.add('hide');
+    document.getElementById('level-popup').parentNode.style.display = 'none';
+    document.getElementById('level-popup').classList.add('hide');
 }
 
 // ------------------------------------------------------------------
 // Event listeners for the popup buttons
 // ------------------------------------------------------------------
+/*
 document.getElementById("init-ok").addEventListener("click", () => {
     // copy temp → permanent state
     initState = structuredClone(tempState);
 
     updateText();
-    hideInitPopup();
+    hideLevelPopup();
 });
 
 document.getElementById("init-cancel").addEventListener("click", () => {
-    hideInitPopup(); // changes are discarded
+    hideLevelPopup(); // changes are discarded
     updateText();
 });
 
@@ -1430,13 +1530,14 @@ document.getElementById("init-erase").addEventListener("click", () => {
         temp: "temperate"
     };
     tempState = structuredClone(initState);
-    populateInitPopup();
+    //populateInitPopup();
     updateText();
-});
+});*/
 
 // ------------------------------------------------------------------
 // Live updates while typing / checking inside the popup
 // ------------------------------------------------------------------
+/*
 function attachLiveHandlers() {
     // flags
     document.querySelectorAll("#init-flags-container input[type=checkbox]").forEach(cb => {
@@ -1480,10 +1581,10 @@ function attachLiveHandlers() {
     document.querySelectorAll('input[name="init-temp"]').forEach(r => {
         r.addEventListener("change", () => { tempState.temp = r.value; });
     });
-}
+}*/
 
-buildInitPopup();
-attachLiveHandlers();
+//buildInitPopup();
+//attachLiveHandlers();
 
 
 
@@ -1635,8 +1736,52 @@ function collectBrushFromPopup(popupSelector) {
 
     if (brushType === "monster" || brushType === "object") {
 
-
         let brush = structuredClone(brushDefault[brushType]);
+
+        const initDefs = brushOptionDefs[brushType];
+        Object.keys(initDefs).forEach(key => {
+            const include = document.getElementById(`include_${brushType}_` + key);
+            const def = initDefs[key];
+            if (include && !include.checked) return;
+
+            const sel = document.getElementById(`${brushType}_` + key + '_value');
+            if (!sel) return;
+
+            let raw = sel.value;
+
+            let value;
+            dataType = def.data_type ? def.data_type : 'null';
+            if (dataType == "int") 
+            {
+                value = parseInt(raw, 10);
+            } 
+            else if ( dataType == "bool" )
+            {
+                value = Boolean(raw);
+            }
+            else if ( dataType == "string" )
+            {
+                value = String(raw);
+            }
+            else if ( dataType == "exist" )
+            {
+                
+            }
+            currentBrushGlobal['level_init'][key] = value;
+            
+            brush[key] = value;
+        });
+
+        if(currentMonPopupInventory.length > 0 )
+        {
+            brush.inventory = structuredClone(currentMonPopupInventory);
+        }
+        if(currentObjPopupContents.length > 0 && setObjectPopupTarget != "contents" )
+        {
+            brush.contents = structuredClone(currentObjPopupContents);
+        }
+
+        /*
         brushCBs.forEach( (key, idx) => {
             const idStr = key.id;
             const parts = idStr.split('-');
@@ -1675,7 +1820,7 @@ function collectBrushFromPopup(popupSelector) {
                 brush.contents = structuredClone(currentObjPopupContents);
             }
 
-        })
+        });*/
          
         const brushDef = isValidIDFN(brush?.id) ? objectDict[brush?.id] : null;
         const brushClassDef = isValidClassFN(brush?.class) ?  brush.class : null;
@@ -1703,6 +1848,60 @@ function collectBrushFromPopup(popupSelector) {
     }
 }
 
+//Defaults
+
+
+
+
+function collectLevelBrushFromPopup() {
+    currentBrushGlobal['level_init'] = {};
+    currentBrushGlobal['level_flags'] = [];
+
+
+    // Level Init
+    const initDefs = brushOptionDefs.level.level_init;
+    Object.keys(initDefs).forEach(key => {
+        def = initDefs[key];
+        const include = document.getElementById('include_level_init_' + key);
+        if (include && !include.checked) return;
+
+        const sel = document.getElementById('level_init_' + key + '_value');
+        if (!sel) return;
+
+        let raw = sel.value;
+
+        let value;
+        dataType = def.data_type ? def.data_type : 'null';
+        if (dataType == "int") 
+        {
+            value = parseInt(raw, 10);
+        } 
+        else if ( dataType == "bool" )
+        {
+            value = Boolean(raw);
+        }
+        else if ( dataType == "string" )
+        {
+            value = String(raw);
+        }
+        else if ( dataType == "exist" )
+        {
+            
+        }
+        currentBrushGlobal['level_init'][key] = value;
+    });
+
+    // Level Flags
+    const flagDefs = brushOptionDefs.level.level_flags;
+    Object.keys(flagDefs).forEach(key => {
+        const cb = document.getElementById('include_level_flags_' + key); // pure checks don't have include_, they are the checkbox itself
+        const actualCb = cb || document.querySelector(`input[type=checkbox][id^="${key}"]`);
+        if (actualCb && actualCb.checked) {
+            currentBrushGlobal['level_flags'].push(key);
+        }
+    });
+}
+
 // === UPDATE prefillPopupFromBrush() TO HANDLE RADIO BUTTONS ===
 function prefillPopupFromBrush(popupSelector, brush) {
     const inputs = document.querySelectorAll(`${popupSelector} [name]`);
@@ -1714,7 +1913,7 @@ function prefillPopupFromBrush(popupSelector, brush) {
             // Check the radio that matches the stored value (or default)
             //let targetValue = '';
             //if( key == 'buc' ) targetValue = 'uncursed';
-            //else if( key == 'currentMonsterBrush' ) targetValue = 'id';
+            //else if( key == 'currentBrushGlobal['monster']' ) targetValue = 'id';
             //else targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '');
             const targetValue = (brush && brush[key]) || (key === 'buc' ? 'uncursed' : '') || (key === 'monsterSelectMode' ? 'id' : '');
             input.checked = (input.value === targetValue);
@@ -1732,39 +1931,30 @@ function prefillPopupFromBrush(popupSelector, brush) {
 // Generate the Lua code and write it to the textarea
 // ------------------------------------------------------------------
 function generateInitLua() {
-    const lines = [];
-
-    
-
-    // ----- level_init -----
-    const opts = [];
-    if (initState.style) opts.push(`style = "${initState.style}"`);
-    if (initState.fg)    opts.push(`fg = ${luaQuote(initState.fg)}`);
-    if (initState.bg)    opts.push(`bg = ${luaQuote(initState.bg)}`);
-    if (initState.smoothed) opts.push("smoothed = true");
-    if (initState.joined)   opts.push("joined = true");
-    if (initState.walled)   opts.push("walled = true");
-    if (!initState.deadends) opts.push("deadends = false");
-    if (initState.lit === "lit")   opts.push("lit = 1");
-    if (initState.lit === "unlit") opts.push("lit = 0");
-    if (initState.corrwid  > 0) opts.push(`corrwid = ${initState.corrwid}`);
-    if (initState.wallthick > 0) opts.push(`wallthick = ${initState.wallthick}`);
-
-    if (opts.length > 0) {
-        lines.push(`des.level_init({ ${opts.join(", ")} });`);
+    let lua = '';
+    //currentBrushGlobal['level_flags']
+    //currentBrushGlobal['level_init']
+    if (Object.keys(currentBrushGlobal['level_init']).length > 0) {
+        lua += 'des.level_init({ ';
+        const parts = [];
+        const order = ['style','fg','bg','smoothed','joined','lit','walled','corrwid','wallthick','deadends'];
+        order.forEach(k => {
+            if (currentBrushGlobal['level_init'].hasOwnProperty(k)) {
+                let val = currentBrushGlobal['level_init'][k];
+                let str;
+                if (typeof val === 'string') str = `"${val}"`;
+                else if (typeof val === 'boolean' || typeof val === 'number') str = val.toString();
+                parts.push(`${k} = ${str}`);
+            }
+        });
+        lua += parts.join(', ') + ' });\n';
     }
 
-    // ----- level_flags -----
-    const flags = {...initState.flags};
-    if (initState.temp === "hot") flags.push("hot");
-    if (initState.temp === "cold") flags.push("cold");
-    const flagStr = Object.keys(flags)
-        .map(key => `"${key}"`)           // wrap each key in quotes
-        .join(', ');                      // join with comma + space
+    if (currentBrushGlobal['level_flags'].length > 0) {
+        lua += 'des.level_flags("' + currentBrushGlobal['level_flags'].join('", "') + '")\n';
+    }
 
-    lines.push(`des.level_flags(${flagStr});`);
-
-    return lines.join("\n");
+    return lua;
 }
 
 // === generateTerrainLUA() FUNCTION ===
@@ -1888,7 +2078,7 @@ function generateSingleObjectLua(brush, x = null, y = null) {
         line += ' ';
     }
 
-    line += '})';
+    line += '});';
     return line;
 }
 
@@ -2049,7 +2239,7 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
                 props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
             }
         } else if (typeof val === 'number') {
-            props.push(`${key} = ${val ? 1 : 0}`);
+            props.push(`${key} = ${val}`);
         } else if (typeof val === 'boolean')
         {
             props.push(`${key} = ${val ? 'true' : 'false'}`);
@@ -2069,7 +2259,7 @@ function generateSingleMonsterLua(brush, gridX = null, gridY = null) {
         line = line.trim(); // remove trailing space if no inventory
     }
 
-    line += ' })';
+    line += ' });';
     return line;
 }
 
@@ -2240,20 +2430,20 @@ function paint(x, y) {
 
     //layers.lighting.push({type, area: {x1,y1,x2,y2}});
   } else if (currentBrush === 'monster') {
-        if (currentMonsterBrush === null) {
+        if (currentBrushGlobal['monster'] === null) {
           layers.monster[y][x] = null;   // or ''
         } else {
           // Clone so later popup changes don't affect already-placed monsters
-          layers.monster[y][x] = { ...currentMonsterBrush };   // spread clone
+          layers.monster[y][x] = { ...currentBrushGlobal['monster'] };   // spread clone
         }
 
   } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
   else if (currentBrush === 'object') {
-    if (currentObjectBrush === null) {
+    if (currentBrushGlobal['object'] === null) {
         layers.object[y][x] = null;   // or '' depending on how you store empty
     } else {
       // Clone the template so future brush changes don't affect already-placed objects
-      layers.object[y][x] = { ...currentObjectBrush };
+      layers.object[y][x] = { ...currentBrushGlobal['object'] };
     }
   }
   else if (currentBrush === 'features' && currentFeatureBrush && currentFeatureBrush.def.stroke === 'point' ) {
@@ -3239,7 +3429,7 @@ function getMonsterChar(input) {
 
 // === Object eraser handler (add inside your object popup click logic) ===
 document.getElementById('object-eraser-btn').addEventListener('click', () => {
-    currentObjectBrush = null;         // null means erase
+    currentBrushGlobal['object'] = null;         // null means erase
     selectBrush('object');        // ensure we are in object mode
     // optional: highlight the eraser button
     document.querySelectorAll('#object-popup .palette-button').forEach(b => b.classList.remove('selected'));
@@ -3251,7 +3441,7 @@ document.getElementById('object-eraser-btn').addEventListener('click', () => {
 
 // Monster eraser handler
 document.getElementById('monster-eraser-btn').addEventListener('click', () => {
-    currentMonsterBrush = null;
+    currentBrushGlobal['monster'] = null;
     selectBrush('monster');
     document.querySelectorAll('#monster-popup .palette-button').forEach(b => b.classList.remove('selected'));
     document.getElementById('monster-eraser-btn').classList.add('selected');
@@ -3296,31 +3486,11 @@ document.getElementById('load-lua-btn').addEventListener('click', () => {
 
 function cloneCurrentBrush(type) {
     if (type === 'object') {
-        return {
-            sym: currentObjectBrush.symbol,     // adjust to your actual property names
-            color: currentObjectBrush.color,
-            name: currentObjectBrush.name,
-            id: currentObjectBrush.id,
-            // copy any other needed fields
-        };
+        return structuredClone( currentBrushGlobal[type]);
     } else if (type === 'monster') {
-        return {
-            sym: currentMonsterBrush.symbol,
-            color: currentMonsterBrush.color,
-            name: currentMonsterBrush.name,
-            // etc.
-        };
+        return structuredClone( currentBrushGlobal[type]);
     } else { // feature / trap
-        const def = {
-            sym: currentFeatureBrush.symbol,
-            color: currentFeatureBrush.color,
-        };
-        if (currentFeatureBrush.options.trapType !== undefined) {
-            def.trapType = currentFeatureBrush.options.trapType;
-        }
-        // copy options if needed
-        if (currentFeatureBrush.options) def.options = JSON.parse(JSON.stringify(currentFeatureBrush.options));
-        return def;
+        return structuredClone( currentBrushGlobal[type]);
     }
 }
 
@@ -3393,6 +3563,7 @@ updateText( true);
 //buildMonsterOptionsForm();
 buildOptionsForm('monster');
 buildOptionsForm('object');
+buildOptionsForm('level');
 currentMonsterInventory = [];
 
 setupRNDLayerListeners();

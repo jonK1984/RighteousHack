@@ -150,3 +150,12 @@ const allTerrains = {
     "color": "HI_MINERAL"
   }
 };
+
+const terrainLuaSymbols = [...new Set(
+    Object.values(allTerrains)
+        .map(t => t.lua)
+        .filter(s => s !== undefined && s !== '\0' && s !== null)
+)];
+
+// Optional: sort for consistent order
+terrainLuaSymbols.sort();

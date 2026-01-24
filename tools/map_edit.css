@@ -542,3 +542,84 @@
     padding: 4px;
     background: #111;
 }
+
+
+
+#level-popup {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-height: 80vh;
+    background: #111;
+    border: 2px solid #1da1f2;
+    padding: 12px;
+    z-index: 1000;
+}
+
+#level-popup .popup-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#level-popup .popup-tabs button {
+    padding: 6px 12px;
+    background: #22303c;
+    color: #1da1f2;
+}
+
+#level-popup .popup-tabs button.active {
+    background: #1da1f2;
+    color: #fff;
+}
+
+#level-popup .tab-panel {
+    display: none;
+}
+
+#level-popup .tab-panel.active {
+    display: block;
+}
+
+#level-popup .option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+#level-popup .option-row label {
+    min-width: 120px;
+}
+
+.popup .popup-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.popup .popup-tabs button {
+    padding: 6px 12px;
+    background: #22303c;
+    color: #1da1f2;
+    border: none;
+    cursor: pointer;
+}
+
+.popup .popup-tabs button.active {
+    background: #1da1f2;
+    color: #fff;
+}
+
+.popup .popup-panels .tab-panel {
+    display: none;
+}
+
+.popup .popup-panels .tab-panel.active {
+    display: block;
+}
