@@ -94,6 +94,446 @@ function getFeatureInfo(brush) {
     return info;
 }
 
+
+allFeatureMenuOptions = {
+        tabs: [
+            { desc: "Altar",          key: "altar" },
+            { desc: "Door",           key: "door" },
+            { desc: "Drawbridge",     key: "drawbridge" },
+            { desc: "Engraving",      key: "engraving" },    
+            { desc: "Grave",          key: "grave" },
+            { desc: "Stair",          key: "stair" },
+            { desc: "Ladder",         key: "ladder" },
+            { desc: "Room",           key: "room" },
+            { desc: "Trap",           key: "trap" },
+            { desc: "Feature",        key: "feature" },
+            { desc: "Gold",           key: "gold" },
+            { desc: "Message",        key: "message" },
+            { desc: "Mineralize",     key: "mineralize" },
+            { desc: "Reset Level",    key: "reset_level" },
+            { desc: "Finalize Level", key: "finalize_level" }
+        ],
+
+        // ───── Point-placeable features (is_xy_possible: true) ─────
+
+        altar: {
+            align: {
+                label: "Altar alignment",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["noalign", "law", "neutral", "chaos", "coaligned", "noncoaligned", "random"],
+                desc: "Altar alignment"
+            },
+            type: {
+                label: "Altar type",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["altar", "shrine", "sanctum"],
+                desc: "Altar type"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.altar",
+                type: "feature",
+                color: "CLR_GRAY",
+                symbol: "_",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        door: {
+            state: {
+                label: "State of door",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["random", "open", "closed", "locked", "nodoor", "broken", "secret"],
+                desc: "State of door"
+            },
+            wall: {
+                label: "Wall direction",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["all", "random", "north", "west", "east", "south"],
+                desc: "Wall direction"
+            },
+            pos: {
+                label: "Door position (secret doors only)",
+                input_type: "combo",
+                data_type: "int",
+                combo_options: [0, 1, 2, 3],
+                desc: "Door position"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.door",
+                type: "feature",
+                color: "CLR_BROWN",
+                symbol: "+",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        drawbridge: {
+            dir: {
+                label: "Direction",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["north", "east", "south", "west"],
+                desc: "Drawbridge direction"
+            },
+            state: {
+                label: "Initial state",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["open", "closed"],
+                desc: "Drawbridge state"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.drawbridge",
+                type: "feature",
+                color: "CLR_BROWN",
+                symbol: "#",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        engraving: {
+            type: {
+                label: "Engraving type",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["dust", "engrave", "burn", "random"],
+                desc: "Engraving type"
+            },
+            text: {
+                label: "Engraving text",
+                input_type: "text",
+                data_type: "string",
+                desc: "Engraving text (optional if random)"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.engraving",
+                type: "feature",
+                color: "CLR_ORANGE",
+                symbol: "\"",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        room: {
+            type: {
+                label: "Room type",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["ordinary","themed","throne","swamp","vault","beehive","morgue","barracks","zoo","delphi","temple","anthole","cocknest","leprehall","shop","armor shop","scroll shop","potion shop","weapon shop","food shop","ring shop","rod shop","tool shop","book shop","health food shop","candle shop"],
+                desc: "Room type"
+            },
+            chance: {
+                label: "Probability of room generation",
+                input_type: "text",
+                data_type: "int",
+                desc: "Probability of room generation"
+            },
+            lit: {
+                label: "Room lighting",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["lit","unlit"],
+                desc: "Room lighting"
+            },
+            xalign: {
+                label: "X-Align",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["left", "half-left", "center", "half-right", "right", "none", "random"],
+                desc: "Room alignment accross the X-axis"
+            },
+            yalign: {
+                label: "Y-Align",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["top", "center", "bottom", "none", "random"],
+                desc: "Room alignment accross the Y-axis"
+            },
+            filled:     { label: "Filled",          input_type: "combo", data_type: "int", combo_options: ["0","1"], desc: "Room is Filleds" },
+            joined:      { label: "Joined",         input_type: "combo", data_type: "bool", combo_options: ["true","false"], desc: "Room is Joined to Something" },
+            internal: {
+                lua: (f) => {
+                    let parts = [`type="${f.type}"`, `lit=${f.lit === "lit" ? 1 : 0}`, `x=${f.area.split(',')[0]},y=${f.area.split(',')[1]}, w=${f.w},h=${f.h}`];
+                    if (f.contents) parts.push(`contents = function()\n${f.contents}\nend`);
+                    return `des.room({ ${parts.join(", ")} })`;
+                },
+                des_code: "des.room",
+                type: "feature",
+                color: "CLR_ORANGE",
+                dither: "crosshatch",        // distinct pattern
+                ditherColor: "CLR_GREEN",
+                symbol: null,
+                random: false,
+                brushMode: "complex",
+                stroke: "rect",
+                is_xy_possible: true
+            }
+            
+        },
+
+        grave: {
+            text: {
+                label: "Epitaph text (optional)",
+                input_type: "text",
+                data_type: "string",
+                desc: "Text on grave"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.grave",
+                type: "feature",
+                color: "CLR_GRAY",
+                symbol: "`",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+
+        stair: {
+            dir: {
+                label: "Direction",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["up", "down"],
+                desc: "Up or down stair"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.stair",
+                type: "feature",
+                color: "CLR_GRAY",
+                symbol: "<",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        ladder: {
+            dir: {
+                label: "Direction",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["up", "down"],
+                desc: "Up or down ladder"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.ladder",
+                type: "feature",
+                color: "CLR_GRAY",
+                symbol: "<",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        trap: {
+            type: {
+                label: "Trap type",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: [
+                    "random",
+                    "arrow trap",
+                    "dart trap",
+                    "falling rock trap",
+                    "squeaky board",
+                    "bear trap",
+                    "land mine",
+                    "rolling boulder trap",
+                    "sleeping gas trap",
+                    "rust trap",
+                    "fire trap",
+                    "pit",
+                    "spiked pit",
+                    "hole",
+                    "trap door",
+                    "teleportation trap",
+                    "level teleport trap",
+                    "magic trap",
+                    "anti-magic trap",
+                    "polymorph trap",
+                    "web",
+                    "statue trap",
+                    "magic portal",
+                    "vibrating square"
+                ],
+                desc: "Trap type"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.trap",
+                type: "feature",
+                color: "CLR_RED",
+                symbol: "^",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        feature: {
+            type: {
+                label: "Feature type",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["fountain", "sink", "pool", "throne", "tree"]
+            },
+            internal: {
+                lua: null,
+                des_code: "des.feature",
+                type: "feature",
+                color: "CLR_RED",
+                symbol: "#",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        gold: {
+            amount: {
+                label: "Gold amount",
+                input_type: "text",
+                data_type: "string",
+                desc: "Amount: number, dice (e.g. 10d20), or 'random'"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.gold",
+                type: "feature",
+                color: "CLR_YELLOW",
+                symbol: "$",
+                random: false,
+                brushMode: "complex",
+                stroke: "point",
+                is_xy_possible: true
+            }
+        },
+
+        // ───── Level-wide / non-spatial commands (is_xy_possible: false) ─────
+
+        message: {
+            text: {
+                label: "Message text",
+                input_type: "text",
+                data_type: "string",
+                desc: "Level message shown when hero enters"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.message",
+                type: "feature",
+                color: null,
+                symbol: null,
+                random: false,
+                brushMode: "level",
+                stroke: null,
+                is_xy_possible: false
+            }
+        },
+
+        mineralize: {
+            gold_prob: {
+                label: "Fill with gold",
+                input_type: "combo",
+                data_type: "int",
+                combo_options: [-1, 0, 25, 50, 75, 100],
+                desc: "Replace some stone with gold veins"
+            },
+            gem_prob: {
+                label: "Fill with gems",
+                input_type: "combo",
+                data_type: "int",
+                combo_options: [-1, 0, 25, 50, 75, 100],
+                desc: "Replace some stone with gems"
+            },
+            kelp_moat: {
+                label: "Fill with kelp (moat, etc.)",
+                input_type: "combo",
+                data_type: "int",
+                combo_options:  [-1, 0, 25, 50, 75, 100],
+                desc: "Other kelp replacements"
+            },
+            kelp_pool: {
+                label: "Fill with kelp (pool, etc.)",
+                input_type: "combo",
+                data_type: "int",
+                combo_options:  [-1, 0, 25, 50, 75, 100],
+                desc: "Other kelp replacements"
+            },
+
+            internal: {
+                lua: null,
+                des_code: "des.mineralize",
+                type: "feature",
+                color: null,
+                symbol: null,
+                random: false,
+                brushMode: "level",
+                stroke: null,
+                is_xy_possible: false
+            }
+        },
+
+        reset_level: {
+            internal: {
+                lua: null,
+                des_code: "des.reset_level",
+                type: "feature",
+                color: null,
+                symbol: null,
+                random: false,
+                brushMode: "level",
+                stroke: null,
+                is_xy_possible: false
+            }
+        },
+
+        finalize_level: {
+            internal: {
+                lua: null,
+                des_code: "des.finalize_level",
+                type: "feature",
+                color: null,
+                symbol: null,
+                random: false,
+                brushMode: "level",
+                stroke: null,
+                is_xy_possible: false
+            }
+        }
+    }
+
 const allFeatures = [
     {
         name: "Eraser",

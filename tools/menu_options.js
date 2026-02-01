@@ -88,95 +88,13 @@ const brushOptionDefs = {
             fumaroles:     { label: "fumaroles",     input_type: "check", data_type: "exist", desc: "Lava emits poison gas" },
             stormy:        { label: "stormy",        input_type: "check", data_type: "exist", desc: "Clouds generate lightning" }
         }
-    }
+    },
+
+    features: allFeatureMenuOptions
+    
     
     // inventory is handled separately
 };
-
-function buildMonsterOptionsForm() {
-    const form = document.getElementById("monster-options-form");
-    form.innerHTML = "";
-    const monsterOptionDefs = brushOptionDefs['monster'];
-
-    for (const [key, def] of Object.entries(monsterOptionDefs)) {
-        const row = document.createElement("div");
-        row.className = "option-row";
-
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.id = `monopt-cb-${key}`;
-        cb.dataset.key = key;
-
-        const label = document.createElement("label");
-        label.htmlFor = cb.id;
-        label.textContent = def.label + ":";
-
-        row.appendChild(cb);
-        row.appendChild(label);
-
-        let input = null;
-        if (def.input_type === "text") {
-            input = document.createElement("input");
-            input.type = "text";
-        } else if (def.input_type === "number") {
-            input = document.createElement("input");
-            input.type = "number";
-            input.min = def.min || 0;
-            input.value = 1; // sensible default
-        }
-        // bool fields need no extra input
-
-        if (input) {
-            input.id = `monopt-inp-${key}`;
-            input.disabled = true; // disabled until checkbox is checked
-            row.appendChild(input);
-        }
-
-        // Mutual exclusion handling (id ↔ class)
-        if (def.no_coexist) {
-            cb.addEventListener("change", () => {
-                if (cb.checked) {
-                    def.no_coexist.forEach(other => {
-                        const otherCb = document.getElementById(`monopt-cb-${other}`);
-                        
-                        if (otherCb) {
-                            otherCb.checked = false;
-                            const otherInp = document.getElementById(`monopt-inp-${other}`);
-                            if (otherInp) otherInp.disabled = true;
-                        }
-                    });
-                }
-                if (input) input.disabled = !cb.checked;
-                if( key == 'id' || key == 'class'){
-                    currentMonsterMode = key;
-                    const inputHNDL = document.getElementById(`monopt-inp-${key}`);  
-                    def.no_coexist.forEach(other => {
-                        const otherInputHNDL = document.getElementById(`monopt-inp-${other}`);
-                        otherInputHNDL.value = '';
-                    });
-                    populateMonsterList( inputHNDL?.value || '' );
-                    inputHNDL.addEventListener('input', (e) => {
-                        const filter = e.target.value.trim();
-                        populateMonsterList( filter );
-                    });
-                    //Clear the value in the other one
-                    
-                    inputHNDL.focus();
-                    inputHNDL.select();
-                }
-            });
-        } else {
-            cb.addEventListener("change", () => {
-                if (input) input.disabled = !cb.checked;
-            });
-        }
-
-        // Initial state: if checkbox unchecked, disable input
-        if (input) input.disabled = true;
-
-        form.appendChild(row);
-    }
-}
 
 document.getElementById("monster-inventory-list").innerHTML = "";
 /*

@@ -202,23 +202,23 @@
     <!-- ############################### -->
     <!-- FEATURES POPUP HTML -->
     <!-- ############################### -->
-    <div id="feature-popup" class="popup" style="display:none;">
-        <div class="popup-header">Feature Brush Selector</div>
-        <div class="popup-content" style="display:flex;">
-            <!-- Left: Feature list -->
-            <div id="feature-list" class="scroll-list" style="width:45%;"></div>
-
-            <!-- Right: Context-sensitive options -->
-            <div id="feature-options" style="width:55%; padding-left:10px;">
-                <div id="feature-options-content"></div>
-                <div style="margin-top:20px;">
-                    <button id="feature-confirm">OK</button>
-                    <button id="feature-cancel">Cancel</button>
-                </div>
-            </div>
+    <div id="features-popup" class="popup" style="display:none;">
+        <div class="popup-title">Features</div>
+        
+        <div class="popup-tabs">
+            <!-- tabs will be injected by JS -->
+        </div>
+        
+        <div id="features-options-form" class="popup-content">
+            <!-- content panels will be injected by JS -->
+        </div>
+        
+        <div class="popup-buttons">
+            <button id="features-ok-btn">OK</button>
+            <button id="features-cancel-btn">Cancel</button>
         </div>
     </div>
-    <!-- END OF FEATURES POPUP HTML -->
+    
     
 
     <!-- ############################### -->
@@ -831,17 +831,17 @@ document.getElementById('monster-suggestions').addEventListener('dblclick', (e) 
 });
 
 function showFeaturePopup() {
-    document.getElementById('feature-popup').parentNode.style.display = 'flex';
+    document.getElementById('features-popup').parentNode.style.display = 'flex';
 
-    populateFeatureList();
-    document.getElementById('feature-popup').style.display = 'block';
-    document.getElementById('feature-popup').classList.remove('hide');
+    //populateFeatureList();
+    document.getElementById('features-popup').style.display = 'block';
+    document.getElementById('features-popup').classList.remove('hide');
 }
 
 function hideFeaturePopup() {
-    document.getElementById('feature-popup').parentNode.style.display = 'none';
-    document.getElementById('feature-popup').style.display = 'none';
-    document.getElementById('feature-popup').classList.add('hide');
+    document.getElementById('features-popup').parentNode.style.display = 'none';
+    document.getElementById('features-popup').style.display = 'none';
+    document.getElementById('features-popup').classList.add('hide');
 }
 
 function populateFeatureList() {
@@ -1058,7 +1058,7 @@ function clearFeatureBrush() {
     updateBrushLabel();
 }
 
-document.getElementById('feature-confirm').onclick = () => {
+document.getElementById('features-ok-btn').onclick = () => {
     if (currentFeatureBrush && !currentFeatureBrush.def.isEraser) {
         updateShapeButtons([currentFeatureBrush.def.stroke]);
     }
@@ -1077,7 +1077,7 @@ document.getElementById('feature-confirm').onclick = () => {
 
 
 
-document.getElementById('feature-cancel').onclick = () => {
+document.getElementById('features-cancel-btn').onclick = () => {
     currentFeatureBrush = null;
     hideFeaturePopup();
 };
@@ -3560,10 +3560,12 @@ createRndGrids();
 renderLayers();  // initial render
 updateText( true);
 
-//buildMonsterOptionsForm();
+
 buildOptionsForm('monster');
 buildOptionsForm('object');
 buildOptionsForm('level');
+buildOptionsForm('features');
+
 currentMonsterInventory = [];
 
 setupRNDLayerListeners();
