@@ -372,7 +372,53 @@ const brushDefault = {
         fg: ".",
         bg: "-"
     },
-    'level_flags': ["noteleport", "noflipy", "hardfloor"]
+    'level_flags': ["noteleport", "noflipy", "hardfloor"],
+    'altar': {
+        type: 'lawful'
+    },
+    'altar': {
+        type: 'lawful'
+    },
+    'door': {
+        state: 'closed'
+    },
+    'drawbridge': {
+        state: 'open'
+    },
+    'engraving': {
+        type: 'burn',
+        text: 'Engrave Message Here'
+    },
+    'room': {
+        type: 'vault',
+        lit: 'lit'
+    },
+    'grave': {
+        text: 'Here lies someone...'
+    },
+    'stair': {
+        dir: 'down'
+    },
+    'ladder': {
+        dir: 'down'
+    },
+    'trap': {
+        type: 'web'
+    },
+    'feature': {
+        type: 'fountain'
+    },
+    'gold': {
+        amount: '100'
+    },
+    'message': {
+        text: 'An important message for the hero...'
+    },
+    'mineralize': {
+        gold_prob: '25'
+    },
+    'reset_level': {},
+    'finalize_level': {}
 };
 
 // Global brush storage – one top-level entry per brush "name"
@@ -442,13 +488,14 @@ function updateBrushLabel() {
     } else if (currentBrush === 'monster') {
         text = currentBrushGlobal['monster'] ? `Monster: ${currentBrushGlobal['monster'].id}` : "Monster: ERASER";
     } else if (currentBrush === 'features') {
-    if (currentFeatureBrush && currentFeatureBrush.def.isEraser) {
-          currentBrushText = 'Features: Eraser';
-      } else if (currentFeatureBrush) {
-          currentBrushText = `Features: ${currentFeatureBrush.def.name}`;
-      } else {
-          currentBrushText = 'Features: (none)';
-      }
+        const currentFeatureBrush = currentBrushGlobal[currentBrushType];
+        if (currentFeatureBrush && currentFeatureBrush.internal.isEraser) {
+            text = 'Features: Eraser';
+        } else if (currentFeatureBrush) {
+            text = `Features: ${currentBrushType}`;
+        } else {
+            text = 'Features: (none)';
+        }
     }else if (currentBrush) {
         text = currentBrush.charAt(0).toUpperCase() + currentBrush.slice(1);
     }
@@ -1059,16 +1106,23 @@ function clearFeatureBrush() {
 }
 
 document.getElementById('features-ok-btn').onclick = () => {
-    if (currentFeatureBrush && !currentFeatureBrush.def.isEraser) {
-        updateShapeButtons([currentFeatureBrush.def.stroke]);
+    
+    
+    const featureType = document.querySelectorAll('#features-popup button.active')[0].getAttribute('data-key');
+    currentBrush = 'features';
+    currentBrushType = featureType;
+    const brush = collectBrushFromPopup('#features-options-form');
+    currentBrushGlobal[currentBrushType] = brush;
+
+    if (brush && !brush.internal.isEraser) {
+        updateShapeButtons([brush.internal.stroke]);
     }
-    if(currentFeatureBrush && currentFeatureBrush.def.isEraser)
+    if(brush && brush.internal.isEraser)
     {
       updateShapeButtons(['point']);
     }
     updateBrushLabel();
 
-    currentBrush = 'features';
     //document.querySelectorAll('.toolbar-row button[data-brush]').forEach(b => b.classList.remove('selected'));
     //document.querySelector('button[data-brush="features"]').classList.add('selected');
     
@@ -1734,7 +1788,7 @@ function collectBrushFromPopup(popupSelector) {
     isValidClassFN = isValidClass[brushType];
     objectDict = dicts[brushType];
 
-    if (brushType === "monster" || brushType === "object") {
+    if (brushType === "monster" || brushType === "object" ) {
 
         let brush = structuredClone(brushDefault[brushType]);
 
@@ -1844,6 +1898,47 @@ function collectBrushFromPopup(popupSelector) {
             brush.inventory = currentMonsterInventory;
         }
 
+        return brush;
+    }
+    else if( currentBrush === "features")
+    {
+        let brush = structuredClone(brushDefault[brushType]);
+
+        const initDefs = brushOptionDefs['features'][brushType];
+        brush.internal = structuredClone(initDefs.internal);
+        Object.keys(initDefs).forEach(key => {
+            const include = document.getElementById(`include_${brushType}_` + key);
+            const def = initDefs[key];
+
+            if (include && !include.checked) return;
+
+            const sel = document.getElementById(`${brushType}_` + key + '_value');
+            if (!sel) return;
+
+            let raw = sel.value;
+
+            let value;
+            dataType = def.data_type ? def.data_type : 'null';
+            if (dataType == "int") 
+            {
+                value = parseInt(raw, 10);
+            } 
+            else if ( dataType == "bool" )
+            {
+                value = Boolean(raw);
+            }
+            else if ( dataType == "string" )
+            {
+                value = String(raw);
+            }
+            else if ( dataType == "exist" )
+            {
+                
+            }
+            
+            
+            brush[key] = value;
+        });
         return brush;
     }
 }
@@ -1971,11 +2066,105 @@ function generateTerrainLUA() {
 function generateFeaturesLua() {
     let lines = [];
     layers.features.forEach(f => {
-        if (f.lua) lines.push(f.lua(f));
-        else if (f.def.name === "Trap") lines.push(`des.trap("${f.trapType}"${f.x !== undefined ? `,${f.x},${f.y}` : ''})`);
+        //if (f.internal.lua) lines.push(f.internal.lua(f));
+        //else if (f.internal.type === "trap") lines.push(`des.trap("${f.type}"${f.x !== undefined ? `,${f.x},${f.y}` : ''})`);
         // add any special cases here
+        txt = generateSingleBrushLua(f);
+        lines.push(txt);
+
     });
     return lines.join('\n');
+}
+
+function generateSingleBrushLua(brush, x = null, y = null) {
+    if (!brush) return '';
+    if( !brush.internal.des_code) return '';
+    const des_code = brush.internal.des_code;
+    const mode = brush.internal?.brushMode || 'simple';
+
+    x = brush['x'];
+    y = brush['y'];
+
+    // SIMPLE mode – always single-line
+    if (mode === 'simple') {
+        let line = des_code + '(';
+
+        if (brush.name && brush.name.variable) {
+            line += brush.name.variable;
+        } else if (brush.id) {
+            line += `"${brush.id.replace(/"/g, '\\"')}"`;
+        } else if (brush.class) {
+            line += `"${brush.class.replace(/"/g, '\\"')}"`;
+            //line += brush.class;
+        }
+
+        if (x  && y ) {
+            if (line.length > 'des.object('.length) line += ', ';
+            line += `${x.toString().padStart(2, '0')}, ${y.toString().padStart(2, '0')}`;
+        }
+
+        line += ')';
+        return line;
+    }
+
+    // COMPLEX mode
+    let props = [];
+
+    if (brush.id) {
+        props.push(`id = "${brush.id.replace(/"/g, '\\"')}"`);
+    }
+
+    
+    if (brush.coord) {
+        if (brush.coord.variable) {
+            props.push(`coord = ${brush.coord.variable}`);
+        } else if (Array.isArray(brush.coord) && brush.coord.length === 2) {
+            const [cx, cy] = brush.coord;
+            props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
+        }
+    } else if (x  && y ) {
+        props.push(`x = ${x.toString().padStart(2, '0')}`);
+        props.push(`y = ${y.toString().padStart(2, '0')}`);
+    }
+
+    let otherKeys = [];
+    Object.keys(allFeatureMenuOptions[brush.internal.type]).forEach( (key) => {
+        if( key == 'internal') return;
+        otherKeys.push(key);
+    });
+    //const otherKeys = ['class', 'spe', 'buc', 'name', 'montype', 'historic', 'quantity', 'trapped', 'locked'];
+    for (const key of otherKeys) {
+        if (brush[key] === undefined) continue;
+
+        let val = brush[key];
+        if (typeof val === 'string') {
+            if (key === 'name' && val.variable) {
+                props.push(`name = ${val.variable}`);
+            } else {
+                props.push(`${key} = "${val.replace(/"/g, '\\"')}"`);
+            }
+        } else if (typeof val === 'number' || typeof val === 'boolean') {
+            props.push(`${key} = ${val}`);
+        } else if (typeof val === 'boolean') {
+            props.push(`${key} = ${val ? 'true' : 'false'}`);
+        }
+    }
+
+    let line = des_code + '({';
+
+    if (props.length) {
+        line += ' ' + props.join(', ') + (brush.contents && brush.contents.length ? ',' : '');
+    }
+
+    if (brush.contents && brush.contents.length > 0) {
+        const contentsLua = generateContentsLua(brush.contents, '');
+        line += ' contents = ' + contentsLua;
+    } else if (props.length) {
+        line += ' ';
+    }
+
+    line += '});';
+    return line;
 }
 
 /**
@@ -2413,79 +2602,85 @@ function eraseAt(col, row) {
 function pad(n) { return n < 10 ? '0'+n : n; } // for 2-digit coords
 
 function paint(x, y) {
-  if (currentChar && currentBrush === 'terrain') {
-
-    //Terrain painting
-    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
-    layers.terrain[y][x] = currentChar;
-
-  } else if (currentBrush === 'lighting' && currentShape === 'rectangle') {
-    // Simple rectangle region for lit/unlit
-    if (!dragStart) return;
-    const x1 = Math.min(dragStart.x, x), x2 = Math.max(dragStart.x, x);
-    const y1 = Math.min(dragStart.y, y), y2 = Math.max(dragStart.y, y);
-    const type = currentLightingBrush === 'light' ? 'lit' : 'unlit';
 
     
+    if (currentChar && currentBrush === 'terrain') {
 
-    //layers.lighting.push({type, area: {x1,y1,x2,y2}});
-  } else if (currentBrush === 'monster') {
-        if (currentBrushGlobal['monster'] === null) {
-          layers.monster[y][x] = null;   // or ''
+        //Terrain painting
+        if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+        layers.terrain[y][x] = currentChar;
+
+    } else if (currentBrush === 'lighting' && currentShape === 'rectangle') {
+        // Simple rectangle region for lit/unlit
+        if (!dragStart) return;
+        const x1 = Math.min(dragStart.x, x), x2 = Math.max(dragStart.x, x);
+        const y1 = Math.min(dragStart.y, y), y2 = Math.max(dragStart.y, y);
+        const type = currentLightingBrush === 'light' ? 'lit' : 'unlit';
+
+        
+
+        //layers.lighting.push({type, area: {x1,y1,x2,y2}});
+    } else if (currentBrush === 'monster') {
+            if (currentBrushGlobal['monster'] === null) {
+            layers.monster[y][x] = null;   // or ''
+            } else {
+            // Clone so later popup changes don't affect already-placed monsters
+            layers.monster[y][x] = { ...currentBrushGlobal['monster'] };   // spread clone
+            }
+
+    } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
+    else if (currentBrush === 'object') {
+        if (currentBrushGlobal['object'] === null) {
+            layers.object[y][x] = null;   // or '' depending on how you store empty
         } else {
-          // Clone so later popup changes don't affect already-placed monsters
-          layers.monster[y][x] = { ...currentBrushGlobal['monster'] };   // spread clone
+        // Clone the template so future brush changes don't affect already-placed objects
+        layers.object[y][x] = { ...currentBrushGlobal['object'] };
         }
-
-  } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
-  else if (currentBrush === 'object') {
-    if (currentBrushGlobal['object'] === null) {
-        layers.object[y][x] = null;   // or '' depending on how you store empty
-    } else {
-      // Clone the template so future brush changes don't affect already-placed objects
-      layers.object[y][x] = { ...currentBrushGlobal['object'] };
     }
-  }
-  else if (currentBrush === 'features' && currentFeatureBrush && currentFeatureBrush.def.stroke === 'point' ) {
-      const cellX = x;
-      const cellY = y;
+    else if (currentBrush === 'features' && currentBrushGlobal[currentBrushType] ) {
+        const brush = currentBrushGlobal[currentBrushType];
+        const cellX = x;
+        const cellY = y;
 
-      if (currentFeatureBrush.def.isEraser) {
-        // ----- ERASER MODE -----
-        if (currentShape === 'point') {
-            const featuresToRemove = getFeaturesAtXY(cellX, cellY);
-            if (featuresToRemove.length > 0) {
-                layers.features = layers.features.filter(f => !featuresToRemove.includes(f));
-                //renderLayers();
-                //generateFeatureLua();   // refresh code textarea
+        if (brush.internal.isEraser) {
+            // ----- ERASER MODE -----
+            if (currentShape === 'point') {
+                const featuresToRemove = getFeaturesAtXY(cellX, cellY);
+                if (featuresToRemove.length > 0) {
+                    layers.features = layers.features.filter(f => !featuresToRemove.includes(f));
+                    //renderLayers();
+                    //generateFeatureLua();   // refresh code textarea
+                }
             }
         }
-      }
-  
-      else {
-        const feat = {
-            def: currentFeatureBrush.def.name,
-            lua: currentFeatureBrush.def.lua,
-            x: cellX, y: cellY,
-            area: null,
-            w: null,
-            h: null,
-            ...currentFeatureBrush.options
-        };
-        if (currentFeatureBrush.def.symbol || currentFeatureBrush.symbol) {
-            feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
-            feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
+    
+        else {
+            brush.x = cellX;
+            brush.y = cellY;
+            layers.features.push(brush)
+            /*const feat = {
+                def: currentFeatureBrush.def.name,
+                lua: currentFeatureBrush.def.lua,
+                x: cellX, y: cellY,
+                area: null,
+                w: null,
+                h: null,
+                ...currentFeatureBrush.options
+            };
+            if (currentFeatureBrush.def.symbol || currentFeatureBrush.symbol) {
+                feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
+                feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
+            }*/
+            //layers.features.push(feat);
         }
-        layers.features.push(feat);
     }
-  }
-  else if (currentBrush === 'eraser') {
-    eraseAt(x, y);
-    // If you have drag-painting (mousemove while mouse down), this will erase cell-by-cell as you drag
-    return; // prevent any other painting action
-    }
+    else if (currentBrush === 'eraser') {
+        eraseAt(x, y);
+        // If you have drag-painting (mousemove while mouse down), this will erase cell-by-cell as you drag
+        return; // prevent any other painting action
+        }
 
-  updateText();
+    updateText();
 }
 
 function clearPreview() { overlay.innerHTML = ''; }
@@ -3319,8 +3514,8 @@ function renderLayers() {
               //const cell = document.querySelector(`.grid-cell[data-x="${f.x}"][data-y="${f.y}"]`);
               const cell = mapCells[f.y][f.x];
               if (cell) {
-                  cell.textContent = f.symbol || f.def.symbol;
-                  cell.style.color = getColorRGB(f.color || f.def.color || 'CLR_WHITE');
+                  cell.textContent = f.symbol || f.internal.symbol;
+                  cell.style.color = getColorRGB(f.color || f.internal.color || 'CLR_WHITE');
               }
           }
       });

@@ -592,9 +592,52 @@
     margin-bottom: 6px;
 }
 
+
 #level-popup .option-row label {
     min-width: 120px;
 }
+
+#features-popup {
+    min-width: 400px;
+    max-width: 550px;
+    min-height: 500px;
+}
+#features-popup .popup-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#features-popup .popup-tabs button {
+    padding: 6px 12px;
+    background: #22303c;
+    color: #1da1f2;
+}
+
+#features-popup .popup-tabs button.active {
+    background: #1da1f2;
+    color: #fff;
+}
+
+#features-popup .tab-panel {
+    display: none;
+}
+
+#features-popup .tab-panel.active {
+    display: block;
+}
+
+#features-popup .option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+#features-popup .option-row label {
+    min-width: 120px;
+}
+
 
 .popup .popup-tabs {
     display: flex;

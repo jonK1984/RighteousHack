@@ -997,84 +997,126 @@ function loadLUAMap(luaText) {
                         
                     }
                     break;
-
+                
+                case 'region':
                 case 'room':
                     if (args[0]?.type !== 'TableConstructorExpression') break;
+                    
+                    {
+                        const room = args[0];
+                        let lit = false;
+                        let roomX1, roomY1, roomX2, roomY2;
 
-                    const room = args[0];
-                    let lit = false;
-                    let roomX1, roomY1, roomX2, roomY2;
+                        let roomW = 0, roomH = 0, roomX = 0, roomY = 0;
+                        let xAlign = '', yAlign = '', roomType = '';
+                        
+                        const roomInternal = getFeatureDefByType('room').internal;
+                        let luaBrush = {};
+                        let contents = {};
+                        luaBrush['internal'] = structuredClone(roomInternal);
 
-                    let roomW = 0, roomH = 0, roomX = 0, roomY = 0;
-                    let xAlign = '', yAlign = '';
 
-                    for (const field of room.fields) {
-                        const key = field.key.name;
-                        const val = field.value;
+                        for (const field of room.fields) {
+                            const key = field.key.name;
+                            const val = field.value;
 
-                        if (key === 'lit' && val.value === 1) lit = true;
-                        if (key === 'region' && val.type === 'TableConstructorExpression' && val.fields.length === 4) {
-                            roomX1 = val.fields[0].value.value;
-                            roomY1 = val.fields[1].value.value;
-                            roomX2 = val.fields[2].value.value;
-                            roomY2 = val.fields[3].value.value;
+                            if (key === 'lit' && val.value === 1) luaBrush['lit'] = true;
+                            if (key === 'region' && val.type === 'TableConstructorExpression' && val.fields.length === 4) {
+                                roomX1 = val.fields[0].value.value;
+                                roomY1 = val.fields[1].value.value;
+                                roomX2 = val.fields[2].value.value;
+                                roomY2 = val.fields[3].value.value;
+                                luaBrush['x'] = roomX1;
+                                luaBrush['y'] = roomX1;
+                                luaBrush['w'] = roomX1 - roomX2;
+                                luaBrush['h'] = roomY1 - roomY2;
+
+                            }
+                            if (key === 'x') luaBrush['x'] = val.value;
+                            if (key === 'y') luaBrush['y'] = val.value;
+                            if (key === 'w') luaBrush['w'] = val.value;
+                            if (key === 'h') luaBrush['h'] = val.value;
+                            if (key === 'xalign') luaBrush['xalign'] = dequote(val.raw);
+                            if (key === 'yalign') luaBrush['yalign'] = dequote(val.raw);
+                            if (key === 'type')  luaBrush['type'] = dequote(val.raw);
+                            if (key === 'contents')  contents = field.value;
                         }
-                        if (key === 'x') roomX = val.value;
-                        if (key === 'y') roomY = val.value;
-                        if (key === 'w') roomW = val.value;
-                        if (key === 'h') roomH = val.value;
-                        if (key === 'xalign') xAlign = val.value;
-                        if (key === 'yalign') yAlign = val.value;
+
+                        if (contents && contents.type === "FunctionDeclaration" && contents.body) {
+                            luaBrush.contents = [];
+                            for (const stmt of contents.body) {
+                                if (stmt.type !== "CallStatement") continue;
+                                const expr = stmt.expression;
+                                if (expr.type !== "CallExpression") continue;
+
+                                if (!expr.base ||
+                                    expr.base.type !== "MemberExpression" ||
+                                    expr.base.identifier.name !== "object" ||
+                                    !expr.base.base ||
+                                    expr.base.base.name !== "des") {
+                                    continue;
+                                }
+
+                                const innerBrush = getObjectBrushFromLUAObj(expr);
+                                if (innerBrush) {
+                                    luaBrush.contents.push(innerBrush);
+                                }
+                            }
+                        }
+
+                        // Resolve coordinates
+                        /*if (typeof roomX1 !== 'number') {
+                            if (roomW && roomH) {
+                                roomX1 = roomX;
+                                roomY1 = roomY;
+                                if (xAlign === 'center') roomX1 = Math.floor((COLS - roomW) / 2);
+                                if (yAlign === 'center') roomY1 = Math.floor((ROWS - roomH) / 2);
+                                roomX2 = roomX1 + roomW - 1;
+                                roomY2 = roomY1 + roomH - 1;
+                            } else break;
+                        }*/
+                        
+                        // Draw using terrain keys
+                        /*const floorKey = symToTerrain['.'] || 'room';
+                        const hwallKey = symToTerrain['-'] || 'hwall';
+                        const vwallKey = symToTerrain['|'] || 'vwall';
+                        const cornerKey = symToTerrain['+'] || 'hwall'; // Corners are walls
+
+                        // Floor
+                        for (let yy = roomY1 + 1; yy < roomY2; yy++)
+                            for (let xx = roomX1 + 1; xx < roomX2; xx++)
+                                if (yy < ROWS && xx < COLS) layers.terrain[yy][xx] = floorKey;
+
+                        // Top/bottom walls
+                        for (let xx = roomX1 + 1; xx < roomX2; xx++) {
+                            if (roomY1 < ROWS && xx < COLS) layers.terrain[roomY1][xx] = hwallKey;
+                            if (roomY2 < ROWS && xx < COLS) layers.terrain[roomY2][xx] = hwallKey;
+                        }
+
+                        // Side walls
+                        for (let yy = roomY1 + 1; yy < roomY2; yy++) {
+                            if (yy < ROWS && roomX1 < COLS) layers.terrain[yy][roomX1] = vwallKey;
+                            if (yy < ROWS && roomX2 < COLS) layers.terrain[yy][roomX2] = vwallKey;
+                        }
+
+                        // Corners
+                        if (roomY1 < ROWS && roomX1 < COLS) layers.terrain[roomY1][roomX1] = cornerKey;
+                        if (roomY1 < ROWS && roomX2 < COLS) layers.terrain[roomY1][roomX2] = cornerKey;
+                        if (roomY2 < ROWS && roomX1 < COLS) layers.terrain[roomY2][roomX1] = cornerKey;
+                        if (roomY2 < ROWS && roomX2 < COLS) layers.terrain[roomY2][roomX2] = cornerKey;*/
+                        
+                        
+
+                        /*if (lit) {
+                            for (let yy = roomY1; yy <= roomY2 && yy < ROWS; yy++)
+                                for (let xx = roomX1; xx <= roomX2 && xx < COLS; xx++)
+                                    layers.lighting[yy][xx] = 'lit';
+                        }*/
+
+                        if(luaBrush) layers.features.push(luaBrush);
+                        
+                        break;
                     }
-
-                    // Resolve coordinates
-                    if (typeof roomX1 !== 'number') {
-                        if (roomW && roomH) {
-                            roomX1 = roomX;
-                            roomY1 = roomY;
-                            if (xAlign === 'center') roomX1 = Math.floor((COLS - roomW) / 2);
-                            if (yAlign === 'center') roomY1 = Math.floor((ROWS - roomH) / 2);
-                            roomX2 = roomX1 + roomW - 1;
-                            roomY2 = roomY1 + roomH - 1;
-                        } else break;
-                    }
-
-                    // Draw using terrain keys
-                    const floorKey = symToTerrain['.'] || 'room';
-                    const hwallKey = symToTerrain['-'] || 'hwall';
-                    const vwallKey = symToTerrain['|'] || 'vwall';
-                    const cornerKey = symToTerrain['+'] || 'hwall'; // Corners are walls
-
-                    // Floor
-                    for (let yy = roomY1 + 1; yy < roomY2; yy++)
-                        for (let xx = roomX1 + 1; xx < roomX2; xx++)
-                            if (yy < ROWS && xx < COLS) layers.terrain[yy][xx] = floorKey;
-
-                    // Top/bottom walls
-                    for (let xx = roomX1 + 1; xx < roomX2; xx++) {
-                        if (roomY1 < ROWS && xx < COLS) layers.terrain[roomY1][xx] = hwallKey;
-                        if (roomY2 < ROWS && xx < COLS) layers.terrain[roomY2][xx] = hwallKey;
-                    }
-
-                    // Side walls
-                    for (let yy = roomY1 + 1; yy < roomY2; yy++) {
-                        if (yy < ROWS && roomX1 < COLS) layers.terrain[yy][roomX1] = vwallKey;
-                        if (yy < ROWS && roomX2 < COLS) layers.terrain[yy][roomX2] = vwallKey;
-                    }
-
-                    // Corners
-                    if (roomY1 < ROWS && roomX1 < COLS) layers.terrain[roomY1][roomX1] = cornerKey;
-                    if (roomY1 < ROWS && roomX2 < COLS) layers.terrain[roomY1][roomX2] = cornerKey;
-                    if (roomY2 < ROWS && roomX1 < COLS) layers.terrain[roomY2][roomX1] = cornerKey;
-                    if (roomY2 < ROWS && roomX2 < COLS) layers.terrain[roomY2][roomX2] = cornerKey;
-
-                    if (lit) {
-                        for (let yy = roomY1; yy <= roomY2 && yy < ROWS; yy++)
-                            for (let xx = roomX1; xx <= roomX2 && xx < COLS; xx++)
-                                layers.lighting[yy][xx] = 'lit';
-                    }
-                    break;
-
                 case 'feature':
                     if (args.length === 3 && args[0].type === 'StringLiteral' &&
                         args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
@@ -1085,10 +1127,12 @@ function loadLUAMap(luaText) {
                         // Find matching feature from allFeatures
                         const feat = allFeatures.find(f => f.type?.toLowerCase() === type.toLowerCase() || f.name.toLowerCase() === type.toLowerCase());
                         
-                        let luaBrush = {...getFeatureBrushByName(feat.name)};
-                        luaBrush.internal.type = 'feature';
+                        const internal = getFeatureDefByType('feature').internal;
+                        let luaBrush = {};
+                        luaBrush['internal'] = structuredClone(internal);
                         luaBrush.x = x;
                         luaBrush.y = y;
+                        luaBrush.type = type;
                         if (feat && y < ROWS && x < COLS) {
                             layers.features.push(luaBrush);
                         }
@@ -1105,8 +1149,9 @@ function loadLUAMap(luaText) {
                         const name = dir === 'up' ? 'Stairs Up' : 'Stairs Down';
                         const sym = dir === 'up' ? '<' : '>';
                         const color = 'CLR_GRAY';  // Default from def
-                        let luaBrush = {...getFeatureBrushByName(name)};
-                        luaBrush.internal.type = 'feature';
+                        const internal = getFeatureDefByType('stairs').internal;
+                        let luaBrush = {};
+                        luaBrush['internal'] = structuredClone(internal);
                         luaBrush.x = x;
                         luaBrush.y = y;
                         if (y < ROWS && x < COLS) {
@@ -1126,17 +1171,13 @@ function loadLUAMap(luaText) {
                         }
 
                         if (typeof ax === 'number' && typeof ay === 'number' && ay < ROWS && ax < COLS) {
-                            layers.features.push({
-                                def: 'Altar',
-                                x: ax,
-                                y: ay,
-                                area: null,
-                                w: null,
-                                h: null,
-                                symbol: '_',
-                                color: 'CLR_GRAY',  // Default
-                                internal: {type: 'feature'}
-                            });
+
+                            const internal = getFeatureDefByType('altar').internal;
+                            let luaBrush = {};
+                            luaBrush['internal'] = structuredClone(internal);
+                            luaBrush.x = ax;
+                            luaBrush.y = ay;
+                            layers.features.push(luaBrush);
                         }
                     }
                     break;
@@ -1151,10 +1192,11 @@ function loadLUAMap(luaText) {
                      
                     }
                     if (typeof dx === 'number' && typeof dy === 'number' && dy < ROWS && dx < COLS) {
-                        let luaBrush = {...getFeatureBrushByName('Door')};
+                        const internal = getFeatureDefByType('stairs').internal;
+                        let luaBrush = {};
+                        luaBrush['internal'] = structuredClone(internal);
                         luaBrush.x = dx;
                         luaBrush.y = dy;    
-                        luaBrush.internal.type = 'feature';
                         luaBrush.options.state = state; 
                         layers.features.push(luaBrush);
                     }
@@ -1204,8 +1246,10 @@ function loadLUAMap(luaText) {
                     let trapType = null;
                     let x = null;
                     let y = null;
-                    let luaTrapBrush = {...getFeatureBrushByName('Trap')};
-                    luaTrapBrush.internal.type = 'feature';
+
+                    const internal = getFeatureDefByType('trap').internal;
+                    let luaTrapBrush = {};
+                    luaTrapBrush['internal'] = structuredClone(internal);
 
                     let trapSym = '^';
                     let trapCol = 'CLR_WHITE';
@@ -1222,14 +1266,14 @@ function loadLUAMap(luaText) {
                     if( y ) luaTrapBrush.y = y;    
                     if( trapType ) 
                     {
-                        luaTrapBrush.trapType = trapType;   
+                        luaTrapBrush.type = trapType;   
                         trapObj = getTrapTypeByName(trapType);
                         trapSym = trapObj.sym;
                         trapCol = trapObj.color;
                     }
 
-                    luaTrapBrush.symbol = trapSym; 
-                    luaTrapBrush.color = trapCol;   
+                    luaTrapBrush.internal.symbol = trapSym; 
+                    luaTrapBrush.internal.color = trapCol;   
                     layers.features.push(luaTrapBrush);
                     break;
                 // Add more cases here if new deterministic des. calls appear in levels

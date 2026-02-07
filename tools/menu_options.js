@@ -262,10 +262,13 @@ function buildOptionsForm( type ) {
 
 function restorePanelOptions( panelName )
     {
-        const definition = brushOptionDefs[panelName] || brushOptionDefs['level'][panelName];
+        const definition = brushOptionDefs[panelName] || brushOptionDefs['level'][panelName] || brushOptionDefs['features'][panelName];
         const stored = currentBrushGlobal[panelName];
         //Load in existing options
         Object.keys(definition).forEach(key => {
+
+            if( key == 'internal') return;
+
             const opt = definition[key];
             const fieldId = panelName + '_' + key;
 
@@ -324,7 +327,7 @@ function buildOptionsForm(type) {
     function attachPanelListners(panelElem, fields, prefix = ''  )
     {
         Object.keys(fields).forEach(key => {
-
+            if( key == 'internal') return;
             const fieldId = prefix + "_" + key;
 
             //Uncheck boxes that can't coexist
@@ -405,6 +408,7 @@ function buildOptionsForm(type) {
 
     function buildPanel(panelElem, fields, prefix = '') {
         Object.keys(fields).forEach(key => {  // sort for consistent order
+            if( key == 'internal') return;
             const opt = fields[key];
 
             const row = document.createElement('div');

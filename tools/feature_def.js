@@ -27,6 +27,16 @@ function getFeatureBrushByName(name) {
     return allFeatures.find(feature => feature.name === name);
 }
 
+function getFeatureDefByType(type) {
+    
+    //return allFeatureMenuOptions.find(feature => feature.internal.type === type);
+    const featureArray = Object.values(allFeatureMenuOptions);
+    const featLen = featureArray.length;
+    return featureArray.slice(1, featLen).find(
+        feature => feature.internal.type === type
+        );
+}
+
 function getTrapTypeByName(name) {
     return trapTypes.find(trap => trap.name === name);
 }
@@ -134,7 +144,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.altar",
-                type: "feature",
+                type: "altar",
                 color: "CLR_GRAY",
                 symbol: "_",
                 random: false,
@@ -169,7 +179,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.door",
-                type: "feature",
+                type: "door",
                 color: "CLR_BROWN",
                 symbol: "+",
                 random: false,
@@ -197,7 +207,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.drawbridge",
-                type: "feature",
+                type: "drawbridge",
                 color: "CLR_BROWN",
                 symbol: "#",
                 random: false,
@@ -224,9 +234,9 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.engraving",
-                type: "feature",
-                color: "CLR_ORANGE",
-                symbol: "\"",
+                type: "engraving",
+                color: "CLR_BRIGHT_BLUE",
+                symbol: "ε",
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
@@ -272,13 +282,14 @@ allFeatureMenuOptions = {
             filled:     { label: "Filled",          input_type: "combo", data_type: "int", combo_options: ["0","1"], desc: "Room is Filleds" },
             joined:      { label: "Joined",         input_type: "combo", data_type: "bool", combo_options: ["true","false"], desc: "Room is Joined to Something" },
             internal: {
-                lua: (f) => {
+                lua: null,
+                /*lua: (f) => {
                     let parts = [`type="${f.type}"`, `lit=${f.lit === "lit" ? 1 : 0}`, `x=${f.area.split(',')[0]},y=${f.area.split(',')[1]}, w=${f.w},h=${f.h}`];
                     if (f.contents) parts.push(`contents = function()\n${f.contents}\nend`);
                     return `des.room({ ${parts.join(", ")} })`;
-                },
+                },*/
                 des_code: "des.room",
-                type: "feature",
+                type: "room",
                 color: "CLR_ORANGE",
                 dither: "crosshatch",        // distinct pattern
                 ditherColor: "CLR_GREEN",
@@ -301,7 +312,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.grave",
-                type: "feature",
+                type: "grave",
                 color: "CLR_GRAY",
                 symbol: "`",
                 random: false,
@@ -323,7 +334,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.stair",
-                type: "feature",
+                type: "stair",
                 color: "CLR_GRAY",
                 symbol: "<",
                 random: false,
@@ -344,7 +355,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.ladder",
-                type: "feature",
+                type: "ladder",
                 color: "CLR_GRAY",
                 symbol: "<",
                 random: false,
@@ -390,7 +401,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.trap",
-                type: "feature",
+                type: "trap",
                 color: "CLR_RED",
                 symbol: "^",
                 random: false,
@@ -430,7 +441,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.gold",
-                type: "feature",
+                type: "gold",
                 color: "CLR_YELLOW",
                 symbol: "$",
                 random: false,
@@ -452,7 +463,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.message",
-                type: "feature",
+                type: "message",
                 color: null,
                 symbol: null,
                 random: false,
@@ -495,7 +506,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.mineralize",
-                type: "feature",
+                type: "mineralize",
                 color: null,
                 symbol: null,
                 random: false,
@@ -509,7 +520,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.reset_level",
-                type: "feature",
+                type: "reset_level",
                 color: null,
                 symbol: null,
                 random: false,
@@ -523,7 +534,7 @@ allFeatureMenuOptions = {
             internal: {
                 lua: null,
                 des_code: "des.finalize_level",
-                type: "feature",
+                type: "finalize_level",
                 color: null,
                 symbol: null,
                 random: false,
