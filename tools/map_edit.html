@@ -390,9 +390,10 @@ const brushDefault = {
         type: 'burn',
         text: 'Engrave Message Here'
     },
-    'room': {
+    'region': {
         type: 'shop',
-        lit: '1'
+        lit: '1',
+        filled: '1'
     },
     'grave': {
         text: 'Here lies someone...'
@@ -419,7 +420,9 @@ const brushDefault = {
         gold_prob: '25'
     },
     'reset_level': {},
-    'finalize_level': {}
+    'finalize_level': {},
+    'non_diggable': {},
+    'teleport_region': { region_islev: '1' },
 };
 
 // Global brush storage – one top-level entry per brush "name"
@@ -584,8 +587,8 @@ function setupRNDLayerListeners() {
                 // Cap to 50 cells
                 const cappedList = list.slice(0, 50);
                 const brush = (i < cappedList.length) ? cappedList[i] : null;
-
-                const desc = `${descMap[type]} ${i}` || 'Random Item';
+                const desc = getFeatureDescFromBrush(brush);
+                //const desc = `${descMap[type]} ${i}` || 'Random Item';
                 cursorLabel.innerText = updateCursorInfoBrush(desc, brush);
             };
 
@@ -785,6 +788,30 @@ function populateObjectList(filter = '', listID = null) {
 
             item.addEventListener('click', () => {
                 // Put the correct value (class char or full name) into the active input
+
+                objDef = allObjects?.[item?.dataset?.value];
+                if( !objDef && !isValidObjectClass('?') ) 
+                {
+                    console.log(`object ${item?.dataset?.value} not found in allObjects`);
+                    return;
+                }
+
+                if( objDef?.is_artifact )
+                {
+                    document.getElementById(`object_id_value`).value = objDef.artifact_base_id;
+                    document.getElementById(`object_name_value`).value = objDef.artifact_base_name;
+                    document.getElementById(`include_object_id`).checked = true;
+                    document.getElementById(`include_object_name`).checked = true;
+                    return;
+                }
+                else
+                {
+                    document.getElementById(`include_object_id`).checked = false;
+                    document.getElementById(`include_object_name`).checked = false;
+                    document.getElementById(`object_id_value`).value = '';
+                    document.getElementById(`object_name_value`).value = '';
+                }
+                
                 document.getElementById(`object_${currentObjectMode}_value`).value = item.dataset.value;
 
                 // Ensure the "include" checkbox is ticked
@@ -895,25 +922,7 @@ function hideFeaturePopup() {
     document.getElementById('features-popup').classList.add('hide');
 }
 
-function populateFeatureList() {
-    const list = document.getElementById('feature-list');
-    list.innerHTML = '';
 
-    // Sort alphabetically, but force Eraser to the top
-    const sorted = allFeatures.slice().sort((a, b) => {
-        if (a.isEraser) return -1;
-        if (b.isEraser) return 1;
-        return a.name.localeCompare(b.name);
-    });
-
-    sorted.forEach(feat => {
-        const div = document.createElement('div');
-        div.className = 'obj-item';
-        div.textContent = feat.name;
-        div.onclick = () => selectFeature(feat);
-        list.appendChild(div);
-    });
-}
 
 function selectFeature(feat) {
     // Highlight selection
@@ -1955,6 +1964,11 @@ function collectBrushFromPopup(popupSelector) {
         {
             setFeatureInternals(brush);
         }
+        if( brush.internal.type == 'region')
+        {
+            setRoomDitherColor(brush);
+        }
+        
         return brush;
     }
 }
@@ -2103,7 +2117,7 @@ function generateSingleBrushLua(brush, x = null, y = null) {
     w = brush['w'];
     h = brush['h'];
     // SIMPLE mode – always single-line
-    if (mode === 'simple') {
+    if (mode === 'simple' || mode === 'level') {
         let line = des_code + '(';
 
         if (brush.name && brush.name.variable) {
@@ -2115,9 +2129,25 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             //line += brush.class;
         }
 
-        if (x  && y ) {
+        if (brush.text && brush.internal.type == 'message') {
+            line += `"${brush.text}"`;
+        }
+
+        if (brush.dir && ( brush.internal.type == 'stair' || brush.internal.type == 'ladder')) {
+            line += `"${brush.dir}"`;
+        }
+
+        if (x  && y && brush.internal.type != 'non_diggable') {
             if (line.length > 'des.object('.length) line += ', ';
             line += `${x.toString().padStart(2, '0')}, ${y.toString().padStart(2, '0')}`;
+        }
+
+        if (x  && y && w && h && brush.internal.type == 'non_diggable') {
+            const x1 = `${x.toString().padStart(2, '0')}`;
+            const x2 = `${(x+w-1).toString().padStart(2, '0')}`;
+            const y1 = `${y.toString().padStart(2, '0')}`;
+            const y2 = `${(y+h-1).toString().padStart(2, '0')}`;
+            line += `selection.area(${x1},${y1},${x2},${y2})`;
         }
 
         line += ')';
@@ -2140,10 +2170,21 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
         }
     } else if (x  && y && w && h) {
-        props.push(`x = ${x.toString().padStart(2, '0')}`);
-        props.push(`y = ${y.toString().padStart(2, '0')}`);
-        props.push(`w = ${w.toString().padStart(2, '0')}`);
-        props.push(`h = ${h.toString().padStart(2, '0')}`);
+        if( brush.internal.type == 'region' || brush.internal.type == 'teleport_region' )
+        {
+            const x1 = `${x.toString().padStart(2, '0')}`;
+            const x2 = `${(x+w-1).toString().padStart(2, '0')}`;
+            const y1 = `${y.toString().padStart(2, '0')}`;
+            const y2 = `${(y+h-1).toString().padStart(2, '0')}`;
+            props.push(`region={${x1},${y1},${x2},${y2}}`);
+        }
+        else
+        {
+            props.push(`x = ${x.toString().padStart(2, '0')}`);
+            props.push(`y = ${y.toString().padStart(2, '0')}`);
+            props.push(`w = ${w.toString().padStart(2, '0')}`);
+            props.push(`h = ${h.toString().padStart(2, '0')}`);
+        }
     } else if (x  && y ) {
         props.push(`x = ${x.toString().padStart(2, '0')}`);
         props.push(`y = ${y.toString().padStart(2, '0')}`);
@@ -3225,6 +3266,53 @@ function getObjectInfo(brush) {
     return info;
 }
 
+function getFeatureDescFromBrush( brush )
+{
+    const typeStr = brush.internal.type;
+    let descStr = '';
+    let lines = [];
+    if( typeStr == 'region' || typeStr == 'trap' )
+    {
+        descStr = `${typeStr}`;
+        if(brush?.type) descStr = `${typeStr}: ${brush?.type}`;
+    }
+    else if( typeStr == 'message' || typeStr == 'grave' || typeStr == 'engraving' )
+    {
+        descStr = `${typeStr}`;
+        if(brush?.text) descStr = `${typeStr}: "${brush?.text}"`;
+    }
+    else if( typeStr == 'stair' ||  typeStr == 'ladder')
+    {
+        descStr = `${typeStr}`;
+        if(brush?.dir) descStr = `${typeStr}: ${brush?.dir}`;
+    }
+    else if( typeStr == 'gold' )
+    {
+        descStr = 'gold';
+        if(brush?.amount) descStr = `${brush?.amount} gold`;
+    }
+    else if( typeStr == 'drawbridge' )
+    {
+        descStr = 'drawbridge';
+        if(brush?.state) descStr = `drawbridge: ${brush?.state}`;
+    }
+    else if( typeStr == 'door' )
+    {
+        descStr = 'door';
+        if(brush?.state) descStr = `door: ${brush?.state}`;
+    }
+    else if( typeStr == 'altar' )
+    {
+        descStr = 'altar';
+        if(brush?.align) descStr = `altar: ${brush?.align}`;
+    }
+    else
+    {
+        descStr = `${typeStr}`;
+    }
+    //lines.push(`Feature #${indx+1} ${descStr}`);
+    return descStr;
+}
 // === NEW FUNCTION TO UPDATE CURSOR INFO WITH ALL LAYERS ===
 function updateCursorInfo(x, y) {
     let lines = [];
@@ -3257,8 +3345,8 @@ function updateCursorInfo(x, y) {
     if( featList )
     {
       featList.forEach( (feat, indx) => {
-        const typeStr = feat.name ? (`${feat.name} | ${ feat.trapType ?  feat.trapType : ''  } `) : '';
-        lines.push(`Feature #${indx+1}: ${typeStr} "${feat.symbol}" `);
+        const descStr = getFeatureDescFromBrush(feat);
+        lines.push(`Feature #${indx+1} [${descStr}]`);
       });
     }
     // Join with <br> for HTML display
@@ -3406,7 +3494,7 @@ document.getElementById('copy-all-btn').onclick = () => {
   });
   navigator.clipboard.writeText(all.trim());
 };
-
+/*
 function getDitherPattern(type, colorName) {
     const color = colorTable[colorName]?.desc || '#fff';
     const patterns = {
@@ -3416,6 +3504,37 @@ function getDitherPattern(type, colorName) {
         'horizontal-dash': `repeating-linear-gradient(90deg, ${color} 0px, ${color} 6px, transparent 6px, transparent 12px)`,
         'crosshatch': `linear-gradient(45deg, ${color} 25%, transparent 25%, transparent 75%, ${color} 75%), linear-gradient(45deg, ${color} 25%, transparent 25%, transparent 75%, ${color} 75%)`
     };
+    return patterns[type] || 'none';
+}*/
+
+function getDitherPattern(type, colorName, alpha = 0.15) {
+    // Get the hex color (fallback to white)
+    let hex = (colorTable[colorName]?.desc || '#ffffff').replace(/^#/, '');
+
+    // Expand shorthand form (#rgb → #rrggbb)
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+
+    // Parse RGB components
+    const r = colorTable[colorName]?.RGB?.r;
+    const g = colorTable[colorName]?.RGB?.g;
+    const b = colorTable[colorName]?.RGB?.b;
+
+    // Build the semi-transparent color
+    const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+
+    const patterns = {
+        'dense-dots': `repeating-linear-gradient(45deg, ${rgba} 0px, ${rgba} 2px, transparent 2px, transparent 4px)`,
+        'sparse-dots': `repeating-linear-gradient(45deg, ${rgba} 0px, ${rgba} 1px, transparent 1px, transparent 8px)`,
+        'diagonal': `repeating-linear-gradient(45deg, ${rgba} 0px, ${rgba} 3px, transparent 3px, transparent 6px)`,
+        'horizontal-dash': `repeating-linear-gradient(90deg, ${rgba} 0px, ${rgba} 6px, transparent 6px, transparent 12px)`,
+        'crosshatch': `
+            repeating-linear-gradient(45deg, ${rgba} 0px, ${rgba} 3px, transparent 3px, transparent 6px),
+            repeating-linear-gradient(135deg, ${rgba} 0px, ${rgba} 3px, transparent 3px, transparent 6px)
+        `.replace(/\s+/g, ' ').trim()  // clean whitespace
+    };
+
     return patterns[type] || 'none';
 }
 
@@ -3592,7 +3711,7 @@ function renderLayers() {
                       }
                   }
               }
-          } else if (f.y && f.x)
+          } else if ( f.y >= 0 && f.x >= 0 )
           { // point symbol
               //const cell = document.querySelector(`.grid-cell[data-x="${f.x}"][data-y="${f.y}"]`);
               const cell = mapCells[f.y][f.x];
@@ -3826,7 +3945,8 @@ function cloneCurrentBrush(type) {
 function handleRndCellClick(e) {
     const cell = e.target.closest('.rnd-cell');
     if (!cell) return;
-
+    if( !currentBrushGlobal[currentBrushType].internal.is_rnd_possible ) return;
+    
     const col = parseInt(cell.dataset.col);
     const type = cell.dataset.type;   // 'object', 'monster', 'feature'
 
@@ -3844,6 +3964,8 @@ function handleRndCellClick(e) {
     } else {
         list = layers[type + 'RND'];
     }
+    
+    
 
     if (isEraser) {
         // Remove the item at this position (shifts later items left)
@@ -3858,7 +3980,7 @@ function handleRndCellClick(e) {
         }
     } else {
         // Normal brush – replace or append
-        currentBrushType
+        //currentBrushType
         //const newDef = cloneCurrentBrush(type);   // you need a small helper, see below
         const newDef = cloneCurrentBrush(currentBrushType);
         if (col < list.length) {

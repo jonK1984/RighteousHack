@@ -261,6 +261,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "writing tablet",
+        artifact_base_name: "apostolic writing kit",
         color: "CLR_WHITE",
     },
     "apple": {
@@ -389,6 +391,8 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "humble sash",
+        artifact_base_name: "belt of truth",
         color: "NO_COLOR",
     },
     "bill-guisarme": {
@@ -493,6 +497,8 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "gleaming armor",
+        artifact_base_name: "breastplate of righteousness",
         color: "NO_COLOR",
     },
     "broadsword": {
@@ -565,6 +571,8 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "divine covering",
+        artifact_base_name: "cap of salvation",
         color: "NO_COLOR",
     },
     "carrot": {
@@ -621,6 +629,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "battle-axe",
+        artifact_base_name: "cleaver",
         color: "NO_COLOR",
     },
     "cloak of displacement": {
@@ -773,6 +783,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "silver mace",
+        artifact_base_name: "demonbane",
         color: "NO_COLOR",
     },
     "dented pot": {
@@ -821,6 +833,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "broadsword",
+        artifact_base_name: "dragonbane",
         color: "NO_COLOR",
     },
     "drum of earthquake": {
@@ -1125,6 +1139,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "excalibur",
         color: "NO_COLOR",
     },
     "expensive camera": {
@@ -1165,6 +1181,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "fire brand",
         color: "NO_COLOR",
     },
     "fire horn": {
@@ -1221,6 +1239,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "frost brand",
         color: "NO_COLOR",
     },
     "frost horn": {
@@ -1277,6 +1297,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "giantslayer",
         color: "NO_COLOR",
     },
     "glaive": {
@@ -1357,6 +1379,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "thurible",
+        artifact_base_name: "golden censer of incense",
         color: "CLR_WHITE",
     },
     "gosple of the peace": {
@@ -1365,7 +1389,17 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "trusty sandals",
+        artifact_base_name: "gosple of the peace",
         color: "NO_COLOR",
+    },
+    "grappling hook": {
+        id: "grappling hook",
+        symbol: "(",
+        class1: "tools",
+        class2: "useful item (pick-axe, key, lamp...)",
+        is_artifact: false,
+        color: "HI_METAL",
     },
     "gray dragon scale mail": {
         id: "gray dragon scale mail",
@@ -1389,6 +1423,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "silver saber",
+        artifact_base_name: "grayswandir",
         color: "NO_COLOR",
     },
     "green dragon scale mail": {
@@ -1413,6 +1449,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "orcish dagger",
+        artifact_base_name: "grimtooth",
         color: "CLR_RED",
     },
     "guisarme": {
@@ -1437,6 +1475,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "torn piece of cloth",
+        artifact_base_name: "handkerchief of the apostle paul",
         color: "CLR_WHITE",
     },
     "hawaiian shirt": {
@@ -1837,6 +1877,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "athame",
+        artifact_base_name: "magicbane",
         color: "NO_COLOR",
     },
     "meat ring": {
@@ -1885,6 +1927,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "war hammer",
+        artifact_base_name: "mjollnir",
         color: "NO_COLOR",
     },
     "morning star": {
@@ -1925,6 +1969,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "war hammer",
+        artifact_base_name: "ogresmasher",
         color: "NO_COLOR",
     },
     "oil lamp": {
@@ -2069,6 +2115,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "elven broadsword",
+        artifact_base_name: "orcrist",
         color: "CLR_BRIGHT_BLUE",
     },
     "pancake": {
@@ -2094,6 +2142,14 @@ const allObjects = {
         class2: "piece of food",
         is_artifact: false,
         color: "CLR_BRIGHT_GREEN",
+    },
+    "pick-axe": {
+        id: "pick-axe",
+        symbol: "(",
+        class1: "tools",
+        class2: "useful item (pick-axe, key, lamp...)",
+        is_artifact: false,
+        color: "HI_METAL",
     },
     "plate mail": {
         id: "plate mail",
@@ -2493,6 +2549,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "saddle",
+        artifact_base_name: "riding blanket of the heavenly host",
         color: "CLR_WHITE",
     },
     "ring mail": {
@@ -2935,6 +2993,14 @@ const allObjects = {
         is_artifact: false,
         color: "HI_GLASS",
     },
+    "rope": {
+        id: "rope",
+        symbol: "(",
+        class1: "tools",
+        class2: "useful item (pick-axe, key, lamp...)",
+        is_artifact: false,
+        color: "CLR_ORANGE",
+    },
     "rubber hose": {
         id: "rubber hose",
         symbol: ")",
@@ -3001,10 +3067,12 @@ const allObjects = {
     },
     "scarlet cord of rahab": {
         id: "scarlet cord of rahab",
-        symbol: "?",
-        class1: "unknown",
-        class2: "",
+        symbol: "(",
+        class1: "tools",
+        class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "rope",
+        artifact_base_name: "scarlet cord of rahab",
         color: "CLR_MAGENTA",
     },
     "scimitar": {
@@ -3021,6 +3089,8 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "ancient defense",
+        artifact_base_name: "shield of faith",
         color: "NO_COLOR",
     },
     "shield of reflection": {
@@ -3141,6 +3211,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "katana",
+        artifact_base_name: "snickersnee",
         color: "NO_COLOR",
     },
     "spear": {
@@ -3205,6 +3277,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "almond-wood walking stick",
+        artifact_base_name: "staff of signs and wonders",
         color: "CLR_MAGENTA",
     },
     "statue": {
@@ -3237,6 +3311,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "elven dagger",
+        artifact_base_name: "sting",
         color: "CLR_BRIGHT_BLUE",
     },
     "stormbringer": {
@@ -3245,6 +3321,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "runesword",
+        artifact_base_name: "stormbringer",
         color: "NO_COLOR",
     },
     "strange object": {
@@ -3269,6 +3347,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "sunsword",
         color: "NO_COLOR",
     },
     "sword of the spirit": {
@@ -3277,6 +3357,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "doubled-edged blade",
+        artifact_base_name: "sword of the spirit",
         color: "NO_COLOR",
     },
     "t-shirt": {
@@ -3301,6 +3383,8 @@ const allObjects = {
         class1: "amulets",
         class2: "amulet",
         is_artifact: true,
+        artifact_base_id: "amulet of esp",
+        artifact_base_name: "the eye of the aethiopica",
         color: "NO_COLOR",
     },
     "the eyes of the overworld": {
@@ -3309,6 +3393,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "lenses",
+        artifact_base_name: "the eyes of the overworld",
         color: "NO_COLOR",
     },
     "the heart of ahriman": {
@@ -3317,6 +3403,8 @@ const allObjects = {
         class1: "large stones",
         class2: "boulder or statue",
         is_artifact: true,
+        artifact_base_id: "luckstone",
+        artifact_base_name: "the heart of ahriman",
         color: "NO_COLOR",
     },
     "the longbow of diana": {
@@ -3325,6 +3413,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "bow",
+        artifact_base_name: "the longbow of diana",
         color: "NO_COLOR",
     },
     "the magic mirror of merlin": {
@@ -3333,6 +3423,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "mirror",
+        artifact_base_name: "the magic mirror of merlin",
         color: "NO_COLOR",
     },
     "the master key of thievery": {
@@ -3341,6 +3433,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "skeleton key",
+        artifact_base_name: "the master key of thievery",
         color: "NO_COLOR",
     },
     "the mitre of holiness": {
@@ -3349,6 +3443,8 @@ const allObjects = {
         class1: "armor",
         class2: "suit or piece of armor",
         is_artifact: true,
+        artifact_base_id: "helm of brilliance",
+        artifact_base_name: "the mitre of holiness",
         color: "NO_COLOR",
     },
     "the orb of detection": {
@@ -3357,6 +3453,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "crystal ball",
+        artifact_base_name: "the orb of detection",
         color: "NO_COLOR",
     },
     "the orb of fate": {
@@ -3365,6 +3463,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "crystal ball",
+        artifact_base_name: "the orb of fate",
         color: "NO_COLOR",
     },
     "the palantir of westernesse": {
@@ -3373,6 +3473,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "crystal ball",
+        artifact_base_name: "the palantir of westernesse",
         color: "NO_COLOR",
     },
     "the platinum yendorian express card": {
@@ -3381,6 +3483,8 @@ const allObjects = {
         class1: "tools",
         class2: "useful item (pick-axe, key, lamp...)",
         is_artifact: true,
+        artifact_base_id: "credit card",
+        artifact_base_name: "the platinum yendorian express card",
         color: "NO_COLOR",
     },
     "the sceptre of might": {
@@ -3389,6 +3493,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "mace",
+        artifact_base_name: "the sceptre of might",
         color: "NO_COLOR",
     },
     "the staff of aesculapius": {
@@ -3397,6 +3503,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "quarterstaff",
+        artifact_base_name: "the staff of aesculapius",
         color: "NO_COLOR",
     },
     "the tsurugi of muramasa": {
@@ -3405,6 +3513,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "tsurugi",
+        artifact_base_name: "the tsurugi of muramasa",
         color: "NO_COLOR",
     },
     "thurible": {
@@ -3509,6 +3619,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "morning star",
+        artifact_base_name: "trollsbane",
         color: "NO_COLOR",
     },
     "trusty sandals": {
@@ -3542,6 +3654,14 @@ const allObjects = {
         class2: "weapon",
         is_artifact: false,
         color: "HI_METAL",
+    },
+    "unicorn horn": {
+        id: "unicorn horn",
+        symbol: "(",
+        class1: "tools",
+        class2: "useful item (pick-axe, key, lamp...)",
+        is_artifact: false,
+        color: "CLR_WHITE",
     },
     "uruk-hai shield": {
         id: "uruk-hai shield",
@@ -3741,6 +3861,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "long sword",
+        artifact_base_name: "vorpal blade",
         color: "NO_COLOR",
     },
     "voulge": {
@@ -3781,6 +3903,8 @@ const allObjects = {
         class1: "weapons",
         class2: "weapon",
         is_artifact: true,
+        artifact_base_id: "silver saber",
+        artifact_base_name: "werebane",
         color: "NO_COLOR",
     },
     "white dragon scale mail": {

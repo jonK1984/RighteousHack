@@ -168,14 +168,16 @@ allFeatureMenuOptions = {
             { desc: "Grave",          key: "grave" },
             { desc: "Stair",          key: "stair" },
             { desc: "Ladder",         key: "ladder" },
-            { desc: "Room",           key: "room" },
+            { desc: "Region",         key: "region" },
             { desc: "Trap",           key: "trap" },
             { desc: "Feature",        key: "feature" },
             { desc: "Gold",           key: "gold" },
             { desc: "Message",        key: "message" },
             { desc: "Mineralize",     key: "mineralize" },
             { desc: "Reset Level",    key: "reset_level" },
-            { desc: "Finalize Level", key: "finalize_level" }
+            { desc: "Finalize Level", key: "finalize_level" },
+            { desc: "Teleport Region", key: "teleport_region" },
+            { desc: "Non-Diggable Region", key: "non_diggable" }
         ],
 
         // ───── Point-placeable features (is_xy_possible: true) ─────
@@ -204,7 +206,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -239,7 +242,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: false
             }
         },
 
@@ -267,7 +271,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -294,17 +299,18 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
-        room: {
+        region: {
             type: {
-                label: "Room type",
+                label: "Region type",
                 input_type: "combo",
                 data_type: "string",
                 combo_options: ["ordinary","themed","throne","swamp","vault","beehive","morgue","barracks","zoo","delphi","temple","anthole","cocknest","leprehall","shop","armor shop","scroll shop","potion shop","weapon shop","food shop","ring shop","rod shop","tool shop","book shop","health food shop","candle shop"],
-                desc: "Room type"
+                desc: "Region type"
             },
             chance: {
                 label: "Probability of room generation",
@@ -337,13 +343,8 @@ allFeatureMenuOptions = {
             joined:      { label: "Joined",         input_type: "combo", data_type: "bool", combo_options: ["true","false"], desc: "Room is Joined to Something" },
             internal: {
                 lua: null,
-                /*lua: (f) => {
-                    let parts = [`type="${f.type}"`, `lit=${f.lit === "lit" ? 1 : 0}`, `x=${f.area.split(',')[0]},y=${f.area.split(',')[1]}, w=${f.w},h=${f.h}`];
-                    if (f.contents) parts.push(`contents = function()\n${f.contents}\nend`);
-                    return `des.room({ ${parts.join(", ")} })`;
-                },*/
-                des_code: "des.room",
-                type: "room",
+                des_code: "des.region",
+                type: "region",
                 color: "CLR_ORANGE",
                 dither: "crosshatch",        // distinct pattern
                 ditherColor: "CLR_GREEN",
@@ -351,7 +352,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "rectangle",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: false
             }
             
         },
@@ -372,7 +374,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -392,9 +395,10 @@ allFeatureMenuOptions = {
                 color: "CLR_GRAY",
                 symbol: "<",
                 random: false,
-                brushMode: "complex",
+                brushMode: "simple",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -413,9 +417,10 @@ allFeatureMenuOptions = {
                 color: "CLR_GRAY",
                 symbol: "<",
                 random: false,
-                brushMode: "complex",
+                brushMode: "simple",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
         trap: {
@@ -460,7 +465,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -480,7 +486,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -500,7 +507,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "complex",
                 stroke: "point",
-                is_xy_possible: true
+                is_xy_possible: true,
+                is_rnd_possible: true
             }
         },
 
@@ -522,7 +530,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "level",
                 stroke: null,
-                is_xy_possible: false
+                is_xy_possible: false,
+                is_rnd_possible: true
             }
         },
 
@@ -565,7 +574,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "level",
                 stroke: null,
-                is_xy_possible: false
+                is_xy_possible: false,
+                is_rnd_possible: true
             }
         },
 
@@ -579,7 +589,8 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "level",
                 stroke: null,
-                is_xy_possible: false
+                is_xy_possible: false,
+                is_rnd_possible: false
             }
         },
 
@@ -593,9 +604,66 @@ allFeatureMenuOptions = {
                 random: false,
                 brushMode: "level",
                 stroke: null,
-                is_xy_possible: false
+                is_xy_possible: false,
+                is_rnd_possible: false
             }
-        }
+        },
+
+        teleport_region: {
+            region_islev: {
+                label: "Region Is Level",
+                input_type: "combo",
+                data_type: "int",
+                combo_options: ["0", "1"],
+                desc: "Region Is Level"
+            },
+            exclude_islev: {
+                label: "Excluded Region Is Level",
+                input_type: "combo",
+                data_type: "int",
+                combo_options: ["0", "1"],
+                desc: "Excluded Region Is Level"
+            },
+            dir: {
+                label: "Direction",
+                input_type: "combo",
+                data_type: "string",
+                combo_options: ["up", "down"],
+                desc: "Up or down"
+            },
+            internal: {
+                lua: null,
+                des_code: "des.teleport_region",
+                type: "teleport_region",
+                color: "CLR_YELLOW",
+                dither: "sparse-dots",        // distinct pattern
+                ditherColor: "CLR_YELLOW",
+                symbol: null,
+                random: false,
+                brushMode: "complex",
+                stroke: "rectangle",
+                is_xy_possible: true,
+                is_rnd_possible: false
+            }
+        },
+
+        non_diggable: {
+            
+            internal: {
+                lua: null,
+                des_code: "des.non_diggable",
+                type: "non_diggable",
+                color: "CLR_ORANGE",
+                dither: "horizontal-dash",        // distinct pattern
+                ditherColor: "CLR_MAGENTA",
+                symbol: null,
+                random: false,
+                brushMode: "simple",
+                stroke: "rectangle",
+                is_xy_possible: true,
+                is_rnd_possible: false
+            }
+        },
     }
 
 const allFeatures = [

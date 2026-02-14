@@ -151,8 +151,12 @@ def parse_base_objects(objects_path, class_dict):
      1, 3, 2, 'amulet', ''),  # color group 2 is now optional
 
     # TOOL family (macro in 1, name in 2, color in 3, sn in 4)
-    (r'(TOOL|CONTAINER|EYEWEAR|WEPTOOL)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
+    (r'(TOOL|CONTAINER|EYEWEAR)\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
      2, 4, 3, 'tool', ''),
+
+    # Dedicated WEPTOOL pattern – handles multi-line definitions
+    (r'(WEPTOOL)\s*\(\s*"([^"]+)"[^)]*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)',
+    2, 4, 3, 'tool', ''),
 
     # FOOD → food (name 1, color 2, sn 3)
     (r'FOOD\s*\(\s*"([^"]+)"\s*,.*?\s*,\s*(CLR_[A-Z_]+|HI_[A-Z_]+|NO_COLOR)\s*,\s*([A-Z_0-9_]+)\s*\)', 
@@ -188,7 +192,7 @@ def parse_base_objects(objects_path, class_dict):
     ]
 
     for regex, name_g, sn_g, item_color_indx, class_key_fixed, name_prefix in patterns:
-        if class_key_fixed == 'amulet':
+        if class_key_fixed == 'tool':
             print('coin')
         for match in re.finditer(regex, content):
             name = match.group(name_g).strip().lower()
@@ -234,7 +238,13 @@ def parse_base_objects(objects_path, class_dict):
 
             sn_to_class_key[sn] = class_key
 
-    return all_objects, sn_to_class_key
+            # <<< ADD THIS BLOCK AT THE END, just before the return >>>
+            sn_to_id = {}
+            for obj_id, o in all_objects.items():
+                if o.get('sn'):                     # almost all base objects have this
+                    sn_to_id[o['sn']] = obj_id      # e.g. 'PLATE_OF_RIGHT' → 'gleaming armor'
+
+    return all_objects, sn_to_class_key, sn_to_id
 
 def get_class_info(class_dict: dict, class_key: str) -> dict:
     """
@@ -248,7 +258,7 @@ def get_class_info(class_dict: dict, class_key: str) -> dict:
     # Default fallback if no match
     return {'symbol': '?', 'class1': 'unknown', 'class2': ''}
 
-def parse_artifacts(artilist_file, sn_to_class_key, class_dict):
+def parse_artifacts(artilist_file, sn_to_class_key, class_dict, sn_to_id):
     artifacts = {}
 
     content = Path(artilist_file).read_text(encoding='utf-8')
@@ -277,7 +287,7 @@ def parse_artifacts(artilist_file, sn_to_class_key, class_dict):
         raw_name = match.group(1).strip()
         base_name = match.group(2)
         color_token = match.group(3)
-        sn = match.group(3)
+        sn = match.group(4)
 
         name = raw_name.lower()
 
@@ -294,7 +304,9 @@ def parse_artifacts(artilist_file, sn_to_class_key, class_dict):
             'raw_name': raw_name,
             'color': color_token,       # ← NEW: e.g. "NO_COLOR", "CLR_BRIGHT_BLUE", "CLR_MAGENTA"
             'is_artifact': True,
-            'sn': sn
+            'sn': sn,
+            'base_sn': base_name,
+            'base_id': sn_to_id[base_name]
         }
 
     return artifacts
@@ -317,6 +329,8 @@ def output_js(all_objs, output_path):
             f.write(f'        class1: "{esc_c1}",\n')
             f.write(f'        class2: "{esc_c2}",\n')
             f.write(f'        is_artifact: {str(o["is_artifact"]).lower()},\n')
+            if o["is_artifact"]: f.write(f'        artifact_base_id: "{str(o["base_id"])}",\n')
+            if o["is_artifact"]: f.write(f'        artifact_base_name: "{esc_id}",\n')
             f.write(f'        color: "{o["color"]}",\n')
             f.write('    },\n')
         f.write('};\n')
@@ -330,8 +344,8 @@ if __name__ == '__main__':
     output_file = 'allObjects.js'
 
     class_dict = parse_object_classes(defsym_file)
-    base_objects, sn_to_class_key = parse_base_objects(objects_file, class_dict)
-    artifacts = parse_artifacts(artilist_file, sn_to_class_key, class_dict)
+    base_objects, sn_to_class_key, sn_to_id = parse_base_objects(objects_file, class_dict)
+    artifacts = parse_artifacts(artilist_file, sn_to_class_key, class_dict, sn_to_id)
 
     all_objects = {**base_objects, **artifacts}
 
