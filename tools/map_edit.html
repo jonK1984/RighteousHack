@@ -11,6 +11,7 @@
 <div id="menubar">
   <div class="toolbar-row" id="load-tools-row">
     <button id="load-lua-btn">Load Lua Map</button>
+    <button id="save-lua-btn">Save Lua to File</button>
   </div>
   <div class="toolbar-row" id="layer-brush-row">
     <button data-brush="terrain">Terrain</button>
@@ -390,8 +391,8 @@ const brushDefault = {
         text: 'Engrave Message Here'
     },
     'room': {
-        type: 'vault',
-        lit: 'lit'
+        type: 'shop',
+        lit: '1'
     },
     'grave': {
         text: 'Here lies someone...'
@@ -514,7 +515,7 @@ function selectBrush(mode) {
         // Hide disallowed stroke buttons
         document.querySelectorAll('#shape-row button').forEach(btn => {
             const shape = btn.dataset.shape;
-            const allowed = currentFeatureBrush ? currentFeatureBrush.def.stroke : null;
+            const allowed = currentFeatureBrush ? currentBrushGlobal[currentBrushType].internal.stroke : null;
             btn.style.display = (allowed === null || shape === allowed || shape === 'erase') ? 'inline-block' : 'none';
         });
     }
@@ -878,6 +879,9 @@ document.getElementById('monster-suggestions').addEventListener('dblclick', (e) 
 });
 
 function showFeaturePopup() {
+
+    restorePanelOptions('features');
+
     document.getElementById('features-popup').parentNode.style.display = 'flex';
 
     //populateFeatureList();
@@ -1906,6 +1910,8 @@ function collectBrushFromPopup(popupSelector) {
 
         const initDefs = brushOptionDefs['features'][brushType];
         brush.internal = structuredClone(initDefs.internal);
+        
+
         Object.keys(initDefs).forEach(key => {
             const include = document.getElementById(`include_${brushType}_` + key);
             const def = initDefs[key];
@@ -1937,8 +1943,18 @@ function collectBrushFromPopup(popupSelector) {
             }
             
             
+            
             brush[key] = value;
         });
+
+        if( brush.internal.type == 'trap')
+        {
+            setTrapInternals(brush);
+        }
+        if( brush.internal.type == 'feature')
+        {
+            setFeatureInternals(brush);
+        }
         return brush;
     }
 }
@@ -2084,7 +2100,8 @@ function generateSingleBrushLua(brush, x = null, y = null) {
 
     x = brush['x'];
     y = brush['y'];
-
+    w = brush['w'];
+    h = brush['h'];
     // SIMPLE mode – always single-line
     if (mode === 'simple') {
         let line = des_code + '(';
@@ -2122,6 +2139,11 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             const [cx, cy] = brush.coord;
             props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
         }
+    } else if (x  && y && w && h) {
+        props.push(`x = ${x.toString().padStart(2, '0')}`);
+        props.push(`y = ${y.toString().padStart(2, '0')}`);
+        props.push(`w = ${w.toString().padStart(2, '0')}`);
+        props.push(`h = ${h.toString().padStart(2, '0')}`);
     } else if (x  && y ) {
         props.push(`x = ${x.toString().padStart(2, '0')}`);
         props.push(`y = ${y.toString().padStart(2, '0')}`);
@@ -2638,9 +2660,15 @@ function paint(x, y) {
         }
     }
     else if (currentBrush === 'features' && currentBrushGlobal[currentBrushType] ) {
-        const brush = currentBrushGlobal[currentBrushType];
+        //const brush = currentBrushGlobal[currentBrushType];
+        const brush = cloneCurrentBrush(currentBrushType);
+        if( !brush.internal.is_xy_possible ) return;
         const cellX = x;
         const cellY = y;
+        existFeat = getFeaturesAtXY(x, y)
+
+        similarFeatures = existFeat.filter(f => f.internal.type == brush.internal.type );
+        if( similarFeatures.length > 0 ) return;
 
         if (brush.internal.isEraser) {
             // ----- ERASER MODE -----
@@ -2659,17 +2687,17 @@ function paint(x, y) {
             brush.y = cellY;
             layers.features.push(brush)
             /*const feat = {
-                def: currentFeatureBrush.def.name,
-                lua: currentFeatureBrush.def.lua,
+                def: currentBrushGlobal[currentBrushType].internal.name,
+                lua: currentBrushGlobal[currentBrushType].internal.lua,
                 x: cellX, y: cellY,
                 area: null,
                 w: null,
                 h: null,
                 ...currentFeatureBrush.options
             };
-            if (currentFeatureBrush.def.symbol || currentFeatureBrush.symbol) {
-                feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
-                feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
+            if (currentBrushGlobal[currentBrushType].internal.symbol || currentFeatureBrush.symbol) {
+                feat.symbol = currentBrushGlobal[currentBrushType].internal.symbol || currentFeatureBrush.symbol;
+                feat.color = currentBrushGlobal[currentBrushType].internal.color || currentFeatureBrush.color;
             }*/
             //layers.features.push(feat);
         }
@@ -2718,27 +2746,34 @@ function showPreview() {
 function paintFeatureRect (xmin, xmax, ymin, ymax)
 { 
   //Saftey Check
-  if( currentBrush == 'features' && currentFeatureBrush.def.stroke == 'rectangle' )
+  if( currentBrush == 'features' && currentBrushGlobal[currentBrushType].internal.stroke == 'rectangle' )
   {
 
     const x1 = xmin, x2 = xmax;
     const y1 =ymin, y2 = ymax;
-    const feat = {
-        def: currentFeatureBrush.def.name,
-        lua: currentFeatureBrush.def.lua,
-        dither: currentFeatureBrush.def.dither,
-        ditherColor: currentFeatureBrush.def.ditherColor,
+    const feat = cloneCurrentBrush(currentBrushType);
+    feat['x'] = x1;
+    feat['y'] = y1;
+    feat['w'] = Math.abs(x2 - x1) + 1;
+    feat['h'] = Math.abs(y2 - y1) + 1;
+
+    
+    /*const feat = {
+        def: currentBrushGlobal[currentBrushType].internal.name,
+        lua: currentBrushGlobal[currentBrushType].internal.lua,
+        dither: currentBrushGlobal[currentBrushType].internal.dither,
+        ditherColor: currentBrushGlobal[currentBrushType].internal.ditherColor,
         x: x1, y: y1,
         area: `${x1},${y1},${x2},${y2}`,
         w: Math.abs(x2 - x1) + 1,
         h: Math.abs(y2 - x1) + 1,
         ...currentFeatureBrush.options
         };
-        if (currentFeatureBrush.def.symbol) {
-            feat.symbol = currentFeatureBrush.def.symbol || currentFeatureBrush.symbol;
-            feat.color = currentFeatureBrush.def.color || currentFeatureBrush.color;
-        }
-        layers.features.push(feat);
+        if (currentBrushGlobal[currentBrushType].internal.symbol) {
+            feat.symbol = currentBrushGlobal[currentBrushType].internal.symbol || currentFeatureBrush.symbol;
+            feat.color = currentBrushGlobal[currentBrushType].internal.color || currentFeatureBrush.color;
+        }*/
+    layers.features.push(feat);
   }
 }
 
@@ -2775,8 +2810,12 @@ function paintLightingRect (xmin, xmax, ymin, ymax)
 function drawRectangle(xmin, xmax, ymin, ymax) {
 
   //Special case if a feature is being drawn with a rectangle
-  if( currentBrush == 'features' && currentFeatureBrush.def.stroke == 'rectangle' )
+  if( currentBrush == 'features' && currentBrushGlobal[currentBrushType].internal.stroke == 'rectangle' )
   {
+    existFeat = getFeaturesInRect(xmin, xmax, ymin, ymax);
+    similarFeatures = existFeat.filter(f => f.internal.type == currentBrushGlobal[currentBrushType].internal.type );
+    if( similarFeatures.length > 0 ) return;
+
     paintFeatureRect(xmin, xmax, ymin, ymax);
     return;
   }
@@ -2934,8 +2973,10 @@ function getFeaturesIdxAtXY(x, y) {
     const indices = [];
     for (let i = 0; i < layers.features.length; i++) {
         const feat = layers.features[i];
-        if (feat.area) {
-            const [x1, y1, x2, y2] = feat.area.split(',').map(Number);
+
+
+        if (feat.internal.stroke=="rectangle") {
+            const [x1,y1,x2,y2] = [feat['x'], feat['y'], feat['x'] + feat['w'] - 1, feat['y'] + feat['h'] - 1];
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
             const minY = Math.min(y1, y2);
@@ -2956,8 +2997,8 @@ function getFeaturesAtXY(x, y) {
 
     layers.features.forEach(feature => {
         // Rectangle / area features (stored as "x1,y1,x2,y2" string)
-        if (feature.area) {
-            const [x1, y1, x2, y2] = feature.area.split(',').map(Number);
+        if (feature.internal.stroke=="rectangle") {
+            const [x1,y1,x2,y2] = [feature['x'], feature['y'], feature['x'] + feature['w'] - 1, feature['y'] + feature['h'] - 1];
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
             const minY = Math.min(y1, y2);
@@ -2976,6 +3017,47 @@ function getFeaturesAtXY(x, y) {
     });
 
     return matchingFeatures; // Array of feature objects at this coordinate (can be empty)
+}
+
+function getFeaturesInRect(xmin, xmax, ymin, ymax) {
+    // Normalize the query rectangle so min ≤ max (robust against swapped coords)
+    const queryMinX = Math.min(xmin, xmax);
+    const queryMaxX = Math.max(xmin, xmax);
+    const queryMinY = Math.min(ymin, ymax);
+    const queryMaxY = Math.max(ymin, ymax);
+
+    // Use filter() for a clean, vectorized approach (no explicit for-loop)
+    return layers.features.filter(feature => {
+        // --- Rectangle / area features ---
+        if (feature.internal && feature.internal.stroke === "rectangle" &&
+            typeof feature.w === "number" && typeof feature.h === "number") {
+
+            // Compute the feature's bounding box (handles negative w/h automatically)
+            const fx1 = feature.x;
+            const fy1 = feature.y;
+            const fx2 = feature.x + feature.w - 1;
+            const fy2 = feature.y + feature.h - 1;
+
+            const fMinX = Math.min(fx1, fx2);
+            const fMaxX = Math.max(fx1, fx2);
+            const fMinY = Math.min(fy1, fy2);
+            const fMaxY = Math.max(fy1, fy2);
+
+            // Standard axis-aligned rectangle overlap test (includes touching edges)
+            // Two rectangles overlap if their projections on both axes overlap.
+            return !(fMaxX < queryMinX || queryMaxX < fMinX ||
+                     fMaxY < queryMinY || queryMaxY < fMinY);
+        }
+
+        // --- Point / single-cell features ---
+        if (typeof feature.x === "number" && typeof feature.y === "number") {
+            return feature.x >= queryMinX && feature.x <= queryMaxX &&
+                   feature.y >= queryMinY && feature.y <= queryMaxY;
+        }
+
+        // Anything else (malformed or unknown feature type) is ignored
+        return false;
+    });
 }
 
 /**
@@ -3498,14 +3580,15 @@ function renderLayers() {
 
   if (visibleLayers.features) {
       layers.features.forEach(f => {
-          if (f.area) { // rectangle dither
-              const [x1,y1,x2,y2] = f.area.split(',').map(Number);
+          if (f.internal.stroke=="rectangle") { // rectangle dither
+              const [x1,y1,x2,y2] = [f['x'], f['y'], f['x'] + f['w'] - 1, f['y'] + f['h'] - 1];
+              
               for (let xx = Math.min(x1,x2); xx <= Math.max(x1,x2); xx++) {
                   for (let yy = Math.min(y1,y2); yy <= Math.max(y1,y2); yy++) {
                       //const cell = document.querySelector(`.grid-cell[data-x="${xx}"][data-y="${yy}"]`);
                       const cell = mapCells[yy][xx];
                       if (cell) {
-                          cell.style.background = getDitherPattern(f.dither, f.ditherColor);
+                          cell.style.background = getDitherPattern(f.internal.dither, f.internal.ditherColor);
                       }
                   }
               }
@@ -3645,8 +3728,9 @@ document.getElementById('monster-eraser-btn').addEventListener('click', () => {
 });
 
 
-// Add this code to the main <script> block in map_edit.html (anywhere after the existing event listeners, before the closing
-
+// ------------------------------------------------------------------
+// Load Lua from File button
+// ------------------------------------------------------------------
 document.getElementById('load-lua-btn').addEventListener('click', () => {
     // Create a hidden file input
     const fileInput = document.createElement('input');
@@ -3679,6 +3763,56 @@ document.getElementById('load-lua-btn').addEventListener('click', () => {
     document.body.removeChild(fileInput);   // Clean up
 });
 
+// ------------------------------------------------------------------
+// Save Lua to File button
+// ------------------------------------------------------------------
+document.getElementById('save-lua-btn').addEventListener('click', function () {
+    // Optional: force a refresh of any displayed Lua preview
+    if (typeof updateText === 'function') updateText(true);
+
+    // Collect all Lua sections from the existing generate...LUA functions.
+    // Adjust the list if your actual function names differ slightly.
+    const sections = [];
+    
+    
+    if (typeof generateInitLua      === 'function') sections.push(generateInitLua());
+    if (typeof generateTerrainLUA   === 'function') sections.push(generateTerrainLUA());
+    if (typeof generateLightLUA     === 'function') sections.push(generateLightLUA());
+    //if (typeof generateDarkLUA      === 'function') sections.push(generateDarkLUA());
+    //if (typeof generateLightingLUA  === 'function') sections.push(generateLightingLUA()); // if you have a combined lighting function
+    if (typeof generateMonsterLUA   === 'function') sections.push(generateMonsterLUA());
+    if (typeof generateObjectLUA    === 'function') sections.push(generateObjectLUA());
+    if (typeof generateFeaturesLua  === 'function') sections.push(generateFeaturesLua());
+
+    // Filter out empty/undefined sections and join with double newlines for clean separation
+    let luaCode = sections.filter(s => s && s.trim().length > 0).join('\n\n');
+
+    // Prepend a nice header (optional but helpful)
+    luaCode = `-- Map generated by RighteousHack Map Editor
+-- ${new Date().toISOString().split('T')[0]}
+-- Feel free to edit by hand
+
+` + luaCode;
+
+    // Prompt for filename (defaults to map.lua)
+    let fileName = prompt('Save Lua map as:', 'map.lua');
+    if (!fileName) return; // user cancelled
+    if (!fileName.toLowerCase().endsWith('.lua')) fileName += '.lua';
+
+    // Create and trigger download using Blob
+    const blob = new Blob([luaCode], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+});
+
 function cloneCurrentBrush(type) {
     if (type === 'object') {
         return structuredClone( currentBrushGlobal[type]);
@@ -3699,7 +3833,7 @@ function handleRndCellClick(e) {
     const isEraser = currentBrush === 'eraser';
     const brushOk = (type === 'object' && currentBrush === 'object') ||
                     (type === 'monster' && currentBrush === 'monster') ||
-                    (type === 'features' && currentBrush === 'features');
+                    (type === 'feature' && currentBrush === 'features');
 
     if (!isEraser && !brushOk) return;
 
@@ -3724,8 +3858,9 @@ function handleRndCellClick(e) {
         }
     } else {
         // Normal brush – replace or append
-        const newDef = cloneCurrentBrush(type);   // you need a small helper, see below
-
+        currentBrushType
+        //const newDef = cloneCurrentBrush(type);   // you need a small helper, see below
+        const newDef = cloneCurrentBrush(currentBrushType);
         if (col < list.length) {
             // Replace existing slot
             if (type === 'feature') {

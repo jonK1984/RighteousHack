@@ -42,6 +42,60 @@ function getTrapTypeByName(name) {
 }
 
 /**
+ * Configure the internal display properties of a trap brush.
+ * @param {Object} brush - The brush object to configure.
+ * @returns {boolean} true if the trap type was found and internals were set,
+ *                    false otherwise (type missing, not found, etc.).
+ */
+function setTrapInternals(brush) {
+    // Basic validation
+    if (!brush || typeof brush !== "object") return false;
+    if (!brush.internal || typeof brush.internal !== "object") return false;
+    if (typeof brush.type !== "string") return false;
+
+    // Find the matching trap definition
+    const trapDef = trapTypes.find(t => t.type === brush.type);
+
+    if (!trapDef) {
+        // No matching trap type found
+        return false;
+    }
+
+    // Apply the symbol and color from the definition
+    brush.internal.symbol = trapDef.sym;
+    brush.internal.color  = trapDef.color;
+
+    return true;
+}
+
+/**
+ * Configure the internal display properties of a feature brush.
+ * @param {Object} brush - The brush object to configure.
+ * @returns {boolean} true if the feature type was found and internals were set,
+ *                    false otherwise (type missing, not found, etc.).
+ */
+function setFeatureInternals(brush) {
+    // Basic validation
+    if (!brush || typeof brush !== "object") return false;
+    if (!brush.internal || typeof brush.internal !== "object") return false;
+    if (typeof brush.type !== "string") return false;
+
+    // Find the matching feature definition
+    const featDef = featureDef.find(f => f.type === brush.type);
+
+    if (!featDef) {
+        // No matching feature type found
+        return false;
+    }
+
+    // Apply the symbol and color from the definition
+    brush.internal.symbol = featDef.sym;
+    brush.internal.color  = featDef.color;
+
+    return true;
+}
+
+/**
  * Get formatted info for a feature brush (for UI display, tooltips, etc.)
  * Handles concrete traps/features, random, and unknown cases.
  *
@@ -261,8 +315,8 @@ allFeatureMenuOptions = {
             lit: {
                 label: "Room lighting",
                 input_type: "combo",
-                data_type: "string",
-                combo_options: ["lit","unlit"],
+                data_type: "int",
+                combo_options: ["0","1"],
                 desc: "Room lighting"
             },
             xalign: {
@@ -296,7 +350,7 @@ allFeatureMenuOptions = {
                 symbol: null,
                 random: false,
                 brushMode: "complex",
-                stroke: "rect",
+                stroke: "rectangle",
                 is_xy_possible: true
             }
             
@@ -364,7 +418,6 @@ allFeatureMenuOptions = {
                 is_xy_possible: true
             }
         },
-
         trap: {
             type: {
                 label: "Trap type",
@@ -372,27 +425,27 @@ allFeatureMenuOptions = {
                 data_type: "string",
                 combo_options: [
                     "random",
-                    "arrow trap",
-                    "dart trap",
-                    "falling rock trap",
+                    "arrow",
+                    "dart",
+                    "falling rock",
                     "squeaky board",
-                    "bear trap",
+                    "bear",
                     "land mine",
-                    "rolling boulder trap",
-                    "sleeping gas trap",
-                    "rust trap",
-                    "fire trap",
+                    "rolling boulder",
+                    "sleeping gas",
+                    "rust",
+                    "fire",
                     "pit",
                     "spiked pit",
                     "hole",
                     "trap door",
-                    "teleportation trap",
-                    "level teleport trap",
-                    "magic trap",
-                    "anti-magic trap",
-                    "polymorph trap",
+                    "teleport",
+                    "level teleport",
+                    "magic",
+                    "anti-magic",
+                    "polymorph",
                     "web",
-                    "statue trap",
+                    "statue",
                     "magic portal",
                     "vibrating square"
                 ],
@@ -771,4 +824,12 @@ const trapTypes = [
     { name: "polymorph",         type: "polymorph",         sym: "^", color: "CLR_BRIGHT_GREEN" },
     { name: "vibrating square",  type: "vibrating square",  sym: "~", color: "CLR_MAGENTA" },
     { name: "random",            type: "random",            sym: "^", color: "CLR_WHITE" }
+];
+
+const featureDef = [
+    { name: "fountain",  type: "fountain",  sym: "{",  color: "CLR_BRIGHT_CYAN" },
+    { name: "sink",      type: "sink",      sym: "}",  color: "CLR_GRAY" },
+    { name: "pool",      type: "pool",      sym: "}",  color: "CLR_BLUE" },
+    { name: "throne",    type: "throne",    sym: "\\", color: "CLR_YELLOW" },
+    { name: "tree",      type: "tree",      sym: "#",  color: "CLR_GREEN" }
 ];

@@ -263,11 +263,18 @@ function buildOptionsForm( type ) {
 function restorePanelOptions( panelName )
     {
         const definition = brushOptionDefs[panelName] || brushOptionDefs['level'][panelName] || brushOptionDefs['features'][panelName];
-        const stored = currentBrushGlobal[panelName];
+        const stored = currentBrushGlobal[panelName] || brushDefault[panelName];
+        if( definition['tabs'] ){
+            Object.keys(definition).forEach( tab => {
+                if( tab == 'tabs') return;
+                restorePanelOptions( tab )
+            });
+        }
         //Load in existing options
         Object.keys(definition).forEach(key => {
 
             if( key == 'internal') return;
+            if( key == 'tabs') return;
 
             const opt = definition[key];
             const fieldId = panelName + '_' + key;
