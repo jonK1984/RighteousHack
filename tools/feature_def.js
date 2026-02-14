@@ -69,6 +69,37 @@ function setTrapInternals(brush) {
 }
 
 /**
+ * Configure the internal display properties of a stair/ladder brush.
+ * Sets the symbol to '<' for up stairs or '>' for down stairs.
+ * 
+ * @param {Object} brush - The brush object to configure.
+ * @returns {boolean} true if the direction was valid ('up' or 'down') and the symbol was set,
+ *                    false otherwise (invalid brush, missing internal/dir, unknown direction, etc.).
+ */
+function setStairInternals(brush) {
+    // Basic validation
+    if (!brush || typeof brush !== "object") return false;
+    if (!brush.internal || typeof brush.internal !== "object") return false;
+    if (typeof brush.dir !== "string") return false;
+
+    // Normalize direction for case-insensitivity
+    const dir = brush.dir.trim().toLowerCase();
+
+    if (dir === "up") {
+        brush.internal.symbol = '<';
+        return true;
+    }
+
+    if (dir === "down") {
+        brush.internal.symbol = '>';
+        return true;
+    }
+
+    // Unknown direction
+    return false;
+}
+
+/**
  * Configure the internal display properties of a feature brush.
  * @param {Object} brush - The brush object to configure.
  * @returns {boolean} true if the feature type was found and internals were set,

@@ -1968,6 +1968,10 @@ function collectBrushFromPopup(popupSelector) {
         {
             setRoomDitherColor(brush);
         }
+        if( brush.internal.type == 'stair' || brush.internal.type == 'ladder')
+        {
+            setStairInternals(brush);
+        }
         
         return brush;
     }
@@ -3268,7 +3272,8 @@ function getObjectInfo(brush) {
 
 function getFeatureDescFromBrush( brush )
 {
-    const typeStr = brush.internal.type;
+    const typeStr = brush?.internal?.type;
+    if( !typeStr ) return '';
     let descStr = '';
     let lines = [];
     if( typeStr == 'region' || typeStr == 'trap' )
@@ -3946,7 +3951,7 @@ function handleRndCellClick(e) {
     const cell = e.target.closest('.rnd-cell');
     if (!cell) return;
     if( !currentBrushGlobal[currentBrushType].internal.is_rnd_possible ) return;
-    
+
     const col = parseInt(cell.dataset.col);
     const type = cell.dataset.type;   // 'object', 'monster', 'feature'
 

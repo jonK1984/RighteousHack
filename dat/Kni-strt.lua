@@ -2,64 +2,120 @@
 -- 2026-02-14
 -- Feel free to edit by hand
 
-des.level_init({ style = "solidfill", fg = ".", bg = "-" });
-des.level_flags("noteleport", "noflip", "hardfloor", "nomongen")
+des.level_init({ style = "solidfill", fg = " ", bg = "-" });
+des.level_flags("noteleport", "hardfloor", "noflip", "nomongen")
 
 
 des.map([[
-|---------------------------------------------------------------------------
-|...............................|.................................|........|
-|...............................|.................................|........|
-|...............................|.................................|........|
-|...............................|...}}}}}}}.......................|........|
-|...............................|...}LLLLL}.......................|........|
-|...............................|...}LLLLL}..T....................+........|
-|...............................|...}LLLLL}..T....................|........|
-|...............................|...}LLLLL}.......................|........|
-|...............................|...}LLLLL}..T....................|........|
-|...............................|...}LLLLL}..T....................|--------|
-|...................................}LLLLL}.......................|--------|
-|...............................|...}LLLLL}.......................|........|
-|...............................|...}}}}}}}..........{{{..........|........|
-|...............................|.................................|........|
-|...............................|.................................|........|
-|...............................|.................................+........|
-|...............................|.................................|........|
-|.................................................................|........|
-|---------------------------------------------------------------------------
+----------------------------------------------------------------------------
+|...........|..........|............|.........|......|......|..............|
+|...........|..........|............|.........|......|......|..............|
+|...........|..........|............|.........|......|......|..............|
+|...........|..........|............|.........|......|......|..............|
+|----------------------------------------------------|---------------------|
+|..........................................................................|
+|..........................................................................|
+|--------------------------------------------------------------------------|
+|........|.............}LLLLLLL}...............................|...........|
+|........|.............}}}}}}}}}...............................|...........|
+|........|.....................................................|...........|
+|--------------------------------------------------------------------------|
+|..........|...|........|...........|.............|..........|.............|
+|..........|...|........|...........|.............|..........|.............|
+|..........|...|........|...........|.............|..........|.............|
+|..........|...|........|...........|.............|..........|.............|
+|..........|...|........|...........|.............|..........|.............|
+|..........|...|........|...........|.............|..........|.............|
+----------------------------------------------------------------------------
 ]]);
 
--- Lighting regions
-des.region(selection.area(20,02,30,12), "lit")
-des.region(selection.area(49,02,59,11), "lit")
-des.region(selection.area(35,02,43,15), "lit")
-
-des.monster({ id = "angel", x = 21, y = 03, peaceful = 1 });
-des.monster({ id = "angel", x = 24, y = 03, peaceful = 1 });
-des.monster({ id = "angel", x = 21, y = 07, peaceful = 1 });
-des.monster({ id = "angel", x = 24, y = 07, peaceful = 1 });
+des.monster({ id = "pony", x = 28, y = 04, peaceful = 1 });
+des.monster({ id = "angel", x = 01, y = 06, peaceful = 1 });
+des.monster({ id = "angel", x = 04, y = 06, peaceful = 1 });
+des.monster({ id = "angel", x = 08, y = 06, peaceful = 1 });
+des.monster({ id = "angel", x = 74, y = 06, peaceful = 1 });
 
 
-des.object({ id = "gleaming armor", x = 53, y = 04, name = "breastplate of righteousness" });
-des.object({ id = "ancient defense", x = 54, y = 04, name = "shield of faith" });
-des.object({ id = "trusty sandals", x = 55, y = 04, name = "gosple of the peace" });
-des.object({ id = "divine covering", x = 53, y = 05, name = "cap of salvation" });
-des.object({ id = "doubled-edged blade", x = 54, y = 05, name = "sword of the spirit" });
-des.object({ id = "humble sash", x = 55, y = 05, name = "belt of truth" });
-des.object({ x = 41, y = 13, class = "?" });
+des.object({ id = "gleaming armor", x = 25, y = 01, name = "breastplate of righteousness" });
+des.object({ id = "doubled-edged blade", x = 27, y = 01, buc = "blessed", name = "sword of the spirit" });
+des.object({ id = "ancient defense", x = 31, y = 01, buc = "blessed", name = "shield of faith" });
+des.object({ id = "humble sash", x = 35, y = 01, buc = "blessed", name = "belt of truth" });
+des.object({ id = "divine covering", x = 26, y = 02, buc = "blessed", name = "cap of salvation" });
+des.object({ id = "trusty sandals", x = 28, y = 02, buc = "blessed", name = "gosple of the peace" });
+des.object({ id = "saddle", x = 26, y = 04, buc = "blessed", name = "riding blanket of the heavenly host" });
 
 
---des.room({ type = "shop", x = 67, y = 01, w = 08, h = 09,  lit = 1, filled = 1 });
---des.room({ type = "potion shop", x = 67, y = 12, w = 08, h = 07,  lit = 1, filled = 1 });
+des.teleport_region({ region={29,06,45,07}, region_islev = 1 });
+des.door({ x = 39, y = 05, state = "closed" });
+des.door({ x = 39, y = 08, state = "closed" });
+des.gold({ x = 24, y = 01, amount = "100" });
+des.gold({ x = 26, y = 01, amount = "100" });
+des.gold({ x = 28, y = 01, amount = "100" });
+des.gold({ x = 25, y = 02, amount = "100" });
+des.gold({ x = 27, y = 02, amount = "100" });
+des.gold({ x = 24, y = 03, amount = "100" });
+des.gold({ x = 26, y = 03, amount = "100" });
+des.gold({ x = 25, y = 04, amount = "100" });
+des.gold({ x = 27, y = 04, amount = "100" });
+des.gold({ x = 28, y = 03, amount = "100" });
+des.gold({ x = 29, y = 02, amount = "100" });
+des.gold({ x = 29, y = 04, amount = "100" });
+des.gold({ x = 30, y = 03, amount = "100" });
+des.gold({ x = 30, y = 01, amount = "100" });
+des.gold({ x = 31, y = 04, amount = "100" });
+des.gold({ x = 31, y = 02, amount = "100" });
+des.gold({ x = 32, y = 01, amount = "100" });
+des.gold({ x = 32, y = 03, amount = "100" });
+des.gold({ x = 33, y = 02, amount = "100" });
+des.gold({ x = 33, y = 04, amount = "100" });
+des.gold({ x = 34, y = 03, amount = "100" });
+des.gold({ x = 34, y = 01, amount = "100" });
+des.gold({ x = 35, y = 02, amount = "100" });
+des.gold({ x = 35, y = 04, amount = "100" });
+des.region({ region={37,01,45,04}, type = "shop", lit = 1, filled = 1 });
+des.region({ region={13,01,22,04}, type = "vault", lit = 1, filled = 1 });
+des.region({ region={01,01,11,04}, type = "beehive", lit = 1, filled = 1 });
+des.region({ region={61,01,74,04}, type = "barracks", lit = 1, filled = 1 });
+des.message("Lots of things to do in this room...")
+des.trap({ x = 51, y = 13, type = "fire" });
+des.trap({ x = 51, y = 14, type = "fire" });
+des.trap({ x = 51, y = 15, type = "fire" });
+des.trap({ x = 60, y = 13, type = "fire" });
+des.trap({ x = 60, y = 14, type = "fire" });
+des.trap({ x = 60, y = 15, type = "fire" });
+des.feature({ x = 55, y = 15, type = "tree" });
+des.feature({ x = 56, y = 15, type = "tree" });
+des.feature({ x = 55, y = 16, type = "tree" });
+des.feature({ x = 56, y = 16, type = "tree" });
+des.trap({ x = 51, y = 18, type = "teleport" });
+des.trap({ x = 60, y = 18, type = "teleport" });
+des.trap({ x = 54, y = 16, type = "magic" });
+des.trap({ x = 57, y = 16, type = "magic" });
+des.region({ region={01,13,10,18}, type = "temple", lit = 1, filled = 1 });
+des.region({ region={25,13,35,18}, type = "leprehall", lit = 1, filled = 1 });
+des.region({ region={62,13,74,18}, type = "armor shop", lit = 1, filled = 1 });
+des.region({ region={64,09,74,11}, type = "scroll shop", lit = 1, filled = 1 });
+des.region({ region={01,09,08,11}, type = "potion shop", lit = 1, filled = 1 });
+des.region({ region={16,13,23,18}, type = "weapon shop", lit = 1, filled = 1 });
+des.region({ region={12,13,14,18}, type = "cocknest", lit = 1, filled = 1 });
+des.region({ region={47,01,52,04}, type = "morgue", lit = 1, filled = 1 });
+des.region({ region={54,01,59,04}, type = "ring shop", lit = 1, filled = 1 });
+des.door({ x = 49, y = 05, state = "closed" });
+des.door({ x = 57, y = 05, state = "closed" });
+des.door({ x = 68, y = 05, state = "closed" });
+des.door({ x = 63, y = 09, state = "closed" });
+des.door({ x = 62, y = 12, state = "closed" });
+des.door({ x = 55, y = 12, state = "closed" });
+des.door({ x = 42, y = 12, state = "closed" });
+des.door({ x = 29, y = 12, state = "closed" });
+des.door({ x = 19, y = 12, state = "closed" });
+des.door({ x = 13, y = 12, state = "closed" });
+des.door({ x = 10, y = 12, state = "closed" });
+des.door({ x = 09, y = 10, state = "closed" });
+des.door({ x = 06, y = 05, state = "closed" });
+des.door({ x = 17, y = 05, state = "closed" });
+des.door({ x = 30, y = 05, state = "closed" });
+des.region({ region={37,13,49,18}, type = "rod shop", lit = 1, filled = 1 });
+des.stair("down", 61, 06)
 
-
-des.region({ x = 67, y = 01, w = 08, h = 09,lit=1,type="shop",filled=1 })
-des.region({ region={67,12,75,19},lit=1,type="potion shop",filled=1 })
-
-des.trap();
-des.trap();
-des.trap();
-des.trap();
-des.altar({ x = 49, y = 04 });
-des.feature({ x = 54, y = 07, type = "throne" });
-des.feature({ x = 54, y = 09, type = "sink" });
+des.altar({ x=50,y=14,align="law",type="altar" })

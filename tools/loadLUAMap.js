@@ -858,6 +858,98 @@ function isDesCall(expr) {
     return true;
 }
 
+function parseLUAtoBrush(args, type)
+{
+    if (args[0]?.type !== 'TableConstructorExpression') return null;
+    let luaBrush = {};
+    const internal = getFeatureDefByType(type).internal;
+    luaBrush['internal'] = {...internal};
+
+    args[0].fields.forEach(arg => {
+
+        if (arg?.type == 'TableKeyString' && arg?.key?.name == 'region')
+        {
+            const x1  = arg.value.fields[0].value.value;
+            const y1 = arg.value.fields[1].value.value;
+            const x2 = arg.value.fields[2].value.value;
+            const y2 = arg.value.fields[3].value.value;
+            luaBrush['x'] = x1;
+            luaBrush['y'] = y1;
+            luaBrush['w'] = Math.abs(x1 - x2) + 1;
+            luaBrush['h'] = Math.abs(y1 - y2) + 1;
+        }
+        else if (arg?.type == 'TableKeyString' && arg?.value?.raw)
+        {
+            const key = arg.key.name;
+            let val = dequote(arg?.value?.raw);
+            if( key == 'x' || key == 'y') val = parseInt(val);
+            luaBrush[key] = val
+            
+        }
+    });
+    return luaBrush;
+
+}
+
+function parseLUAtoBrushSimple(args, type)
+{
+    let luaBrush = {};
+    const internal = getFeatureDefByType(type).internal;
+    luaBrush['internal'] = {...internal};
+    luaBrush['internal'].brushMode = "simple";
+
+    if( type == 'stair' || type == 'ladder')
+    {
+        if( args[0].type != 'StringLiteral' ) return;
+        luaBrush['dir'] = dequote(args[0].raw);
+        luaBrush['x'] = parseInt(args[1].value);
+        luaBrush['y'] = parseInt(args[2].value);
+        setStairInternals(luaBrush);
+        
+    }
+    if( (type == 'region' || type == 'non_diggable' ) && args[0].base.base.name == 'selection' && args[0].type == 'CallExpression' )
+    {
+        const x1 = args[0].arguments[0].value;
+        const y1 = args[0].arguments[1].value;
+        const x2 = args[0].arguments[2].value;
+        const y2 = args[0].arguments[3].value;
+
+        luaBrush['x'] = x1;
+        luaBrush['y'] = y1;
+        luaBrush['w'] = Math.abs(x1 - x2) + 1;
+        luaBrush['h'] = Math.abs(y1 - y2) + 1;
+
+        if( args[1] ?? false )
+        {
+            const isLit = dequote(args[1].raw);
+            luaBrush['x1'] = x1;
+            luaBrush['x2'] = x2;
+            luaBrush['y1'] = y1;
+            luaBrush['y2'] = y2;
+            luaBrush['lit'] = isLit == 'lit' ? true : false;
+            luaBrush['overlayColor'] = isLit == 'lit' ? LIGHTING_OVERLAY.light : LIGHTING_OVERLAY.dark;
+            
+        }
+        /*layers.lighting.push({
+            x1: x1,
+            y1: y1,
+            x2: x2,
+            y2: y2,
+            lit: isLit,                                 // boolean for internal use
+            overlayColor: isLit ? LIGHTING_OVERLAY.light : LIGHTING_OVERLAY.dark
+        });*/
+    }
+    
+    if( type == 'message' )
+    {
+        if( args[0].type != 'StringLiteral' ) return;
+        luaBrush['text'] = dequote(args[0].raw);
+        setStairInternals(luaBrush);
+        
+    }
+    return luaBrush;
+}
+
 function loadLUAMap(luaText) {
     if (!luaText) return;
 
@@ -910,48 +1002,53 @@ function loadLUAMap(luaText) {
 
             switch (method) {
                 case 'level_init':
-                    if (args[0]?.type === 'TableConstructorExpression') {
-                        const table = args[0];
-                        let solidfill = false;
-                        let fgChar = ' ';
-                        let bgChar = ' ';
-                        let wholeLit = false;
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const initDefs = brushOptionDefs.level.level_init;
+                        currentBrushGlobal['level_init'] = {};
 
-                        for (const field of table.fields) {
-                            const key = field.key.name || field.key.value;
-                            const val = field.value;
-                            const value = val.value ? val.value : dequote( val.raw );
-                            initState[key] = value
-                            if (key === 'style' && value === 'solidfill') solidfill = true;
-                            if (key === 'fg' && val.type === 'StringLiteral') fgChar = value;
-                            if (key === 'bg' && val.type === 'StringLiteral') bgChar = value;
-                            if (key === 'lit' && val.value === 1) wholeLit = true;
-                        }
+                        args[0].fields.forEach(  field => {
+                            
+                            const key = field.key.name;
+                            const raw = dequote(field.value.raw);
+                            const def = initDefs[key];
+                            const dataType = def.data_type ? def.data_type : 'null';
+                            let value = null;
 
-                        if (solidfill) {
-                            const fgKey = initState['fg'] || 'stone';
-                            for (let y = 0; y < ROWS; y++)
-                                for (let x = 0; x < COLS; x++)
-                                    layers.terrain[y][x] = symToTerrain[fgKey];
-                        }
-                        /*if (wholeLit) {
-                            for (let y = 0; y < ROWS; y++)
-                                for (let x = 0; x < COLS; x++)
-                                    layers.lighting[y][x] = 'lit';
-                        }*/
+                            if (dataType == "int") 
+                            {
+                                value = parseInt(raw, 10);
+                            } 
+                            else if ( dataType == "bool" )
+                            {
+                                value = Boolean(raw);
+                            }
+                            else if ( dataType == "string" )
+                            {
+                                value = String(raw);
+                            }
+
+                            currentBrushGlobal['level_init'][key] = value;
+                        })
+                        
+                        break;
                     }
-                    break;
+                    
 
                 case 'level_flags':
-                    args.forEach( arg => {
-                        if (arg?.type === 'StringLiteral') {
-                            key = dequote(arg.raw);
-                            initState.flags[key] = true;
-                    }
+                    {
+                        currentBrushGlobal['level_flags'] = [];
+                        args.forEach( arg => {
+                            if (arg?.type === 'StringLiteral') {
+                                key = dequote(arg.raw);
+                                currentBrushGlobal['level_flags'].push(key);
+                                //initState.flags[key] = true;
+                        }
 
-                    });
-                    
-                    break;
+                        });
+                        
+                        break;
+                    }
 
                 case 'map':
                     if (args[0]?.type === 'StringLiteral' && args[0].raw.startsWith('[[')) {
@@ -973,32 +1070,28 @@ function loadLUAMap(luaText) {
                     break;
 
                 case 'region':
-                    let rect = null;
-                    let litStr = null;
+                    {
+                        if (args[0]?.type == 'TableConstructorExpression')
+                        {
+                            const luaBrush = parseLUAtoBrush( args, method );
+                        
+                            if( luaBrush.internal.type == 'region')
+                            {
+                                setRoomDitherColor(luaBrush);
+                            }
 
-                    args.forEach(arg => {
-                        if (arg.type === 'CallExpression' && arg.base.base.name === 'selection' && arg.base.identifier.name === 'area') {
-                            const vals = arg.arguments.map(a => a.value);
-                            rect = {x1: vals[0], y1: vals[1], x2: vals[2], y2: vals[3]};
+                            layers.features.push(luaBrush);
+                            break;
                         }
-                        if (arg.type === 'StringLiteral') {
-                            litStr = dequote(arg.raw);  // "lit" or "unlit"
+                        else if (args[0]?.type == 'CallExpression')
+                        {
+                            const luaBrush = parseLUAtoBrushSimple( args, method );
+                            layers.lighting.push(luaBrush);
                         }
-                    });
-
-                    if (rect && litStr) {
-                        const isLit = litStr === 'lit';
-                        const overlay = isLit ? LIGHTING_OVERLAY.light : LIGHTING_OVERLAY.dark;
-                        layers.lighting.push({
-                            x1: rect.x1, y1: rect.y1, x2: rect.x2, y2: rect.y2,
-                            lit: isLit,
-                            overlayColor: overlay
-                        });
+                        break;
                         
                     }
-                    break;
-                
-                case 'region':
+
                 case 'room':
                     if (args[0]?.type !== 'TableConstructorExpression') break;
                     
@@ -1064,143 +1157,48 @@ function loadLUAMap(luaText) {
                             }
                         }
 
-                        // Resolve coordinates
-                        /*if (typeof roomX1 !== 'number') {
-                            if (roomW && roomH) {
-                                roomX1 = roomX;
-                                roomY1 = roomY;
-                                if (xAlign === 'center') roomX1 = Math.floor((COLS - roomW) / 2);
-                                if (yAlign === 'center') roomY1 = Math.floor((ROWS - roomH) / 2);
-                                roomX2 = roomX1 + roomW - 1;
-                                roomY2 = roomY1 + roomH - 1;
-                            } else break;
-                        }*/
                         
-                        // Draw using terrain keys
-                        /*const floorKey = symToTerrain['.'] || 'room';
-                        const hwallKey = symToTerrain['-'] || 'hwall';
-                        const vwallKey = symToTerrain['|'] || 'vwall';
-                        const cornerKey = symToTerrain['+'] || 'hwall'; // Corners are walls
-
-                        // Floor
-                        for (let yy = roomY1 + 1; yy < roomY2; yy++)
-                            for (let xx = roomX1 + 1; xx < roomX2; xx++)
-                                if (yy < ROWS && xx < COLS) layers.terrain[yy][xx] = floorKey;
-
-                        // Top/bottom walls
-                        for (let xx = roomX1 + 1; xx < roomX2; xx++) {
-                            if (roomY1 < ROWS && xx < COLS) layers.terrain[roomY1][xx] = hwallKey;
-                            if (roomY2 < ROWS && xx < COLS) layers.terrain[roomY2][xx] = hwallKey;
-                        }
-
-                        // Side walls
-                        for (let yy = roomY1 + 1; yy < roomY2; yy++) {
-                            if (yy < ROWS && roomX1 < COLS) layers.terrain[yy][roomX1] = vwallKey;
-                            if (yy < ROWS && roomX2 < COLS) layers.terrain[yy][roomX2] = vwallKey;
-                        }
-
-                        // Corners
-                        if (roomY1 < ROWS && roomX1 < COLS) layers.terrain[roomY1][roomX1] = cornerKey;
-                        if (roomY1 < ROWS && roomX2 < COLS) layers.terrain[roomY1][roomX2] = cornerKey;
-                        if (roomY2 < ROWS && roomX1 < COLS) layers.terrain[roomY2][roomX1] = cornerKey;
-                        if (roomY2 < ROWS && roomX2 < COLS) layers.terrain[roomY2][roomX2] = cornerKey;*/
-                        
-                        
-
-                        /*if (lit) {
-                            for (let yy = roomY1; yy <= roomY2 && yy < ROWS; yy++)
-                                for (let xx = roomX1; xx <= roomX2 && xx < COLS; xx++)
-                                    layers.lighting[yy][xx] = 'lit';
-                        }*/
 
                         if(luaBrush) layers.features.push(luaBrush);
                         
                         break;
                     }
                 case 'feature':
-                    if (args.length === 3 && args[0].type === 'StringLiteral' &&
-                        args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
-                        const type = dequote(args[0].raw);
-                        const x = args[1].value;
-                        const y = args[2].value;
-                        if( !type || x == null || y == null) return;
-                        // Find matching feature from allFeatures
-                        const feat = allFeatures.find(f => f.type?.toLowerCase() === type.toLowerCase() || f.name.toLowerCase() === type.toLowerCase());
+                    {
                         
-                        const internal = getFeatureDefByType('feature').internal;
-                        let luaBrush = {};
-                        luaBrush['internal'] = structuredClone(internal);
-                        luaBrush.x = x;
-                        luaBrush.y = y;
-                        luaBrush.type = type;
-                        if (feat && y < ROWS && x < COLS) {
-                            layers.features.push(luaBrush);
-                        }
-                    }
-                    break;
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        setFeatureInternals(luaBrush);
+                        layers.features.push(luaBrush);
 
+                        break;
+                    }
+                    
+                case 'ladder':
                 case 'stair':
-                    if (args.length === 3 && args[0].type === 'StringLiteral' &&
-                        args[1].type === 'NumericLiteral' && args[2].type === 'NumericLiteral') {
-                        const dir = dequote(args[0].raw);
-                        const x = args[1].value;
-                        const y = args[2].value;
-
-                        const name = dir === 'up' ? 'Stairs Up' : 'Stairs Down';
-                        const sym = dir === 'up' ? '<' : '>';
-                        const color = 'CLR_GRAY';  // Default from def
-                        const internal = getFeatureDefByType('stairs').internal;
-                        let luaBrush = {};
-                        luaBrush['internal'] = structuredClone(internal);
-                        luaBrush.x = x;
-                        luaBrush.y = y;
-                        if (y < ROWS && x < COLS) {
-                            layers.features.push(luaBrush);
-                        }
+                    {
+                        if ( args[0].type != 'StringLiteral' ) return;
+                        const luaBrush = parseLUAtoBrushSimple(args, method);
+                        layers.features.push(luaBrush);
+                        break;
                     }
-                    break;
 
                 case 'altar':
-                    if (args[0]?.type === 'TableConstructorExpression') {
-                        let ax, ay, align = 'noalign';  // Default alignment
-
-                        for (const f of args[0].fields) {
-                            if (f.key.name === 'x') ax = f.value.value;
-                            if (f.key.name === 'y') ay = f.value.value;
-                            if (f.key.name === 'align') align = f.value.value;
-                        }
-
-                        if (typeof ax === 'number' && typeof ay === 'number' && ay < ROWS && ax < COLS) {
-
-                            const internal = getFeatureDefByType('altar').internal;
-                            let luaBrush = {};
-                            luaBrush['internal'] = structuredClone(internal);
-                            luaBrush.x = ax;
-                            luaBrush.y = ay;
-                            layers.features.push(luaBrush);
-                        }
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        layers.features.push(luaBrush);
+                        break;
                     }
-                    break;
+
 
                 case 'door':
-                    let dx, dy, state = 'closed';  // Default state
-                    if (args[0]?.type === 'StringLiteral' &&  args[1]?.type === 'NumericLiteral' &&  args[2]?.type === 'NumericLiteral') {
-                       
-                        if ( args[0]?.type === 'StringLiteral') state = dequote(args[0].raw);
-                        if ( args[1]?.type === 'NumericLiteral') dx = args[1].value;
-                        if ( args[2]?.type === 'NumericLiteral') dy = args[2].value;
-                     
-                    }
-                    if (typeof dx === 'number' && typeof dy === 'number' && dy < ROWS && dx < COLS) {
-                        const internal = getFeatureDefByType('stairs').internal;
-                        let luaBrush = {};
-                        luaBrush['internal'] = structuredClone(internal);
-                        luaBrush.x = dx;
-                        luaBrush.y = dy;    
-                        luaBrush.options.state = state; 
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
                         layers.features.push(luaBrush);
+                        break;
                     }
-                    break;
 
                 case 'object':
                     {
@@ -1243,39 +1241,57 @@ function loadLUAMap(luaText) {
                     
                     break;
                 case 'trap':
-                    let trapType = null;
-                    let x = null;
-                    let y = null;
-
-                    const internal = getFeatureDefByType('trap').internal;
-                    let luaTrapBrush = {};
-                    luaTrapBrush['internal'] = structuredClone(internal);
-
-                    let trapSym = '^';
-                    let trapCol = 'CLR_WHITE';
-                    if (args.length == 3 && args[0]?.type === 'StringLiteral' ) { 
-                        trapType = dequote(args[0].raw);
-                        x = args[1].value;
-                        y = args[2].value;
-                    }
-                    if (args.length == 1 && args[0]?.type === 'StringLiteral' ) { 
-                        trapType = dequote(args[0].raw);
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        setTrapInternals(luaBrush);
+                        layers.features.push(luaBrush);
+                        break;
                     }
                     
-                    if( x ) luaTrapBrush.x = x;
-                    if( y ) luaTrapBrush.y = y;    
-                    if( trapType ) 
+                case 'gold':
                     {
-                        luaTrapBrush.type = trapType;   
-                        trapObj = getTrapTypeByName(trapType);
-                        trapSym = trapObj.sym;
-                        trapCol = trapObj.color;
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        layers.features.push(luaBrush);
+                        break;
                     }
-
-                    luaTrapBrush.internal.symbol = trapSym; 
-                    luaTrapBrush.internal.color = trapCol;   
-                    layers.features.push(luaTrapBrush);
-                    break;
+                case 'engraving':
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        layers.features.push(luaBrush);
+                        break;
+                    }
+                case 'grave':
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        layers.features.push(luaBrush);
+                        break;
+                    }
+                case 'teleport_region':
+                    {
+                        if (args[0]?.type !== 'TableConstructorExpression') break;
+                        const luaBrush = parseLUAtoBrush( args, method );
+                        layers.features.push(luaBrush);
+                        break;
+                    }
+                case 'non_diggable':
+                    {
+                        if (args[0]?.type !== 'CallExpression') break;
+                        const luaBrush = parseLUAtoBrushSimple( args, method );
+                        layers.features.push(luaBrush);
+                        break;
+                    }
+                case 'message':
+                    {
+                        if (args[0]?.type !== 'StringLiteral') break;
+                        
+                        const luaBrush = parseLUAtoBrushSimple( args, method );
+                        layers.features.push(luaBrush);
+                        break;
+                    }
                 // Add more cases here if new deterministic des. calls appear in levels
             }
         }
