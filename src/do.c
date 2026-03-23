@@ -1572,13 +1572,53 @@ goto_level(
         }
     }
 
+    /*Special Quest Treasure Level */
+    if (on_level(&u.uz, &qstart_level) && !newdungeon) {
+        stairway *stway = gs.stairs;  /* find the down-stair we are using */
+
+        if (stway) {
+            coordxy sx = stway->sx;
+            coordxy sy = stway->sy;
+
+            /* Treasure staircase = anywhere inside the 3×3 block at top-left (1,1) to (3,3) */
+            boolean is_treasure_stair = (sx >= 1 && sx <= 4 && sy >= 1 && sy <= 4);
+
+            if (sx >= 1 && sx <= 4 && sy >= 1 && sy <= 4) {
+                /* Narrow gate / treasure path */
+                s_level *sl = find_level("his-treasure-1");
+                if (sl) {
+                    assign_level(newlevel, &sl->dlevel);
+                } else {
+                    impossible("Could not find level 'his-treasure-1'");
+                    return;
+                }
+                pline("The Lord opens the narrow gate before you...");
+                pline("\"Enter by the narrow gate...\" (Matthew 7:13–14 ESV)");
+            }
+            else {
+                /* Normal quest continuation path */
+                if (!ok_to_quest()) {
+                    pline("A mysterious force prevents you from taking the broad way.");
+                    return;
+                }
+                /* continue to normal x-loca — no assign_level needed here */
+            }
+
+            at_stairs = TRUE;
+        }
+        else {
+            pline("No path downward is open to you yet.");
+            return;
+        }
+    }
+
     /* Prevent the player from going past the first quest level unless
      * (s)he has been given the go-ahead by the leader.
      */
-    if (on_level(&u.uz, &qstart_level) && !newdungeon && !ok_to_quest()) {
+    /*if (on_level(&u.uz, &qstart_level) && !newdungeon && !ok_to_quest()) {
         pline("A mysterious force prevents you from descending.");
         return;
-    }
+    }*/
 
     if (on_level(newlevel, &u.uz))
         return; /* this can happen */

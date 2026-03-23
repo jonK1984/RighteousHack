@@ -47,6 +47,12 @@ dungeon = {
             base = 1,
             branchtype = "no_down",
             direction = "up"
+         },
+         {
+            name = "Treasure Room of Alex",
+            base = 1,
+            branchtype = "no_down",
+            direction = "down"
          }
       },
       levels = {
@@ -330,4 +336,16 @@ dungeon = {
          },
       }
    },
+   {
+      name = "Treasure Room of Alex",
+      bonetag = "A",
+      base = 3,
+      range = 2,
+      flags = { "mazelike" },
+      alignment = "neutral",
+      levels = {
+         { name = "his-treasure-1", base = 1 }
+      }
+   },
+   
 }

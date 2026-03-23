@@ -398,14 +398,14 @@ static NEARDATA struct artifact artilist[] = {
       GOSPLE OF THE PEACE
       Water Walking
       Haste
-      Fire Resistance
+      Fire Resistance (Carried or Worn)
       Apply to tame
       +modifier to charisma
     =================================
     */
     A("Gosple of the Peace", SANDALS,
       (SPFX_NOGEN), 0,
-      0, NO_ATTK, NO_DFNS, CARY(AD_FIRE), TAMING, A_LAWFUL,
+      0, NO_ATTK, DFNS(AD_FIRE), CARY(AD_FIRE), TAMING, A_LAWFUL,
       NON_PM, NON_PM,
       0, 10, 2000L, NO_COLOR, SHOES_GOSPEL_OF_PEACE),
 

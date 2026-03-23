@@ -9,7 +9,7 @@
 
 des.level_flags("noteleport", "hardfloor", "solidify", "noflip", "nomongen")
 
-des.level_init({ style = "solidfill", bg = "W" })
+des.level_init({ style = "solidfill", fg = "}", bg = "W" })
 
 
 -- Overall map: water around a central island/building with dock
