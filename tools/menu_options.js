@@ -1,7 +1,8 @@
 const brushOptionDefs = {
     monster: {
-        id:          { label: "Monster ID",           input_type: "text",   data_type: "string", no_coexist: ["class"],  desc: "Monster ID" },
-        class:       { label: "Monster class",        input_type: "text",   data_type: "string", no_coexist: ["id"],  desc: "Monster Class" },
+        id:          { label: "Monster ID",           input_type: "text",   data_type: "string", no_coexist: ["class", "variable"],  desc: "Monster ID" },
+        class:       { label: "Monster class",        input_type: "text",   data_type: "string", no_coexist: ["id", "variable"],  desc: "Monster Class" },
+        variable:    { label: "Variable",             input_type: "text",   data_type: "string", no_coexist: ["id", "class"],  desc: "Local table index, e.g. monster[1]" },
         peaceful:    { label: "Peaceful",             input_type: "combo",  data_type: "int", combo_options: [0,1],  desc: "Peaceful" },
         asleep:      { label: "Asleep",               input_type: "combo", data_type: "int", combo_options: ["0","1"],  desc: "Asleep" },
         name:        { label: "Custom name",          input_type: "text",  data_type: "string", desc: "Custom name" },
@@ -22,8 +23,10 @@ const brushOptionDefs = {
     },
 
     object: {
-        id:          { label: "Object ID",            input_type: "text",   data_type: "string", no_coexist: ["class"] },
-        class:       { label: "Object Class",         input_type: "text",   data_type: "string", no_coexist: ["id"] },
+        id:          { label: "Object ID",            input_type: "text",   data_type: "string", no_coexist: ["class", "variable"] },
+        class:       { label: "Object Class",         input_type: "text",   data_type: "string", no_coexist: ["id", "variable"] },
+        variable:    { label: "Variable",             input_type: "text",   data_type: "string", no_coexist: ["id", "class"], desc: "Local table index, e.g. object[1]" },
+        coord_variable: { label: "Coord variable",    input_type: "text",   data_type: "string", desc: "e.g. loc from place:rndcoord(1)" },
         quantity:    { label: "Quantity",             input_type: "number", data_type: "int", min: -1 }, // -1 = random
         spe:         { label: "Charges",              input_type: "number", data_type: "int" },
         buc:         { label: "BUC State",            input_type: "combo", data_type: "string", combo_options: [ "uncursed", "blessed",  "cursed", "not-cursed"] },  // e.g. "blessed", "uncursed", "cursed"
@@ -288,16 +291,33 @@ function restorePanelOptions( panelName )
                 const includeCb = document.getElementById('include_' + fieldId);
                 const valueElem = document.getElementById(fieldId + '_value');
 
-                const hasValue = stored && stored.hasOwnProperty(key);
-                if (includeCb) includeCb.checked = hasValue;
+                // name.variable is identity-via-local, not custom name string
+                let hasValue = stored && stored.hasOwnProperty(key);
+                if (key === 'name' && stored && stored.name && typeof stored.name === 'object') {
+                    hasValue = false;
+                }
+                // variable / coord_variable restored separately by restoreIdentityFields
+                if (key === 'variable' || key === 'coord_variable') {
+                    hasValue = false;
+                }
+                if (includeCb) includeCb.checked = !!hasValue;
 
-                if (includeCb) valueElem.disabled = !hasValue;
+                if (includeCb && valueElem) valueElem.disabled = !hasValue;
 
                 if (hasValue && valueElem) {
                     let val = stored[key];
                     // Convert stored type to string for <select>
                     if (typeof val === 'boolean' || typeof val === 'number') val = val.toString();
+                    if (typeof val === 'object') val = '';
                     valueElem.value = val;
+                } else if (valueElem) {
+                    // Clear sticky values from a previously opened brush
+                    if (valueElem.tagName === 'SELECT') {
+                        valueElem.selectedIndex = 0;
+                    } else {
+                        valueElem.value = '';
+                    }
+                    valueElem.disabled = true;
                 }
             } else {
                 // Pure checkbox flags
@@ -369,27 +389,62 @@ function buildOptionsForm(type) {
                     }
                 }
                 
-                if ( (key === 'id' || key === 'class') && checked) {
+                if ( (key === 'id' || key === 'class' || key === 'variable') && checked) {
                     if (prefix == 'monster') {
                         currentMonsterMode = key;
-                        populateMonsterList(inputHNDL?.value || '');
-                        inputHNDL.addEventListener('input', (e) => {
-                            const filter = e.target.value.trim();
-                            populateMonsterList(filter);
-                        });
+                        if (key === 'variable') {
+                            if (typeof populateVariableList === 'function') {
+                                populateVariableList('monster', inputHNDL?.value || '');
+                            }
+                            if (inputHNDL && !inputHNDL._varFilterBound) {
+                                inputHNDL._varFilterBound = true;
+                                inputHNDL.addEventListener('input', (e) => {
+                                    if (currentMonsterMode === 'variable' && typeof populateVariableList === 'function') {
+                                        populateVariableList('monster', e.target.value.trim());
+                                    }
+                                });
+                            }
+                        } else {
+                            populateMonsterList(inputHNDL?.value || '');
+                            if (inputHNDL && !inputHNDL._monFilterBound) {
+                                inputHNDL._monFilterBound = true;
+                                inputHNDL.addEventListener('input', (e) => {
+                                    if (currentMonsterMode === 'id' || currentMonsterMode === 'class') {
+                                        populateMonsterList(e.target.value.trim());
+                                    }
+                                });
+                            }
+                        }
                     }
                     if (prefix == 'object') {
                         currentObjectMode = key;
-                        populateObjectList(inputHNDL?.value || '');
-                        inputHNDL.addEventListener('input', (e) => {
-                            const filter = e.target.value.trim();
-                            populateObjectList(filter);
-                        });
-                        
+                        if (key === 'variable') {
+                            if (typeof populateVariableList === 'function') {
+                                populateVariableList('object', inputHNDL?.value || '');
+                            }
+                            if (inputHNDL && !inputHNDL._varFilterBound) {
+                                inputHNDL._varFilterBound = true;
+                                inputHNDL.addEventListener('input', (e) => {
+                                    if (currentObjectMode === 'variable' && typeof populateVariableList === 'function') {
+                                        populateVariableList('object', e.target.value.trim());
+                                    }
+                                });
+                            }
+                        } else {
+                            populateObjectList(inputHNDL?.value || '');
+                            if (inputHNDL && !inputHNDL._objFilterBound) {
+                                inputHNDL._objFilterBound = true;
+                                inputHNDL.addEventListener('input', (e) => {
+                                    if (currentObjectMode === 'id' || currentObjectMode === 'class') {
+                                        populateObjectList(e.target.value.trim());
+                                    }
+                                });
+                            }
+                        }
                     }
                     
                 }
-                if( checked )
+                if( checked && inputHNDL )
                 {
                     inputHNDL.focus();
                     if( inputHNDL.select) inputHNDL.select();
@@ -562,17 +617,33 @@ function updateInventoryDisplay() {
 }
 
 //MONSTER INVENTORY SELECTION CODE
+function describeObjectBrushShort(item) {
+    if (!item) return '?';
+    const sym = item.internal?.symbol || item.class || '?';
+    const label = item.id
+        || (typeof item.name === 'string' ? item.name : null)
+        || (item.name && item.name.variable)
+        || item.class
+        || (item.coord && item.coord.variable ? `coord=${item.coord.variable}` : null)
+        || '?';
+    return `${sym}  ${label}`;
+}
+
 function updateContentsDisplay() {
     const list = document.getElementById('object-contents-list');
+    if (!list) return;
     list.innerHTML = '';
-    currentObjPopupContents.forEach((item, i) => {
+    const items = (typeof currentObjPopupContents !== 'undefined' && currentObjPopupContents)
+        ? currentObjPopupContents
+        : [];
+    items.forEach((item, i) => {
         const li = document.createElement('li');
         li.dataset.index = i;
         li.style.padding = '6px';
         li.style.background = (i === selectedContentsIndex) ? '#1da1f2' : '#222';
         li.style.cursor = 'pointer';
         li.style.marginBottom = '2px';
-        li.textContent = `${item.internal.symbol || '?'}  ${item.id}`;   // simple readable description
+        li.textContent = describeObjectBrushShort(item);
         li.addEventListener('click', () => {
             selectedContentsIndex = i;
             updateContentsDisplay();
@@ -582,7 +653,8 @@ function updateContentsDisplay() {
     });
 
     // disable delete button if nothing selected
-    document.getElementById('delete-contents-btn').disabled = (selectedContentsIndex < 0);
+    const del = document.getElementById('delete-contents-btn');
+    if (del) del.disabled = (selectedContentsIndex < 0);
 }
 
 document.getElementById('show-inventory-btn').addEventListener('click', () => {

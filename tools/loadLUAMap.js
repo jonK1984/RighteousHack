@@ -3,8 +3,7 @@
 // Only deterministic top-level des. calls are processed.
 // Uses allMonsters, allObjects, allTerrains, and the features array (from feature_def.js) for accurate symbol lookup.
 
-//const COLS = 80;
-//const ROWS = 21;
+// Grid size comes from map_edit.html: COLS=80, ROWS=21 (NetHack COLNO/ROWNO)
 
 // Lookup maps built dynamically from the definition files
 
@@ -370,23 +369,56 @@ function reconstructVariableRef(node) {
 }
 
 /**
- * Extract fixed x,y coordinates from a brush's .coord property.
- * Returns { x: number, y: number } if coord is a fixed array/table of two numbers.
- * Returns null if coord is missing, a variable reference, or invalid format.
+ * Resolve a local name used as coord (e.g. loc from place:rndcoord) to a
+ * deterministic preview {x,y}. Map-relative selection points are returned
+ * without map origin applied — caller adds lastMapOrigin when placing.
  *
- * @param {Object} brush - the monster or object brush
- * @returns {{x: number, y: number}|null}
+ * @param {string} name
+ * @returns {{x:number,y:number,source:string}|null}
  */
-function getXYFromCoord(brush) {
+function resolveCoordVariable(name) {
+    if (!name || typeof name !== 'string') return null;
+    const def = (typeof luaLocals !== 'undefined') ? luaLocals[name] : null;
+    if (!def) return null;
+
+    if (def.kind === 'rndcoord_ref') {
+        const sel = luaLocals[def.from];
+        if (sel && sel.kind === 'selection' && Array.isArray(sel.points) && sel.points.length) {
+            return { x: sel.points[0][0], y: sel.points[0][1], source: name };
+        }
+        return null;
+    }
+    if (def.kind === 'selection' && Array.isArray(def.points) && def.points.length) {
+        return { x: def.points[0][0], y: def.points[0][1], source: name };
+    }
+    if (def.kind === 'coord_list' && Array.isArray(def.values) && def.values.length) {
+        return { x: def.values[0][0], y: def.values[0][1], source: name };
+    }
+    return null;
+}
+
+/**
+ * Extract x,y from a brush's .coord property.
+ * Fixed tables → numbers. Variable refs → preview resolve when possible.
+ *
+ * @param {Object} brush
+ * @param {{resolveVariable?: boolean}} opts  default resolveVariable true
+ * @returns {{x: number, y: number, variable?: string}|null}
+ */
+function getXYFromCoord(brush, opts = {}) {
     if (!brush || !brush.coord) {
         return null;
     }
 
+    const resolveVariable = opts.resolveVariable !== false;
     const coord = brush.coord;
 
-    // Variable reference → cannot resolve to fixed coords
+    // Variable reference → try deterministic preview from luaLocals
     if (coord.variable) {
-        return null;
+        if (!resolveVariable) return null;
+        const resolved = resolveCoordVariable(coord.variable);
+        if (!resolved) return null;
+        return { x: resolved.x, y: resolved.y, variable: coord.variable };
     }
 
     // Expect array of exactly two numbers (from {09,07} table)
@@ -403,6 +435,47 @@ function getXYFromCoord(brush) {
 
     // Anything else (invalid, string, etc.) → null
     return null;
+}
+
+/**
+ * Place object/monster brush on grid or RND, handling variable coords.
+ * Map-relative preview coords get lastMapOrigin applied.
+ */
+function placeBrushWithCoords(brush, layerKind /* 'object'|'monster' */) {
+    if (!brush) return;
+
+    let x = brush.x != null ? brush.x : null;
+    let y = brush.y != null ? brush.y : null;
+    const fromCoord = getXYFromCoord(brush);
+    if (fromCoord) {
+        x = fromCoord.x;
+        y = fromCoord.y;
+        // des.object/monster coord (fixed table or variable) is map-relative after des.map
+        if (lastMapOrigin) {
+            x += (lastMapOrigin.x || 0);
+            y += (lastMapOrigin.y || 0);
+        }
+        if (brush.internal) {
+            brush.internal.previewX = x;
+            brush.internal.previewY = y;
+        }
+    }
+
+    // Fixed x,y from brush may already include map origin via applyMapOriginToBrush
+
+    const grid = layerKind === 'monster' ? layers.monster : layers.object;
+    const rnd = layerKind === 'monster' ? layers.monsterRND : layers.objectRND;
+
+    if (y != null && x != null && y >= 0 && y < ROWS && x >= 0 && x < COLS) {
+        // If slot occupied and this is a variable-coord secondary object, keep in RND with coord.variable
+        if (grid[y][x] && brush.coord && brush.coord.variable) {
+            rnd.push(brush);
+        } else {
+            grid[y][x] = brush;
+        }
+    } else {
+        rnd.push(brush);
+    }
 }
 
 /**
@@ -486,25 +559,34 @@ function getObjectBrushFromLUAObj(callNode) {
         // Coord
         if (fields.coord !== undefined) brush.coord = fields.coord;
 
-        // Contents – recursive
-        if (fields.contents && fields.contents.type === "FunctionDeclaration" && fields.contents.body) {
-            brush.contents = [];
-            for (const stmt of fields.contents.body) {
-                if (stmt.type !== "CallStatement") continue;
-                const expr = stmt.expression;
-                if (expr.type !== "CallExpression") continue;
+        // Contents – recursive (contents = function() des.object(...) end)
+        const contentsNode = fields.contents;
+        if (contentsNode) {
+            const bodyStmts = Array.isArray(contentsNode.body)
+                ? contentsNode.body
+                : (contentsNode.body && Array.isArray(contentsNode.body.body)
+                    ? contentsNode.body.body
+                    : null);
+            if (bodyStmts) {
+                brush.contents = [];
+                for (const stmt of bodyStmts) {
+                    if (stmt.type !== "CallStatement") continue;
+                    const expr = stmt.expression;
+                    if (!expr || expr.type !== "CallExpression") continue;
 
-                if (!expr.base ||
-                    expr.base.type !== "MemberExpression" ||
-                    expr.base.identifier.name !== "object" ||
-                    !expr.base.base ||
-                    expr.base.base.name !== "des") {
-                    continue;
-                }
+                    // des.object(...)
+                    if (!expr.base ||
+                        expr.base.type !== "MemberExpression" ||
+                        expr.base.identifier?.name !== "object" ||
+                        !expr.base.base ||
+                        expr.base.base.name !== "des") {
+                        continue;
+                    }
 
-                const innerBrush = getObjectBrushFromLUAObj(expr);
-                if (innerBrush) {
-                    brush.contents.push(innerBrush);
+                    const innerBrush = getObjectBrushFromLUAObj(expr);
+                    if (innerBrush) {
+                        brush.contents.push(innerBrush);
+                    }
                 }
             }
         }
@@ -520,17 +602,14 @@ function getObjectBrushFromLUAObj(callNode) {
     if (args.length > argIdx) {
         const firstArg = args[argIdx];
 
-        // object[N] reference
-        if (firstArg.type === "IndexExpression" &&
-            firstArg.base && firstArg.base.name === "object" &&
-            firstArg.index && firstArg.index.type === "NumericLiteral") {
-
-            const varRef = `object[${firstArg.index.value}]`;
-            brush.name = { variable: varRef };
+        // localvar[N] reference (e.g. object[1], objclass[2])
+        if (firstArg.type === "IndexExpression" ||
+            (firstArg.type === "CallExpression" && firstArg.base?.type === "IndexExpression")) {
+            brush.name = { variable: reconstructVariableRef(firstArg) };
             brush.internal.random = false;
             argIdx++;
         }
-        // String literal (id or class)
+        // String literal (id, class char, or free name e.g. artifact)
         else if (firstArg.type === "StringLiteral") {
             const str = dequote(firstArg.raw);
             const obj = getObjectById(str);
@@ -539,10 +618,15 @@ function getObjectBrushFromLUAObj(callNode) {
                 brush.internal.color = obj.color;
                 brush.internal.random = false;
                 brush.id = str;
-            } else {
+            } else if (str.length === 1 && typeof isValidObjectClass === 'function' && isValidObjectClass(str)) {
                 brush.internal.symbol = str;
                 brush.internal.random = false;
                 brush.class = str;
+            } else {
+                // Named object not in allObjects (e.g. "ask and ye shall receive")
+                brush.id = str;
+                brush.internal.symbol = (str && str.charAt(0)) || '?';
+                brush.internal.random = false;
             }
             argIdx++;
         }
@@ -862,7 +946,7 @@ function parseLUAtoBrush(args, type)
 {
     if (args[0]?.type !== 'TableConstructorExpression') return null;
     let luaBrush = {};
-    const internal = getFeatureDefByType(type).internal;
+    const internal = getFeatureDefByType(type)?.internal || { type, stroke: 'point' };
     luaBrush['internal'] = {...internal};
 
     args[0].fields.forEach(arg => {
@@ -878,23 +962,309 @@ function parseLUAtoBrush(args, type)
             luaBrush['w'] = Math.abs(x1 - x2) + 1;
             luaBrush['h'] = Math.abs(y1 - y2) + 1;
         }
-        else if (arg?.type == 'TableKeyString' && arg?.value?.raw)
+        else if (arg?.type == 'TableKeyString')
         {
             const key = arg.key.name;
-            let val = dequote(arg?.value?.raw);
-            if( key == 'x' || key == 'y') val = parseInt(val);
-            luaBrush[key] = val
-            
+            const parsed = parseValueNode(arg.value);
+            if (parsed !== undefined) {
+                luaBrush[key] = parsed;
+            } else if (arg.value?.raw) {
+                let val = dequote(arg.value.raw);
+                if (key == 'x' || key == 'y') val = parseInt(val, 10);
+                luaBrush[key] = val;
+            }
         }
     });
-    return luaBrush;
 
+    // Resolve coord = loc (or fixed coord table) to preview x,y for rendering
+    applyFeatureCoordPreview(luaBrush);
+    return luaBrush;
+}
+
+/**
+ * If feature brush has coord (fixed or variable), set x,y for map display.
+ * Keeps coord.variable for export. Applies lastMapOrigin for variable/map-relative.
+ */
+function applyFeatureCoordPreview(brush) {
+    if (!brush) return;
+    const fromCoord = getXYFromCoord(brush);
+    if (!fromCoord) return;
+
+    let x = fromCoord.x;
+    let y = fromCoord.y;
+    if (fromCoord.variable && lastMapOrigin) {
+        x += (lastMapOrigin.x || 0);
+        y += (lastMapOrigin.y || 0);
+    } else if (!fromCoord.variable && lastMapOrigin &&
+               brush.coord && !brush.region_islev) {
+        // fixed coord table in map-relative des calls also need origin when
+        // placed after des.map — applyMapOriginToBrush handles numeric x,y;
+        // coord tables need it here if we set x,y from coord only
+        x += (lastMapOrigin.x || 0);
+        y += (lastMapOrigin.y || 0);
+    }
+    brush.x = x;
+    brush.y = y;
+    if (brush.internal) {
+        brush.internal.previewX = x;
+        brush.internal.previewY = y;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// des.map placement — mirrors NetHack src/sp_lev.c lspo_map()
+// Bare des.map([[...]]) defaults to halign/valign = center.
+// Map-relative des.* coords are then offset by lastMapOrigin.
+// ---------------------------------------------------------------------------
+
+/** @type {{x:number,y:number,w:number,h:number,halign:string,valign:string}} */
+let lastMapOrigin = { x: 0, y: 0, w: 0, h: 0, halign: 'none', valign: 'none' };
+
+/**
+ * Split a des.map long-string into rows (drop leading/trailing blank from [[ ]]).
+ */
+function parseMapLines(mapContent) {
+    if (mapContent == null) return [];
+    let text = String(mapContent);
+    // If raw still includes long-bracket delimiters, strip them
+    if (text.startsWith('[[')) {
+        text = text.replace(/^\[\[/, '').replace(/\]\]$/, '');
+    }
+    let lines = text.split(/\r?\n/);
+    if (lines.length && lines[0] === '') lines = lines.slice(1);
+    if (lines.length && lines[lines.length - 1] === '') lines = lines.slice(0, -1);
+    return lines.filter(l => l !== '[[' && l !== ']]');
+}
+
+/**
+ * Compute map origin like NetHack (maze max + odd-adjust).
+ * @param {number} mapW
+ * @param {number} mapH
+ * @param {{x?:number,y?:number,halign?:string,valign?:string}} opts
+ */
+function computeMapOrigin(mapW, mapH, opts = {}) {
+    const x_maze_max = (COLS - 1) & ~1; // NetHack: (COLNO-1) & ~1 → 78
+    const y_maze_max = (ROWS - 1) & ~1; // NetHack: (ROWNO-1) & ~1 → 20
+
+    // Explicit coord wins
+    if (opts.x != null && opts.y != null) {
+        return {
+            x: opts.x,
+            y: opts.y,
+            w: mapW,
+            h: mapH,
+            halign: 'none',
+            valign: 'none'
+        };
+    }
+
+    // String-form des.map defaults both to center (sp_lev.c)
+    const ha = opts.halign != null ? opts.halign : 'center';
+    const va = opts.valign != null ? opts.valign : 'center';
+
+    let ox = 0;
+    let oy = 0;
+
+    // Assume level_init already ran (splev_init_present) → left starts at 1
+    switch (ha) {
+        case 'left':
+            ox = 1;
+            break;
+        case 'half-left':
+            ox = 2 + Math.floor((x_maze_max - 2 - mapW) / 4);
+            break;
+        case 'center':
+            ox = 2 + Math.floor((x_maze_max - 2 - mapW) / 2);
+            break;
+        case 'half-right':
+            ox = 2 + Math.floor(((x_maze_max - 2 - mapW) * 3) / 4);
+            break;
+        case 'right':
+            ox = x_maze_max - mapW - 1;
+            break;
+        default:
+            ox = 0;
+            break;
+    }
+    switch (va) {
+        case 'top':
+            oy = 3;
+            break;
+        case 'center':
+            oy = 2 + Math.floor((y_maze_max - 2 - mapH) / 2);
+            break;
+        case 'bottom':
+            oy = y_maze_max - mapH - 1;
+            break;
+        default:
+            oy = 0;
+            break;
+    }
+
+    // NetHack forces odd start when using alignment
+    if (ha !== 'none' && (ox % 2) === 0) ox++;
+    if (va !== 'none' && (oy % 2) === 0) oy++;
+
+    if (oy < 0 || oy + mapH > ROWS) {
+        if (mapH >= ROWS) oy = 0;
+        else if (oy < 0 || oy + mapH > ROWS) oy = 0;
+    }
+    if (ox < 0) ox = 0;
+
+    return { x: ox, y: oy, w: mapW, h: mapH, halign: ha, valign: va };
+}
+
+/**
+ * Offset map-relative x/y (and coord) by lastMapOrigin.
+ * Level-absolute brushes (region_islev) are left alone.
+ */
+function applyMapOriginToBrush(brush) {
+    if (!brush) return brush;
+    const isLev =
+        brush.region_islev === 1 ||
+        brush.region_islev === '1' ||
+        brush.region_islev === true;
+    if (isLev) return brush;
+
+    // Already finalized by applyFeatureCoordPreview (coord → x,y + origin)
+    if (brush.internal && brush.internal.previewX != null) return brush;
+
+    const ox = lastMapOrigin.x || 0;
+    const oy = lastMapOrigin.y || 0;
+    if (!ox && !oy) return brush;
+
+    if (brush.x != null && typeof brush.x === 'number') brush.x += ox;
+    if (brush.y != null && typeof brush.y === 'number') brush.y += oy;
+
+    // Do not mutate coord.variable; only fixed numeric coord tables
+    if (Array.isArray(brush.coord) && brush.coord.length === 2) {
+        if (typeof brush.coord[0] === 'number') brush.coord[0] += ox;
+        if (typeof brush.coord[1] === 'number') brush.coord[1] += oy;
+    } else if (brush.coord && typeof brush.coord === 'object' &&
+               brush.coord.x != null && brush.coord.y != null &&
+               !brush.coord.variable) {
+        brush.coord.x += ox;
+        brush.coord.y += oy;
+    }
+
+    // Lighting-style absolute corners if present without region_islev
+    if (brush.x1 != null && typeof brush.x1 === 'number') {
+        brush.x1 += ox;
+        brush.x2 += ox;
+        brush.y1 += oy;
+        brush.y2 += oy;
+    }
+
+    return brush;
+}
+
+/**
+ * Place map lines into layers.terrain at origin; update lastMapOrigin.
+ */
+function placeMapContent(lines, originOpts = {}) {
+    if (!lines || !lines.length) return;
+
+    const mapH = lines.length;
+    const mapW = Math.max(...lines.map(l => l.length), 0);
+    const origin = computeMapOrigin(mapW, mapH, originOpts);
+    lastMapOrigin = origin;
+
+    for (let ly = 0; ly < mapH; ly++) {
+        const gy = origin.y + ly;
+        if (gy < 0 || gy >= ROWS) continue;
+        const line = lines[ly];
+        for (let lx = 0; lx < mapW; lx++) {
+            const gx = origin.x + lx;
+            if (gx < 0 || gx >= COLS) continue;
+            const ch = lx < line.length ? line[lx] : ' ';
+            layers.terrain[gy][gx] = symToTerrain[ch] || 'stone';
+        }
+    }
+}
+
+/**
+ * Extract map string + placement options from a des.map call's AST args.
+ */
+function getMapCallSpec(args) {
+    if (!args || !args.length) return null;
+
+    // des.map([[...]])  → default center,center
+    if (args[0].type === 'StringLiteral') {
+        const content = (args[0].value != null)
+            ? args[0].value
+            : dequote(args[0].raw);
+        return {
+            lines: parseMapLines(content),
+            opts: { halign: 'center', valign: 'center' }
+        };
+    }
+
+    // des.map({ map=[[...]], x=, y=, coord=, halign=, valign= })
+    if (args[0].type === 'TableConstructorExpression') {
+        let content = null;
+        const opts = { halign: 'none', valign: 'none' };
+        let hasAlign = false;
+        let hasXY = false;
+
+        for (const field of args[0].fields) {
+            if (field.type !== 'TableKeyString') continue;
+            const key = field.key.name;
+            const val = field.value;
+
+            if (key === 'map' && val.type === 'StringLiteral') {
+                content = (val.value != null) ? val.value : dequote(val.raw);
+            } else if (key === 'halign' && val.type === 'StringLiteral') {
+                opts.halign = dequote(val.raw);
+                hasAlign = true;
+            } else if (key === 'valign' && val.type === 'StringLiteral') {
+                opts.valign = dequote(val.raw);
+                hasAlign = true;
+            } else if (key === 'x' && val.type === 'NumericLiteral') {
+                opts.x = val.value;
+                hasXY = true;
+            } else if (key === 'y' && val.type === 'NumericLiteral') {
+                opts.y = val.value;
+                hasXY = true;
+            } else if (key === 'coord' && val.type === 'TableConstructorExpression') {
+                const nums = val.fields
+                    .filter(f => f.type === 'TableValue' && f.value?.type === 'NumericLiteral')
+                    .map(f => f.value.value);
+                if (nums.length >= 2) {
+                    opts.x = nums[0];
+                    opts.y = nums[1];
+                    hasXY = true;
+                }
+            }
+        }
+
+        if (content == null) return null;
+        // Table form with neither xy nor align is invalid in engine; fall back to 0,0
+        if (!hasAlign && !hasXY) {
+            opts.x = 0;
+            opts.y = 0;
+            opts.halign = 'none';
+            opts.valign = 'none';
+        } else if (hasAlign && !hasXY) {
+            // keep halign/valign; clear any partial xy
+            delete opts.x;
+            delete opts.y;
+        }
+        return { lines: parseMapLines(content), opts };
+    }
+
+    return null;
 }
 
 function parseLUAtoBrushSimple(args, type)
 {
     let luaBrush = {};
-    const internal = getFeatureDefByType(type).internal;
+    const def = (typeof getFeatureDefByType === 'function') ? getFeatureDefByType(type) : null;
+    const internal = def?.internal || {
+        type: type || 'feature',
+        stroke: 'point',
+        brushMode: 'simple',
+        des_code: type ? `des.${type}` : 'des.feature'
+    };
     luaBrush['internal'] = {...internal};
     luaBrush['internal'].brushMode = "simple";
 
@@ -950,17 +1320,392 @@ function parseLUAtoBrushSimple(args, type)
     return luaBrush;
 }
 
+// ---------------------------------------------------------------------------
+// Lua locals (level script variables) — shared with map_edit.html
+// ---------------------------------------------------------------------------
+
+/** @type {Object.<string, object>} */
+let luaLocals = {};
+/** @type {Array<object>} ordered ops / opaque snippets for re-export */
+let luaOps = [];
+let _luaLocalExportOrder = 0;
+
+function resetLuaLocals() {
+    luaLocals = {};
+    luaOps = [];
+    _luaLocalExportOrder = 0;
+}
+
+/**
+ * Lua is 1-based for array indexes. values is JS 0-based.
+ */
+function resolveLocalIndex(name, luaIndex) {
+    const def = luaLocals[name];
+    if (!def || (def.kind !== 'string_list' && def.kind !== 'coord_list')) return null;
+    if (typeof luaIndex !== 'number' || !Number.isFinite(luaIndex)) return null;
+    const i = luaIndex - 1;
+    if (!def.values || i < 0 || i >= def.values.length) return null;
+    return def.values[i];
+}
+
+/**
+ * Parse "monster[1]" / "object[10]" → { name, index } or null.
+ */
+function parseVariableIndexRef(varStr) {
+    if (!varStr || typeof varStr !== 'string') return null;
+    const m = varStr.match(/^([A-Za-z_]\w*)\[(\d+)\]$/);
+    if (!m) return null;
+    return { name: m[1], index: parseInt(m[2], 10) };
+}
+
+/**
+ * Apply resolved local value onto a monster/object brush for WYSIWYG display.
+ * Keeps name.variable for round-trip.
+ */
+function applyLocalResolveToBrush(brush, kindHint /* 'monster'|'object' */) {
+    if (!brush) return brush;
+    const varRef = brush.name && typeof brush.name === 'object' ? brush.name.variable : null;
+    if (!varRef) return brush;
+
+    const parsed = parseVariableIndexRef(varRef);
+    if (!parsed) return brush;
+
+    const val = resolveLocalIndex(parsed.name, parsed.index);
+    if (val == null) return brush;
+
+    if (typeof val === 'string') {
+        // Single-char → class; multi-char → id
+        if (val.length === 1) {
+            brush.class = val;
+            brush.internal = brush.internal || {};
+            brush.internal.symbol = val;
+            brush.internal.random = false;
+            brush.internal.resolvedFrom = varRef;
+            if (kindHint === 'monster' && typeof getMonsterById === 'function') {
+                // class char — try optional color from first matching mon if available later
+            }
+        } else {
+            brush.id = val;
+            brush.internal = brush.internal || {};
+            brush.internal.random = false;
+            brush.internal.resolvedFrom = varRef;
+            if (kindHint === 'monster' && typeof getMonsterById === 'function') {
+                const mon = getMonsterById(val);
+                if (mon) {
+                    brush.internal.symbol = mon.symbol;
+                    brush.internal.color = mon.color;
+                }
+            } else if (kindHint === 'object' && typeof getObjectById === 'function') {
+                const obj = getObjectById(val);
+                if (obj) {
+                    brush.internal.symbol = obj.symbol;
+                    brush.internal.color = obj.color;
+                }
+            } else {
+                brush.internal.symbol = val.charAt(0);
+            }
+        }
+    } else if (Array.isArray(val) && val.length === 2) {
+        // coord pair from coord_list — rarely used as monster id, store for info
+        brush.internal = brush.internal || {};
+        brush.internal.resolvedCoord = val;
+        brush.internal.resolvedFrom = varRef;
+    }
+    return brush;
+}
+
+/**
+ * Try to classify a TableConstructorExpression into string_list or coord_list.
+ * Returns { kind, values } or null.
+ */
+function classifyLocalTable(tableNode) {
+    if (!tableNode || tableNode.type !== 'TableConstructorExpression') return null;
+    const fields = tableNode.fields || [];
+    if (!fields.length) return { kind: 'string_list', values: [] };
+
+    const stringVals = [];
+    const coordVals = [];
+    let allString = true;
+    let allCoord = true;
+
+    for (const f of fields) {
+        if (f.type === 'TableValue') {
+            const v = f.value;
+            if (v.type === 'StringLiteral') {
+                stringVals.push(dequote(v.raw));
+                allCoord = false;
+            } else if (v.type === 'NumericLiteral') {
+                stringVals.push(String(v.value));
+                allCoord = false;
+            } else if (v.type === 'TableConstructorExpression') {
+                allString = false;
+                const nums = (v.fields || [])
+                    .filter(ff => ff.type === 'TableValue' && ff.value?.type === 'NumericLiteral')
+                    .map(ff => ff.value.value);
+                if (nums.length >= 2) {
+                    coordVals.push([nums[0], nums[1]]);
+                } else {
+                    allCoord = false;
+                }
+            } else {
+                allString = false;
+                allCoord = false;
+            }
+        } else {
+            allString = false;
+            allCoord = false;
+        }
+    }
+
+    if (allString && stringVals.length === fields.length) {
+        return { kind: 'string_list', values: stringVals };
+    }
+    if (allCoord && coordVals.length === fields.length) {
+        return { kind: 'coord_list', values: coordVals };
+    }
+    return null;
+}
+
+function registerLuaLocal(name, def) {
+    def.name = name;
+    def.exportOrder = _luaLocalExportOrder++;
+    if (def.shuffled == null) def.shuffled = false;
+    luaLocals[name] = def;
+    luaOps.push({ type: 'local', name });
+}
+
+/**
+ * Handle LocalStatement — returns true if consumed.
+ */
+function ingestLocalStatement(stmt) {
+    if (!stmt || stmt.type !== 'LocalStatement') return false;
+    const vars = stmt.variables || [];
+    const inits = stmt.init || [];
+
+    // Only handle simple one-name locals for structured kinds; multi → opaque
+    if (vars.length !== 1) {
+        const src = getCodeStringFromLUAStmt(stmt);
+        registerLuaLocal(vars.map(v => v.name).join('_'), {
+            kind: 'opaque',
+            source: src,
+            shuffled: false
+        });
+        return true;
+    }
+
+    const name = vars[0].name;
+    const init = inits[0];
+
+    if (!init) {
+        registerLuaLocal(name, { kind: 'opaque', source: `local ${name}`, shuffled: false });
+        return true;
+    }
+
+    // selection.new()
+    if (init.type === 'CallExpression' &&
+        init.base?.type === 'MemberExpression' &&
+        init.base.base?.name === 'selection' &&
+        init.base.identifier?.name === 'new') {
+        registerLuaLocal(name, {
+            kind: 'selection',
+            points: [],
+            methods: [],
+            shuffled: false
+        });
+        return true;
+    }
+
+    // place:rndcoord(N) → structured link to selection for preview
+    if (init.type === 'CallExpression' &&
+        init.base?.type === 'MemberExpression' &&
+        init.base.indexer === ':' &&
+        init.base.identifier?.name === 'rndcoord' &&
+        init.base.base?.type === 'Identifier') {
+        const from = init.base.base.name;
+        let n = 1;
+        if (init.arguments?.[0]?.type === 'NumericLiteral') {
+            n = init.arguments[0].value;
+        }
+        registerLuaLocal(name, {
+            kind: 'rndcoord_ref',
+            from,
+            n,
+            shuffled: false
+        });
+        return true;
+    }
+
+    // other method calls → opaque
+    if (init.type === 'CallExpression' && init.base?.type === 'MemberExpression') {
+        const src = getCodeStringFromLUAStmt(stmt);
+        registerLuaLocal(name, { kind: 'opaque', source: src, shuffled: false });
+        return true;
+    }
+
+    // Table literals
+    if (init.type === 'TableConstructorExpression') {
+        const classified = classifyLocalTable(init);
+        if (classified) {
+            registerLuaLocal(name, {
+                kind: classified.kind,
+                values: classified.values,
+                shuffled: false
+            });
+            return true;
+        }
+        const src = getCodeStringFromLUAStmt(stmt);
+        registerLuaLocal(name, { kind: 'opaque', source: src, shuffled: false });
+        return true;
+    }
+
+    // String / number literals
+    if (init.type === 'StringLiteral') {
+        registerLuaLocal(name, { kind: 'string', value: dequote(init.raw), shuffled: false });
+        return true;
+    }
+    if (init.type === 'NumericLiteral') {
+        registerLuaLocal(name, { kind: 'number', value: init.value, shuffled: false });
+        return true;
+    }
+
+    // Fallback opaque
+    const src = getCodeStringFromLUAStmt(stmt);
+    registerLuaLocal(name, { kind: 'opaque', source: src, shuffled: false });
+    return true;
+}
+
+/**
+ * Handle non-des CallStatement: shuffle(x), place:set(...), etc.
+ * Returns true if consumed (should not go to layers.code as generic).
+ */
+function ingestNonDesCall(expr) {
+    if (!expr || expr.type !== 'CallExpression') return false;
+
+    // shuffle(ident)
+    if (expr.base?.type === 'Identifier' && expr.base.name === 'shuffle') {
+        const arg = expr.arguments?.[0];
+        if (arg?.type === 'Identifier' && luaLocals[arg.name]) {
+            luaLocals[arg.name].shuffled = true;
+            luaOps.push({ type: 'shuffle', name: arg.name });
+            return true;
+        }
+        // unknown shuffle — still record
+        if (arg?.type === 'Identifier') {
+            luaOps.push({ type: 'shuffle', name: arg.name });
+            return true;
+        }
+        return false;
+    }
+
+    // place:set(x, y)  MemberExpression with indexer :
+    if (expr.base?.type === 'MemberExpression' &&
+        expr.base.indexer === ':' &&
+        expr.base.identifier?.name === 'set' &&
+        expr.base.base?.type === 'Identifier') {
+        const selName = expr.base.base.name;
+        const def = luaLocals[selName];
+        if (def && def.kind === 'selection') {
+            const a0 = expr.arguments?.[0];
+            const a1 = expr.arguments?.[1];
+            if (a0?.type === 'NumericLiteral' && a1?.type === 'NumericLiteral') {
+                def.points.push([a0.value, a1.value]);
+                def.methods.push({ op: 'set', args: [a0.value, a1.value] });
+                luaOps.push({ type: 'method', name: selName, op: 'set', args: [a0.value, a1.value] });
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Emit Lua source for all tracked locals + ops (for save / luadef).
+ */
+function generateLocalsLua() {
+    const lines = [];
+    const emitted = new Set();
+
+    // Prefer export order from luaOps for interleaving shuffle/methods with locals
+    for (const op of luaOps) {
+        if (op.type === 'local') {
+            const def = luaLocals[op.name];
+            if (!def || emitted.has(op.name)) continue;
+            emitted.add(op.name);
+            lines.push(formatLocalDefLua(def));
+        } else if (op.type === 'shuffle') {
+            lines.push(`shuffle(${op.name})`);
+        } else if (op.type === 'method' && op.op === 'set') {
+            const [x, y] = op.args;
+            lines.push(`${op.name}:set(${String(x).padStart(2, '0')},${String(y).padStart(2, '0')});`);
+        }
+    }
+
+    // Any locals not in luaOps
+    Object.keys(luaLocals).forEach(name => {
+        if (emitted.has(name)) return;
+        lines.push(formatLocalDefLua(luaLocals[name]));
+        if (luaLocals[name].shuffled) lines.push(`shuffle(${name})`);
+    });
+
+    return lines.filter(Boolean).join('\n');
+}
+
+function formatLocalDefLua(def) {
+    if (!def) return '';
+    if (def.kind === 'opaque' && def.source) {
+        return def.source.endsWith(';') ? def.source : def.source;
+    }
+    if (def.kind === 'string_list') {
+        const body = (def.values || []).map(v => {
+            if (typeof v !== 'string') return String(v);
+            // escape quotes
+            const esc = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            return `"${esc}"`;
+        }).join(', ');
+        return `local ${def.name} = { ${body} };`;
+    }
+    if (def.kind === 'coord_list') {
+        const body = (def.values || []).map(pair => {
+            const x = String(pair[0]).padStart(2, '0');
+            const y = String(pair[1]).padStart(2, '0');
+            return `{${x},${y}}`;
+        }).join(',');
+        return `local ${def.name} = { ${body} };`;
+    }
+    if (def.kind === 'selection') {
+        return `local ${def.name} = selection.new();`;
+    }
+    if (def.kind === 'rndcoord_ref') {
+        const n = def.n != null ? def.n : 1;
+        return `local ${def.name} = ${def.from}:rndcoord(${n});`;
+    }
+    if (def.kind === 'string') {
+        const esc = String(def.value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        return `local ${def.name} = "${esc}";`;
+    }
+    if (def.kind === 'number') {
+        return `local ${def.name} = ${def.value};`;
+    }
+    return def.source || `local ${def.name};`;
+}
+
 function loadLUAMap(luaText) {
     if (!luaText) return;
 
     // Initialize layers with default 'stone' terrain
     layers.terrain = Array.from({length: ROWS}, () => Array(COLS).fill('stone'));
     layers.monster = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+    layers.object = Array.from({length: ROWS}, () => Array(COLS).fill(null));
     layers.lighting = [];
     layers.features = [];
     layers.code = [];
     layers.objectRND = [];
     layers.monsterRND = [];
+
+    // Reset map origin — updated by des.map (bare string form centers like NetHack)
+    lastMapOrigin = { x: 0, y: 0, w: 0, h: 0, halign: 'none', valign: 'none' };
+    resetLuaLocals();
 
     initState = {
         style: "",
@@ -979,6 +1724,12 @@ function loadLUAMap(luaText) {
         // Traverse top-level statements
         for (const stmt of ast.body) {
 
+            // Local variables
+            if (stmt.type === 'LocalStatement') {
+                ingestLocalStatement(stmt);
+                continue;
+            }
+
             //Handle if it's a line of code we can't process
             if (stmt.type !== 'CallStatement') {
                 const codeLine = getCodeStringFromLUAStmt(stmt);
@@ -988,6 +1739,8 @@ function loadLUAMap(luaText) {
             if (stmt.type === "CallStatement") {
                 const expr = stmt.expression;
                 if (!isDesCall(expr)) {
+                    // shuffle / selection methods / etc.
+                    if (ingestNonDesCall(expr)) continue;
                     const codeLine = getCodeStringFromLUAStmt(stmt);
                     layers.code.push(codeLine);
                     continue;
@@ -1029,7 +1782,21 @@ function loadLUAMap(luaText) {
                             }
 
                             currentBrushGlobal['level_init'][key] = value;
-                        })
+                        });
+
+                        // Prefill whole level with bg (e.g. mazegrid "-") so centered
+                        // maps sit on the correct backdrop like in-game.
+                        const bgSym = currentBrushGlobal['level_init'].bg;
+                        if (bgSym != null && bgSym !== '') {
+                            const terrKey = symToTerrain[bgSym] || symToTerrain[String(bgSym)] || null;
+                            if (terrKey) {
+                                for (let y = 0; y < ROWS; y++) {
+                                    for (let x = 0; x < COLS; x++) {
+                                        layers.terrain[y][x] = terrKey;
+                                    }
+                                }
+                            }
+                        }
                         
                         break;
                     }
@@ -1051,23 +1818,13 @@ function loadLUAMap(luaText) {
                     }
 
                 case 'map':
-                    if (args[0]?.type === 'StringLiteral' && args[0].raw.startsWith('[[')) {
-                        const mapContent = dequote(args[0].raw); // Clean content without [[ ]]
-                        const lines = mapContent.split(/\r?\n/);
-
-                        let y = 0;
-                        for (let line of lines) {
-                            if( line == '[[' || line == ']]') continue;
-                            if (y >= ROWS) break;
-                            //line = line.replace(/^\|?/, ''); // Optional leading |
-                            for (let x = 0; x < COLS; x++) {
-                                const ch = x < line.length ? line[x] : ' ';
-                                layers.terrain[y][x] = symToTerrain[ch] || 'stone';
-                            }
-                            y++;
+                    {
+                        const spec = getMapCallSpec(args);
+                        if (spec && spec.lines.length) {
+                            placeMapContent(spec.lines, spec.opts);
                         }
+                        break;
                     }
-                    break;
 
                 case 'region':
                     {
@@ -1080,13 +1837,20 @@ function loadLUAMap(luaText) {
                                 setRoomDitherColor(luaBrush);
                             }
 
+                            applyMapOriginToBrush(luaBrush);
                             layers.features.push(luaBrush);
                             break;
                         }
                         else if (args[0]?.type == 'CallExpression')
                         {
                             const luaBrush = parseLUAtoBrushSimple( args, method );
-                            layers.lighting.push(luaBrush);
+                            applyMapOriginToBrush(luaBrush);
+                            // lighting rects use x1/y1/x2/y2 after apply
+                            if (luaBrush.x1 != null) {
+                                layers.lighting.push(luaBrush);
+                            } else {
+                                layers.features.push(luaBrush);
+                            }
                         }
                         break;
                         
@@ -1103,10 +1867,27 @@ function loadLUAMap(luaText) {
                         let roomW = 0, roomH = 0, roomX = 0, roomY = 0;
                         let xAlign = '', yAlign = '', roomType = '';
                         
-                        const roomInternal = getFeatureDefByType('room').internal;
+                        // getFeatureDefByType('room') may be missing — Room menu entry
+                        // often uses internal.type 'feature', not 'room'
+                        const roomDef = (typeof getFeatureDefByType === 'function')
+                            ? getFeatureDefByType('room')
+                            : null;
+                        const roomInternal = structuredClone(roomDef?.internal || {
+                            type: 'room',
+                            des_code: 'des.room',
+                            stroke: 'rectangle',
+                            brushMode: 'complex',
+                            color: 'CLR_GREEN',
+                            dither: 'crosshatch',
+                            ditherColor: 'CLR_GREEN',
+                            is_xy_possible: true,
+                            is_rnd_possible: false
+                        });
+                        roomInternal.type = 'room';
+                        roomInternal.des_code = roomInternal.des_code || 'des.room';
                         let luaBrush = {};
                         let contents = {};
-                        luaBrush['internal'] = structuredClone(roomInternal);
+                        luaBrush['internal'] = roomInternal;
 
 
                         for (const field of room.fields) {
@@ -1165,12 +1946,33 @@ function loadLUAMap(luaText) {
                     }
                 case 'feature':
                     {
-                        
-                        if (args[0]?.type !== 'TableConstructorExpression') break;
-                        const luaBrush = parseLUAtoBrush( args, method );
-                        setFeatureInternals(luaBrush);
-                        layers.features.push(luaBrush);
-
+                        // Table form: des.feature({ type=..., x=..., y=... })
+                        if (args[0]?.type === 'TableConstructorExpression') {
+                            const luaBrush = parseLUAtoBrush( args, method );
+                            setFeatureInternals(luaBrush);
+                            applyMapOriginToBrush(luaBrush);
+                            layers.features.push(luaBrush);
+                            break;
+                        }
+                        // Simple form: des.feature("fountain", 10, 08)
+                        if (args[0]?.type === 'StringLiteral' &&
+                            args[1]?.type === 'NumericLiteral' &&
+                            args[2]?.type === 'NumericLiteral') {
+                            const featType = dequote(args[0].raw);
+                            let luaBrush = {
+                                type: featType,
+                                x: args[1].value,
+                                y: args[2].value,
+                                internal: structuredClone(
+                                    (typeof getFeatureDefByType === 'function' && getFeatureDefByType(featType)?.internal) ||
+                                    (typeof getFeatureDefByType === 'function' && getFeatureDefByType('feature')?.internal) ||
+                                    { type: 'feature', stroke: 'point', symbol: '{', color: 'CLR_BLUE' }
+                                )
+                            };
+                            if (typeof setFeatureInternals === 'function') setFeatureInternals(luaBrush);
+                            applyMapOriginToBrush(luaBrush);
+                            layers.features.push(luaBrush);
+                        }
                         break;
                     }
                     
@@ -1179,6 +1981,7 @@ function loadLUAMap(luaText) {
                     {
                         if ( args[0].type != 'StringLiteral' ) return;
                         const luaBrush = parseLUAtoBrushSimple(args, method);
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1187,6 +1990,7 @@ function loadLUAMap(luaText) {
                     {
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1194,26 +1998,42 @@ function loadLUAMap(luaText) {
 
                 case 'door':
                     {
-                        if (args[0]?.type !== 'TableConstructorExpression') break;
-                        const luaBrush = parseLUAtoBrush( args, method );
-                        layers.features.push(luaBrush);
+                        // Table form
+                        if (args[0]?.type === 'TableConstructorExpression') {
+                            const luaBrush = parseLUAtoBrush( args, method );
+                            applyMapOriginToBrush(luaBrush);
+                            layers.features.push(luaBrush);
+                            break;
+                        }
+                        // Simple form: des.door("closed", 07, 03)
+                        if (args[0]?.type === 'StringLiteral' &&
+                            args[1]?.type === 'NumericLiteral' &&
+                            args[2]?.type === 'NumericLiteral') {
+                            const doorInternal =
+                                (typeof getFeatureDefByType === 'function' && getFeatureDefByType('door')?.internal) ||
+                                { type: 'door', stroke: 'point', symbol: '+', color: 'CLR_BROWN', des_code: 'des.door' };
+                            const luaBrush = {
+                                state: dequote(args[0].raw),
+                                x: args[1].value,
+                                y: args[2].value,
+                                internal: structuredClone(doorInternal)
+                            };
+                            applyMapOriginToBrush(luaBrush);
+                            layers.features.push(luaBrush);
+                        }
                         break;
                     }
 
                 case 'object':
                     {
                         const luaBrush = getObjectBrushFromLUAObj(call);
-                        
-                        if (luaBrush.y < ROWS && luaBrush.x < COLS) 
-                        {
-                            const x = luaBrush.x;
-                            const y = luaBrush.y;
-                            layers.object[y][x] = luaBrush;
+                        if (!luaBrush) break;
+                        applyLocalResolveToBrush(luaBrush, 'object');
+                        // Fixed x,y get map origin; variable coords resolved in placeBrushWithCoords
+                        if (!(luaBrush.coord && luaBrush.coord.variable)) {
+                            applyMapOriginToBrush(luaBrush);
                         }
-                        else
-                        {
-                            layers.objectRND.push(luaBrush);
-                        }
+                        placeBrushWithCoords(luaBrush, 'object');
                     }
                     
                     break;
@@ -1221,22 +2041,13 @@ function loadLUAMap(luaText) {
                 case 'monster':
 
                     {
-
-
                         let luaBrush = getMonsterBrushFromLUAObj( call );
-                        const fixedCoords = getXYFromCoord( luaBrush );
-                        const x = fixedCoords?.x != null ? fixedCoords.x : ( luaBrush?.x != null ? luaBrush.x : null );
-                        const y = fixedCoords?.y != null ? fixedCoords.y : ( luaBrush?.y != null ? luaBrush.y : null );
-
-                        if (y < ROWS && x < COLS && x != null && y != null) 
-                        {
-                        
-                            layers.monster[y][x] = luaBrush;
+                        if (!luaBrush) break;
+                        applyLocalResolveToBrush(luaBrush, 'monster');
+                        if (!(luaBrush.coord && luaBrush.coord.variable)) {
+                            applyMapOriginToBrush(luaBrush);
                         }
-                        else
-                        {
-                            layers.monsterRND.push(luaBrush);
-                        }
+                        placeBrushWithCoords(luaBrush, 'monster');
                     }
                     
                     break;
@@ -1245,6 +2056,7 @@ function loadLUAMap(luaText) {
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
                         setTrapInternals(luaBrush);
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1253,6 +2065,7 @@ function loadLUAMap(luaText) {
                     {
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1260,6 +2073,10 @@ function loadLUAMap(luaText) {
                     {
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
+                        // applyFeatureCoordPreview already set x,y (+ origin) when coord present
+                        if (!luaBrush.coord) {
+                            applyMapOriginToBrush(luaBrush);
+                        }
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1267,13 +2084,16 @@ function loadLUAMap(luaText) {
                     {
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
                 case 'teleport_region':
                     {
+                        // Usually region_islev=1 → level-absolute; applyMapOriginToBrush no-ops then
                         if (args[0]?.type !== 'TableConstructorExpression') break;
                         const luaBrush = parseLUAtoBrush( args, method );
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }
@@ -1281,6 +2101,7 @@ function loadLUAMap(luaText) {
                     {
                         if (args[0]?.type !== 'CallExpression') break;
                         const luaBrush = parseLUAtoBrushSimple( args, method );
+                        applyMapOriginToBrush(luaBrush);
                         layers.features.push(luaBrush);
                         break;
                     }

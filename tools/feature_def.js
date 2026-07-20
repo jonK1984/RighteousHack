@@ -30,11 +30,12 @@ function getFeatureBrushByName(name) {
 function getFeatureDefByType(type) {
     
     //return allFeatureMenuOptions.find(feature => feature.internal.type === type);
+    if (typeof allFeatureMenuOptions === 'undefined' || !allFeatureMenuOptions) return null;
     const featureArray = Object.values(allFeatureMenuOptions);
     const featLen = featureArray.length;
     return featureArray.slice(1, featLen).find(
-        feature => feature.internal.type === type
-        );
+        feature => feature?.internal?.type === type
+        ) || null;
 }
 
 function getTrapTypeByName(name) {
@@ -810,7 +811,7 @@ const allFeatures = [
         stroke: "rectangle",
         dither: "crosshatch",        // distinct pattern
         ditherColor: "CLR_GREEN",
-        internal: { type: 'feature'},
+        internal: { type: 'room', des_code: 'des.room' },
         options: {
             type: ["ordinary","themed","throne","swamp","vault","beehive","morgue","barracks","zoo","delphi","temple","anthole","cocknest","leprehall","shop","armor shop","scroll shop","potion shop","weapon shop","food shop","ring shop","rod shop","tool shop","book shop","health food shop","candle shop"],
             lit: ["lit","unlit"],

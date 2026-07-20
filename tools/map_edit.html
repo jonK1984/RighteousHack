@@ -12,6 +12,7 @@
   <div class="toolbar-row" id="load-tools-row">
     <button id="load-lua-btn">Load Lua Map</button>
     <button id="save-lua-btn">Save Lua to File</button>
+    <button id="lua-locals-btn">Lua Locals</button>
   </div>
   <div class="toolbar-row" id="layer-brush-row">
     <button data-brush="terrain">Terrain</button>
@@ -126,7 +127,7 @@
     <!-- ############################### -->
     <!-- MONSTER POPUP HTML -->
     <!-- ############################### -->
-    <div class="popup" id="monster-popup">
+    <div class="popup hide" id="monster-popup">
 
         <div class="monster-popup-layout">
             <!-- Left column: monster search/suggestions -->
@@ -243,7 +244,79 @@
     </div>
     <!-- END OF LEVEL POPUP HTML -->
 
+    <!-- ############################### -->
+    <!-- LUA LOCALS POPUP -->
+    <!-- ############################### -->
+    <div id="locals-popup" class="popup" style="display:none; min-width: 720px;">
+        <div class="popup-title">Lua Local Variables</div>
+        <p style="margin: 0 0 10px 0; color:#aaa; font-size:13px;">
+            Level-script locals (e.g. <code>local monster = { "L", "N", ... }</code>).
+            Display uses declaration order (shuffle is recorded for export only).
+            Lua indexes are 1-based.
+        </p>
+        <div class="locals-layout">
+            <div class="locals-list-panel">
+                <div style="margin-bottom:8px;">
+                    <button type="button" id="locals-add-btn">Add</button>
+                    <button type="button" id="locals-delete-btn">Delete</button>
+                </div>
+                <ul id="locals-list" class="locals-list"></ul>
+            </div>
+            <div class="locals-editor-panel">
+                <label>Name <input type="text" id="local-name" style="width:12em;"></label>
+                <label style="margin-left:12px;">Kind
+                    <select id="local-kind">
+                        <option value="string_list">string list (classes / ids)</option>
+                        <option value="coord_list">coord list {x,y}</option>
+                        <option value="selection">selection + :set points</option>
+                        <option value="rndcoord_ref">rndcoord ref (loc = place:rndcoord)</option>
+                        <option value="opaque">opaque (raw Lua)</option>
+                    </select>
+                </label>
+                <label style="display:block; margin-top:10px;">
+                    <input type="checkbox" id="local-shuffled"> shuffle(name) after definition
+                </label>
+                <div id="local-string-editor" style="margin-top:10px;">
+                    <div style="color:#888; font-size:12px;">One entry per line (string list)</div>
+                    <textarea id="local-values-text" rows="10" style="width:100%; font-family:monospace;"></textarea>
+                </div>
+                <div id="local-coord-editor" style="margin-top:10px; display:none;">
+                    <div style="color:#888; font-size:12px;">One "x,y" per line</div>
+                    <textarea id="local-coords-text" rows="10" style="width:100%; font-family:monospace;"></textarea>
+                </div>
+                <div id="local-selection-editor" style="margin-top:10px; display:none;">
+                    <div style="color:#888; font-size:12px;">selection points — one "x,y" per line (:set)</div>
+                    <textarea id="local-sel-points-text" rows="8" style="width:100%; font-family:monospace;"></textarea>
+                </div>
+                <div id="local-opaque-editor" style="margin-top:10px; display:none;">
+                    <div style="color:#888; font-size:12px;">Raw Lua (re-exported as-is)</div>
+                    <textarea id="local-opaque-text" rows="8" style="width:100%; font-family:monospace;"></textarea>
+                </div>
+                <div id="local-rndcoord-editor" style="margin-top:10px; display:none;">
+                    <div style="color:#888; font-size:12px;">Selection local name + rndcoord argument</div>
+                    <label>From selection <input type="text" id="local-rndcoord-from" style="width:8em;" placeholder="place"></label>
+                    <label style="margin-left:12px;">n <input type="number" id="local-rndcoord-n" min="0" value="1" style="width:4em;"></label>
+                </div>
+            </div>
+        </div>
+        <div class="popup-buttons" style="margin-top:12px;">
+            <button id="locals-ok-btn">OK</button>
+            <button id="locals-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Terrain cell edit popup -->
+    <div id="terrain-edit-popup" class="popup" style="display:none; min-width: 360px;">
+        <div class="popup-title">Edit Terrain</div>
+        <div id="terrain-edit-list" class="terrain-edit-list"></div>
+        <div class="popup-buttons" style="margin-top:12px;">
+            <button id="terrain-edit-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
 </div>
+<!-- Floating cell context menu -->
+<div id="cell-context-menu" class="context-menu" style="display:none;"></div>
 <script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js"></script>
 <script src="object_def.js"></script>
 <script src="monster_def.js"></script>
@@ -266,14 +339,24 @@ let currentObjectBrush = null;
 let currentFeatureBrush = null;
 let currentLightingBrush = null;   // will be 'light' or 'dark'
 
-let setObjectPopupTarget = "brush";         // "brush" = normal object brush, "inventory" = adding to monster inventory
+let setObjectPopupTarget = "brush";         // "brush" | "inventory" | "contents" | "cell"
 let currentMonPopupInventory = [];          // temporary array while editing a monster
 let currentObjPopupContents = [];          // temporary array while editing a monster
 let selectedInventoryIndex = -1;            // currently selected item in the list (-1 = none)
 let selectedContentsIndex = -1;            // currently selected item in the list (-1 = none)
 
-const ROWS = 20;   // confirm from your grid-template-rows: repeat(20, ...)
-const COLS = 76;   // confirm from grid-template-columns: repeat(76, ...)
+// Cell edit target from right-click context menu
+// { layer: 'monster'|'object'|'feature'|'terrain'|'lighting', x, y, featureIndex? }
+let editTarget = null;
+
+// Locals popup working copy
+let localsPopupDraft = null;   // { [name]: def }
+let localsPopupSelected = null;
+let localsPopupOrder = [];     // name order
+
+// Match NetHack ROWNO / COLNO (indices 0..20 and 0..79)
+const ROWS = 21;
+const COLS = 80;
 
 const DARK_BG  = '#000000';        // totally black
 const LIGHT_BG = '#0f0f0f';        // slightly brighter for lit cells
@@ -600,7 +683,184 @@ function setupRNDLayerListeners() {
     });
 }
 
+/**
+ * Fill left suggestion list with map local indexes (Lua 1-based).
+ * kind: 'monster' | 'object' — uses that popup's suggestion panel.
+ */
+function populateVariableList(kind, filter = '') {
+    const listId = kind === 'monster' ? 'monster-suggestions' : 'obj-suggestions';
+    const listDiv = document.getElementById(listId);
+    if (!listDiv) return;
+    listDiv.innerHTML = '';
+
+    const lowerFilter = (filter || '').toLowerCase();
+    const locals = (typeof luaLocals !== 'undefined' && luaLocals) ? luaLocals : {};
+    const names = Object.keys(locals).sort((a, b) => {
+        const oa = locals[a].exportOrder ?? 0;
+        const ob = locals[b].exportOrder ?? 0;
+        return oa - ob || a.localeCompare(b);
+    });
+
+    let any = false;
+    names.forEach(varName => {
+        const def = locals[varName];
+        if (!def || def.kind !== 'string_list' || !Array.isArray(def.values)) return;
+
+        def.values.forEach((val, jsIdx) => {
+            const luaIdx = jsIdx + 1; // Lua 1-based
+            const ref = `${varName}[${luaIdx}]`;
+            const preview = (typeof val === 'string') ? val : JSON.stringify(val);
+            const displayText = `${ref}  →  "${preview}"`;
+            if (lowerFilter && !displayText.toLowerCase().includes(lowerFilter) &&
+                !ref.toLowerCase().includes(lowerFilter) &&
+                !String(preview).toLowerCase().includes(lowerFilter)) {
+                return;
+            }
+            any = true;
+
+            const item = document.createElement('div');
+            item.className = kind === 'monster' ? 'monster-item' : 'obj-item';
+            item.dataset.value = ref;
+            item.dataset.mode = 'variable';
+
+            if (kind === 'object') {
+                const symSpan = document.createElement('span');
+                symSpan.className = 'obj-sym';
+                symSpan.textContent = (typeof preview === 'string' && preview.length === 1) ? preview : '§';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = displayText;
+                item.appendChild(symSpan);
+                item.appendChild(nameSpan);
+            } else {
+                item.textContent = displayText;
+            }
+
+            item.addEventListener('click', () => {
+                const input = document.getElementById(`${kind}_variable_value`);
+                const cb = document.getElementById(`include_${kind}_variable`);
+                if (input) input.value = ref;
+                if (cb) {
+                    cb.checked = true;
+                    // fire change so no_coexist unchecks id/class
+                    cb.dispatchEvent(new Event('change'));
+                }
+                // re-check after no_coexist (change handler may leave variable checked)
+                if (cb) cb.checked = true;
+                if (input) {
+                    input.disabled = false;
+                    input.focus();
+                }
+                listDiv.querySelectorAll('.selected').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            });
+
+            listDiv.appendChild(item);
+        });
+    });
+
+    if (!any) {
+        const empty = document.createElement('div');
+        empty.className = kind === 'monster' ? 'monster-item' : 'obj-item';
+        empty.style.color = '#8899a6';
+        empty.textContent = 'No string-list locals defined — use Lua Locals to add one.';
+        listDiv.appendChild(empty);
+    }
+}
+
+/**
+ * After restorePanelOptions, map brush.name.variable → Variable checkbox/field
+ * and populate the correct left list.
+ */
+function restoreIdentityFields(panelName, brush) {
+    if (panelName !== 'monster' && panelName !== 'object') return;
+    brush = brush || {};
+
+    const idCb = document.getElementById(`include_${panelName}_id`);
+    const classCb = document.getElementById(`include_${panelName}_class`);
+    const varCb = document.getElementById(`include_${panelName}_variable`);
+    const idVal = document.getElementById(`${panelName}_id_value`);
+    const classVal = document.getElementById(`${panelName}_class_value`);
+    const varVal = document.getElementById(`${panelName}_variable_value`);
+
+    // Always clear identity extras first so nothing sticks from the previous open
+    if (varCb) varCb.checked = false;
+    if (varVal) { varVal.value = ''; varVal.disabled = true; }
+    if (panelName === 'object') {
+        const cCb = document.getElementById('include_object_coord_variable');
+        const cVal = document.getElementById('object_coord_variable_value');
+        if (cCb) cCb.checked = false;
+        if (cVal) { cVal.value = ''; cVal.disabled = true; }
+    }
+
+    // Coord variable (objects): coord = loc
+    if (panelName === 'object' && brush.coord && brush.coord.variable) {
+        const cCb = document.getElementById('include_object_coord_variable');
+        const cVal = document.getElementById('object_coord_variable_value');
+        if (cCb && cVal) {
+            cCb.checked = true;
+            cVal.disabled = false;
+            cVal.value = brush.coord.variable;
+        }
+    }
+
+    const varRef = (brush.name && typeof brush.name === 'object' && brush.name.variable)
+        ? brush.name.variable
+        : (typeof brush.variable === 'string' ? brush.variable : null);
+
+    if (varRef && varCb && varVal) {
+        if (idCb) { idCb.checked = false; }
+        if (classCb) { classCb.checked = false; }
+        if (idVal) { idVal.value = ''; idVal.disabled = true; }
+        if (classVal) { classVal.value = ''; classVal.disabled = true; }
+        varCb.checked = true;
+        varVal.disabled = false;
+        varVal.value = varRef;
+        if (panelName === 'monster') {
+            currentMonsterMode = 'variable';
+            populateVariableList('monster', '');
+        } else {
+            currentObjectMode = 'variable';
+            populateVariableList('object', '');
+        }
+        return;
+    }
+
+    if (brush.id && idCb) {
+        if (panelName === 'monster') {
+            currentMonsterMode = 'id';
+            populateMonsterList(idVal?.value || '');
+        } else {
+            currentObjectMode = 'id';
+            populateObjectList(idVal?.value || '');
+        }
+    } else if (brush.class && classCb) {
+        if (panelName === 'monster') {
+            currentMonsterMode = 'class';
+            populateMonsterList(classVal?.value || '');
+        } else {
+            currentObjectMode = 'class';
+            populateObjectList(classVal?.value || '');
+        }
+    } else {
+        // No identity selected — default list mode
+        if (panelName === 'monster') {
+            currentMonsterMode = 'id';
+            populateMonsterList('');
+        } else {
+            currentObjectMode = 'id';
+            populateObjectList('');
+        }
+    }
+}
+
 function populateMonsterList(filter = '') {
+    // Variable mode uses a different list source
+    if (currentMonsterMode === 'variable') {
+        populateVariableList('monster', filter);
+        return;
+    }
+
     const listDiv = document.getElementById('monster-suggestions');
     listDiv.innerHTML = '';
 
@@ -639,13 +899,16 @@ function populateMonsterList(filter = '') {
             //If not already checked, check it
             if (!cb.checked) { 
                 cb.checked = true; 
+                cb.dispatchEvent(new Event('change'));
             }
             // Optional: auto-scroll selected item into view
             item.scrollIntoView({ block: 'nearest' });
             // Keep focus on input for further typing if desired
-            document.getElementById('monster_id_value').focus();
+            const focusEl = document.getElementById(`monster_${currentMonsterMode}_value`) ||
+                            document.getElementById('monster_id_value');
+            if (focusEl) focusEl.focus();
 
-            document.querySelectorAll('#monster-suggestions .obj-item.selected')
+            document.querySelectorAll('#monster-suggestions .obj-item.selected, #monster-suggestions .monster-item.selected')
                     .forEach(i => i.classList.remove('selected'));
             item.classList.add('selected');
         });
@@ -728,6 +991,11 @@ function populateObjectList(filter = '', listID=null) {
 }*/
 
 function populateObjectList(filter = '', listID = null) {
+    if (currentObjectMode === 'variable') {
+        populateVariableList('object', filter);
+        return;
+    }
+
     if (!listID) {
         listID = 'obj-suggestions';
     }
@@ -906,14 +1174,8 @@ document.getElementById('monster-suggestions').addEventListener('dblclick', (e) 
 });
 
 function showFeaturePopup() {
-
+    showOnlyPopup('features-popup');
     restorePanelOptions('features');
-
-    document.getElementById('features-popup').parentNode.style.display = 'flex';
-
-    //populateFeatureList();
-    document.getElementById('features-popup').style.display = 'block';
-    document.getElementById('features-popup').classList.remove('hide');
 }
 
 function hideFeaturePopup() {
@@ -1166,9 +1428,32 @@ function deselectAllBrushes() {
 document.getElementById('monster-ok-btn').addEventListener('click', () => {
     currentBrushType = "monster";
     const brush = collectBrushFromPopup('#monster-options-form');
-    currentBrushGlobal['monster'] = brush;
-
     if (!brush) return;
+
+    // Cell-edit mode (right-click): write back to map cell or RND slot
+    if (editTarget && editTarget.layer === 'monster') {
+        let placed = structuredClone(brush);
+        if (typeof applyLocalResolveToBrush === 'function') {
+            applyLocalResolveToBrush(placed, 'monster');
+        }
+        if (editTarget.rnd) {
+            if (layers.monsterRND && editTarget.index >= 0 && editTarget.index < layers.monsterRND.length) {
+                layers.monsterRND[editTarget.index] = placed;
+            }
+        } else {
+            const { x, y } = editTarget;
+            if (y >= 0 && y < ROWS && x >= 0 && x < COLS) {
+                layers.monster[y][x] = placed;
+            }
+        }
+        editTarget = null;
+        hideMonsterPopup();
+        renderLayers();
+        updateText();
+        return;
+    }
+
+    currentBrushGlobal['monster'] = brush;
 
     selectBrush('monster');
     currentBrushGlobal['monster'] = brush;
@@ -1193,6 +1478,7 @@ document.getElementById('monster-ok-btn').addEventListener('click', () => {
 
 // === CREATURE CANCEL (unchanged except clearing inputs is optional) ===
 document.getElementById('monster-cancel-btn').addEventListener('click', () => {
+    if (editTarget && editTarget.layer === 'monster') editTarget = null;
     hideMonsterPopup();
     // leaves currentBrushGlobal['monster'] intact – user keeps last selection
 });
@@ -1219,9 +1505,13 @@ document.getElementById('add-to-contents-btn').addEventListener('click', () => {
                     document.querySelector('#object-popup input[type="text"]');
     if (!idInput) return;
 
+    const attemptedId = idInput.value.trim() ||
+        (document.getElementById('object_id_value')?.value || '').trim() ||
+        (document.getElementById('object_class_value')?.value || '').trim() ||
+        '(empty)';
     const brush = collectBrushFromPopup('#object-options-form');
     if (!brush) {
-        alert(`Unknown object "${rawId}"`);
+        alert(`Unknown object "${attemptedId}"`);
         return;
     }
 
@@ -1239,16 +1529,47 @@ document.getElementById('object-ok-btn').addEventListener('click', () => {
                     document.querySelector('#object-popup input[type="text"]');
     if (!idInput) return;
 
-    if(setObjectPopupTarget != "inventory") setObjectPopupTarget = "brush";
+    const popupMode = setObjectPopupTarget; // capture before mutating
+    if (popupMode !== "inventory" && popupMode !== "cell" && popupMode !== "contents") {
+        setObjectPopupTarget = "brush";
+    }
 
+    const attemptedId = idInput.value.trim() ||
+        (document.getElementById('object_id_value')?.value || '').trim() ||
+        (document.getElementById('object_class_value')?.value || '').trim() ||
+        '(empty)';
     const brush = collectBrushFromPopup('#object-options-form');
 
     if (!brush) {
-        alert(`Unknown object "${rawId}"`);
+        alert(`Unknown object "${attemptedId}"`);
         return;
     }
 
-    if (setObjectPopupTarget === "inventory") {
+    // Cell-edit mode (right-click): map cell or RND slot
+    if (editTarget && editTarget.layer === 'object') {
+        let placed = structuredClone(brush);
+        if (typeof applyLocalResolveToBrush === 'function') {
+            applyLocalResolveToBrush(placed, 'object');
+        }
+        if (editTarget.rnd) {
+            if (layers.objectRND && editTarget.index >= 0 && editTarget.index < layers.objectRND.length) {
+                layers.objectRND[editTarget.index] = placed;
+            }
+        } else {
+            const { x, y } = editTarget;
+            if (y >= 0 && y < ROWS && x >= 0 && x < COLS) {
+                layers.object[y][x] = placed;
+            }
+        }
+        editTarget = null;
+        setObjectPopupTarget = "brush";
+        hideObjectPopup();
+        renderLayers();
+        updateText();
+        return;
+    }
+
+    if (popupMode === "inventory") {
         // --- Inventory mode ---
         currentMonPopupInventory.push(brush);
 
@@ -1275,6 +1596,12 @@ document.getElementById('object-ok-btn').addEventListener('click', () => {
 
 // === OBJECT CANCEL HANDLER (unchanged except hide) ===
 document.getElementById('object-cancel-btn').addEventListener('click', () => {
+    if (editTarget && editTarget.layer === 'object') {
+        editTarget = null;
+        setObjectPopupTarget = "brush";
+        hideObjectPopup();
+        return;
+    }
     if (setObjectPopupTarget === "inventory"){
         document.getElementById('object-popup').style.display = 'none';
         setObjectPopupTarget = "brush";   // safety reset
@@ -1390,29 +1717,58 @@ document.querySelectorAll('.toolbar-row button[data-brush]').forEach(btn => {
 
 // === UPDATE showMonsterPopup() (replace your existing version) ===
 // === UPDATED SHOW POPUP FUNCTIONS ===
+
+/**
+ * Show only one modal under #popup-overlay; hide all sibling .popup panels.
+ * Prevents stacked/double popups (e.g. Lua Locals + Monster).
+ */
+function showOnlyPopup(popupId) {
+    const overlay = document.getElementById('popup-overlay');
+    if (!overlay) return null;
+    overlay.querySelectorAll('.popup').forEach(el => {
+        if (el.id === popupId) return;
+        el.classList.add('hide');
+        el.style.display = 'none';
+    });
+    const popup = document.getElementById(popupId);
+    if (!popup) return null;
+    overlay.style.display = 'flex';
+    popup.classList.remove('hide');
+    popup.style.display = (popupId === 'object-popup') ? 'flex' : 'block';
+    return popup;
+}
+
 function showMonsterPopup() {
-    document.getElementById('monster-popup').parentNode.style.display = 'flex';
+    showOnlyPopup('monster-popup');
 
     //restore Popup Options from the current Brush
     restorePanelOptions('monster');
+    restoreIdentityFields('monster', currentBrushGlobal['monster']);
 
-    // Populate/full list on open
-    populateMonsterList('');
+    // Populate/full list on open if identity mode did not already
+    if (currentMonsterMode !== 'variable') {
+        populateMonsterList('');
+    }
 
     if (currentBrushGlobal['monster'] && Array.isArray(currentBrushGlobal['monster'].inventory)) {
-        currentMonPopupInventory = currentBrushGlobal['monster'].inventory.map(o => ({...o})); // deep-ish copy
+        currentMonPopupInventory = currentBrushGlobal['monster'].inventory.map(o => structuredClone(o));
     } else {
         currentMonPopupInventory = [];
     }
 
     selectedInventoryIndex = -1;
-    updateInventoryDisplay();
+    if (typeof updateInventoryDisplay === 'function') {
+        updateInventoryDisplay();
+    }
 
-    // Focus input and select its content for easy replacement
-    document.getElementById('monster-popup').classList.remove('hide');
-    const input = document.querySelector('#monster_id_value');
-    input.focus();
-    input.select();
+    // Focus active identity field
+    const mode = currentMonsterMode || 'id';
+    const input = document.getElementById(`monster_${mode}_value`) ||
+                  document.querySelector('#monster_id_value');
+    if (input && !input.disabled) {
+        input.focus();
+        input.select();
+    }
 }
 
 // === FILTER ON INPUT ===
@@ -1430,20 +1786,39 @@ function hideMonsterPopup() {
 
 // === UPDATE showObjectPopup() TO INITIALIZE THE LIST ===
 function showObjectPopup() {
-    document.getElementById('object-popup').parentNode.style.display = 'flex';
-    document.getElementById('object-popup').style.display = 'flex';
-    prefillPopupFromBrush('#object-popup', currentBrushGlobal['object']);
+    showOnlyPopup('object-popup');
+    const brush = currentBrushGlobal['object'] || null;
+
+    // prefill + structured form restore (restore clears sticky fields)
+    prefillPopupFromBrush('#object-popup', brush);
+    if (typeof restorePanelOptions === 'function') {
+        restorePanelOptions('object');
+    }
+    restoreIdentityFields('object', brush);
+
     document.getElementById('object-ok-btn').textContent = 'Ok';
+
+    // Contents list for this brush only (never leave previous chest contents)
+    if (brush && Array.isArray(brush.contents)) {
+        currentObjPopupContents = brush.contents.map(c => structuredClone(c));
+    } else {
+        currentObjPopupContents = [];
+    }
     selectedContentsIndex = -1;
-    // Full list on open
-    populateObjectList('');
+    if (typeof updateContentsDisplay === 'function') {
+        updateContentsDisplay();
+    }
 
-    document.getElementById('object-popup').classList.remove('hide');
+    if (currentObjectMode !== 'variable') {
+        populateObjectList('');
+    }
 
-    const input = document.querySelector('#objopt-inp-id');
-    //const input = document.querySelector('#object-popup [name="id"]');
-    //input.focus();
-    //input.select();
+    const mode = currentObjectMode || 'id';
+    const input = document.getElementById(`object_${mode}_value`);
+    if (input && !input.disabled) {
+        input.focus();
+        input.select();
+    }
 }
 
 // === FILTER ON INPUT ===
@@ -1543,15 +1918,7 @@ function showInitPopup() {
 
     currentBrushType = 'level';
     buildOptionsForm('level');
-    document.getElementById('level-popup').style.display = 'flex';
-
-    //populateInitPopup();
-    document.getElementById('level-popup').parentNode.style.display = 'flex';
-    document.getElementById("level-popup").style.display = "block";
-
-    document.getElementById('level-popup').classList.remove('hide');
-
-
+    showOnlyPopup('level-popup');
 }
 
 // ------------------------------------------------------------------
@@ -1806,7 +2173,20 @@ function collectBrushFromPopup(popupSelector) {
         let brush = structuredClone(brushDefault[brushType]);
 
         const initDefs = brushOptionDefs[brushType];
+        const varInclude = document.getElementById(`include_${brushType}_variable`);
+        const varInput = document.getElementById(`${brushType}_variable_value`);
+        const variableMode = !!(varInclude && varInclude.checked && varInput && varInput.value.trim());
+
         Object.keys(initDefs).forEach(key => {
+            // Variable identity is handled specially below
+            if (key === 'variable') return;
+            // Coord variable handled after loop
+            if (key === 'coord_variable') return;
+            // Custom name field "name" must not overwrite variable ref object
+            if (variableMode && key === 'name') return;
+            // Skip id/class when variable mode (mutual exclusion)
+            if (variableMode && (key === 'id' || key === 'class')) return;
+
             const include = document.getElementById(`include_${brushType}_` + key);
             const def = initDefs[key];
             if (include && !include.checked) return;
@@ -1834,10 +2214,37 @@ function collectBrushFromPopup(popupSelector) {
             {
                 
             }
-            currentBrushGlobal['level_init'][key] = value;
-            
+            // Do not write level_init here — that belongs only in collectLevelBrushFromPopup
             brush[key] = value;
         });
+
+        if (variableMode) {
+            const ref = varInput.value.trim();
+            brush.name = { variable: ref };
+            delete brush.id;
+            delete brush.class;
+            delete brush.variable;
+            brush.internal = brush.internal || {};
+            brush.internal.brushMode = 'simple';
+            brush.internal.random = false;
+            if (typeof applyLocalResolveToBrush === 'function') {
+                applyLocalResolveToBrush(brush, brushType);
+            }
+        }
+
+        // Object coord = loc (variable coordinate)
+        if (brushType === 'object') {
+            const cInc = document.getElementById('include_object_coord_variable');
+            const cVal = document.getElementById('object_coord_variable_value');
+            if (cInc && cInc.checked && cVal && cVal.value.trim()) {
+                brush.coord = { variable: cVal.value.trim() };
+                delete brush.coord_variable;
+                brush.internal = brush.internal || {};
+                brush.internal.brushMode = 'complex';
+            } else {
+                delete brush.coord_variable;
+            }
+        }
 
         if(currentMonPopupInventory.length > 0 )
         {
@@ -1847,69 +2254,29 @@ function collectBrushFromPopup(popupSelector) {
         {
             brush.contents = structuredClone(currentObjPopupContents);
         }
-
-        /*
-        brushCBs.forEach( (key, idx) => {
-            const idStr = key.id;
-            const parts = idStr.split('-');
-            const elementName = parts[parts.length - 1];   // the final segment
-            if( key.checked )
-            {
-                let value = true; // default for bool
-
-                const inputHDL = document.getElementById( `${optIDPre}-inp-${elementName}`);
-                if( inputHDL?.value ) 
-                {   
-                    
-                    if (inputHDL.type === "text") {
-                        value = inputHDL.value.trim();
-                        if (value === "") return;
-                    } else if (inputHDL.type === "number") {
-                        value =  parseInt(inputHDL.value, 10);
-                        if (isNaN(value)) return;
-                    } else if (inputHDL.type === "select-one") {
-                        value = inputHDL.value.trim();
-                        if (value === "") return;
-                    }
-                    
-                    
-                }
-                brush[elementName] = value;
-
-                
-            }
-            if(currentMonPopupInventory.length > 0 )
-            {
-                brush.inventory = structuredClone(currentMonPopupInventory);
-            }
-            if(currentObjPopupContents.length > 0 && setObjectPopupTarget != "contents" )
-            {
-                brush.contents = structuredClone(currentObjPopupContents);
-            }
-
-        });*/
          
-        const brushDef = isValidIDFN(brush?.id) ? objectDict[brush?.id] : null;
-        const brushClassDef = isValidClassFN(brush?.class) ?  brush.class : null;
+        if (!variableMode) {
+            const brushDef = isValidIDFN(brush?.id) ? objectDict[brush?.id] : null;
+            const brushClassDef = isValidClassFN(brush?.class) ?  brush.class : null;
 
-        if( brushDef )
-        {
-            brush.internal.symbol = brushDef.symbol;
-            brush.internal.color = brushDef.color;
-            brush.internal.random = false;
-        }
-        if( brushClassDef )
-        {
-            brush.internal.symbol = brushClassDef;
-            brush.internal.random = false;
+            if( brushDef )
+            {
+                brush.internal.symbol = brushDef.symbol;
+                brush.internal.color = brushDef.color;
+                brush.internal.random = false;
+            }
+            if( brushClassDef )
+            {
+                brush.internal.symbol = brushClassDef;
+                brush.internal.random = false;
+            }
+            // Clear stale variable binding if user switched to id/class
+            if (brush.name && typeof brush.name === 'object' && brush.name.variable) {
+                if (brush.id || brush.class) delete brush.name;
+            }
         }
 
         if (!brush) return null;
-
-
-        if (currentMonsterInventory.length > 0) {
-            brush.inventory = currentMonsterInventory;
-        }
 
         return brush;
     }
@@ -2100,26 +2467,64 @@ function generateTerrainLUA() {
 function generateFeaturesLua() {
     let lines = [];
     layers.features.forEach(f => {
-        //if (f.internal.lua) lines.push(f.internal.lua(f));
-        //else if (f.internal.type === "trap") lines.push(`des.trap("${f.type}"${f.x !== undefined ? `,${f.x},${f.y}` : ''})`);
-        // add any special cases here
-        txt = generateSingleBrushLua(f);
-        lines.push(txt);
-
+        try {
+            const txt = generateSingleBrushLua(f);
+            if (txt && String(txt).trim()) lines.push(txt);
+        } catch (err) {
+            console.warn('generateSingleBrushLua failed for feature', f, err);
+        }
     });
     return lines.join('\n');
 }
 
 function generateSingleBrushLua(brush, x = null, y = null) {
     if (!brush) return '';
-    if( !brush.internal.des_code) return '';
+    if (!brush.internal) return '';
+    if (!brush.internal.des_code) return '';
     const des_code = brush.internal.des_code;
     const mode = brush.internal?.brushMode || 'simple';
+    const featType = brush.internal.type;
 
     x = brush['x'];
     y = brush['y'];
     w = brush['w'];
     h = brush['h'];
+
+    // --- des.room special case (fill levels like Arc-fila) ---
+    if (featType === 'room' || des_code === 'des.room') {
+        const parts = [];
+        if (brush.type) parts.push(`type = "${String(brush.type).replace(/"/g, '\\"')}"`);
+        if (brush.lit !== undefined) {
+            const litVal = (brush.lit === true || brush.lit === 1 || brush.lit === '1' || brush.lit === 'lit') ? 1 : 0;
+            parts.push(`lit = ${litVal}`);
+        }
+        if (brush.xalign) parts.push(`xalign = "${brush.xalign}"`);
+        if (brush.yalign) parts.push(`yalign = "${brush.yalign}"`);
+        if (x != null) parts.push(`x = ${x}`);
+        if (y != null) parts.push(`y = ${y}`);
+        if (w != null) parts.push(`w = ${w}`);
+        if (h != null) parts.push(`h = ${h}`);
+        if (Array.isArray(brush.contents) && brush.contents.length > 0) {
+            const body = brush.contents.map(inner => {
+                if (!inner) return null;
+                if (inner.internal?.type === 'object' || inner.id || inner.class) {
+                    return '   ' + (typeof generateSingleObjectLua === 'function' ? generateSingleObjectLua(inner) : 'des.object()');
+                }
+                if (inner.internal?.type === 'monster') {
+                    return '   ' + (typeof generateSingleMonsterLua === 'function' ? generateSingleMonsterLua(inner) : 'des.monster()');
+                }
+                if (inner.internal?.des_code) {
+                    return '   ' + generateSingleBrushLua(inner);
+                }
+                return null;
+            }).filter(Boolean).join('\n');
+            if (body) parts.push(`contents = function()\n${body}\nend`);
+        } else if (typeof brush.contents === 'string' && brush.contents.trim()) {
+            parts.push(`contents = function()\n${brush.contents}\nend`);
+        }
+        return `des.room({ ${parts.join(', ')} })`;
+    }
+
     // SIMPLE mode – always single-line
     if (mode === 'simple' || mode === 'level') {
         let line = des_code + '(';
@@ -2141,12 +2546,13 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             line += `"${brush.dir}"`;
         }
 
-        if (x  && y && brush.internal.type != 'non_diggable') {
+        // Use != null so coordinate 0 is kept (truthy checks drop x=0 / y=0)
+        if (x != null && y != null && brush.internal.type != 'non_diggable') {
             if (line.length > 'des.object('.length) line += ', ';
             line += `${x.toString().padStart(2, '0')}, ${y.toString().padStart(2, '0')}`;
         }
 
-        if (x  && y && w && h && brush.internal.type == 'non_diggable') {
+        if (x != null && y != null && w != null && h != null && brush.internal.type == 'non_diggable') {
             const x1 = `${x.toString().padStart(2, '0')}`;
             const x2 = `${(x+w-1).toString().padStart(2, '0')}`;
             const y1 = `${y.toString().padStart(2, '0')}`;
@@ -2173,7 +2579,7 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             const [cx, cy] = brush.coord;
             props.push(`coord = {${cx.toString().padStart(2, '0')}, ${cy.toString().padStart(2, '0')}}`);
         }
-    } else if (x  && y && w && h) {
+    } else if (x != null && y != null && w != null && h != null) {
         if( brush.internal.type == 'region' || brush.internal.type == 'teleport_region' )
         {
             const x1 = `${x.toString().padStart(2, '0')}`;
@@ -2189,16 +2595,30 @@ function generateSingleBrushLua(brush, x = null, y = null) {
             props.push(`w = ${w.toString().padStart(2, '0')}`);
             props.push(`h = ${h.toString().padStart(2, '0')}`);
         }
-    } else if (x  && y ) {
+    } else if (x != null && y != null) {
         props.push(`x = ${x.toString().padStart(2, '0')}`);
         props.push(`y = ${y.toString().padStart(2, '0')}`);
     }
 
+    // Menu options for this feature type may be missing (e.g. room) — never Object.keys(undefined)
     let otherKeys = [];
-    Object.keys(allFeatureMenuOptions[brush.internal.type]).forEach( (key) => {
-        if( key == 'internal') return;
-        otherKeys.push(key);
-    });
+    const menuOpts = (typeof allFeatureMenuOptions !== 'undefined' && allFeatureMenuOptions)
+        ? allFeatureMenuOptions[featType]
+        : null;
+    if (menuOpts && typeof menuOpts === 'object') {
+        Object.keys(menuOpts).forEach((key) => {
+            if (key === 'internal') return;
+            otherKeys.push(key);
+        });
+    } else {
+        // Fallback: emit simple own props on the brush (not internal/geometry/contents)
+        const skip = new Set(['internal', 'x', 'y', 'w', 'h', 'coord', 'contents', 'id']);
+        Object.keys(brush).forEach((key) => {
+            if (skip.has(key)) return;
+            if (typeof brush[key] === 'object' && brush[key] !== null) return;
+            otherKeys.push(key);
+        });
+    }
     //const otherKeys = ['class', 'spe', 'buc', 'name', 'montype', 'historic', 'quantity', 'trapped', 'locked'];
     for (const key of otherKeys) {
         if (brush[key] === undefined) continue;
@@ -2342,8 +2762,8 @@ function generateObjectLUA() {
     let lua = '';
 
     // Grid objects (with x,y)
-    for (let y = 0; y < 20; y++) {
-        for (let x = 0; x < 76; x++) {
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
             const brush = layers.object[y][x];
             if (!brush) continue;
             lua += generateSingleObjectLua(brush, x, y) + '\n';
@@ -2362,6 +2782,14 @@ function generateObjectLUA() {
 
 function generateLUADefLUA() {
      let lua = '';
+     // Level locals (tables, shuffle, selection points, opaque)
+     if (typeof generateLocalsLua === 'function') {
+         const locals = generateLocalsLua();
+         if (locals && locals.trim()) {
+             lua += '-- Local variables / shuffle / selection helpers\n';
+             lua += locals + '\n\n';
+         }
+     }
      if (layers.code && layers.code.length) {
         for (const brush of layers.code) {
             lua += brush + '\n';
@@ -2526,8 +2954,8 @@ function generateMonsterLUA() {
     let lua = '';
 
     // Grid monsters
-    for (let y = 0; y < 20; y++) {
-        for (let x = 0; x < 76; x++) {
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
             const brush = layers.monster[y][x];
             if (!brush) continue;
             lua += generateSingleMonsterLua(brush, x, y) + '\n';
@@ -2563,20 +2991,35 @@ function generateLightLUA() {
 }
 
 // === Refresh button handler ===
+// data-type on buttons may be singular or plural; map to generator + textarea id
 const generateFunctions = {
-    terrain:  generateTerrainLUA,   // existing
-    objects:  generateObjectLUA,   // you will need to write this similar to terrain
-    monsters: generateMonsterLUA,  // you will need to write this
-    lighting: generateLightLUA,      // the one we wrote earlier
+    init:     generateInitLua,
+    terrain:  generateTerrainLUA,
+    object:   generateObjectLUA,
+    objects:  generateObjectLUA,
+    monster:  generateMonsterLUA,
+    monsters: generateMonsterLUA,
+    lighting: generateLightLUA,
     features: generateFeaturesLua,
-    luadef: generateLUADefLUA
+    luadef:   generateLUADefLUA
+};
+
+const refreshTextareaIds = {
+    init:     'init-textarea',
+    terrain:  'terrain-textarea',
+    object:   'object-textarea',
+    objects:  'object-textarea',
+    monster:  'monster-textarea',
+    monsters: 'monster-textarea',
+    lighting: 'lighting-textarea',
+    features: 'features-textarea',
+    luadef:   'luadef-textarea'
 };
 
 document.querySelectorAll('.refresh').forEach(btn => {
     btn.addEventListener('click', () => {
         const type = btn.dataset.type;
-        const textareaId = 'lua-' + type;
-        const ta = document.getElementById(textareaId);
+        const ta = document.getElementById(refreshTextareaIds[type]);
         if (ta && generateFunctions[type]) {
             ta.value = generateFunctions[type]();
         }
@@ -2691,8 +3134,8 @@ function paint(x, y) {
             if (currentBrushGlobal['monster'] === null) {
             layers.monster[y][x] = null;   // or ''
             } else {
-            // Clone so later popup changes don't affect already-placed monsters
-            layers.monster[y][x] = { ...currentBrushGlobal['monster'] };   // spread clone
+            // Deep-clone so inventory/nested data is not shared with the live brush
+            layers.monster[y][x] = structuredClone(currentBrushGlobal['monster']);
             }
 
     } // === UPDATE paint() FOR OBJECTS (replace the object branch) ===
@@ -2700,8 +3143,8 @@ function paint(x, y) {
         if (currentBrushGlobal['object'] === null) {
             layers.object[y][x] = null;   // or '' depending on how you store empty
         } else {
-        // Clone the template so future brush changes don't affect already-placed objects
-        layers.object[y][x] = { ...currentBrushGlobal['object'] };
+        // Deep-clone so contents/nested data is not shared with the live brush
+        layers.object[y][x] = structuredClone(currentBrushGlobal['object']);
         }
     }
     else if (currentBrush === 'features' && currentBrushGlobal[currentBrushType] ) {
@@ -2953,7 +3396,11 @@ function fillArea(x, y) {
   }
 }*/
 function fillArea(startX, startY) {
-  const target = map[startY][startX];
+  // Use layers.terrain (keys like 'stone', 'room') — not the legacy map[][] glyph grid
+  if (currentBrush !== 'terrain' || !currentChar) return;
+  if (startX < 0 || startX >= COLS || startY < 0 || startY >= ROWS) return;
+
+  const target = layers.terrain[startY][startX];
   if (target === currentChar) return;
 
   const queue = [[startX, startY]];
@@ -2961,7 +3408,7 @@ function fillArea(startX, startY) {
 
   while (queue.length) {
     const [cx, cy] = queue.shift();
-    if (cx < 0 || cx >= COLS || cy < 0 || cy >= ROWS || visited[cy][cx] || map[cy][cx] !== target) continue;
+    if (cx < 0 || cx >= COLS || cy < 0 || cy >= ROWS || visited[cy][cx] || layers.terrain[cy][cx] !== target) continue;
     visited[cy][cx] = true;
     paint(cx, cy);
     queue.push([cx-1, cy], [cx+1, cy], [cx, cy-1], [cx, cy+1]);
@@ -3642,8 +4089,29 @@ function getSymbolFromBrush(brush) {
 
     const type = brush.internal.type || 'object';
 
+    // Resolve variable refs against luaLocals (e.g. monster[1] → "L")
+    if (brush.name && typeof brush.name === 'object' && brush.name.variable &&
+        typeof resolveLocalIndex === 'function' && typeof parseVariableIndexRef === 'function') {
+        const parsed = parseVariableIndexRef(brush.name.variable);
+        if (parsed) {
+            const val = resolveLocalIndex(parsed.name, parsed.index);
+            if (typeof val === 'string') {
+                if (val.length === 1) return val;
+                let lookup = type === 'monster' ? getMonsterById(val) : getObjectById(val);
+                if (lookup && lookup.symbol) return lookup.symbol;
+                return val.charAt(0);
+            }
+        }
+    }
+
     // Direct symbol highest priority
     if (brush.internal.symbol && typeof brush.internal.symbol === 'string') {
+        // Prefer class letter over generic placeholders when class is set
+        if (brush.class && typeof brush.class === 'string' && brush.class.length === 1 &&
+            (brush.internal.symbol === '♣' || brush.internal.symbol === '§' ||
+             brush.internal.symbol === '♠' || brush.internal.symbol === '♦')) {
+            return brush.class;
+        }
         return brush.internal.symbol;
     }
 
@@ -3672,6 +4140,21 @@ function getSymbolFromBrush(brush) {
 
     // Random fallback
     return type === 'monster' ? '♣' : '§';
+}
+
+/**
+ * Re-apply local variable resolution to all placed monsters/objects.
+ */
+function reresolveAllLocalRefs() {
+    if (typeof applyLocalResolveToBrush !== 'function') return;
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (layers.monster[y][x]) applyLocalResolveToBrush(layers.monster[y][x], 'monster');
+            if (layers.object[y][x]) applyLocalResolveToBrush(layers.object[y][x], 'object');
+        }
+    }
+    (layers.monsterRND || []).forEach(b => applyLocalResolveToBrush(b, 'monster'));
+    (layers.objectRND || []).forEach(b => applyLocalResolveToBrush(b, 'object'));
 }
 
 function renderLayers() {
@@ -3704,22 +4187,28 @@ function renderLayers() {
 
   if (visibleLayers.features) {
       layers.features.forEach(f => {
+          if (!f || !f.internal) return;
           if (f.internal.stroke=="rectangle") { // rectangle dither
-              const [x1,y1,x2,y2] = [f['x'], f['y'], f['x'] + f['w'] - 1, f['y'] + f['h'] - 1];
+              if (f.x == null || f.y == null || f.w == null || f.h == null) return;
+              const x1 = f.x, y1 = f.y, x2 = f.x + f.w - 1, y2 = f.y + f.h - 1;
+              // Clamp to grid so OOB level regions never crash render
+              const xx0 = Math.max(0, Math.min(x1, x2));
+              const xx1 = Math.min(COLS - 1, Math.max(x1, x2));
+              const yy0 = Math.max(0, Math.min(y1, y2));
+              const yy1 = Math.min(ROWS - 1, Math.max(y1, y2));
+              if (xx1 < xx0 || yy1 < yy0) return;
               
-              for (let xx = Math.min(x1,x2); xx <= Math.max(x1,x2); xx++) {
-                  for (let yy = Math.min(y1,y2); yy <= Math.max(y1,y2); yy++) {
-                      //const cell = document.querySelector(`.grid-cell[data-x="${xx}"][data-y="${yy}"]`);
-                      const cell = mapCells[yy][xx];
+              for (let xx = xx0; xx <= xx1; xx++) {
+                  for (let yy = yy0; yy <= yy1; yy++) {
+                      const cell = mapCells[yy]?.[xx];
                       if (cell) {
                           cell.style.background = getDitherPattern(f.internal.dither, f.internal.ditherColor);
                       }
                   }
               }
-          } else if ( f.y >= 0 && f.x >= 0 )
+          } else if ( f.y != null && f.x != null && f.y >= 0 && f.x >= 0 )
           { // point symbol
-              //const cell = document.querySelector(`.grid-cell[data-x="${f.x}"][data-y="${f.y}"]`);
-              const cell = mapCells[f.y][f.x];
+              const cell = mapCells[f.y]?.[f.x];
               if (cell) {
                   cell.textContent = f.symbol || f.internal.symbol;
                   cell.style.color = getColorRGB(f.color || f.internal.color || 'CLR_WHITE');
@@ -3774,11 +4263,15 @@ function renderLayers() {
   if (visibleLayers.lighting) {
     // Apply rectangles in the order they were painted (later overrides earlier)
     layers.lighting.forEach(rect => {
-        for (let y = rect.y1; y <= rect.y2; y++) {
-            for (let x = rect.x1; x <= rect.x2; x++) {
-                const index = y * COLS + x;
-                //const cell = grid.children[index];
-                const cell = mapCells[y][x];
+        if (rect == null || rect.y1 == null || rect.y2 == null || rect.x1 == null || rect.x2 == null) return;
+        const y0 = Math.max(0, Math.min(rect.y1, rect.y2));
+        const y1 = Math.min(ROWS - 1, Math.max(rect.y1, rect.y2));
+        const x0 = Math.max(0, Math.min(rect.x1, rect.x2));
+        const x1 = Math.min(COLS - 1, Math.max(rect.x1, rect.x2));
+        if (y1 < y0 || x1 < x0) return;
+        for (let y = y0; y <= y1; y++) {
+            for (let x = x0; x <= x1; x++) {
+                const cell = mapCells[y]?.[x];
                 if (cell) {
                     cell.style.backgroundColor = rect.overlayColor;
                 }
@@ -3901,9 +4394,8 @@ document.getElementById('save-lua-btn').addEventListener('click', function () {
     
     if (typeof generateInitLua      === 'function') sections.push(generateInitLua());
     if (typeof generateTerrainLUA   === 'function') sections.push(generateTerrainLUA());
+    if (typeof generateLUADefLUA    === 'function') sections.push(generateLUADefLUA());
     if (typeof generateLightLUA     === 'function') sections.push(generateLightLUA());
-    //if (typeof generateDarkLUA      === 'function') sections.push(generateDarkLUA());
-    //if (typeof generateLightingLUA  === 'function') sections.push(generateLightingLUA()); // if you have a combined lighting function
     if (typeof generateMonsterLUA   === 'function') sections.push(generateMonsterLUA());
     if (typeof generateObjectLUA    === 'function') sections.push(generateObjectLUA());
     if (typeof generateFeaturesLua  === 'function') sections.push(generateFeaturesLua());
@@ -4011,6 +4503,645 @@ function handleRndCellClick(e) {
     renderLayers();
     updateText(true);
 }
+
+// ==================================================================
+// LUA LOCALS POPUP
+// ==================================================================
+
+function cloneLuaLocals() {
+    const src = (typeof luaLocals !== 'undefined' && luaLocals) ? luaLocals : {};
+    return structuredClone(src);
+}
+
+function showLocalsPopup() {
+    localsPopupDraft = cloneLuaLocals();
+    localsPopupOrder = Object.keys(localsPopupDraft).sort((a, b) => {
+        const oa = localsPopupDraft[a].exportOrder ?? 0;
+        const ob = localsPopupDraft[b].exportOrder ?? 0;
+        return oa - ob;
+    });
+    localsPopupSelected = localsPopupOrder[0] || null;
+    refreshLocalsListUI();
+    loadLocalEditorFromDraft(localsPopupSelected);
+
+    showOnlyPopup('locals-popup');
+}
+
+function hideLocalsPopup() {
+    const popup = document.getElementById('locals-popup');
+    popup.style.display = 'none';
+    popup.classList.add('hide');
+    if (popup.parentNode) popup.parentNode.style.display = 'none';
+    localsPopupDraft = null;
+    localsPopupSelected = null;
+}
+
+function refreshLocalsListUI() {
+    const ul = document.getElementById('locals-list');
+    ul.innerHTML = '';
+    localsPopupOrder.forEach(name => {
+        const def = localsPopupDraft[name];
+        if (!def) return;
+        const li = document.createElement('li');
+        li.className = 'locals-list-item' + (name === localsPopupSelected ? ' selected' : '');
+        const summary = summarizeLocalDef(def);
+        li.innerHTML = `<strong>${name}</strong> <span class="locals-kind">${def.kind}</span>` +
+            (def.shuffled ? ' <span class="locals-shuffle">shuffle</span>' : '') +
+            `<div class="locals-summary">${summary}</div>`;
+        li.addEventListener('click', () => {
+            saveLocalEditorToDraft();
+            localsPopupSelected = name;
+            refreshLocalsListUI();
+            loadLocalEditorFromDraft(name);
+        });
+        ul.appendChild(li);
+    });
+}
+
+function summarizeLocalDef(def) {
+    if (!def) return '';
+    if (def.kind === 'string_list') return (def.values || []).slice(0, 8).join(', ') + ((def.values || []).length > 8 ? '…' : '');
+    if (def.kind === 'coord_list') return `${(def.values || []).length} coord(s)`;
+    if (def.kind === 'selection') return `${(def.points || []).length} point(s)`;
+    if (def.kind === 'rndcoord_ref') return `${def.from}:rndcoord(${def.n != null ? def.n : 1})`;
+    if (def.kind === 'opaque') return (def.source || '').slice(0, 60);
+    if (def.kind === 'string') return JSON.stringify(def.value);
+    if (def.kind === 'number') return String(def.value);
+    return '';
+}
+
+function showLocalEditorPane(kind) {
+    document.getElementById('local-string-editor').style.display = (kind === 'string_list') ? 'block' : 'none';
+    document.getElementById('local-coord-editor').style.display = (kind === 'coord_list') ? 'block' : 'none';
+    document.getElementById('local-selection-editor').style.display = (kind === 'selection') ? 'block' : 'none';
+    document.getElementById('local-opaque-editor').style.display = (kind === 'opaque') ? 'block' : 'none';
+    const rndEd = document.getElementById('local-rndcoord-editor');
+    if (rndEd) rndEd.style.display = (kind === 'rndcoord_ref') ? 'block' : 'none';
+}
+
+function loadLocalEditorFromDraft(name) {
+    const def = name ? localsPopupDraft[name] : null;
+    document.getElementById('local-name').value = def ? def.name || name : '';
+    document.getElementById('local-kind').value = def ? def.kind : 'string_list';
+    document.getElementById('local-shuffled').checked = !!(def && def.shuffled);
+    showLocalEditorPane(def ? def.kind : 'string_list');
+
+    document.getElementById('local-values-text').value =
+        (def && def.kind === 'string_list' && def.values) ? def.values.join('\n') : '';
+    document.getElementById('local-coords-text').value =
+        (def && def.kind === 'coord_list' && def.values)
+            ? def.values.map(p => `${p[0]},${p[1]}`).join('\n') : '';
+    document.getElementById('local-sel-points-text').value =
+        (def && def.kind === 'selection' && def.points)
+            ? def.points.map(p => `${p[0]},${p[1]}`).join('\n') : '';
+    document.getElementById('local-opaque-text').value =
+        (def && def.kind === 'opaque' && def.source) ? def.source : '';
+    const fromEl = document.getElementById('local-rndcoord-from');
+    const nEl = document.getElementById('local-rndcoord-n');
+    if (fromEl) fromEl.value = (def && def.kind === 'rndcoord_ref' && def.from) ? def.from : '';
+    if (nEl) nEl.value = (def && def.kind === 'rndcoord_ref' && def.n != null) ? def.n : 1;
+}
+
+function parseCoordLines(text) {
+    const out = [];
+    String(text || '').split(/\r?\n/).forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        const m = line.match(/^(-?\d+)\s*[, ]\s*(-?\d+)$/);
+        if (m) out.push([parseInt(m[1], 10), parseInt(m[2], 10)]);
+    });
+    return out;
+}
+
+function saveLocalEditorToDraft() {
+    if (!localsPopupDraft || !localsPopupSelected) return;
+    const oldName = localsPopupSelected;
+    let name = document.getElementById('local-name').value.trim();
+    if (!name) name = oldName;
+    const kind = document.getElementById('local-kind').value;
+    const shuffled = document.getElementById('local-shuffled').checked;
+
+    // rename
+    if (name !== oldName) {
+        if (localsPopupDraft[name]) {
+            alert(`Local "${name}" already exists`);
+            document.getElementById('local-name').value = oldName;
+            name = oldName;
+        } else {
+            localsPopupDraft[name] = localsPopupDraft[oldName];
+            delete localsPopupDraft[oldName];
+            const idx = localsPopupOrder.indexOf(oldName);
+            if (idx >= 0) localsPopupOrder[idx] = name;
+            localsPopupSelected = name;
+        }
+    }
+
+    const def = localsPopupDraft[name] || { name, exportOrder: localsPopupOrder.length };
+    def.name = name;
+    def.kind = kind;
+    def.shuffled = shuffled;
+
+    if (kind === 'string_list') {
+        def.values = document.getElementById('local-values-text').value
+            .split(/\r?\n/).map(s => s.trim()).filter(s => s.length > 0);
+        delete def.points;
+        delete def.source;
+        delete def.methods;
+    } else if (kind === 'coord_list') {
+        def.values = parseCoordLines(document.getElementById('local-coords-text').value);
+        delete def.points;
+        delete def.source;
+    } else if (kind === 'selection') {
+        def.points = parseCoordLines(document.getElementById('local-sel-points-text').value);
+        def.methods = def.points.map(p => ({ op: 'set', args: p }));
+        delete def.values;
+        delete def.source;
+    } else if (kind === 'opaque') {
+        def.source = document.getElementById('local-opaque-text').value;
+        delete def.values;
+        delete def.points;
+        delete def.from;
+        delete def.n;
+    } else if (kind === 'rndcoord_ref') {
+        def.from = (document.getElementById('local-rndcoord-from')?.value || 'place').trim();
+        def.n = parseInt(document.getElementById('local-rndcoord-n')?.value || '1', 10);
+        if (!Number.isFinite(def.n)) def.n = 1;
+        delete def.values;
+        delete def.points;
+        delete def.source;
+    }
+
+    localsPopupDraft[name] = def;
+}
+
+document.getElementById('local-kind').addEventListener('change', () => {
+    showLocalEditorPane(document.getElementById('local-kind').value);
+});
+
+document.getElementById('locals-add-btn').addEventListener('click', () => {
+    saveLocalEditorToDraft();
+    let base = 'var';
+    let n = 1;
+    while (localsPopupDraft[base + n]) n++;
+    const name = base + n;
+    localsPopupDraft[name] = {
+        name,
+        kind: 'string_list',
+        values: [],
+        shuffled: false,
+        exportOrder: localsPopupOrder.length
+    };
+    localsPopupOrder.push(name);
+    localsPopupSelected = name;
+    refreshLocalsListUI();
+    loadLocalEditorFromDraft(name);
+});
+
+document.getElementById('locals-delete-btn').addEventListener('click', () => {
+    if (!localsPopupSelected) return;
+    delete localsPopupDraft[localsPopupSelected];
+    localsPopupOrder = localsPopupOrder.filter(n => n !== localsPopupSelected);
+    localsPopupSelected = localsPopupOrder[0] || null;
+    refreshLocalsListUI();
+    loadLocalEditorFromDraft(localsPopupSelected);
+});
+
+document.getElementById('locals-ok-btn').addEventListener('click', () => {
+    saveLocalEditorToDraft();
+    // Commit draft → globals
+    if (typeof luaLocals === 'undefined') {
+        // loadLUAMap.js should define this; create if missing
+        window.luaLocals = {};
+    }
+    // Clear and reassign
+    Object.keys(luaLocals).forEach(k => delete luaLocals[k]);
+    localsPopupOrder.forEach((name, i) => {
+        const def = localsPopupDraft[name];
+        if (!def) return;
+        def.exportOrder = i;
+        luaLocals[name] = def;
+    });
+    // Rebuild luaOps for export interleaving
+    if (typeof luaOps !== 'undefined') {
+        luaOps.length = 0;
+        localsPopupOrder.forEach(name => {
+            const def = luaLocals[name];
+            if (!def) return;
+            luaOps.push({ type: 'local', name });
+            if (def.kind === 'selection' && def.points) {
+                def.points.forEach(p => {
+                    luaOps.push({ type: 'method', name, op: 'set', args: [p[0], p[1]] });
+                });
+            }
+            if (def.shuffled) luaOps.push({ type: 'shuffle', name });
+        });
+    }
+
+    reresolveAllLocalRefs();
+    hideLocalsPopup();
+    renderLayers();
+    updateText(true);
+});
+
+document.getElementById('locals-cancel-btn').addEventListener('click', () => {
+    hideLocalsPopup();
+});
+
+document.getElementById('lua-locals-btn').addEventListener('click', () => {
+    showLocalsPopup();
+});
+
+// ==================================================================
+// RIGHT-CLICK CELL CONTEXT MENU
+// ==================================================================
+
+const cellContextMenu = document.getElementById('cell-context-menu');
+
+function hideCellContextMenu() {
+    cellContextMenu.style.display = 'none';
+    cellContextMenu.innerHTML = '';
+}
+
+function showCellContextMenu(clientX, clientY, cellX, cellY) {
+    const items = [];
+
+    // Terrain always present
+    const terrKey = layers.terrain[cellY]?.[cellX];
+    const terrLabel = (allTerrains[terrKey] && allTerrains[terrKey].id) || terrKey || 'terrain';
+    items.push({
+        label: `Edit terrain (${terrLabel})`,
+        action: () => openTerrainCellEdit(cellX, cellY)
+    });
+
+    if (layers.monster[cellY]?.[cellX]) {
+        const mon = layers.monster[cellY][cellX];
+        const monDesc = mon.id || mon.class || (mon.name && mon.name.variable) || 'monster';
+        items.push({
+            label: `Edit monster (${monDesc})`,
+            action: () => openMonsterCellEdit(cellX, cellY)
+        });
+    }
+
+    if (layers.object[cellY]?.[cellX]) {
+        const obj = layers.object[cellY][cellX];
+        const objDesc = obj.id || obj.class || (obj.name && obj.name.variable) || 'object';
+        items.push({
+            label: `Edit object (${objDesc})`,
+            action: () => openObjectCellEdit(cellX, cellY)
+        });
+    }
+
+    const feats = typeof getFeaturesAtXY === 'function' ? getFeaturesAtXY(cellX, cellY) : [];
+    feats.forEach((feat, i) => {
+        const desc = (typeof getFeatureDescFromBrush === 'function')
+            ? getFeatureDescFromBrush(feat)
+            : (feat.internal?.type || 'feature');
+        // find real index in layers.features
+        const realIdx = layers.features.indexOf(feat);
+        items.push({
+            label: `Edit feature: ${desc}`,
+            action: () => openFeatureCellEdit(cellX, cellY, realIdx >= 0 ? realIdx : i)
+        });
+    });
+
+    const lighting = typeof getLightingAtXY === 'function' ? getLightingAtXY(cellX, cellY) : 'not set';
+    if (lighting && lighting !== 'not set') {
+        items.push({
+            label: `Lighting (${lighting}) — remove covering rects`,
+            action: () => {
+                const idxs = getLightingIdxAtXY(cellX, cellY).slice().sort((a, b) => b - a);
+                idxs.forEach(i => layers.lighting.splice(i, 1));
+                renderLayers();
+                updateText(true);
+            }
+        });
+    }
+
+    cellContextMenu.innerHTML = '';
+    items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'context-menu-item';
+        btn.textContent = item.label;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideCellContextMenu();
+            item.action();
+        });
+        cellContextMenu.appendChild(btn);
+    });
+
+    cellContextMenu.style.display = 'block';
+    cellContextMenu.style.left = clientX + 'px';
+    cellContextMenu.style.top = clientY + 'px';
+
+    // Keep on screen
+    requestAnimationFrame(() => {
+        const r = cellContextMenu.getBoundingClientRect();
+        if (r.right > window.innerWidth) {
+            cellContextMenu.style.left = Math.max(0, window.innerWidth - r.width - 8) + 'px';
+        }
+        if (r.bottom > window.innerHeight) {
+            cellContextMenu.style.top = Math.max(0, window.innerHeight - r.height - 8) + 'px';
+        }
+    });
+}
+
+function openMonsterCellEdit(x, y) {
+    const brush = layers.monster[y][x];
+    if (!brush) return;
+    editTarget = { layer: 'monster', x, y, rnd: false };
+    currentBrushGlobal['monster'] = structuredClone(brush);
+    if (Array.isArray(brush.inventory)) {
+        currentMonPopupInventory = brush.inventory.map(o => structuredClone(o));
+    } else {
+        currentMonPopupInventory = [];
+    }
+    showMonsterPopup();
+}
+
+function openObjectCellEdit(x, y) {
+    const brush = layers.object[y][x];
+    if (!brush) return;
+    editTarget = { layer: 'object', x, y, rnd: false };
+    setObjectPopupTarget = 'cell';
+    currentBrushGlobal['object'] = structuredClone(brush);
+    // contents loaded in showObjectPopup from currentBrushGlobal
+    showObjectPopup();
+}
+
+/** Random-layer list helpers */
+function getRndList(type) {
+    if (type === 'feature') {
+        return layers.features.filter(f => f.x === undefined && f.y === undefined);
+    }
+    return layers[type + 'RND'] || [];
+}
+
+function openMonsterRndEdit(index) {
+    const brush = layers.monsterRND?.[index];
+    if (!brush) return;
+    editTarget = { layer: 'monster', rnd: true, index };
+    currentBrushGlobal['monster'] = structuredClone(brush);
+    if (Array.isArray(brush.inventory)) {
+        currentMonPopupInventory = brush.inventory.map(o => structuredClone(o));
+    } else {
+        currentMonPopupInventory = [];
+    }
+    showMonsterPopup();
+}
+
+function openObjectRndEdit(index) {
+    const brush = layers.objectRND?.[index];
+    if (!brush) return;
+    editTarget = { layer: 'object', rnd: true, index };
+    setObjectPopupTarget = 'cell';
+    currentBrushGlobal['object'] = structuredClone(brush);
+    // contents loaded in showObjectPopup from currentBrushGlobal
+    showObjectPopup();
+}
+
+function openFeatureRndEdit(index) {
+    const list = getRndList('feature');
+    const feat = list[index];
+    if (!feat) return;
+    const featureIndex = layers.features.indexOf(feat);
+    openFeatureCellEdit(null, null, featureIndex >= 0 ? featureIndex : index, true);
+}
+
+function openFeatureCellEdit(x, y, featureIndex, isRnd = false) {
+    const feat = layers.features[featureIndex];
+    if (!feat) return;
+    editTarget = { layer: 'feature', x, y, featureIndex, rnd: !!isRnd };
+    // Prefer type-specific brush key
+    const fType = feat.internal?.type || currentBrushType || 'feature';
+    currentBrushType = fType;
+    currentBrushGlobal[fType] = structuredClone(feat);
+    // Open features popup on the right tab if possible
+    if (typeof showFeaturePopup === 'function') {
+        showFeaturePopup();
+        // Try to activate the matching tab
+        const tabBtn = document.querySelector(`#features-popup button[data-key="${fType}"]`);
+        if (tabBtn) tabBtn.click();
+        // Prefill after tab build
+        setTimeout(() => {
+            if (typeof restorePanelOptions === 'function') {
+                try { restorePanelOptions(fType); } catch (e) { /* ignore */ }
+            }
+        }, 0);
+    } else {
+        alert('Feature popup unavailable');
+        editTarget = null;
+    }
+}
+
+function openTerrainCellEdit(x, y) {
+    editTarget = { layer: 'terrain', x, y };
+    const list = document.getElementById('terrain-edit-list');
+    list.innerHTML = '';
+    Object.keys(allTerrains).forEach(key => {
+        const terr = allTerrains[key];
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'terrain-edit-item';
+        btn.textContent = `${terr.lua === ' ' ? '[space]' : terr.lua}  ${terr.id}`;
+        if (layers.terrain[y][x] === key) btn.classList.add('selected');
+        btn.addEventListener('click', () => {
+            layers.terrain[y][x] = key;
+            editTarget = null;
+            hideTerrainEditPopup();
+            renderLayers();
+            updateText();
+        });
+        list.appendChild(btn);
+    });
+    showOnlyPopup('terrain-edit-popup');
+}
+
+function hideTerrainEditPopup() {
+    const popup = document.getElementById('terrain-edit-popup');
+    popup.style.display = 'none';
+    popup.classList.add('hide');
+    if (popup.parentNode) popup.parentNode.style.display = 'none';
+}
+
+document.getElementById('terrain-edit-cancel-btn').addEventListener('click', () => {
+    if (editTarget && editTarget.layer === 'terrain') editTarget = null;
+    hideTerrainEditPopup();
+});
+
+// Feature OK — also support cell edit
+const _featuresOkOrig = document.getElementById('features-ok-btn').onclick;
+document.getElementById('features-ok-btn').onclick = () => {
+    if (editTarget && editTarget.layer === 'feature') {
+        const active = document.querySelectorAll('#features-popup button.active')[0];
+        const featureType = active ? active.getAttribute('data-key') : currentBrushType;
+        currentBrushType = featureType;
+        const brush = collectBrushFromPopup('#features-options-form');
+        if (brush && editTarget.featureIndex != null && layers.features[editTarget.featureIndex]) {
+            // Keep placement geometry from original if form doesn't carry it
+            const old = layers.features[editTarget.featureIndex];
+            if (brush.x == null && old.x != null) brush.x = old.x;
+            if (brush.y == null && old.y != null) brush.y = old.y;
+            if (brush.w == null && old.w != null) brush.w = old.w;
+            if (brush.h == null && old.h != null) brush.h = old.h;
+            if (old.coord) brush.coord = old.coord;
+            // RND features must stay without fixed map coords
+            if (editTarget.rnd) {
+                delete brush.x;
+                delete brush.y;
+            }
+            layers.features[editTarget.featureIndex] = brush;
+        }
+        editTarget = null;
+        hideFeaturePopup();
+        renderLayers();
+        updateText();
+        return;
+    }
+    if (typeof _featuresOkOrig === 'function') _featuresOkOrig();
+    else {
+        // Fallback: original inline body if it was reassigned as property
+        const featureType = document.querySelectorAll('#features-popup button.active')[0]?.getAttribute('data-key');
+        if (!featureType) { hideFeaturePopup(); return; }
+        currentBrush = 'features';
+        currentBrushType = featureType;
+        const brush = collectBrushFromPopup('#features-options-form');
+        currentBrushGlobal[currentBrushType] = brush;
+        if (brush && !brush.internal.isEraser) updateShapeButtons([brush.internal.stroke]);
+        if (brush && brush.internal.isEraser) updateShapeButtons(['point']);
+        updateBrushLabel();
+        hideFeaturePopup();
+    }
+};
+
+document.getElementById('features-cancel-btn').addEventListener('click', () => {
+    if (editTarget && editTarget.layer === 'feature') editTarget = null;
+}, true);
+
+grid.addEventListener('contextmenu', e => {
+    if (!e.target.classList.contains('cell')) return;
+    // RND cells are handled separately
+    if (e.target.classList.contains('rnd-cell') || e.target.closest('.rnd-cell')) return;
+    e.preventDefault();
+    const x = parseInt(e.target.dataset.x, 10);
+    const y = parseInt(e.target.dataset.y, 10);
+    if (Number.isNaN(x) || Number.isNaN(y)) return;
+    showCellContextMenu(e.clientX, e.clientY, x, y);
+});
+
+function showRndContextMenu(clientX, clientY, type, col) {
+    const list = getRndList(type);
+    const items = [];
+
+    if (col >= 0 && col < list.length) {
+        const brush = list[col];
+        if (type === 'monster') {
+            const monDesc = brush.id || brush.class || (brush.name && brush.name.variable) || 'monster';
+            items.push({
+                label: `Edit random monster (${monDesc})`,
+                action: () => openMonsterRndEdit(col)
+            });
+            items.push({
+                label: 'Delete from random monsters',
+                action: () => {
+                    layers.monsterRND.splice(col, 1);
+                    renderLayers();
+                    updateText(true);
+                }
+            });
+        } else if (type === 'object') {
+            const objDesc = brush.id || brush.class || (brush.name && brush.name.variable) ||
+                (brush.coord && brush.coord.variable ? `coord=${brush.coord.variable}` : 'object');
+            items.push({
+                label: `Edit random object (${objDesc})`,
+                action: () => openObjectRndEdit(col)
+            });
+            items.push({
+                label: 'Delete from random objects',
+                action: () => {
+                    layers.objectRND.splice(col, 1);
+                    renderLayers();
+                    updateText(true);
+                }
+            });
+        } else if (type === 'feature') {
+            const desc = (typeof getFeatureDescFromBrush === 'function')
+                ? getFeatureDescFromBrush(brush)
+                : (brush.internal?.type || 'feature');
+            items.push({
+                label: `Edit random feature: ${desc}`,
+                action: () => openFeatureRndEdit(col)
+            });
+            items.push({
+                label: 'Delete from random features',
+                action: () => {
+                    const realIdx = layers.features.indexOf(brush);
+                    if (realIdx >= 0) layers.features.splice(realIdx, 1);
+                    renderLayers();
+                    updateText(true);
+                }
+            });
+        }
+    } else {
+        items.push({
+            label: 'Empty random slot',
+            action: () => {}
+        });
+    }
+
+    cellContextMenu.innerHTML = '';
+    items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'context-menu-item';
+        btn.textContent = item.label;
+        if (item.label === 'Empty random slot') {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        }
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideCellContextMenu();
+            item.action();
+        });
+        cellContextMenu.appendChild(btn);
+    });
+
+    cellContextMenu.style.display = 'block';
+    cellContextMenu.style.left = clientX + 'px';
+    cellContextMenu.style.top = clientY + 'px';
+    requestAnimationFrame(() => {
+        const r = cellContextMenu.getBoundingClientRect();
+        if (r.right > window.innerWidth) {
+            cellContextMenu.style.left = Math.max(0, window.innerWidth - r.width - 8) + 'px';
+        }
+        if (r.bottom > window.innerHeight) {
+            cellContextMenu.style.top = Math.max(0, window.innerHeight - r.height - 8) + 'px';
+        }
+    });
+}
+
+const rndContainer = document.getElementById('rnd-container');
+if (rndContainer) {
+    rndContainer.addEventListener('contextmenu', e => {
+        const cell = e.target.closest('.rnd-cell');
+        if (!cell) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const col = parseInt(cell.dataset.col, 10);
+        const type = cell.dataset.type; // object | monster | feature
+        if (Number.isNaN(col) || !type) return;
+        showRndContextMenu(e.clientX, e.clientY, type, col);
+    });
+}
+
+document.addEventListener('click', e => {
+    if (!cellContextMenu.contains(e.target)) hideCellContextMenu();
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') hideCellContextMenu();
+});
 
 createGrid();
 createRndGrids();
