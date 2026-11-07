@@ -38,7 +38,7 @@
 
 #define COPYRIGHT_BANNER_A "RighteousHack, Copyright 2025"
 #define COPYRIGHT_BANNER_B \
-    "         By jonk1984."
+    "         By Jon Kakaley."
 /* nomakedefs.copyright_banner_c is generated at runtime */
 #define COPYRIGHT_BANNER_C nomakedefs.copyright_banner_c
 #define COPYRIGHT_BANNER_D "         See license for details."

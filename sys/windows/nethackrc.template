@@ -128,7 +128,10 @@ OPTIONS=font_status:Courier New,font_size_status:14
 
 # Other
 OPTIONS=hilite_pet,!toptenwin
-#OPTIONS=!splash_screen,player_selection:prompts
+# Narrow Way at startup (console) and the opening picture (graphical
+# window). On unless this line is used:
+#OPTIONS=!splash_screen
+#OPTIONS=player_selection:prompts
 
 # Status/message window colors
 # Possible color options include:

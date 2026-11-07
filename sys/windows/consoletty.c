@@ -994,6 +994,223 @@ term_start_screen(void)
 #endif /* VIRTUAL_TERMINAL_SEQUENCES */
 }
 
+/* The Narrow Way is 112x48. A NetHack console is often 80x24, so the
+   splash grows the window (and shrinks the font if it must) and puts
+   the old size back afterwards. */
+static struct {
+    boolean active;
+    int width, height;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    CONSOLE_FONT_INFOEX font;
+    boolean have_font;
+} splash_frame = { 0 };
+
+static void
+console_use_size(int w, int h)
+{
+    int bytes;
+
+    if (w < 1)
+        w = 1;
+    if (h < 1)
+        h = 1;
+    free(console.front_buffer);
+    free(console.back_buffer);
+    console.width = w;
+    console.height = h;
+    console.buffer_size = w * h;
+    bytes = (int) sizeof(cell_t) * console.buffer_size;
+    console.front_buffer = (cell_t *) malloc((size_t) bytes);
+    console.back_buffer = (cell_t *) malloc((size_t) bytes);
+    buffer_fill_to_end(console.front_buffer, &undefined_cell, 0, 0);
+    buffer_fill_to_end(console.back_buffer, &clear_cell, 0, 0);
+    LI = h;
+    CO = w;
+    if (ttyDisplay) {
+        ttyDisplay->rows = h;
+        ttyDisplay->cols = w;
+    }
+}
+
+/* One string per gray level. The console only redraws a cell when
+   the color-sequence pointer changes, so every level needs its own
+   string. A single buffer reused for each step never animates. */
+static const char *splash_gray_seq = 0;
+static char splash_gray_table[256][24];
+static boolean splash_gray_ready = FALSE;
+
+void
+console_splash_gray(int v)
+{
+    int i;
+
+    if (v <= 0) {
+        splash_gray_seq = 0;
+        return;
+    }
+    if (v > 255)
+        v = 255;
+    if (!splash_gray_ready) {
+        for (i = 1; i < 256; i++)
+            Sprintf(splash_gray_table[i], "\033[38;2;%d;%d;%dm", i, i, i);
+        splash_gray_ready = TRUE;
+    }
+    splash_gray_seq = splash_gray_table[v];
+}
+
+/* Windows Terminal ignores SetConsoleWindowInfo. It does honor the
+   VT window-size sequence, written straight to the console handle.
+   xputs() would store the escape as a cell instead of sending it. */
+static void
+console_host_resize(HANDLE out, int rows, int cols)
+{
+    char seq[40];
+    DWORD wrote = 0;
+    DWORD mode = 0;
+
+    if (GetConsoleMode(out, &mode)
+        && (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) == 0) {
+        mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        SetConsoleMode(out, mode);
+    }
+    Sprintf(seq, "\033[8;%d;%dt", rows, cols);
+    WriteConsoleA(out, seq, (DWORD) strlen(seq), &wrote, NULL);
+}
+
+static void
+console_set_window(HANDLE out, int w, int h)
+{
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    SMALL_RECT rect;
+    COORD buf;
+    int cur_w, cur_h;
+
+    if (!GetConsoleScreenBufferInfo(out, &info))
+        return;
+    cur_w = info.srWindow.Right - info.srWindow.Left + 1;
+    cur_h = info.srWindow.Bottom - info.srWindow.Top + 1;
+    if (cur_w > w || cur_h > h) {
+        rect.Left = 0;
+        rect.Top = 0;
+        rect.Right = (SHORT) ((cur_w < w ? cur_w : w) - 1);
+        rect.Bottom = (SHORT) ((cur_h < h ? cur_h : h) - 1);
+        SetConsoleWindowInfo(out, TRUE, &rect);
+    }
+    buf.X = (SHORT) w;
+    buf.Y = (SHORT) (h + 20);
+    if (buf.Y < info.dwSize.Y)
+        buf.Y = info.dwSize.Y;
+    if (buf.X < w)
+        buf.X = (SHORT) w;
+    SetConsoleScreenBufferSize(out, buf);
+    rect.Left = 0;
+    rect.Top = 0;
+    rect.Right = (SHORT) (w - 1);
+    rect.Bottom = (SHORT) (h - 1);
+    SetConsoleWindowInfo(out, TRUE, &rect);
+    console_host_resize(out, h, w);
+}
+
+void
+console_splash_fit(int want_w, int want_h, int *got_w, int *got_h)
+{
+    HANDLE out;
+    CONSOLE_FONT_INFOEX font;
+    int guard;
+
+    out = console.hConOut ? console.hConOut : GetStdHandle(STD_OUTPUT_HANDLE);
+    console.hConOut = out;
+    splash_frame.active = FALSE;
+    splash_frame.width = console.width;
+    splash_frame.height = console.height;
+    splash_frame.have_font = FALSE;
+    if (!GetConsoleScreenBufferInfo(out, &splash_frame.csbi)) {
+        *got_w = console.width;
+        *got_h = console.height;
+        return;
+    }
+    font.cbSize = sizeof font;
+    if (GetCurrentConsoleFontEx(out, FALSE, &font)) {
+        splash_frame.font = font;
+        splash_frame.have_font = TRUE;
+    }
+    /* Shrink the font and apply the window until the visible
+       rectangle really is want_w by want_h. Do not stop at the
+       first guess from GetLargestConsoleWindowSize. */
+    for (guard = 0; guard < 40; guard++) {
+        int vw, vh;
+        CONSOLE_SCREEN_BUFFER_INFO now;
+
+        console_set_window(out, want_w, want_h);
+        Delay(120);
+        if (!GetConsoleScreenBufferInfo(out, &now))
+            break;
+        vw = now.srWindow.Right - now.srWindow.Left + 1;
+        vh = now.srWindow.Bottom - now.srWindow.Top + 1;
+        if (vw >= want_w && vh >= want_h)
+            break;
+        if (!splash_frame.have_font || font.dwFontSize.Y <= 4)
+            break;
+        font.dwFontSize.Y = (SHORT) (font.dwFontSize.Y - 2);
+        if (font.dwFontSize.X > 3)
+            font.dwFontSize.X = (SHORT) (font.dwFontSize.X - 1);
+        font.cbSize = sizeof font;
+        SetCurrentConsoleFontEx(out, FALSE, &font);
+    }
+    console_set_window(out, want_w, want_h);
+    {
+        CONSOLE_SCREEN_BUFFER_INFO now;
+        int vw = want_w, vh = want_h;
+
+        /* Do not write into splash_frame.csbi. That copy is the
+           play size console_splash_restore() puts back. */
+        if (GetConsoleScreenBufferInfo(out, &now)) {
+            vw = now.srWindow.Right - now.srWindow.Left + 1;
+            vh = now.srWindow.Bottom - now.srWindow.Top + 1;
+        }
+        if (vw > want_w)
+            vw = want_w;
+        if (vh > want_h)
+            vh = want_h;
+        if (vw < 1)
+            vw = console.width;
+        if (vh < 1)
+            vh = console.height;
+        console_use_size(vw, vh);
+    }
+    splash_frame.active = TRUE;
+    *got_w = console.width;
+    *got_h = console.height;
+}
+
+void
+console_splash_restore(void)
+{
+    HANDLE out;
+    SMALL_RECT tiny;
+
+    if (!splash_frame.active)
+        return;
+    out = console.hConOut;
+    tiny.Left = 0;
+    tiny.Top = 0;
+    tiny.Right = 1;
+    tiny.Bottom = 1;
+    SetConsoleWindowInfo(out, TRUE, &tiny);
+    if (splash_frame.have_font) {
+        splash_frame.font.cbSize = sizeof splash_frame.font;
+        SetCurrentConsoleFontEx(out, FALSE, &splash_frame.font);
+    }
+    SetConsoleScreenBufferSize(out, splash_frame.csbi.dwSize);
+    SetConsoleWindowInfo(out, TRUE, &splash_frame.csbi.srWindow);
+    /* Last, so a host that ignores SetConsoleWindowInfo still
+       returns to the play size. */
+    console_host_resize(out, splash_frame.height, splash_frame.width);
+    Delay(80);
+    console_use_size(splash_frame.width, splash_frame.height);
+    splash_frame.active = FALSE;
+}
+
 static BOOL
 CtrlHandler(DWORD ctrltype)
 {
@@ -1274,7 +1491,9 @@ xputc_core(int ch)
 #ifdef VIRTUAL_TERMINAL_SEQUENCES
         /* this causes way too much performance degradation */
         /* cell.color24 = customcolors[console.current_nhcolor]; */
-        cell.colorseq = esc_seq_colors[console.current_nhcolor];
+        cell.colorseq = splash_gray_seq
+                            ? splash_gray_seq
+                            : esc_seq_colors[console.current_nhcolor];
         cell.bkcolorseq = esc_seq_bkcolors[console.current_nhbkcolor];
         cell.attr = console.attr;
         // if (console.color24)
@@ -1366,7 +1585,9 @@ console_g_putch(int in_ch)
     cell.character = (console.has_unicode ? cp437[ch] : ch);
 #else
     cell.attr = console.attr;
-    cell.colorseq = esc_seq_colors[console.current_nhcolor];
+    cell.colorseq = splash_gray_seq
+                        ? splash_gray_seq
+                        : esc_seq_colors[console.current_nhcolor];
     cell.bkcolorseq = esc_seq_bkcolors[console.current_nhbkcolor];
     cell.color24 = console.color24 ? console.color24 : 0L;
     cell.color256idx = 0;
@@ -1413,7 +1634,9 @@ g_pututf8(uint8 *sequence)
     set_console_cursor(ttyDisplay->curx, ttyDisplay->cury);
     cell_t cell;
     cell.attr = console.attr;
-    cell.colorseq = esc_seq_colors[console.current_nhcolor];
+    cell.colorseq = splash_gray_seq
+                        ? splash_gray_seq
+                        : esc_seq_colors[console.current_nhcolor];
     cell.bkcolorseq = esc_seq_bkcolors[console.current_nhbkcolor];
     cell.color24 = console.color24 ? console.color24 : 0L;
     cell.color256idx =console.color256idx ? console.color256idx : 0;

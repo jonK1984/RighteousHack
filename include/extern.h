@@ -2049,6 +2049,9 @@ extern int dosuspend(void);
 extern void nt_regularize(char *);
 extern int(*nt_kbhit)(void);
 extern void Delay(int);
+extern void console_splash_fit(int, int, int *, int *);
+extern void console_splash_restore(void);
+extern void console_splash_gray(int);
 boolean get_user_home_folder(char *, size_t);
 # ifdef CRASHREPORT
 struct CRctxt;

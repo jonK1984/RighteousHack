@@ -704,8 +704,9 @@ init_sound_disp_gamewindows(void)
     activate_chosen_soundlib();
 
     if (iflags.wc_splash_screen && !flags.randomall) {
+        /* The picture already ran at the start of tty_init_nhwindows,
+           before the recover prompt. This is only the sound. */
         SoundAchievement(0, sa2_splashscreen, 0);
-        /* ToDo: new splash screen invocation will go here */
     } else {
         SoundAchievement(0, sa2_newgame_nosplash, 0);
     }

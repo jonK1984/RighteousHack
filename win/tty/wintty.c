@@ -16,6 +16,9 @@
 
 #ifdef TTY_GRAPHICS
 #include "dlb.h"
+#include "narrowway.h"
+
+static void tty_narrow_way_splash(void);
 
 /* leave this undefined; it produces bad screen output with rxvt-unicode */
 /*#define DECgraphicsOptimization*/
@@ -558,6 +561,10 @@ tty_init_nhwindows(int *argcp UNUSED, char **argv UNUSED)
 #endif
 
     tty_clear_nhwindow(BASE_WINDOW);
+
+    /* Before the copyright lines, and before getlock() asks about
+       a game left in progress. Options are already loaded. */
+    tty_narrow_way_splash();
 
     /* Once pline() is functional, error-related prompts such as
      * those relating to save files etc. can intrude on the
@@ -5317,6 +5324,412 @@ play_usersound_via_idx(int idx, int volume)
 #undef HUPSKIP
 #undef HUPSKIP_RESULT
 #undef ttypanic
+
+#if !defined(WIN32) && !defined(WIN32CON)
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <unistd.h>
+#endif
+#include <time.h>
+
+/* Several stars at once. Each fades in, fades out, then is born
+   again on a different sky cell. Not the game's rn2(). */
+#define SPLASH_PROMPT "[press enter]"
+#define SPLASH_NSTAR 8
+/* Black up through white and back, in small steps. */
+static const int splash_ramp[] = {
+    0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176,
+    192, 208, 224, 240, 255, 255, 240, 224, 208, 192, 176,
+    160, 144, 128, 112, 96, 80, 64, 48, 32, 16, 0
+};
+/* The prompt stays readable. It never drops out. */
+static const int splash_prompt_ramp[] = {
+    150, 165, 180, 195, 210, 225, 235, 245, 255,
+    255, 245, 235, 225, 210, 195, 180, 165, 150
+};
+static int splash_prompt_row;
+
+static unsigned splash_state = 1U;
+
+static unsigned
+splash_rand(void)
+{
+    splash_state = splash_state * 1103515245U + 12345U;
+    return (splash_state >> 16) & 0x7fffU;
+}
+
+static void
+splash_pen(int artfg)
+{
+    term_end_attr(ATR_BOLD);
+#if defined(WIN32) || defined(WIN32CON)
+    /* This console maps CLR_WHITE to SGR 37 (light gray) and
+       CLR_GRAY to SGR 90 (dark gray). Bold on light gray is the
+       bright peak. */
+    switch (artfg) {
+    case 3: term_start_color(CLR_BROWN); break;
+    case 7: term_start_color(CLR_WHITE); break;
+    case 8: term_start_color(CLR_GRAY); break;
+    case 11: term_start_color(CLR_YELLOW); break;
+    case 15:
+        term_start_color(CLR_WHITE);
+        term_start_attr(ATR_BOLD);
+        break;
+    default: term_start_color(CLR_BLACK); break;
+    }
+    term_start_bgcolor(CLR_BLACK);
+#else
+    if (artfg == 8)
+        xputs("\033[90m");
+    else if (artfg == 15)
+        term_start_color(CLR_WHITE);
+    else if (artfg == 7)
+        term_start_color(CLR_GRAY);
+    else if (artfg == 11)
+        term_start_color(CLR_YELLOW);
+    else if (artfg == 3)
+        term_start_color(CLR_BROWN);
+    else
+        term_start_color(CLR_BLACK);
+    /* Color sequences above reset the background. Keep the sky black. */
+    xputs("\033[40m");
+#endif
+}
+
+static void
+splash_at(int x, int y, char ch, int artfg)
+{
+    cmov(x, y);
+    splash_pen(artfg);
+    (void) xputc((int) ch);
+}
+
+/* Gray level 0..255. Used for the star fade and the prompt. */
+static void
+splash_shade(int x, int y, char ch, int v)
+{
+    cmov(x, y);
+    term_end_attr(ATR_BOLD);
+    if (v < 0)
+        v = 0;
+    if (v > 255)
+        v = 255;
+#if defined(WIN32) || defined(WIN32CON)
+    console_splash_gray(v > 0 ? v : 0);
+    term_start_bgcolor(CLR_BLACK);
+    term_start_color(v > 0 ? CLR_WHITE : CLR_BLACK);
+#else
+    {
+        char seq[40];
+
+        if (v <= 0)
+            xputs("\033[30m");
+        else {
+            Sprintf(seq, "\033[38;2;%d;%d;%dm", v, v, v);
+            xputs(seq);
+        }
+        xputs("\033[40m");
+    }
+#endif
+    (void) xputc((int) ch);
+#if defined(WIN32) || defined(WIN32CON)
+    console_splash_gray(0);
+#endif
+}
+
+static void
+splash_sleep(unsigned msec)
+{
+#if defined(WIN32) || defined(WIN32CON)
+    /* Console NetHack links Delay() (Sleep). It does not link msleep(). */
+    Delay((int) msec);
+#elif defined(VMS)
+    /* vmstty.c provides msleep(); nanosleep is not the VMS timer. */
+    msleep(msec);
+#else
+    /* Mac, Linux, and other Unix. Do not call msleep(): it is a macro
+       only when TIMED_DELAY is on, and that option is off by default. */
+    struct timespec ts;
+
+    ts.tv_sec = (time_t) (msec / 1000U);
+    ts.tv_nsec = (long) (msec % 1000U) * 1000000L;
+    (void) nanosleep(&ts, (struct timespec *) 0);
+#endif
+}
+
+static boolean
+splash_key_waiting(void)
+{
+#if defined(WIN32) || defined(WIN32CON)
+    return (boolean) kbhit();
+#else
+    fd_set fds;
+    struct timeval tv;
+
+    FD_ZERO(&fds);
+    FD_SET(fileno(stdin), &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    return (boolean) (select(fileno(stdin) + 1, &fds,
+                             (fd_set *) 0, (fd_set *) 0, &tv) > 0);
+#endif
+}
+
+/* Space or Enter leaves. Anything else is eaten so it does not
+   start the game, and the picture stays up. */
+static boolean
+splash_skip_key(void)
+{
+    int ch;
+
+    if (!splash_key_waiting())
+        return FALSE;
+    ch = tty_nhgetch();
+    return (boolean) (ch == ' ' || ch == '\n' || ch == '\r');
+}
+
+#if !defined(WIN32) && !defined(WIN32CON)
+static void
+splash_measure(int *cols, int *rows)
+{
+#if defined(TIOCGWINSZ)
+    struct winsize ws;
+
+    if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) == 0
+        && ws.ws_col > 0 && ws.ws_row > 0) {
+        *cols = (int) ws.ws_col;
+        *rows = (int) ws.ws_row;
+        CO = *cols;
+        LI = *rows;
+        if (ttyDisplay) {
+            ttyDisplay->cols = *cols;
+            ttyDisplay->rows = *rows;
+        }
+        return;
+    }
+#endif
+    *cols = ttyDisplay ? ttyDisplay->cols : CO;
+    *rows = ttyDisplay ? ttyDisplay->rows : LI;
+}
+
+static void
+splash_request_size(int cols, int rows)
+{
+    char buf[40];
+
+    Sprintf(buf, "\033[8;%d;%dt", rows, cols);
+    xputs(buf);
+    (void) fflush(stdout);
+    splash_sleep(80);
+}
+#endif
+
+static short splash_sky[NARROW_W * NARROW_H];
+static int splash_sky_n;
+static int splash_prompt_col;
+
+/* Hard sky box. The title occupies rows 2-6, columns 20-96.
+   The mountains and the path begin at row 9. Stars may use only
+   the open rows above that, and not the title block. */
+static boolean
+splash_in_sky(int x, int y)
+{
+    if (y < 0 || y > 8 || x < 0 || x >= NARROW_W)
+        return FALSE;
+    if (y >= 2 && y <= 6 && x >= 18 && x <= 98)
+        return FALSE;
+    return TRUE;
+}
+
+static void
+splash_center_prompt(int cols, int rows)
+{
+    int len, y, i, x, ok, dist, best, bestd, mid;
+
+    len = (int) sizeof SPLASH_PROMPT - 1;
+    splash_prompt_col = (cols - len) / 2;
+    if (splash_prompt_col < 0)
+        splash_prompt_col = 0;
+    mid = rows / 2;
+    best = (rows > 2) ? rows - 2 : 0;
+    if (best >= NARROW_H)
+        best = NARROW_H - 1;
+    bestd = 10000;
+    for (y = 0; y < rows && y < NARROW_H; y++) {
+        ok = 1;
+        for (i = 0; i < len; i++) {
+            x = splash_prompt_col + i;
+            if (x < 0 || x >= NARROW_W || narrow_glyph[y][x] != ' ') {
+                ok = 0;
+                break;
+            }
+        }
+        if (!ok)
+            continue;
+        dist = y - mid;
+        if (dist < 0)
+            dist = -dist;
+        if (dist < bestd) {
+            bestd = dist;
+            best = y;
+        }
+    }
+    splash_prompt_row = best - 2;
+    if (splash_prompt_row < 0)
+        splash_prompt_row = 0;
+}
+
+static void
+splash_build_sky(void)
+{
+    int x, y, len;
+
+    len = (int) sizeof SPLASH_PROMPT - 1;
+    splash_sky_n = 0;
+    for (y = 0; y <= 8; y++)
+        for (x = 0; x < NARROW_W; x++) {
+            if (!splash_in_sky(x, y))
+                continue;
+            if (narrow_glyph[y][x] != ' ')
+                continue;
+            if (y == splash_prompt_row && x >= splash_prompt_col
+                && x < splash_prompt_col + len)
+                continue;
+            splash_sky[splash_sky_n++] = (short) (y * NARROW_W + x);
+        }
+}
+
+struct splash_star {
+    int x, y, phase, wait;
+};
+
+static void
+splash_place_star(struct splash_star *s)
+{
+    int n, guard, prev;
+
+    if (splash_sky_n < 1) {
+        s->x = s->y = -1;
+        return;
+    }
+    prev = (s->y >= 0) ? (s->y * NARROW_W + s->x) : -1;
+    for (guard = 0; guard < 8; guard++) {
+        n = splash_sky[splash_rand() % (unsigned) splash_sky_n];
+        if (n != prev || splash_sky_n < 2)
+            break;
+    }
+    s->x = n % NARROW_W;
+    s->y = n / NARROW_W;
+    s->phase = 0;
+    s->wait = 0;
+}
+
+static void
+splash_draw_prompt(int v)
+{
+    const char *p = SPLASH_PROMPT;
+    int i;
+
+    for (i = 0; p[i]; i++)
+        splash_shade(splash_prompt_col + i, splash_prompt_row, p[i], v);
+}
+
+static void
+tty_narrow_way_splash(void)
+{
+    int r, c, i, tick;
+    int cols, rows, draw_w, draw_h;
+    struct splash_star star[SPLASH_NSTAR];
+#if !defined(WIN32) && !defined(WIN32CON)
+    int saved_cols, saved_rows;
+    boolean resized = FALSE;
+#endif
+
+    if (!iflags.wc_splash_screen)
+        return;
+
+#if defined(WIN32) || defined(WIN32CON)
+    /* binary\NetHack.exe is usually 80 by 24. Grow it for the art. */
+    console_splash_fit(NARROW_W, NARROW_H, &cols, &rows);
+#else
+    splash_measure(&saved_cols, &saved_rows);
+    cols = saved_cols;
+    rows = saved_rows;
+    if (cols < NARROW_W || rows < NARROW_H) {
+        splash_request_size(NARROW_W, NARROW_H);
+        splash_measure(&cols, &rows);
+        resized = (cols != saved_cols || rows != saved_rows);
+    }
+#endif
+    if (cols < 1 || rows < 1)
+        return;
+    draw_w = (cols < NARROW_W) ? cols : NARROW_W;
+    draw_h = (rows < NARROW_H) ? rows : NARROW_H;
+
+    term_start_bgcolor(CLR_BLACK);
+    term_clear_screen();
+    for (r = 0; r < draw_h; r++)
+        for (c = 0; c < draw_w; c++)
+            splash_at(c, r, narrow_glyph[r][c], (int) narrow_fg[r][c]);
+    splash_center_prompt(cols, rows);
+    splash_build_sky();
+    splash_state = (unsigned) time((time_t *) 0);
+    if (splash_state == 0U)
+        splash_state = 1U;
+    for (i = 0; i < SPLASH_NSTAR; i++) {
+        star[i].x = star[i].y = -1;
+        splash_place_star(&star[i]);
+        /* Scatter them through the fade so they are not in step. */
+        star[i].phase = (int) (splash_rand() % (unsigned) SIZE(splash_ramp));
+        star[i].wait = (int) (splash_rand() % 8U);
+    }
+    splash_draw_prompt(255);
+    (void) fflush(stdout);
+
+    /* Space or Enter leaves. No game RNG, no turn timer.
+       128 ms per brightness step: forty percent faster than 180 ms. */
+    for (tick = 0; ; tick++) {
+        for (i = 0; i < 2; i++) {
+            if (splash_skip_key())
+                goto splash_done;
+            splash_sleep(64);
+        }
+        for (i = 0; i < SPLASH_NSTAR; i++) {
+            int v;
+
+            if (star[i].x < 0 || star[i].x >= draw_w || star[i].y >= draw_h)
+                continue;
+            if (star[i].phase < SIZE(splash_ramp)) {
+                v = splash_ramp[star[i].phase];
+                if (v <= 0)
+                    splash_at(star[i].x, star[i].y, ' ', 0);
+                else
+                    splash_shade(star[i].x, star[i].y, '+', v);
+                star[i].phase++;
+            } else if (--star[i].wait <= 0) {
+                splash_at(star[i].x, star[i].y, ' ', 0);
+                splash_place_star(&star[i]);
+            }
+        }
+        splash_draw_prompt(splash_prompt_ramp[
+            tick % SIZE(splash_prompt_ramp)]);
+        (void) fflush(stdout);
+    }
+ splash_done:
+    term_end_attr(ATR_BOLD);
+    term_end_color();
+#if defined(WIN32) || defined(WIN32CON)
+    console_splash_gray(0);
+#endif
+#if defined(WIN32) || defined(WIN32CON)
+    console_splash_restore();
+#else
+    if (resized)
+        splash_request_size(saved_cols, saved_rows);
+#endif
+    term_clear_screen();
+    (void) fflush(stdout);
+}
 
 #endif /* TTY_GRAPHICS */
 

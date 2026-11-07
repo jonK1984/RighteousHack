@@ -382,7 +382,8 @@
 # Status window settings. Windows GUI only.
 #OPTIONS=font_status:Courier New,font_size_status:9
 
-# No startup splash screen. Windows GUI only.
+# Startup screen. On by default. The console shows the Narrow Way.
+# The graphical window shows its opening picture. Turn either off with:
 #OPTIONS=!splash_screen
 
 # How does NetHack prompt for character creation. Windows GUI only.

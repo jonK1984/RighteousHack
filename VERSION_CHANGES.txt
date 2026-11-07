@@ -10,6 +10,18 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-07
+The Narrow Way fade is forty percent faster.
+
+2026-11-07
+Star and [press enter] fades update on screen again. Each gray has its own color string, and [press enter] sits two rows higher.
+
+2026-11-07
+The Narrow Way wait uses Delay() on Windows and nanosleep() on Mac, Linux, and Unix. It does not call msleep().
+
+2026-11-07
+The console shows the Narrow Way at startup, with four stars that twinkle. OPTIONS=!splash_screen in the options file turns that screen off. A console smaller than 112 by 48, or one with color off, skips it.
+
 2026-11-06
 The spare Key to the Sanctum is in a chest in the northeast tower of the town of Berachah, at (73,5). It is not on the Hinnom battlefield. Moloch still carries the other key.
 

@@ -710,7 +710,7 @@ static int optfn_##a(int, int, boolean, char *, char *);
            "message when hero spots a monster")
     NHOPTB(splash_screen, Advanced, 0, opt_out, set_in_config,
            On, Yes, No, No, NoAlias, &iflags.wc_splash_screen, Term_False,
-           (char *)0)
+           "show the Narrow Way at startup")
     NHOPTB(standout, Advanced, 0, opt_in, set_in_game,
            Off, Yes, No, No, NoAlias, &flags.standout, Term_False,
            "use standout for --more--")

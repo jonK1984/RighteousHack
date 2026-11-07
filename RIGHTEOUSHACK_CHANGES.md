@@ -26,7 +26,7 @@ A short human-readable log of changes is in VERSION_CHANGES.txt.
 
 | ID | Item | Where | Notes |
 |----|------|-------|-------|
-| ID-001 | Banner `RighteousHack, Copyright 2025` / `By jonk1984.` | `include/patchlevel.h` | Replaces the NetHack copyright banner lines A and B. |
+| ID-001 | Banner `RighteousHack, Copyright 2025` / `By Jon Kakaley.` | `include/patchlevel.h` | Replaces the NetHack copyright banner lines A and B. |
 | ID-002 | `WIZARD_NAME` is `"prophet"` | `include/config.h` | Ignored when SYSCF is on. |
 | ID-003 | README rewritten as the RighteousHack 0.1 introduction | `README` | Still describes the base as NetHack 3.7.0 at inventory time. |
 | ID-004 | `VERSION_MAJOR 3` / `VERSION_MINOR 7` / `EDITLEVEL 131` / `NH_STATUS_WIP` | `include/patchlevel.h` | Owner's 3.7 version. **5.0.0's version numbers replace this.** Old save and bones files are not compatible. |
@@ -1473,6 +1473,32 @@ prints "You caitiff!" and takes one alignment point. It does not
 change Favor. A hostile monster no longer triggers it, whether that
 monster is fleeing or helpless. A peaceful monster still does. The
 same function is used for a kick, a polearm, and a grappling hook.
+
+### Narrow Way startup screen (2026-11-07)
+
+The console and the Windows console tty show the approved Narrow
+Way art once, before the game windows open, when `splash_screen`
+is on. That option already defaults to on and is set from the
+options file. `OPTIONS=!splash_screen` turns it off. The same
+switch still controls the graphical port's opening picture.
+
+The art is the 112 by 48 colored grid. It is drawn at the start
+of tty setup, before the copyright lines and before the recover
+question. On Windows the visible window is grown to 112 by 48,
+shrinking the font until that size actually fits, then put back
+to the play size the console already chose. Mac, Linux, and Unix
+ask the terminal to resize the same way.
+
+Eight stars at a time fade in and out only in the open sky:
+rows 0-1, the side margins of the title, and rows 7-8. Row 9
+downward is the mountains and the path, and the title block
+on rows 2-6 is closed. The Windows console is asked to resize
+with the terminal's own window-size sequence, because
+SetConsoleWindowInfo does not change a Windows Terminal window.
+When one finishes, it is born again on a different sky cell.
+The choice uses a private counter, not the game RNG. Along the
+bottom, [press enter] cycles light gray and white. Enter or
+Space leaves the picture.
 
 ### Valley, Greed, and the lever (2026-11-06)
 
