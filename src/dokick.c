@@ -148,6 +148,11 @@ kick_monster(struct monst *mon, coordxy x, coordxy y)
     boolean clumsy = FALSE;
     int i, j;
 
+    if (wayside_is_villager(mon)) {
+        wayside_hero_strikes(mon);
+        return;
+    }
+
     /* anger target even if wild miss will occur */
     setmangry(mon, TRUE);
 

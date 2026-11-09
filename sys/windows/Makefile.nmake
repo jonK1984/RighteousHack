@@ -763,6 +763,7 @@ LUA_FILES = $(DAT)asmodeus.lua $(DAT)baalz.lua $(DAT)bigrm-1.lua \
 	$(DAT)gibeon.lua \
 	$(DAT)hinnom.lua \
 	$(DAT)berachah.lua \
+	$(DAT)wayside.lua \
 	$(DAT)Adv-fila.lua $(DAT)Adv-filb.lua $(DAT)Adv-goal.lua \
 	$(DAT)Adv-loca.lua $(DAT)Adv-strt.lua \
 	$(DAT)Chp-fila.lua $(DAT)Chp-filb.lua $(DAT)Chp-goal.lua \

@@ -1335,14 +1335,14 @@ doup(void)
         You_cant("go up here.");
         return ECMD_OK;
     }
-    if (Is_sanctum(&u.uz) && u.uevent.sanctum_frozen
-        && !sanctum_ascent_open()) {
-        pline("The Road to Salvation is not yet open.");
-        return ECMD_OK;
-    }
     if (Is_sanctum(&u.uz)
         && (u.uevent.sanctum_grace || u.uevent.sanctum_doom)) {
         pline("The hosts of darkness bar the way.");
+        return ECMD_OK;
+    }
+    /* From the moment of entry, not only after the hosts freeze. */
+    if (Is_sanctum(&u.uz) && !sanctum_ascent_open()) {
+        pline("The Road to Salvation is not yet open.");
         return ECMD_OK;
     }
     if (stucksteed(TRUE)) {
@@ -1633,26 +1633,26 @@ goto_level(
         return;
     }
     if (Is_sanctum(&u.uz) && !on_level(newlevel, &u.uz)) {
-        if (u.uevent.sanctum_frozen && !sanctum_ascent_open()) {
-            pline("The Road to Salvation is not yet open.");
-            return;
-        }
-        if (sanctum_ascent_open())
-            wayside_begin();
         if (u.uevent.sanctum_grace || u.uevent.sanctum_doom) {
             pline("The hosts of darkness bar the way.");
             return;
         }
+        /* Immediate, including before the hosts freeze. */
+        if (!sanctum_ascent_open()) {
+            pline("The Road to Salvation is not yet open.");
+            return;
+        }
+        wayside_begin();
     }
-    /* A fall from the level just above the vibrating square would
-       skip the Wayside. Send that fall through the Wayside too. */
-    if (wayside_road() && falling && In_hell(&u.uz)
-        && u.uz.dlevel == svd.dungeons[u.uz.dnum].num_dunlevs - 2) {
-        s_level *ws = find_level("wayside");
-
-        if (ws)
-            assign_level(newlevel, &ws->dlevel);
-    }
+    /* A jump that would pass the trial lands on the Wayside instead.
+       Stairs that already end there are left alone. */
+    if (wayside_steer(newlevel))
+        return;
+    if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
+        newlevel->dlevel = dunlevs_in_dungeon(newlevel);
+    up = (depth(newlevel) < depth(&u.uz));
+    newdungeon = (u.uz.dnum != newlevel->dnum);
+    dist = depth(newlevel) - depth(&u.uz);
     /* The sword's return is not a portal and is not the sealed way up. */
     wildhome = (u.utotype & UTOTYPE_WILDHOME) != 0;
     if (in_wilderness() && up && dunlev(&u.uz) > 1 && !portal && !wildhome) {

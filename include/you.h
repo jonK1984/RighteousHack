@@ -534,6 +534,16 @@ struct you {
     xint16 skill_record[P_SKILL_LIMIT]; /* skill advancements */
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
+    /* Wayside trial. Starts at zero. Saved with struct you.
+       EDITLEVEL 12: older saves do not load. */
+    struct {
+        unsigned long bits;
+        xint16 mode;             /* 0 unset, 1 replace a level, 2 insert */
+        xint16 target;           /* Gehennom dlevel when mode is 1 */
+        unsigned vid[6];         /* villager m_id, house order */
+        unsigned mino_id;
+        unsigned giant_id;
+    } uwayside;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */
