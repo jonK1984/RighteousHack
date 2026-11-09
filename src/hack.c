@@ -5955,8 +5955,9 @@ sanctum_no_hostility(void)
                       && (u.uevent.sanctum_frozen || u.uevent.sanctum_grace));
 }
 
-/* The Cap this fork actually gives: divine covering made into the
-   artifact in give_cap_of_salvation(). Worn on the head, not carried. */
+/* The Helmet of Salvation this fork actually gives: divine covering
+   made into the artifact in give_cap_of_salvation(). Worn on the
+   head. The check is the artifact id, not the name string. */
 boolean
 cap_of_salvation_worn(void)
 {
@@ -6073,9 +6074,12 @@ give_cap_of_salvation(void)
         return;
     otmp->spe = 2;
     bless(otmp);
-    otmp->bknown = otmp->known = otmp->dknown = 1;
-    if (otmp->oartifact)
+    otmp->bknown = otmp->known = otmp->dknown = otmp->rknown = 1;
+    if (otmp->oartifact) {
+        makeknown(otmp->otyp);
+        discover_artifact((xint16) otmp->oartifact);
         u.ugifts++;
+    }
     (void) hold_another_object(otmp, "Oops!  %s to the floor!",
                                The(aobjnam(otmp, "drop")),
                                (const char *) 0);

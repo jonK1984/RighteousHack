@@ -11,7 +11,10 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-09
-Wayside progress is stored on the hero, not on the soul's corpsenm. The Sanctum stairs are shut from the moment of entry until the Cap of Salvation is worn and your soul is carried. your soul is that object, not a gem. An unvisited ordinary level between Orcustown and the vibrating square is chosen at random when one exists; otherwise a new level is inserted on the ascent and the game says so. Old saves will not load.
+The head artifact is the Helmet of Salvation. Wishing that full name yields it. Wishing helmet, helm of brilliance, helm of telepathy, helm of opposite alignment, or dwarvish iron helm still yields those armors.
+
+2026-11-09
+Wayside progress is stored on the hero, not on the soul's corpsenm. The Sanctum stairs are shut from the moment of entry until the Helmet of Salvation is worn and your soul is carried. your soul is that object, not a gem. An unvisited ordinary level between Orcustown and the vibrating square is chosen at random when one exists; otherwise a new level is inserted on the ascent and the game says so. Old saves will not load.
 
 2026-11-08
 Looking at yourself names your role, so a prophet is a prophet. Wayside house walls are real walls, the extra stair on a wall is removed, and the villagers answer when spoken to.
@@ -20,13 +23,13 @@ Looking at yourself names your role, so a prophet is a prophet. Wayside house wa
 The Windows nmake file now compiles wayside.c into both the console and the graphical game.
 
 2026-11-08
-The Wayside stairs check that the Cap of Salvation is still worn. your soul resists destruction and polymorph. A fall or a cursed potion of gain level cannot skip the Wayside once the Road has started.
+The Wayside stairs check that the Helmet of Salvation is still worn. your soul resists destruction and polymorph. A fall or a cursed potion of gain level cannot skip the Wayside once the Road has started.
 
 2026-11-07
 The return from the Sanctum now leads through the Wayside, a new level between the vibrating square and the level above it. Six villagers ask riddles. All six answers open the gate. A wrong answer returns you to the courtyard with a minotaur and a storm giant. Old saves will not load.
 
 2026-11-07
-The Sanctum stairs stay shut until the Cap of Salvation is worn and your soul is carried. your soul cannot be dropped.
+The Sanctum stairs stay shut until the Helmet of Salvation is worn and your soul is carried. your soul cannot be dropped.
 
 2026-11-07
 The Narrow Way fade is forty percent faster.
@@ -396,7 +399,7 @@ altar. It is named for you, such as "Elisha's soul". Opening
 that chest is the reveal and God's question. Either answer, the
 hosts of darkness rise. Yes: they move for two turns and cannot
 fight, then the light freezes the whole level and you receive a
-+2 Cap of Salvation. The code name is still Cap of Salvation.
++2 Helmet of Salvation.
 The climb back up is only a placeholder, the Road to Salvation.
 No: they really attack for three turns, then the game ends.
 The tombstone is "Killed by the hosts of darkness, having
