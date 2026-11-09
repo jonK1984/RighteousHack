@@ -2589,6 +2589,9 @@ in_container(struct obj *obj)
         set_bknown(obj, 1);
         pline_The("stone%s won't leave your person.", plur(obj->quan));
         return 0;
+    } else if (obj->otyp == PLAYER_SOUL) {
+        pline("your soul stays with you.");
+        return 0;
     } else if (obj->otyp == AMULET_OF_YENDOR
                || obj->otyp == CANDELABRUM_OF_INVOCATION
                || obj->otyp == BELL_OF_OPENING

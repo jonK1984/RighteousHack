@@ -268,6 +268,7 @@ moveloop_core(void)
 
                 l_nhcore_call(NHCORE_MOVELOOP_TURN);
                 sanctum_tick();
+                wayside_tick();
 
                 if (Glib)
                     glibr();

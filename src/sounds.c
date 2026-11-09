@@ -691,6 +691,8 @@ domonnoise(struct monst *mtmp)
     /* Fortress speech runs before the silent check. Horned, barbed,
        bone, and ice devils do not otherwise speak, and the cloak
        still gets a line from each of them. */
+    if (wayside_chat(mtmp))
+        return ECMD_TIME;
     if (hinnom_chat(mtmp))
         return ECMD_TIME;
     /* shk_chat can handle nonverbal monsters */
@@ -1548,6 +1550,11 @@ dochat(void)
         || M_AP_TYPE(mtmp) == M_AP_FURNITURE
         || M_AP_TYPE(mtmp) == M_AP_OBJECT)
         return ECMD_OK;
+
+    /* Wayside villagers are asked before the sleep check. A
+       waiting or djinni-voiced prisoner would otherwise refuse. */
+    if (wayside_chat(mtmp))
+        return ECMD_TIME;
 
     /* sleeping monsters won't talk, except priests (who wake up) */
     if (helpless(mtmp) && !mtmp->ispriest) {

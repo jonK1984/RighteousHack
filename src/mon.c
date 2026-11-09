@@ -3154,6 +3154,9 @@ mondead(struct monst *mtmp)
         return;
     if (moloch_stands(mtmp))
         return;
+    if (wayside_villager_stands(mtmp))
+        return;
+    wayside_monster_died(mtmp);
 
     /* potential pet message; always clear global flag */
     be_sad = iflags.sad_feeling;

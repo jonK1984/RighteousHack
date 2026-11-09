@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 10 /* the Battle of Hinnom: new monsters, power lever trap, Hinnom event flags */
+#define EDITLEVEL 11 /* The Road to Salvation adds a dungeon; old saves will not load */
 
 /*
  * Development status possibilities.

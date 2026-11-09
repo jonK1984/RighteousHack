@@ -1191,6 +1191,8 @@ level_tele(void)
         schedule_goto(&newlevel, UTOTYPE_NONE, (char *) 0, (char *) 0);
         return;
     }
+    if (wayside_blocks_levelport())
+        return;
     if ((u.uhave.amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
         && !wizard) {
         You_feel("very disoriented for a moment.");

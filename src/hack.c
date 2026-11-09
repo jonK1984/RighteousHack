@@ -5955,6 +5955,34 @@ sanctum_no_hostility(void)
                       && (u.uevent.sanctum_frozen || u.uevent.sanctum_grace));
 }
 
+/* The Cap this fork actually gives: divine covering made into the
+   artifact in give_cap_of_salvation(). Worn on the head, not carried. */
+boolean
+cap_of_salvation_worn(void)
+{
+    return (boolean) (uarmh && uarmh->oartifact == ART_HELMET_OF_SALVATION);
+}
+
+/* The altar object is PLAYER_SOUL. Identity is the type, not a
+   player-typed name on some other item. */
+struct obj *
+carried_player_soul(void)
+{
+    struct obj *otmp;
+
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->otyp == PLAYER_SOUL)
+            return otmp;
+    return (struct obj *) 0;
+}
+
+/* Up out of the Sanctum after the hosts freeze. Both must hold now. */
+boolean
+sanctum_ascent_open(void)
+{
+    return (boolean) (cap_of_salvation_worn() && carried_player_soul());
+}
+
 static boolean
 box_holds_soul(struct obj *box)
 {
@@ -5975,7 +6003,6 @@ place_soul_chest(void)
     coordxy x, y, ax, ay;
     struct obj *chest, *soul;
     struct monst *mtmp;
-    char buf[BUFSZ];
     boolean found = FALSE;
 
     if (u.uevent.soul_placed || !Is_sanctum(&u.uz))
@@ -5998,11 +6025,8 @@ place_soul_chest(void)
     chest->otrapped = 0;
     soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
     if (soul) {
-        if (svp.plname[0])
-            Sprintf(buf, "%s's soul", svp.plname);
-        else
-            Strcpy(buf, "your soul");
-        soul = oname(soul, buf, ONAME_NO_FLAGS);
+        /* Locked name. Not the player's name, and not a soul gem. */
+        soul = oname(soul, "your soul", ONAME_NO_FLAGS);
         if (soul) {
             soul->dknown = 1;
             add_to_container(chest, soul);

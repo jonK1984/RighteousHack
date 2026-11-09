@@ -700,6 +700,11 @@ canletgo(struct obj *obj, const char *word)
         set_bknown(obj, 1);
         return FALSE;
     }
+    if (obj->otyp == PLAYER_SOUL) {
+        if (*word)
+            pline("your soul stays with you.");
+        return FALSE;
+    }
     if (obj->otyp == LEASH && obj->leashmon != 0) {
         if (*word)
             pline_The("leash is tied around your %s.", body_part(HAND));
@@ -1244,6 +1249,8 @@ dodown(void)
     }
     /* The stairs exist once the square has been revealed. They stay
        shut until Peter's key is used on them. */
+    if (stairs_down && wayside_take_down())
+        return ECMD_TIME;
     if (stairs_down && invocation_pos(u.ux, u.uy) && !u.uevent.invoked) {
         pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it."); /* PLACEHOLDER */
         return ECMD_OK;
@@ -1328,7 +1335,8 @@ doup(void)
         You_cant("go up here.");
         return ECMD_OK;
     }
-    if (Is_sanctum(&u.uz) && u.uevent.sanctum_frozen) {
+    if (Is_sanctum(&u.uz) && u.uevent.sanctum_frozen
+        && !sanctum_ascent_open()) {
         pline("The Road to Salvation is not yet open.");
         return ECMD_OK;
     }
@@ -1360,6 +1368,8 @@ doup(void)
         You("are held back by your pet!");
         return ECMD_OK;
     }
+    if (wayside_take_up())
+        return ECMD_TIME;
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;
@@ -1623,14 +1633,25 @@ goto_level(
         return;
     }
     if (Is_sanctum(&u.uz) && !on_level(newlevel, &u.uz)) {
-        if (u.uevent.sanctum_frozen) {
+        if (u.uevent.sanctum_frozen && !sanctum_ascent_open()) {
             pline("The Road to Salvation is not yet open.");
             return;
         }
+        if (sanctum_ascent_open())
+            wayside_begin();
         if (u.uevent.sanctum_grace || u.uevent.sanctum_doom) {
             pline("The hosts of darkness bar the way.");
             return;
         }
+    }
+    /* A fall from the level just above the vibrating square would
+       skip the Wayside. Send that fall through the Wayside too. */
+    if (wayside_road() && falling && In_hell(&u.uz)
+        && u.uz.dlevel == svd.dungeons[u.uz.dnum].num_dunlevs - 2) {
+        s_level *ws = find_level("wayside");
+
+        if (ws)
+            assign_level(newlevel, &ws->dlevel);
     }
     /* The sword's return is not a portal and is not the sealed way up. */
     wildhome = (u.utotype & UTOTYPE_WILDHOME) != 0;

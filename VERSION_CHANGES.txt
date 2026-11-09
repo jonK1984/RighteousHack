@@ -10,6 +10,21 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-08
+Looking at yourself names your role, so a prophet is a prophet. Wayside house walls are real walls, the extra stair on a wall is removed, and the villagers answer when spoken to.
+
+2026-11-08
+The Windows nmake file now compiles wayside.c into both the console and the graphical game.
+
+2026-11-08
+The Wayside stairs check that the Cap of Salvation is still worn. your soul resists destruction and polymorph. A fall or a cursed potion of gain level cannot skip the Wayside once the Road has started.
+
+2026-11-07
+The return from the Sanctum now leads through the Wayside, a new level between the vibrating square and the level above it. Six villagers ask riddles. All six answers open the gate. A wrong answer returns you to the courtyard with a minotaur and a storm giant. Old saves will not load.
+
+2026-11-07
+The Sanctum stairs stay shut until the Cap of Salvation is worn and your soul is carried. your soul cannot be dropped.
+
 2026-11-07
 The Narrow Way fade is forty percent faster.
 

@@ -451,6 +451,12 @@ steal(struct monst *mtmp, char *objnambuf)
         otmp = uarm;
 
  gotobj:
+    if (otmp->otyp == PLAYER_SOUL) {
+        if (!retrycnt++)
+            goto retry;
+        pline("your soul stays with you.");
+        return 1;
+    }
     if (otmp->oartifact == ART_SWORD_OF_THE_SPIRIT
         && (otmp == uwep || otmp == uswapwep)) {
         if (!retrycnt++)

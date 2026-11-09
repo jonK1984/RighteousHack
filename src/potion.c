@@ -1205,6 +1205,8 @@ peffect_gain_level(struct obj *otmp)
                     return;
                 }
             }
+            if (wayside_blocks_levelport())
+                return;
             You("rise up, through the %s!", ceiling(u.ux, u.uy));
             goto_level(&newlevel, FALSE, FALSE, FALSE);
         } else {

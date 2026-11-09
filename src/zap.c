@@ -1470,6 +1470,7 @@ obj_resists(struct obj *obj,
         || obj->otyp == SPE_BOOK_OF_THE_DEAD
         || obj->otyp == CANDELABRUM_OF_INVOCATION
         || obj->otyp == BELL_OF_OPENING
+        || obj->otyp == PLAYER_SOUL
         || (obj->otyp == CORPSE && is_rider(&mons[obj->corpsenm]))) {
         return TRUE;
     } else {

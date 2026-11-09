@@ -119,6 +119,15 @@ dungeon = {
             base = 9,
             range = 5,
             direction = "up"
+         },
+         {
+            -- Attaches at the vibrating-square level (second from the
+            -- bottom). no_up: that level does not grow a stair on the
+            -- way down. The return ascent is sent here from C.
+            name = "The Road to Salvation",
+            base = -2,
+            direction = "up",
+            branchtype = "no_up"
          }
       },
       levels = {
@@ -385,6 +394,17 @@ dungeon = {
       alignment = "neutral",
       levels = {
          { name = "his-treasure-1", base = 1 }
+      }
+   },
+   {
+      name = "The Road to Salvation",
+      bonetag = "Z",
+      base = 1,
+      alignment = "lawful",
+      flags = { "mazelike" },
+      entry = 1,
+      levels = {
+         { name = "wayside", base = 1 }
       }
    },
    {

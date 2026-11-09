@@ -2120,8 +2120,10 @@ invoke_create_portal(struct obj *obj)
     else
         newlev.dlevel = svd.dungeons[i].dunlev_ureached;
 
-    if (u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev)
-        || newlev.dnum == u.uz.dnum || !next_to_u()) {
+    if (wayside_blocks_levelport()) {
+        /* The Road message was just given. */
+    } else if (u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev)
+               || newlev.dnum == u.uz.dnum || !next_to_u()) {
         You_feel("very disoriented for a moment.");
     } else {
         if (!Blind)

@@ -1295,6 +1295,12 @@ makelevel(void)
             makemaz(slev->proto);
             if (Is_hinnom_level(&u.uz))
                 hinnom_setup();
+            {
+                s_level *ws = find_level("wayside");
+
+                if (ws && on_level(&u.uz, &ws->dlevel))
+                    wayside_setup();
+            }
             if (on_jacobs_ladder(&u.uz))
                 jacob_set_portal();
         }

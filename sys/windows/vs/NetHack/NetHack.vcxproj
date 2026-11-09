@@ -205,6 +205,7 @@
     <ClCompile Include="$(SrcDir)vault.c" />
     <ClCompile Include="$(SrcDir)version.c" />
     <ClCompile Include="$(SrcDir)vision.c" />
+    <ClCompile Include="$(SrcDir)wayside.c" />
     <ClCompile Include="$(SrcDir)weapon.c" />
     <ClCompile Include="$(SrcDir)were.c" />
     <ClCompile Include="$(SrcDir)wield.c" />

@@ -109,14 +109,32 @@ self_lookat(char *outbuf)
 {
     char race[QBUFSZ], trapbuf[QBUFSZ];
 
-    /* include race with role unless polymorphed */
+    /* include race with role unless polymorphed.
+       The prophet's body is still the old wizard monster type.
+       Say the role, so a prophet is not called a wizard. */
     race[0] = '\0';
     if (!Upolyd)
         Sprintf(race, "%s ", gu.urace.adj);
-    Sprintf(outbuf, "%s%s%s called %s",
-            /* being blinded may hide invisibility from self */
-            (Invis && (senseself() || !Blind)) ? "invisible " : "", race,
-            pmname(&mons[u.umonnum], Ugender), svp.plname);
+    {
+        const char *who;
+        char rolebuf[QBUFSZ];
+        char *rp;
+
+        if (!Upolyd) {
+            who = (flags.female && gu.urole.name.f) ? gu.urole.name.f
+                                                    : gu.urole.name.m;
+            Strcpy(rolebuf, who);
+            for (rp = rolebuf; *rp; rp++)
+                *rp = (char) lowc(*rp);
+            who = rolebuf;
+        } else {
+            who = pmname(&mons[u.umonnum], Ugender);
+        }
+        Sprintf(outbuf, "%s%s%s called %s",
+                /* being blinded may hide invisibility from self */
+                (Invis && (senseself() || !Blind)) ? "invisible " : "", race,
+                who, svp.plname);
+    }
     if (u.usteed)
         Sprintf(eos(outbuf), ", mounted on %s", y_monnam(u.usteed));
     if (u.uundetected || (Upolyd && U_AP_TYPE)
