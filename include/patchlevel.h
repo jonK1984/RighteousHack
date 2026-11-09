@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 12 /* Wayside state lives on the hero; old saves will not load */
+#define EDITLEVEL 13 /* Wayside wrong-answer count is saved; old saves will not load */
 
 /*
  * Development status possibilities.

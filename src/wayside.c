@@ -24,6 +24,14 @@ static const char *const ws_name[6] = {
     "Baffled villager",
     "Befuddled villager",
 };
+static const char *const ws_adj[6] = {
+    "confused",
+    "bewildered",
+    "perplexed",
+    "puzzled",
+    "baffled",
+    "befuddled",
+};
 static const char *const ws_answer[6] = {
     "Forgiveness",
     "Repentance",
@@ -305,7 +313,7 @@ static void
 show_intro(void)
 {
     show_text(
-        "You have come to the Wayside, where many hear, but few understand.\n"
+        "You have come to the Wayside, where seeing, they see not; and hearing, they hear not, neither do they understand.\n"
         "\n"
         "Six homes stand beside the road. Within each waits a troubled villager, holding a riddle whose answer has slipped beyond their grasp.\n"
         "\n"
@@ -612,6 +620,102 @@ answer_ok(int which, const char *guess)
 }
 
 static void
+remaining_tail(int left, char *buf)
+{
+    if (left == 1)
+        Strcpy(buf, "(1 riddle remains.)");
+    else
+        Sprintf(buf, "(%d riddles remain.)", left);
+}
+
+static int
+riddles_left(void)
+{
+    int i, left = 0;
+
+    for (i = 0; i < 6; i++)
+        if (!(ws_bits() & (1UL << i)))
+            left++;
+    return left;
+}
+
+static void
+confirm_answer(int which)
+{
+    char tail[BUFSZ], line[BUFSZ];
+    int pick;
+
+    remaining_tail(riddles_left(), tail);
+    pick = rn2(3);
+    if (pick == 0)
+        Sprintf(line,
+                "The %s villager's eyes brighten. '%s! Yes, that was it. Thank you, friend.' %s",
+                ws_adj[which], ws_answer[which], tail);
+    else if (pick == 1)
+        Sprintf(line,
+                "Understanding dawns on the %s villager's face. '%s. How could I have forgotten?' The burden lifts from this house. %s",
+                ws_adj[which], ws_answer[which], tail);
+    else
+        Sprintf(line,
+                "'%s,' the %s villager repeats softly. 'I hear it now, and I understand.' %s",
+                ws_answer[which], ws_adj[which], tail);
+    pline("%s", line);
+}
+
+static void
+halve_current_hp(void)
+{
+    int *hp = Upolyd ? &u.mh : &u.uhp;
+
+    *hp /= 2;
+    if (*hp < 1)
+        *hp = 1;
+    disp.botl = TRUE;
+}
+
+static void
+folly_death(int which)
+{
+    char text[BUFSZ];
+
+    Sprintf(text,
+            "Thou hast heard, yet thou hast not understood.\n"
+            "\n"
+            "The answer was %s.\n"
+            "\n"
+            "The way of a fool is right in his own eyes.",
+            ws_answer[which]);
+    show_text(text);
+    /* The hero's own foolishness, not a blow from God. */
+    svk.killer.format = NO_KILLER_PREFIX;
+    Strcpy(svk.killer.name, "Undone by folly at the Wayside.");
+    done(DIED);
+}
+
+/* Wrong riddle answers only. A villager attack does not call this. */
+static void
+note_wrong_answer(int which)
+{
+    int n;
+
+    u.uwayside.wrongs++;
+    n = (int) u.uwayside.wrongs;
+    /* PLACEHOLDER: no locked line for a wrong answer. */
+    pline("That is not the answer.");
+    if (n >= 6) {
+        folly_death(which);
+        return;
+    }
+    if (n == 4)
+        pline("Thy folly multiplieth, and thy footing groweth unsure. The fool walketh in darkness; twice more mayest thou err, and then thy foolishness shall be thine undoing.");
+    if (n == 5) {
+        halve_current_hp();
+        pline("Thy strength faileth thee, for thine own folly hath wounded thee. Pride goeth before destruction. One error more, and thou shalt fall by thine own hand.");
+    }
+    start_punishment();
+}
+
+static void
 ask_riddle(struct monst *mtmp)
 {
     int which;
@@ -645,15 +749,11 @@ ask_riddle(struct monst *mtmp)
         return;
     if (answer_ok(which, buf)) {
         ws_set(ws_bits() | (1UL << which));
-        if (trial_done()) {
+        confirm_answer(which);
+        if (trial_done())
             open_gate();
-            /* PLACEHOLDER */
-            pline("The gate opens.");
-        }
     } else {
-        /* PLACEHOLDER: no locked line for a wrong answer. */
-        pline("That is not the answer.");
-        start_punishment();
+        note_wrong_answer(which);
     }
 }
 
