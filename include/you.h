@@ -535,7 +535,7 @@ struct you {
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
     /* Wayside trial. Starts at zero. Saved with struct you.
-       EDITLEVEL 12: older saves do not load. */
+       EDITLEVEL 13: older saves do not load. */
     struct {
         unsigned long bits;
         xint16 mode;             /* 0 unset, 1 replace a level, 2 insert */
@@ -543,6 +543,7 @@ struct you {
         unsigned vid[6];         /* villager m_id, house order */
         unsigned mino_id;
         unsigned giant_id;
+        xint16 wrongs;           /* cumulative wrong riddle answers */
     } uwayside;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */

@@ -5984,6 +5984,23 @@ sanctum_ascent_open(void)
     return (boolean) (cap_of_salvation_worn() && carried_player_soul());
 }
 
+/* The stairs refuse the hero. Which line depends on what is missing.
+   The helmet test is the worn artifact, not a name and not a helm
+   that is only carried. */
+void
+sanctum_ascent_refused(void)
+{
+    boolean helm = cap_of_salvation_worn();
+    boolean soul = (carried_player_soul() != 0);
+
+    if (helm && !soul)
+        pline("The stairs will not receive you. You cannot walk the road while leaving your soul behind.");
+    else if (soul && !helm)
+        pline("A voice whispers: Put on the helmet of salvation. You cannot face what lies ahead with your mind unguarded.");
+    else
+        pline("A voice whispers: You come empty handed and bare headed. Recover your soul and put on the helmet of salvation.");
+}
+
 static boolean
 box_holds_soul(struct obj *box)
 {

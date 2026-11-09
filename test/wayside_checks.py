@@ -23,7 +23,7 @@ DOGMOVE_C = (ROOT / "src" / "dogmove.c").read_text()
 UHITM_C = (ROOT / "src" / "uhitm.c").read_text()
 
 INTRO = (
-    "You have come to the Wayside, where many hear, but few understand.\n"
+    "You have come to the Wayside, where seeing, they see not; and hearing, they hear not, neither do they understand.\n"
     "\n"
     "Six homes stand beside the road. Within each waits a troubled villager, "
     "holding a riddle whose answer has slipped beyond their grasp.\n"
@@ -79,7 +79,7 @@ SPEC_MAP = """\
 #..#    1         #........#               #......#     3      #.#      <     #
 #..#              #........#       2       #......#            #.#            #
 #..#              #........#               #......#            #.#            #
-#..#         ######........########+########......######+#######.#####G########
+#..#        #######........########+########......######+#######.#####G########
 #..########+#.................................................................#
 #..TTTTTTT...TTTTTTTTTTTTTTTTTTTTT...TTTTTTTTTTTTTTTTTT...TTTTTTTTTTT...TTTTT.#
 #.............................................................................#
@@ -89,7 +89,7 @@ SPEC_MAP = """\
 #######........####...........................................................#
 #.................#..######+#######....#######+##..........#######+########...#
 #.................#..#            #....#        #..........#              #...#
-#.......m.R.m.....#..#            #....#         ######....#              #...#
+#.......m.R.m.....#..#            #....#        #######....#              #...#
 #.................#..#     4      #....#    5         #....#      6       #...#
 #....>............#..#            #....#              #....#              #...#
 #.................#..##############....################....################...#
@@ -174,6 +174,47 @@ def walkable(ch):
     return ch in ".+"
 
 
+def wall_gaps(rows):
+    """Walls that meet only at a corner leave a disconnected segment."""
+    height, width = len(rows), len(rows[0])
+    gaps = []
+    wall = set("-|")
+    for y in range(height - 1):
+        for x in range(width - 1):
+            a, b = rows[y][x], rows[y][x + 1]
+            c, d = rows[y + 1][x], rows[y + 1][x + 1]
+
+            def openish(ch):
+                return ch not in wall and ch != "+"
+
+            if a in wall and d in wall and openish(b) and openish(c):
+                gaps.append(((x, y), (x + 1, y + 1)))
+            if b in wall and c in wall and openish(a) and openish(d):
+                gaps.append(((x + 1, y), (x, y + 1)))
+    return gaps
+
+
+def room_leaks(rows, sx, sy):
+    """Floor inside a house, treating doors as walls, must not reach the road."""
+    height, width = len(rows), len(rows[0])
+
+    def flood_at(x0, y0):
+        seen = set()
+        stack = [(x0, y0)]
+        while stack:
+            x, y = stack.pop()
+            if (x, y) in seen or not (0 <= x < width and 0 <= y < height):
+                continue
+            if rows[y][x] in "-|+" :
+                continue
+            seen.add((x, y))
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                stack.append((x + dx, y + dy))
+        return seen
+
+    return flood_at(sx, sy) & flood_at(5, 10)
+
+
 def flood(rows, sx, sy, gate_open=False):
     height, width = len(rows), len(rows[0])
     seen = set()
@@ -210,6 +251,27 @@ def eligible(orcus, vibrating, specials, branches, visited, written, nlevels):
             continue
         found.append(depth)
     return found
+
+
+def step(n):
+    if n >= 6:
+        return "die"
+    if n == 5:
+        return "half+punish"
+    if n == 4:
+        return "warn4+punish"
+    return "punish"
+
+
+def halve(hp):
+    hp //= 2
+    return 1 if hp < 1 else hp
+
+
+def remain_words(left):
+    if left == 1:
+        return "(1 riddle remains.)"
+    return "(%d riddles remain.)" % left
 
 
 def blank_answer(guess):
@@ -254,8 +316,12 @@ class WaysideSourceTests(unittest.TestCase):
 
     def test_answer_rules(self):
         # Mirrors ask_riddle: blank input returns before punishment.
-        ask = re.search(r"ask_riddle\(.*?^\}", WAYSIDE_C, re.S | re.M).group(0)
-        self.assertLess(ask.index("blank_answer"), ask.index("start_punishment"))
+        ask = WAYSIDE_C.split("ask_riddle(struct monst *mtmp)", 1)[1].split(
+            "wayside_chat(", 1
+        )[0]
+        self.assertLess(ask.index("blank_answer"), ask.index("note_wrong_answer"))
+        self.assertNotIn("wayside_hero_strikes", WAYSIDE_C.split("note_wrong_answer", 1)[0][-400:] + "")
+        self.assertNotIn("u.uwayside.wrongs", WAYSIDE_C.split("wayside_hero_strikes", 1)[1][:500])
         self.assertTrue(blank_answer(""))
         self.assertTrue(blank_answer("   "))
         self.assertTrue(blank_answer("\t"))
@@ -288,6 +354,9 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertNotIn((72, 3), reached)
         self.assertIn((72, 3), flood(rows, 5, 18, gate_open=True))
         self.assertEqual(rows[6][70], "-")
+        self.assertEqual(wall_gaps(rows), [])
+        for sx, sy in ((8, 3), (35, 4), (56, 3), (27, 17), (44, 17), (66, 17)):
+            self.assertEqual(room_leaks(rows, sx, sy), set())
 
     def test_soul_is_not_a_gem_and_state_is_not_corpsenm(self):
         soul = re.search(r'TOOL\("your soul".*PLAYER_SOUL\)', OBJECTS_H, re.S)
@@ -351,6 +420,63 @@ class WaysideSourceTests(unittest.TestCase):
         )
         hmon = UHITM_C.split("\nhmon(", 1)[1]
         self.assertLess(hmon.index("wayside_hero_strikes"), hmon.index("hmon_hitmon"))
+
+    def test_jon_exact_lines(self):
+        hack = (ROOT / "src" / "hack.c").read_text()
+        self.assertIn(
+            "The stairs will not receive you. You cannot walk the road while leaving your soul behind.",
+            hack,
+        )
+        self.assertIn(
+            "A voice whispers: Put on the helmet of salvation. You cannot face what lies ahead with your mind unguarded.",
+            hack,
+        )
+        self.assertIn(
+            "A voice whispers: You come empty handed and bare headed. Recover your soul and put on the helmet of salvation.",
+            hack,
+        )
+        self.assertIn("sanctum_ascent_refused()", (ROOT / "src" / "do.c").read_text())
+        self.assertIn(
+            "The %s villager's eyes brighten. '%s! Yes, that was it. Thank you, friend.' %s",
+            WAYSIDE_C,
+        )
+        self.assertIn(
+            "Understanding dawns on the %s villager's face. '%s. How could I have forgotten?' The burden lifts from this house. %s",
+            WAYSIDE_C,
+        )
+        self.assertIn(
+            "'%s,' the %s villager repeats softly. 'I hear it now, and I understand.' %s",
+            WAYSIDE_C,
+        )
+        self.assertIn("(1 riddle remains.)", WAYSIDE_C)
+        self.assertIn("(%d riddles remain.)", WAYSIDE_C)
+        self.assertNotIn("The gate opens.", WAYSIDE_C)
+        self.assertNotIn(" of 6", WAYSIDE_C)
+        self.assertIn(
+            "Thy folly multiplieth, and thy footing groweth unsure. The fool walketh in darkness; twice more mayest thou err, and then thy foolishness shall be thine undoing.",
+            WAYSIDE_C,
+        )
+        self.assertIn(
+            "Thy strength faileth thee, for thine own folly hath wounded thee. Pride goeth before destruction. One error more, and thou shalt fall by thine own hand.",
+            WAYSIDE_C,
+        )
+        self.assertIn("Thou hast heard, yet thou hast not understood.", WAYSIDE_C)
+        self.assertIn("The answer was %s.", WAYSIDE_C)
+        self.assertIn("The way of a fool is right in his own eyes.", WAYSIDE_C)
+        self.assertIn("Undone by folly at the Wayside.", WAYSIDE_C)
+        self.assertIn("xint16 wrongs", (ROOT / "include" / "you.h").read_text())
+        self.assertIn("EDITLEVEL 13", (ROOT / "include" / "patchlevel.h").read_text())
+        # Counter: only wrong answers. 4 warns, 5 halves, 6 dies, no reset.
+        self.assertEqual([step(i) for i in range(1, 8)], [
+            "punish", "punish", "punish", "warn4+punish",
+            "half+punish", "die", "die",
+        ])
+        self.assertEqual(halve(5), 2)
+        self.assertEqual(halve(1), 1)
+        self.assertEqual(halve(4), 2)
+        self.assertEqual(remain_words(0), "(0 riddles remain.)")
+        self.assertEqual(remain_words(1), "(1 riddle remains.)")
+        self.assertEqual(remain_words(5), "(5 riddles remain.)")
 
     def test_levelport_does_not_complete_later_trials(self):
         block = re.search(
