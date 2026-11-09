@@ -6025,12 +6025,11 @@ place_soul_chest(void)
     chest->otrapped = 0;
     soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
     if (soul) {
-        /* Locked name. Not the player's name, and not a soul gem. */
-        soul = oname(soul, "your soul", ONAME_NO_FLAGS);
-        if (soul) {
-            soul->dknown = 1;
-            add_to_container(chest, soul);
-        }
+        /* The type name is already "your soul". corpsenm starts at
+           NON_PM (-1); leave it 0 so it is not a monster index. */
+        soul->corpsenm = 0;
+        soul->dknown = soul->known = 1;
+        add_to_container(chest, soul);
     }
     chest->owt = weight(chest);
     if ((mtmp = m_at(ax, ay)) != 0 && mtmp != &gy.youmonst)

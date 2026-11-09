@@ -10,6 +10,9 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-09
+Wayside progress is stored on the hero, not on the soul's corpsenm. The Sanctum stairs are shut from the moment of entry until the Cap of Salvation is worn and your soul is carried. your soul is that object, not a gem. An unvisited ordinary level between Orcustown and the vibrating square is chosen at random when one exists; otherwise a new level is inserted on the ascent and the game says so. Old saves will not load.
+
 2026-11-08
 Looking at yourself names your role, so a prophet is a prophet. Wayside house walls are real walls, the extra stair on a wall is removed, and the villagers answer when spoken to.
 

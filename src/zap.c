@@ -161,6 +161,12 @@ int
 bhitm(struct monst *mtmp, struct obj *otmp)
 {
     int ret = 0;
+
+    if (wayside_is_villager(mtmp)) {
+        if (!svc.context.mon_moving)
+            wayside_hero_strikes(mtmp);
+        return 0;
+    }
     boolean wake = TRUE; /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE, learn_it = FALSE;
     boolean dbldam = Role_if(PM_KNIGHT) && u.uhave.questart;

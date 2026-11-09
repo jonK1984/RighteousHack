@@ -453,9 +453,11 @@ ohitmon(
 
         /* might already be dead (if petrified) */
         if (!harmless && !DEADMONSTER(mtmp)) {
-            if (peter_unhurt(mtmp)) {
+            if (peter_unhurt(mtmp) || wayside_is_villager(mtmp)) {
                 if (vis)
                     pline("%s is unharmed.", Monnam(mtmp));
+                if (!svc.context.mon_moving && wayside_is_villager(mtmp))
+                    wayside_hero_strikes(mtmp);
                 damage = 0;
             } else
                 mtmp->mhp -= damage;

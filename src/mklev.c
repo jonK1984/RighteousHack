@@ -1285,6 +1285,12 @@ makelevel(void)
     clear_level_structures();
 
     slev = Is_special(&u.uz);
+    /* Unvisited ordinary level chosen for the Wayside. */
+    if (wayside_generate_here()) {
+        makemaz("wayside");
+        wayside_setup();
+        return;
+    }
     /* check for special levels */
     if (slev && !Is_rogue_level(&u.uz)) {
         if (Is_hinnom_level(&u.uz) && u.uevent.berachah) {
