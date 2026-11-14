@@ -530,8 +530,8 @@ HACKCSRC = allmain.c alloc.c apply.c artifact.c attrib.c ball.c bones.c \
 	   shk.c shknam.c sit.c sounds.c sp_lev.c spell.c stairs.c steal.c steed.c \
 	   strutil.c symbols.c sys.c teleport.c \
 	   timeout.c topten.c track.c trap.c u_init.c utf8map.c \
-	   uhitm.c vault.c version.c vision.c weapon.c were.c wield.c \
-	   windows.c wizard.c wizcmds.c worm.c worn.c write.c zap.c
+	   uhitm.c vault.c version.c vision.c weapon.c were.c wayside.c \
+	   wield.c windows.c wizard.c wizcmds.c worm.c worn.c write.c zap.c
 
 # all operating-system-dependent .c (for dependencies and such)
 SYSCSRC = ../sys/share/pcmain.c ../sys/share/pcsys.c \
@@ -630,7 +630,8 @@ HOBJ = $(TARGETPFX)allmain.o $(TARGETPFX)alloc.o \
 	$(TARGETPFX)track.o $(TARGETPFX)trap.o $(TARGETPFX)u_init.o \
 	$(TARGETPFX)uhitm.o $(TARGETPFX)utf8map.o $(TARGETPFX)vault.o \
 	$(TARGETPFX)vision.o $(TARGETPFX)weapon.o $(TARGETPFX)were.o \
-	$(TARGETPFX)wield.o $(TARGETPFX)windows.o $(TARGETPFX)wizard.o \
+	$(TARGETPFX)wayside.o $(TARGETPFX)wield.o $(TARGETPFX)windows.o \
+	$(TARGETPFX)wizard.o \
 	$(TARGETPFX)wizcmds.o $(TARGETPFX)worm.o $(TARGETPFX)worn.o \
 	$(TARGETPFX)write.o $(TARGETPFX)zap.o \
 	$(REGEXOBJ) $(RANDOBJ) $(SYSOBJ) $(WINOBJ) \
@@ -1282,6 +1283,7 @@ $(TARGETPFX)version.o: version.c $(HACK_H) ../include/dlb.h
 $(TARGETPFX)vision.o: vision.c $(HACK_H)
 $(TARGETPFX)weapon.o: weapon.c $(HACK_H)
 $(TARGETPFX)were.o: were.c $(HACK_H)
+$(TARGETPFX)wayside.o: wayside.c $(HACK_H)
 $(TARGETPFX)wield.o: wield.c $(HACK_H)
 $(TARGETPFX)windows.o: windows.c $(HACK_H) ../include/dlb.h ../include/wintty.h
 $(TARGETPFX)wizard.o: wizard.c $(HACK_H)

@@ -1182,6 +1182,24 @@ is_unpaid(struct obj *obj)
 }
 
 /* Delete the contents of the given object. */
+static void
+rescue_soul(struct obj *soul, struct obj *box)
+{
+    coordxy x, y;
+
+    if (carried(box)) {
+        (void) addinv(soul);
+        return;
+    }
+    x = y = 0;
+    if (get_obj_location(box, &x, &y, 0)) {
+        place_object(soul, x, y);
+        stackobj(soul);
+        return;
+    }
+    (void) addinv(soul);
+}
+
 void
 delete_contents(struct obj *obj)
 {
@@ -1189,6 +1207,12 @@ delete_contents(struct obj *obj)
 
     while ((curr = obj->cobj) != 0) {
         obj_extract_self(curr);
+        if (curr->otyp == PLAYER_SOUL) {
+            rescue_soul(curr, obj);
+            continue;
+        }
+        if (Has_contents(curr))
+            delete_contents(curr);
         obfree(curr, (struct obj *) 0);
     }
 }

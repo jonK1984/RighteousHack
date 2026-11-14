@@ -523,6 +523,12 @@ do_attack(struct monst *mtmp)
     gn.notonhead = (gb.bhitpos.x != mtmp->mx || gb.bhitpos.y != mtmp->my);
     if (attack_checks(mtmp, uwep))
         return TRUE;
+    /* A committed swing, including one that would have missed.
+       No damage is rolled. */
+    if (wayside_is_villager(mtmp)) {
+        wayside_hero_strikes(mtmp);
+        return TRUE;
+    }
     if (mtmp->data == &mons[PM_MICHAEL]) {
         pline("You cannot bring yourself to strike %s.", mon_nam(mtmp)); /* PLACEHOLDER */
         return TRUE;
@@ -831,6 +837,12 @@ hmon(struct monst *mon,
      int dieroll)
 {
     boolean result, anger_guards;
+
+    /* Thrown and other callers that do not go through attack(). */
+    if (wayside_is_villager(mon)) {
+        wayside_hero_strikes(mon);
+        return TRUE;
+    }
 
     anger_guards = (mon->mpeaceful
                     && (mon->ispriest || mon->isshk || is_watch(mon->data)));

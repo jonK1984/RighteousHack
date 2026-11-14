@@ -3112,6 +3112,9 @@ is_plot_npc(struct monst *mtmp)
 
     if (!mtmp)
         return FALSE;
+    /* Before the name test: a villager is known by m_id. */
+    if (wayside_is_villager(mtmp))
+        return TRUE;
     if (mtmp->data == &mons[PM_ORACLE] || is_peter(mtmp))
         return TRUE;
     if (!has_mgivenname(mtmp))
@@ -3388,6 +3391,8 @@ monstone(struct monst *mdef)
 
     if (peter_unhurt(mdef))
         return;
+    if (wayside_villager_stands(mdef))
+        return;
     x = mdef->mx;
     y = mdef->my;
 
@@ -3483,6 +3488,8 @@ monkilled(
     struct permonst *mptr;
 
     if (peter_unhurt(mdef))
+        return;
+    if (wayside_villager_stands(mdef))
         return;
     if (moloch_stands(mdef))
         return;
@@ -3599,6 +3606,8 @@ xkilled(
             noconduct = (xkill_flags & XKILL_NOCONDUCT) != 0;
 
     if (peter_unhurt(mtmp))
+        return;
+    if (wayside_villager_stands(mtmp))
         return;
     if (moloch_stands(mtmp))
         return;

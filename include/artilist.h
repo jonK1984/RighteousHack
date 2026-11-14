@@ -471,7 +471,11 @@ static NEARDATA struct artifact artilist[] = {
       +modifier to dexterity
     =================================
     */
-    A("Cap of Salvation", DIVINE_COVERING,
+    /* Base type is divine covering, not the armor named "helmet"
+       and not helm of brilliance. The player-facing name is
+       "Helmet of Salvation". Wish parsing must match that full
+       name before the generic helmet/helm rewrite. */
+    A("Helmet of Salvation", DIVINE_COVERING,
       (SPFX_NOGEN | SPFX_HPHDAM | SPFX_REGEN), 0,
       0, NO_ATTK, NO_DFNS, CARY(AD_DISN), HEALING, A_LAWFUL,
       NON_PM, NON_PM,

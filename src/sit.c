@@ -289,6 +289,8 @@ special_throne_effect(int effect) {
         d_level vs_level;
         find_hell(&vs_level);
         vs_level.dlevel = svd.dungeons[vs_level.dnum].num_dunlevs - 1;
+        if (wayside_blocks_levelport())
+            break;
         if (u.uhave.amulet)
             You_feel("extremely disoriented for a moment.");
         else

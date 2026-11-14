@@ -61,6 +61,13 @@ resetobjs(struct obj *ochain, boolean restore)
             dealloc_obj(otmp);
             continue;
         }
+        /* The soul is not a bones prize, and its call is not a
+           player nickname. Drop it from the bones file. */
+        if (!restore && otmp->otyp == PLAYER_SOUL) {
+            obj_extract_self(otmp);
+            obfree(otmp, (struct obj *) 0);
+            continue;
+        }
 
         if (restore) {
             /* artifact bookkeeping needs to be done during

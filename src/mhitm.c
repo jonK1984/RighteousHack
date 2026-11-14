@@ -191,6 +191,9 @@ mdisplacem(
     if (mdef->data == &mons[PM_PHILISTINE_CHAMPION]
         && levl[magr->mx][magr->my].typ != ROOM)
         return M_ATTK_MISS;
+    /* Wayside villagers are not shoved aside by pets or anyone else. */
+    if (wayside_is_villager(mdef))
+        return M_ATTK_MISS;
     pa = magr->data, pd = mdef->data;
     tx = mdef->mx, ty = mdef->my; /* destination */
     fx = magr->mx, fy = magr->my; /* current location */
@@ -311,6 +314,10 @@ mattackm(
 
     if (!magr || !mdef)
         return M_ATTK_MISS; /* mike@genat */
+    /* Before any hit roll or damage. Pets, conflict, and other
+       monsters do not get to strike a Wayside villager. */
+    if (wayside_is_villager(mdef))
+        return M_ATTK_MISS;
     if (helpless(magr))
         return M_ATTK_MISS;
     pa = magr->data;

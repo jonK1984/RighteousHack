@@ -3546,9 +3546,22 @@ wishymatch(
         else if (!strncmpi(u_str, "elfin ", 6))
             return fuzzymatch(u_str + 6, o_str + 6, " -", TRUE);
     } else if (strstri(o_str, "helm") && strstri(u_str, "helmet")) {
+        char *hit, tail[BUFSZ];
+
+        /* "helmet of brilliance" is the object "helm of brilliance".
+           strsubst() is case-sensitive, so "Helmet ..." used to miss
+           the rewrite and call this function again with the same
+           arguments. That recursion ran while scanning the first
+           helm, before artifact_name() could see "Helmet of Salvation". */
         copynchars(buf, u_str, (int) sizeof buf - 1);
-        (void) strsubst(buf, "helmet", "helm");
-        return wishymatch(buf, o_str,  TRUE);
+        hit = strstri(buf, "helmet");
+        if (hit) {
+            Strcpy(tail, hit + (sizeof "helmet" - 1));
+            Strcpy(hit, "helm");
+            Strcat(hit, tail);
+        }
+        if (strcmp(buf, u_str))
+            return wishymatch(buf, o_str, TRUE);
     } else if (strstri(o_str, "gauntlets") && strstri(u_str, "gloves")) {
         /* -3: room to replace shorter "gloves" with longer "gauntlets" */
         copynchars(buf, u_str, (int) sizeof buf - 1 - 3);
@@ -5011,6 +5024,22 @@ readobjnam_postparse3(struct _readobjnam_data *d)
 {
     int i;
 
+    /* Full artifact name before any object type. Otherwise
+       "Helmet of Salvation" is eligible for the helmet/helm
+       rewrite and the armor whose name is "helmet". A short
+       wish such as "helmet" or "helm of brilliance" is not a
+       full artifact name, so it falls through. */
+    if (!d->oclass && d->actualn) {
+        short objtyp;
+        const char *aname = artifact_name(d->actualn, &objtyp, TRUE);
+
+        if (aname) {
+            d->name = aname;
+            d->typ = objtyp;
+            return 2; /*goto typfnd;*/
+        }
+    }
+
     /* check real names of gems first */
     if (!d->oclass && d->actualn) {
         for (i = svb.bases[GEM_CLASS]; i <= LAST_REAL_GEM; i++) {
@@ -5149,17 +5178,6 @@ readobjnam_postparse3(struct _readobjnam_data *d)
                 d->ftype = f->fid;
                 return 2; /*goto typfnd;*/
             }
-        }
-    }
-
-    if (!d->oclass && d->actualn) {
-        short objtyp;
-
-        /* Perhaps it's an artifact specified by name, not type */
-        d->name = artifact_name(d->actualn, &objtyp, TRUE);
-        if (d->name) {
-            d->typ = objtyp;
-            return 2; /*goto typfnd;*/
         }
     }
 
@@ -5663,6 +5681,15 @@ readobjnam(char *bp, struct obj *no_wish)
         if (d.otmp->oartifact || d.name == aname) {
             d.otmp->quan = 1L;
             u.uconduct.wisharti++; /* KMH, conduct */
+            /* A successful artifact wish is identified. Otherwise an
+               undiscovered artifact is shown as its base item named
+               with the artifact's words, which hid Helmet of Salvation. */
+            if (d.otmp->oartifact) {
+                makeknown(d.otmp->otyp);
+                discover_artifact((xint16) d.otmp->oartifact);
+                d.otmp->known = d.otmp->dknown = 1;
+                d.otmp->bknown = d.otmp->rknown = 1;
+            }
 
             //Initialization for staff of wonders
             if(IS_STAFF_OF_WONDERS(d.otmp))

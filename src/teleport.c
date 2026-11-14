@@ -1827,6 +1827,8 @@ rloc(
         (void) peter_unhurt(mtmp);
         return FALSE;
     }
+    if (wayside_is_villager(mtmp))
+        return FALSE;
 
     if (mtmp->iswiz && mtmp->mx) { /* Wizard, not just arriving */
         stairway *stway;

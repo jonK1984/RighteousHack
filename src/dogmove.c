@@ -1230,6 +1230,8 @@ dog_move(
             int mstatus;
             struct monst *mtmp2 = m_at(nx, ny);
 
+            if (is_plot_npc(mtmp2) || wayside_is_villager(mtmp2))
+                continue;
             mstatus = mdisplacem(mtmp, mtmp2, FALSE); /* displace monster */
             if (mstatus & M_ATTK_DEF_DIED)
                 return MMOVE_DIED;

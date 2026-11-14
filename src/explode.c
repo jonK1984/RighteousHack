@@ -508,7 +508,12 @@ explode(
                     pline("%s is caught in the %s!", Monnam(mtmp), str);
                 }
 
-                if (peter_unhurt(mtmp)) {
+                if (wayside_is_villager(mtmp)) {
+                    if (!svc.context.mon_moving)
+                        wayside_hero_strikes(mtmp);
+                    if (cansee(xx, yy))
+                        pline("%s is unharmed.", Monnam(mtmp));
+                } else if (peter_unhurt(mtmp)) {
                     if (cansee(xx, yy))
                         pline("%s is unharmed.", Monnam(mtmp));
                 } else {
