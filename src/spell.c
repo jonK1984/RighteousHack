@@ -416,6 +416,9 @@ study_book(struct obj *spellbook)
             return 1;
         }
 
+        /* Reading the prophetic book of healing beside the sick man. */
+        if (booktype == SPE_HEALING)
+            stony_read_healing();
         switch (objects[booktype].oc_level) {
         case 1:
         case 2:

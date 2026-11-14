@@ -399,12 +399,13 @@ dungeon = {
    {
       name = "The Road to Salvation",
       bonetag = "Z",
-      base = 1,
+      base = 2,
       alignment = "lawful",
       flags = { "mazelike" },
       entry = 1,
       levels = {
-         { name = "wayside", base = 1 }
+         { name = "wayside", base = 1 },
+         { name = "stony", base = 2 }
       }
    },
    {
