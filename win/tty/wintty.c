@@ -3937,6 +3937,10 @@ tty_print_glyph(
     } else if ((special & MG_PET) != 0 && iflags.hilite_pet) {
         term_start_attr(iflags.wc2_petattr);
         petattr = TRUE;
+    } else if ((special & MG_INVERSE) != 0) {
+        /* Son of Perdition. Always inverse, even if hilite is off. */
+        term_start_attr(ATR_INVERSE);
+        inverse_on = TRUE;
     } else if ((((special & MG_OBJPILE) != 0 && iflags.hilite_pile)
                 || ((special & MG_FEMALE) != 0 && wizard && iflags.wizmgender)
                 || ((special & (MG_DETECT | MG_BW_LAVA | MG_BW_ICE

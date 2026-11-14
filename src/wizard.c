@@ -441,6 +441,8 @@ tactics(struct monst *mtmp)
                 rloc_to(mtmp, tx, ty); /* clean old pos */
 
                 if ((otmp = on_ground(which_arti(targ))) != 0) {
+                    if (obj_theft_barred(otmp, mtmp))
+                        return 0;
                     if (cansee(mtmp->mx, mtmp->my))
                         pline("%s picks up %s.", Monnam(mtmp),
                               distant_name(otmp, doname));
@@ -822,10 +824,33 @@ wizdeadorgone(void)
     }
 }
 
+/* The Key to the Sanctum used to be in Moloch's pack and in a spare
+   chest in Berachah. It now drops once, the first time he is killed
+   inside the Wizard's Tower. Later deaths and resurrections do not
+   make another. The key is put in his pack so the death drop leaves
+   it on the floor with the rest of what he carried. */
+void
+perdition_leave_sanctum_key(struct monst *mtmp, coordxy x, coordxy y)
+{
+    struct obj *key;
+
+    if (wayside_sanctum_key_dropped())
+        return;
+    if (!On_W_tower_level(&u.uz) || !In_W_tower(x, y, &u.uz))
+        return;
+    key = mksobj(KEY_TO_SANCTUM, TRUE, FALSE);
+    if (!key)
+        return;
+    key->cursed = 0;
+    key->blessed = 1;
+    (void) add_to_minv(mtmp, key);
+    wayside_mark_sanctum_key();
+}
+
 static const char *const random_insult[] = {
     "antic",      "blackguard",   "caitiff",    "chucklehead",
     "coistrel",   "craven",       "cretin",     "cur",
-    "dastard",    "demon fodder", "dimwit",     "dolt",
+    "dastard",    "unprofitable servant", "dimwit", "dolt",
     "fool",       "footpad",      "imbecile",   "knave",
     "maledict",   "miscreant",    "niddering",  "poltroon",
     "rattlepate", "reprobate",    "scapegrace", "varlet",
@@ -834,7 +859,7 @@ static const char *const random_insult[] = {
 };
 
 static const char *const random_malediction[] = {
-    "Hell shall soon claim thy remains,", "I chortle at thee, thou pathetic",
+    "The wages of sin is death,", "I chortle at thee, thou pathetic",
     "Prepare to die, thou", "Resistance is useless,",
     "Surrender or die, thou", "There shall be no mercy, thou",
     "Thou shalt repent of thy cunning,", "Thou art as a flea to me,",
@@ -850,7 +875,7 @@ cuss(struct monst *mtmp)
         return;
     if (mtmp->iswiz) {
         if (!rn2(5)) { /* typical bad guy action */
-            pline("%s laughs fiendishly.", Monnam(mtmp));
+            pline("%s laughs in scorn.", Monnam(mtmp));
         } else if (u.uhave.amulet && !rn2(SIZE(random_insult))) {
             SetVoice(mtmp, 0, 80, 0);
             verbalize("Relinquish the amulet, %s!",
