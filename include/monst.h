@@ -238,7 +238,7 @@ struct monst {
     ((mon)->ispriest || (mon)->isshk                    \
      || (mon)->isgd || (mon)->data == &mons[PM_ORACLE]  \
      || (mon)->m_id == svq.quest_status.leader_m_id     \
-     || is_peter(mon))
+     || is_peter(mon) || stony_is_traveler(mon))
 
 /* mimic appearances that block vision/light */
 #define is_lightblocker_mappear(mon) \

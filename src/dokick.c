@@ -152,6 +152,8 @@ kick_monster(struct monst *mon, coordxy x, coordxy y)
         wayside_hero_strikes(mon);
         return;
     }
+    if (stony_unharmed(mon))
+        return;
 
     /* anger target even if wild miss will occur */
     setmangry(mon, TRUE);

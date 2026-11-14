@@ -529,6 +529,8 @@ do_attack(struct monst *mtmp)
         wayside_hero_strikes(mtmp);
         return TRUE;
     }
+    if (stony_unharmed(mtmp))
+        return TRUE;
     if (mtmp->data == &mons[PM_MICHAEL]) {
         pline("You cannot bring yourself to strike %s.", mon_nam(mtmp)); /* PLACEHOLDER */
         return TRUE;
@@ -843,6 +845,8 @@ hmon(struct monst *mon,
         wayside_hero_strikes(mon);
         return TRUE;
     }
+    if (stony_unharmed(mon))
+        return TRUE;
 
     anger_guards = (mon->mpeaceful
                     && (mon->ispriest || mon->isshk || is_watch(mon->data)));

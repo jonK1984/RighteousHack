@@ -902,6 +902,9 @@ destroy_drawbridge(coordxy x, coordxy y)
     boolean e_inview;
     struct entity *etmp1 = &(go.occupants[0]), *etmp2 = &(go.occupants[1]);
 
+    /* The iron bridge on the Stony Ground is fixed. */
+    if (stony_here())
+        return;
     lev1 = &levl[x][y];
     if (!IS_DRAWBRIDGE(lev1->typ))
         return;

@@ -1553,6 +1553,8 @@ dochat(void)
 
     /* Wayside villagers are asked before the sleep check. A
        waiting or djinni-voiced prisoner would otherwise refuse. */
+    if (stony_chat(mtmp))
+        return ECMD_TIME;
     if (wayside_chat(mtmp))
         return ECMD_TIME;
 

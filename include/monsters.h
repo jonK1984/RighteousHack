@@ -4024,6 +4024,26 @@
         M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_STRONG | M2_FEMALE | M2_STALK,
         M3_INFRAVISIBLE,
         9, CLR_BRIGHT_MAGENTA, WOMAN_OF_GOMORRAH),
+    /* Stony Ground. Three of them, told apart by the given name.
+       They do not fight. The escort code moves the one who is walking. */
+    MON(NAM("traveler"), S_HUMAN,
+        LVL(4, 12, 10, 0, 0), G_NOGEN,
+        A(NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PEACEFUL,
+        M3_WAITFORU | M3_INFRAVISIBLE,
+        5, CLR_BRIGHT_CYAN, TRAVELER),
+    /* A weak nuisance. CLR_YELLOW is not used by any other '@'. */
+    MON(NAM("persecutor"), S_HUMAN,
+        LVL(2, 12, 10, 0, -3), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_STALK,
+        M3_INFRAVISIBLE,
+        3, CLR_YELLOW, PERSECUTOR),
 
     /*
      * mons_init() in monst.c adds a terminator here, mons[NUMMONS].

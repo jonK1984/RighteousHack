@@ -453,7 +453,8 @@ ohitmon(
 
         /* might already be dead (if petrified) */
         if (!harmless && !DEADMONSTER(mtmp)) {
-            if (peter_unhurt(mtmp) || wayside_is_villager(mtmp)) {
+            if (peter_unhurt(mtmp) || wayside_is_villager(mtmp)
+                || stony_unharmed(mtmp)) {
                 if (vis)
                     pline("%s is unharmed.", Monnam(mtmp));
                 if (!svc.context.mon_moving && wayside_is_villager(mtmp))

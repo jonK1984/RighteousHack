@@ -1251,6 +1251,8 @@ dodown(void)
        shut until Peter's key is used on them. */
     if (stairs_down && wayside_take_down())
         return ECMD_TIME;
+    if (stairs_down && stony_block_stairs(FALSE))
+        return ECMD_OK;
     if (stairs_down && invocation_pos(u.ux, u.uy) && !u.uevent.invoked) {
         pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it."); /* PLACEHOLDER */
         return ECMD_OK;
@@ -1370,6 +1372,8 @@ doup(void)
     }
     if (wayside_take_up())
         return ECMD_TIME;
+    if (stony_block_stairs(TRUE))
+        return ECMD_OK;
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;

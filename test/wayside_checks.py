@@ -465,7 +465,11 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertIn("The way of a fool is right in his own eyes.", WAYSIDE_C)
         self.assertIn("Undone by folly at the Wayside.", WAYSIDE_C)
         self.assertIn("xint16 wrongs", (ROOT / "include" / "you.h").read_text())
-        self.assertIn("EDITLEVEL 13", (ROOT / "include" / "patchlevel.h").read_text())
+        # EDITLEVEL 14 still refuses saves from before the wrongs field.
+        self.assertGreaterEqual(
+            int(re.search(r"#define EDITLEVEL (\d+)",
+                          (ROOT / "include" / "patchlevel.h").read_text()).group(1)),
+            13)
         # Counter: only wrong answers. 4 warns, 5 halves, 6 dies, no reset.
         self.assertEqual([step(i) for i in range(1, 8)], [
             "punish", "punish", "punish", "warn4+punish",

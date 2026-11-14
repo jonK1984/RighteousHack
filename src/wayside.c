@@ -74,6 +74,25 @@ ws_set(unsigned long bits)
     u.uwayside.bits = bits;
 }
 
+static int gehennom_depth(void);
+
+/* The Gehennom level the Wayside up stair used to reach, before
+   that stair was pointed at the Stony Ground. */
+void
+wayside_ascent_level(d_level *dest)
+{
+    int n = gehennom_depth();
+
+    dest->dnum = sanctum_level.dnum;
+    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 1)
+        dest->dlevel = (xint16) (u.uwayside.target - 1);
+    else {
+        dest->dlevel = (xint16) ((n > 2) ? n - 2 : 1);
+        if (dest->dlevel < 1)
+            dest->dlevel = 1;
+    }
+}
+
 boolean
 wayside_road(void)
 {
@@ -373,16 +392,27 @@ fix_stairs(void)
     coordxy ux = WX(72), uy = 3, dx = WX(5), dy = 18;
 
     down.dnum = up.dnum = sanctum_level.dnum;
+    /* Down still returns toward the Sanctum. Up climbs to the
+       Stony Ground, the next appointed trial. */
     if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 1) {
-        up.dlevel = (xint16) (u.uwayside.target - 1);
         down.dlevel = (xint16) (u.uwayside.target + 1);
         if (down.dlevel > n)
             down.dlevel = (xint16) n;
     } else {
         down.dlevel = (xint16) (n - 1); /* vibrating square */
-        up.dlevel = (xint16) (n - 2);   /* one level above it */
-        if (up.dlevel < 1)
-            up.dlevel = 1;
+    }
+    {
+        s_level *stony = find_level("stony");
+
+        if (stony) {
+            up = stony->dlevel;
+        } else if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 1) {
+            up.dlevel = (xint16) (u.uwayside.target - 1);
+        } else {
+            up.dlevel = (xint16) (n - 2); /* one level above the square */
+            if (up.dlevel < 1)
+                up.dlevel = 1;
+        }
     }
     for (st = gs.stairs; st; st = nxt) {
         nxt = st->next;
@@ -966,6 +996,6 @@ wayside_blocks_levelport(void)
     if (!wayside_road())
         return FALSE;
     /* New wording, not locked text. The road is actually unfinished. */
-    pline("The Road to Salvation is unfinished, so level teleport is sealed. Only the Wayside has been appointed; three trials are still to come.");
+    pline("The Road to Salvation is unfinished, so level teleport is sealed. The Wayside and the Stony Ground are appointed; two trials are still to come.");
     return TRUE;
 }

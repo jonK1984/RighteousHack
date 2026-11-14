@@ -2019,6 +2019,9 @@ prayer_done(void)
      *     → Healing of problems + possible favor
      * ------------------------------------------------------------------ */
     if (gp.p_type == 1) {
+        /* A successful prayer, while walking with someone whose
+           need is active. The timeout above is the only limit. */
+        stony_prayer();
         //int major = major_trouble();
         //int minor = minor_trouble();
         int major = 0;
