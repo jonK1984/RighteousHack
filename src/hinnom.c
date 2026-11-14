@@ -1019,6 +1019,9 @@ living_water_at(coordxy x, coordxy y)
         return TRUE;
     if (on_jacobs_ladder(&u.uz))
         return TRUE;
+    /* The camp spring on the Stony Ground. */
+    if (stony_here())
+        return TRUE;
     return FALSE;
 }
 

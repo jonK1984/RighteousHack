@@ -535,7 +535,7 @@ struct you {
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
     /* Wayside trial. Starts at zero. Saved with struct you.
-       EDITLEVEL 13: older saves do not load. */
+       EDITLEVEL 14: older saves do not load. */
     struct {
         unsigned long bits;
         xint16 mode;             /* 0 unset, 1 replace a level, 2 insert */
@@ -545,6 +545,13 @@ struct you {
         unsigned giant_id;
         xint16 wrongs;           /* cumulative wrong riddle answers */
     } uwayside;
+    /* Stony Ground, the second trial. EDITLEVEL 14. */
+    struct {
+        unsigned long bits;
+        unsigned id[3];          /* young believer, old man, mother */
+        unsigned oid[3];         /* rod, healing book, ring */
+        xint16 sick;             /* turns left after the old man falls */
+    } ustony;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

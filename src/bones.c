@@ -22,6 +22,8 @@ no_bones_level(d_level *lev)
     if (ledger_no(&gs.save_dlevel))
         assign_level(lev, &gs.save_dlevel);
 
+    if ((sptr = find_level("stony")) != 0 && on_level(lev, &sptr->dlevel))
+        return TRUE;
     return (boolean) (((sptr = Is_special(lev)) != 0 && !sptr->boneid)
                       || !svd.dungeons[lev->dnum].boneid
                       /* no bones on the last or multiway branch levels

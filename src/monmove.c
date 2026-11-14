@@ -1843,6 +1843,10 @@ m_move(struct monst *mtmp, int after)
     long flag;
     coordxy omx = mtmp->mx, omy = mtmp->my;
 
+    /* Escorted travelers are stepped by stony_tick, not by wandering. */
+    if (stony_is_traveler(mtmp))
+        return MMOVE_NOTHING;
+
     if (mtmp->mtrapped) {
         int i = mintrap(mtmp, NO_TRAP_FLAGS);
 
