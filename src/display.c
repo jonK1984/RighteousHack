@@ -3075,6 +3075,15 @@ reset_glyphmap(enum glyphmap_change_triggers trigger)
             }
             gmap->glyphflags |= MG_MALE;
         }
+        /* Son of Perdition: bright red @, and a flag the tty, curses,
+           X11, and Win32 ports turn into reverse video. Tiles and Qt
+           take the color and do not read this flag. */
+        if (glyph_is_monster(glyph)
+            && glyph_to_mon(glyph) == PM_WIZARD_OF_YENDOR) {
+            gmap->glyphflags |= MG_INVERSE;
+            if (!has_rogue_color)
+                color = CLR_ORANGE;
+        }
         /* This was requested by a blind player to enhance screen reader use
          */
         if (sysopt.accessibility == 1 && (gmap->glyphflags & MG_PET) != 0) {

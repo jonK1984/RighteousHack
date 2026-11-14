@@ -2899,7 +2899,10 @@
         M2_NOPOLY | M2_HOSTILE | M2_STRONG | M2_PNAME | M2_FEMALE,
         M3_WAITFORU | M3_INFRAVISIBLE,
         25, CLR_BRIGHT_GREEN, MEDUSA),
-    MON(NAM("Wizard of Yendor"), S_HUMAN,
+    /* Player-facing name is the Son of Perdition. The symbol stays
+       @. CLR_ORANGE is this port's bright red (bold red on tty).
+       Inverse video is MG_INVERSE, applied in the window ports. */
+    MON(NAM("Son of Perdition"), S_HUMAN,
         LVL(30, 12, -8, 100, A_NONE), (G_NOGEN | G_UNIQ),
         A(ATTK(AT_CLAW, AD_SAMU, 2, 12), ATTK(AT_MAGC, AD_SPEL, 0, 0),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
@@ -2910,7 +2913,7 @@
         M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_STRONG | M2_NASTY | M2_PRINCE
             | M2_MALE | M2_MAGIC,
         M3_COVETOUS | M3_WAITFORU | M3_INFRAVISIBLE,
-        34, HI_OVERLORD, WIZARD_OF_YENDOR),
+        34, CLR_ORANGE, WIZARD_OF_YENDOR),
     MON(NAM("Croesus"), S_HUMAN,
         LVL(20, 15, 0, 40, 15), (G_UNIQ | G_NOGEN),
         A(ATTK(AT_WEAP, AD_PHYS, 4, 10),

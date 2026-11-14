@@ -1708,7 +1708,9 @@ goto_level(
      * gradually but substantially.  The drop off is greater when hero is
      * sent down farther so benefits lawfuls more than chaotics this time.
      */
-    if (Inhell && up && u.uhave.amulet && !newdungeon && !portal
+    /* Same odds and same floors as the Amulet's pull. The trigger is
+       your soul, carried, on the ascent after the bottom of Gehennom. */
+    if (Inhell && up && carried_player_soul() && !newdungeon && !portal
         && (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
         if (!rn2(4 + svc.context.mysteryforce)) {
             int odds = 3 + (int) u.ualign.type,   /* 2..4 */
@@ -1725,7 +1727,7 @@ goto_level(
             if (diff == 0)
                 assign_level(newlevel, &u.uz);
 
-            pline("A mysterious force momentarily surrounds you...");
+            pline("The spirit indeed is willing, but the flesh is weak. Behold, the tempter draweth thee backward, and thou losest the ground thou hadst gained.");
             /* each time it kicks in, the chance of doing so again may drop;
                that drops faster, on average, when being sent down farther so
                while the impact is reduced for everybody compared to earlier

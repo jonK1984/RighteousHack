@@ -10,6 +10,9 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-14
+The Wizard of Yendor is the Son of Perdition in every player-facing name. He is a bright red @ drawn in reverse on the tty, curses, X11, and Win32 maps. After the Sanctum, carrying your soul can pull you back down by the old Amulet odds, with a new line. The Armor of God and the Sword of the Spirit cannot be stolen. your soul can be stolen only by him, and only while the Helmet of Salvation is not worn. The Key to the Sanctum drops the first time he is killed inside his tower. Moloch and the Berachah tower no longer have it. Razing Moloch's altar opens the way down. The sixth Wayside answer shows the gate blackout after "(0 riddles remain.)".
+
 2026-11-09
 The Sanctum stairs name what is missing. A right riddle answer is answered aloud. Six wrong answers end the hero by their own folly. The Wayside houses' walls meet.
 

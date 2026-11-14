@@ -4775,10 +4775,25 @@ mhitm_ad_sedu(
 
         if (magr->mcan)
             return;
-        /* find an object to steal, non-cursed if magr is tame */
-        for (obj = mdef->minvent; obj; obj = obj->nobj)
-            if (!magr->mtame || !obj->cursed)
-                break;
+        /* find an object to steal, non-cursed if magr is tame.
+           Armor of God and your soul are skipped. He prefers the soul. */
+        {
+            struct obj *prefer = 0;
+
+            for (obj = mdef->minvent; obj; obj = obj->nobj) {
+                if (obj_theft_barred(obj, magr))
+                    continue;
+                if (magr->mtame && obj->cursed)
+                    continue;
+                if (!prefer)
+                    prefer = obj;
+                if (magr->iswiz && obj->otyp == PLAYER_SOUL) {
+                    prefer = obj;
+                    break;
+                }
+            }
+            obj = prefer;
+        }
 
         if (obj) {
             char buf[BUFSZ];

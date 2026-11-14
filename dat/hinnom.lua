@@ -101,10 +101,7 @@ des.monster({ id = "aligned cleric", x = 52, y = 12, peaceful = 1, align = "noal
 des.monster({ id = "aligned cleric", x = 62, y = 12, peaceful = 1, align = "noalign" })
 des.monster({ id = "pit fiend", x = 70, y = 9, peaceful = 1 })
 des.monster({ id = "pit fiend", x = 70, y = 11, peaceful = 1 })
-des.monster({ id = "Moloch", x = 72, y = 10, peaceful = 1,
-    inventory = function()
-        des.object("Key to the Sanctum")
-    end })
+des.monster({ id = "Moloch", x = 72, y = 10, peaceful = 1 })
 des.monster({ id = "doctor", x = 57, y = 5, peaceful = 1 })
 des.monster({ id = "child", x = 62, y = 5, peaceful = 1, waiting = 1 })
 des.monster({ id = "child", x = 64, y = 5, peaceful = 1, waiting = 1 })

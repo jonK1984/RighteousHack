@@ -167,6 +167,7 @@ X11_print_glyph(
         co_ptr = &map_info->text_map.colors[y][x];
         colordif = (((special & MG_PET) != 0 && iflags.hilite_pet)
                     || ((special & MG_OBJPILE) != 0 && iflags.hilite_pile)
+                    || ((special & MG_INVERSE) != 0)
                     || ((special & (MG_DETECT | MG_BW_LAVA | MG_BW_ICE
                                     | MG_BW_SINK | MG_BW_ENGR)) != 0
                         && iflags.use_inverse))

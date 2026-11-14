@@ -990,8 +990,9 @@ paintGlyph(PNHMapWindow data, int i, int j, RECT * rect)
             }
         }
         if (((data->map[i][j].gm.glyphflags & MG_PET) && iflags.hilite_pet)
-            || ((data->map[i][j].gm.glyphflags & (MG_DETECT | MG_BW_LAVA
-                                                  | MG_BW_ICE | MG_BW_SINK
+            || ((data->map[i][j].gm.glyphflags & (MG_INVERSE | MG_DETECT
+                                                  | MG_BW_LAVA | MG_BW_ICE
+                                                  | MG_BW_SINK
                                                   | MG_BW_ENGR)) != 0)) {
             back_brush =
                 CreateSolidBrush(nhcolor_to_RGB(CLR_GRAY));
