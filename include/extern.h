@@ -4076,6 +4076,7 @@ extern boolean sanctum_no_hostility(void);
 extern boolean cap_of_salvation_worn(void);
 extern struct obj *carried_player_soul(void);
 extern boolean sanctum_ascent_open(void);
+extern void sanctum_ascent_refused(void);
 extern void wayside_begin(void);
 extern boolean wayside_road(void);
 extern boolean wayside_generate_here(void);

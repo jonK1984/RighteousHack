@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-09
+The Sanctum stairs name what is missing. A right riddle answer is answered aloud. Six wrong answers end the hero by their own folly. The Wayside houses' walls meet.
+
+2026-11-09
 The head artifact is the Helmet of Salvation. Wishing that full name yields it. Wishing helmet, helm of brilliance, helm of telepathy, helm of opposite alignment, or dwarvish iron helm still yields those armors.
 
 2026-11-09

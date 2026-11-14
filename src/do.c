@@ -1342,7 +1342,7 @@ doup(void)
     }
     /* From the moment of entry, not only after the hosts freeze. */
     if (Is_sanctum(&u.uz) && !sanctum_ascent_open()) {
-        pline("The Road to Salvation is not yet open.");
+        sanctum_ascent_refused();
         return ECMD_OK;
     }
     if (stucksteed(TRUE)) {
@@ -1639,7 +1639,7 @@ goto_level(
         }
         /* Immediate, including before the hosts freeze. */
         if (!sanctum_ascent_open()) {
-            pline("The Road to Salvation is not yet open.");
+            sanctum_ascent_refused();
             return;
         }
         wayside_begin();
