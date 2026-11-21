@@ -165,6 +165,24 @@ class Rules(unittest.TestCase):
         self.assertIn('find_level("stony")', WAYSIDE)
         self.assertIn("up = stony->dlevel", WAYSIDE)
 
+    def test_the_sleep_ray_reaches_the_calm(self):
+        zap = (ROOT / "src" / "zap.c").read_text()
+        hit = zap.split("zap_hit(find_mac(mon), spell_type)", 1)[1]
+        hit = hit.split("zhitm(mon, type, nd, &otmp)", 1)[0]
+        self.assertIn("stony_absorb_zap(mon, zobj)", hit)
+        self.assertIn(
+            "The young believer's breathing slows. 'Forgive me. I was hasty. I will walk beside thee.'",
+            SRC,
+        )
+        rods = (ROOT / "include" / "objects.h").read_text()
+        self.assertIn(
+            'ROD("tranquility",               "runed",      50, 175, 1, RAY,       IRON,    HI_METAL,     WAN_SLEEP),',
+            rods,
+        )
+        spell = (ROOT / "src" / "spell.c").read_text()
+        self.assertIn('You("begin to %s the prophecy.",', spell)
+        self.assertNotIn("the runes.", spell.split("begin to", 1)[1][:80])
+
 
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])

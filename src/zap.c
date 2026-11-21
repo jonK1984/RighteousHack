@@ -5010,7 +5010,25 @@ dobuzz(
                     dy = -dy;
                 } else {
                     boolean mon_could_move = mon->mcanmove;
-                    int tmp = zhitm(mon, type, nd, &otmp);
+                    struct obj rayobj, *zobj = (struct obj *) 0;
+                    int tmp;
+
+                    /* A ray never goes through bhitm(), which is where a
+                       traveler absorbs an immediate rod. The rod of
+                       tranquility is a sleep ray, so the calm was skipped
+                       and the next turn woke him again. */
+                    if (type >= 0 && !svc.context.mon_moving) {
+                        zobj = gc.current_wand;
+                        if (!zobj && is_hero_spell(type)
+                            && damgtype == ZT_SLEEP) {
+                            rayobj = cg.zeroobj;
+                            rayobj.otyp = SPE_SLEEP;
+                            zobj = &rayobj;
+                        }
+                        if (zobj && stony_absorb_zap(mon, zobj))
+                            break;
+                    }
+                    tmp = zhitm(mon, type, nd, &otmp);
 
                     if (is_rider(mon->data)
                         && abs(type) == ZT_BREATH(ZT_DEATH)) {
