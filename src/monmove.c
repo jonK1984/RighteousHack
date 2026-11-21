@@ -714,6 +714,12 @@ dochug(struct monst *mtmp)
         mtmp->mpeaceful = 1;
         return 0;
     }
+    /* Delivered on the Stony Ground: stay on the berth, off the stair. */
+    if (stony_traveler_settled(mtmp)) {
+        mtmp->mstrategy |= STRAT_WAITFORU;
+        mtmp->mpeaceful = 1;
+        return 0;
+    }
     if (mtmp->data == &mons[PM_DOCTOR] && mtmp->mhp * 2 < mtmp->mhpmax)
         mtmp->mflee = 1;
     /* A random monster inside the closed fortress is not the garrison.

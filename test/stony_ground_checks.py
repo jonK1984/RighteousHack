@@ -19,6 +19,8 @@ MAKEMON = (ROOT / "src" / "makemon.c").read_text()
 DOG = (ROOT / "src" / "dog.c").read_text()
 BONES = (ROOT / "src" / "bones.c").read_text()
 WAYSIDE = (ROOT / "src" / "wayside.c").read_text()
+DUNGEON = (ROOT / "dat" / "dungeon.lua").read_text()
+MONMOVE = (ROOT / "src" / "monmove.c").read_text()
 
 LOCKED = [
     "The old man sinketh to his knees, pale and trembling. 'My strength faileth me! Pray for me, or lay hands upon me, for I shall not last long!'",
@@ -179,6 +181,56 @@ class Rules(unittest.TestCase):
         deliver = SRC.split("deliver(int who)", 1)[1].split(
             "grant_summit_hp(int who)", 1)[0]
         self.assertIn("grant_summit_hp(who)", deliver)
+
+    def test_the_summit_stair_is_up_and_left_clear(self):
+        rows = map_rows()
+        # Map column 0 is level x 1. The exit cell is map (20, 2).
+        self.assertEqual(rows[2][20], "<")
+        self.assertEqual(rows[19][0], ">")
+        self.assertIn('des.stair("up", 20, 2)', LUA)
+        self.assertIn('des.stair("down", 0, 19)', LUA)
+        self.assertNotIn('des.stair("down", 20, 2)', LUA)
+        self.assertNotIn('des.stair("up", 0, 19)', LUA)
+        road = DUNGEON.split('name = "The Road to Salvation"', 1)[1]
+        road = road.split("name = \"The Wilderness Trial\"", 1)[0]
+        self.assertLess(road.index('name = "wayside"'), road.index('name = "stony"'))
+        self.assertIn("up = stony->dlevel", WAYSIDE)
+        setup = SRC.split("stony_setup", 1)[1].split("step_toward", 1)[0]
+        self.assertIn("aim_stairs()", setup)
+        aim = SRC.split("aim_stairs(void)", 1)[1].split("apply_reset", 1)[0]
+        self.assertIn("plant_one(START_X, START_Y, FALSE, &back)", aim)
+        self.assertIn("plant_one(EXIT_X, EXIT_Y, TRUE, &onward)", aim)
+        plant = SRC.split("plant_one(", 1)[1].split("aim_stairs(void)", 1)[0]
+        self.assertIn("levl[x][y].typ = STAIRS", plant)
+        self.assertIn("stairway_add(x, y, up, FALSE, dest)", plant)
+        tick = SRC.split("stony_tick(void)", 1)[1].split("give_ring", 1)[0]
+        self.assertIn("aim_stairs()", tick)
+        gate = SRC.split("stony_block_stairs", 1)[1].split("stony.c", 1)[0]
+        self.assertIn("if (!stony_here() || !up)", gate)
+        self.assertIn(
+            "The summit stair is shut until all three have reached the top.",
+            gate,
+        )
+        body = SRC.split("sg_berth[3]", 1)[1].split("};", 1)[0]
+        berths = [(int(x), int(y)) for x, y in re.findall(
+            r"\{\s*(\d+)\s*,\s*(\d+)\s*\}", body)]
+        self.assertEqual(len(berths), 3)
+        self.assertEqual(len(set(berths)), 3)
+        stair = (20, 2)
+        neighbors = {(20, 1), (20, 3), (19, 2), (21, 2)}
+        for cell in berths:
+            self.assertNotEqual(cell, stair)
+            self.assertNotIn(cell, neighbors)
+            self.assertEqual(rows[cell[1]][cell[0]], ".", cell)
+        deliver = SRC.split("deliver(int who)", 1)[1].split(
+            "grant_summit_hp(int who)", 1)[0]
+        self.assertIn("settle_traveler(who)", deliver)
+        self.assertIn("settle_traveler(who)", tick)
+        step = SRC.split("step_toward", 1)[1].split("maybe_call", 1)[0]
+        self.assertIn("nx == EXIT_X && ny == EXIT_Y", step)
+        self.assertIn("if (stony_traveler_settled(mtmp))", MONMOVE)
+        self.assertIn("return 0;", MONMOVE.split(
+            "stony_traveler_settled(mtmp)", 1)[1][:200])
 
     def test_the_sleep_ray_reaches_the_calm(self):
         zap = (ROOT / "src" / "zap.c").read_text()

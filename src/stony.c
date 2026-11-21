@@ -12,6 +12,11 @@
 #define START_Y MY(19)
 #define EXIT_X MX(20)
 #define EXIT_Y MY(2)
+/* Where a delivered traveler waits. Map coordinates, west of the
+   summit stair, off its four neighbors, and not on each other. */
+static const coord sg_berth[3] = {
+    { 17, 1 }, { 18, 1 }, { 18, 3 }
+};
 #define CHEST_X MX(48)
 #define CHEST_Y MY(13)
 
@@ -89,6 +94,7 @@ sg_set(unsigned long bits)
 }
 
 static void grant_summit_hp(int);
+static void settle_traveler(int);
 
 static int
 escort_of(void)
@@ -468,35 +474,48 @@ clear_persecutors(void)
     }
 }
 
+/* '<' and '>' in the map are not terrain, so des.stair is the only
+   thing that can make a stair. mkstairs() then refuses a down stair
+   on the last level of a dungeon, and the Road ends here, so that
+   call left the summit as ordinary floor. Plant both stairs directly.
+   The foot goes down to the Wayside. The summit goes up. */
+static void
+plant_one(coordxy x, coordxy y, boolean up, d_level *dest)
+{
+    stairway *st;
+    schar want = up ? LA_UP : LA_DOWN;
+
+    if (!isok(x, y))
+        return;
+    if (levl[x][y].typ != STAIRS || levl[x][y].ladder != want) {
+        levl[x][y].typ = STAIRS;
+        levl[x][y].ladder = want;
+        if (!gi.in_mklev)
+            newsym(x, y);
+    }
+    st = stairway_at(x, y);
+    if (!st)
+        stairway_add(x, y, up, FALSE, dest);
+    else {
+        st->up = up;
+        st->isladder = FALSE;
+        assign_level(&st->tolev, dest);
+    }
+}
+
 static void
 aim_stairs(void)
 {
-    stairway *st;
     d_level back, onward;
 
-    if (u.uz0.dnum || u.uz0.dlevel)
-        back = u.uz0;
-    else if (find_level("wayside"))
+    if (find_level("wayside"))
         back = find_level("wayside")->dlevel;
     else
         back = valley_level;
-    if (stony_level(&back))
-        back = find_level("wayside") ? find_level("wayside")->dlevel
-                                     : valley_level;
-
     wayside_ascent_level(&onward);
-
-    for (st = gs.stairs; st; st = st->next) {
-        if (st->sx == START_X && st->sy == START_Y) {
-            st->up = TRUE;
-            assign_level(&st->tolev, &back);
-            levl[st->sx][st->sy].ladder = LA_UP;
-        } else if (st->sx == EXIT_X && st->sy == EXIT_Y) {
-            st->up = FALSE;
-            assign_level(&st->tolev, &onward);
-            levl[st->sx][st->sy].ladder = LA_DOWN;
-        }
-    }
+    /* Down at the foot, up at the summit. */
+    plant_one(START_X, START_Y, FALSE, &back);
+    plant_one(EXIT_X, EXIT_Y, TRUE, &onward);
 }
 
 static void
@@ -553,6 +572,9 @@ step_toward(struct monst *mtmp)
 
             if (!dx && !dy)
                 continue;
+            /* The summit stair stays empty. Delivery is from beside it. */
+            if (nx == EXIT_X && ny == EXIT_Y)
+                continue;
             if (!passable(nx, ny) || u_at(nx, ny) || MON_AT(nx, ny))
                 continue;
             d = dist2(nx, ny, u.ux, u.uy);
@@ -608,6 +630,8 @@ deliver(int who)
     /* Once per traveler, for the whole game. A later sentence could
        be added here, after the summit speech. */
     grant_summit_hp(who);
+    /* Off the stair, and not on each other. They wait there. */
+    settle_traveler(who);
 }
 
 /* +10 permanent maximum, and +10 current, in this form and in the
@@ -628,6 +652,80 @@ grant_summit_hp(int who)
         u.mh += 10;
         setuhpmax(u.mhmax + 10, FALSE);
     }
+}
+
+static boolean
+berth_ok(coordxy x, coordxy y, struct monst *self)
+{
+    struct monst *at;
+
+    if (!isok(x, y) || !passable(x, y))
+        return FALSE;
+    if (x == EXIT_X && y == EXIT_Y)
+        return FALSE;
+    if (u_at(x, y))
+        return FALSE;
+    at = m_at(x, y);
+    return (boolean) (!at || at == self);
+}
+
+/* Park one delivered traveler on his own floor square. The stair
+   is never one of those squares. */
+static void
+settle_traveler(int who)
+{
+    struct monst *mtmp = traveler_by(who);
+    coordxy x, y;
+    int dx, dy;
+    boolean found = FALSE;
+
+    if (!mtmp || who < 1 || who > 3)
+        return;
+    x = MX(sg_berth[who - 1].x);
+    y = MY(sg_berth[who - 1].y);
+    if (berth_ok(x, y, mtmp))
+        found = TRUE;
+    else {
+        for (dy = -2; dy <= 2 && !found; dy++)
+            for (dx = -2; dx <= 2; dx++) {
+                coordxy nx = (coordxy) (EXIT_X + dx);
+                coordxy ny = (coordxy) (EXIT_Y + dy);
+
+                if (!berth_ok(nx, ny, mtmp))
+                    continue;
+                x = nx;
+                y = ny;
+                found = TRUE;
+                break;
+            }
+    }
+    if (!found)
+        return;
+    if (mtmp->mx != x || mtmp->my != y) {
+        coordxy ox = mtmp->mx, oy = mtmp->my;
+
+        if (u.ustuck == mtmp)
+            set_ustuck((struct monst *) 0);
+        remove_monster(ox, oy);
+        place_monster(mtmp, x, y);
+        newsym(ox, oy);
+        newsym(x, y);
+    }
+    mtmp->mstrategy |= STRAT_WAITFORU;
+    mtmp->mpeaceful = 1;
+}
+
+boolean
+stony_traveler_settled(struct monst *mtmp)
+{
+    int who;
+
+    if (!stony_here() || !stony_is_traveler(mtmp))
+        return FALSE;
+    who = name_who(mtmp);
+    if (who < 1 || who > 3)
+        return FALSE;
+    return (boolean) ((sg_bits() & (SG_DONE_OLD << (who - 1))) != 0);
 }
 
 static void
@@ -768,6 +866,12 @@ stony_tick(void)
         apply_reset();
         return;
     }
+    /* A level saved before the stair was planted still gets it,
+       and a delivered traveler is put back if anything moved him. */
+    aim_stairs();
+    for (who = SG_OLD; who <= SG_MOTH; who++)
+        if (sg_bits() & (SG_DONE_OLD << (who - 1)))
+            settle_traveler(who);
     spawn_persecutor();
 }
 
@@ -947,7 +1051,8 @@ stony_traveler_fell(struct monst *mtmp)
 boolean
 stony_block_stairs(boolean up)
 {
-    if (!stony_here() || up)
+    /* The gated stair is the summit, and the summit goes up. */
+    if (!stony_here() || !up)
         return FALSE;
     if (u.ux != EXIT_X || u.uy != EXIT_Y)
         return FALSE;

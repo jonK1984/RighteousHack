@@ -4107,6 +4107,7 @@ extern boolean stony_absorb_zap(struct monst *, struct obj *);
 extern boolean stony_unharmed(struct monst *);
 extern boolean stony_traveler_fell(struct monst *);
 extern boolean stony_block_stairs(boolean);
+extern boolean stony_traveler_settled(struct monst *);
 extern boolean wayside_sanctum_key_dropped(void);
 extern void wayside_mark_sanctum_key(void);
 extern void sanctum_tick(void);

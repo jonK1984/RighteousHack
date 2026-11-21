@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-21
+The Stony Ground summit stair climbs up, and a delivered traveler waits beside it instead of on it.
+
+2026-11-21
 Each traveler who reaches the Stony Ground summit gives +10 permanent maximum hit points, once per game.
 
 2026-11-21
