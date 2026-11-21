@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-21
+A wished Sword of the Spirit keeps the enchantment you asked for. One that is not wished is still blessed +2 and rustproof.
+
+2026-11-21
 When the Son of Perdition clones himself, he says "My name is Legion: for we are many."
 
 2026-11-21
