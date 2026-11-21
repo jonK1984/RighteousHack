@@ -1184,8 +1184,8 @@ makemon(
 
     if (iflags.debug_mongen || (!svl.level.flags.rndmongen && !ptr))
         return (struct monst *) 0;
-    /* The Son of Perdition does not enter the Stony Ground. */
-    if (ptr == &mons[PM_WIZARD_OF_YENDOR] && stony_here())
+    /* The Son of Perdition does not enter a trial. */
+    if (ptr == &mons[PM_WIZARD_OF_YENDOR] && trial_bars_son())
         return (struct monst *) 0;
 
     /* if caller wants random location, do it here */

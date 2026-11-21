@@ -1895,6 +1895,34 @@ dungeon_branch(const char *s)
     return br;
 }
 
+/* The Son of Perdition does not enter a trial. His tower, Hinnom,
+   and the Sanctum are not trials. */
+boolean
+trial_bars_son(void)
+{
+    const char *dname;
+    s_level *slev;
+
+    if (u.uz.dnum < 0 || u.uz.dnum >= svn.n_dgns)
+        return FALSE;
+    dname = svd.dungeons[u.uz.dnum].dname;
+    /* Every level of these branches is a trial, including a later
+       one that has not been drawn yet. */
+    if (!strcmp(dname, "The Road to Salvation")
+        || !strcmp(dname, "The Wilderness Trial")
+        || !strcmp(dname, "Cave of Gibeon"))
+        return TRUE;
+    /* Sodom and Tyre is the placed Medusa level. */
+    if (Is_medusa_level(&u.uz))
+        return TRUE;
+    /* Capernaum sits inside the mines. The rest of that branch is not
+       this trial. */
+    slev = Is_special(&u.uz);
+    if (slev && !strcmp(slev->proto, "capernaum"))
+        return TRUE;
+    return FALSE;
+}
+
 /* The Cave of Gibeon is a one-level branch above the Prophet. */
 boolean
 on_gibeon_level(d_level *lev)

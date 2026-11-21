@@ -145,8 +145,8 @@ class Cuts(unittest.TestCase):
 
 class Rules(unittest.TestCase):
     def test_son_of_perdition_is_blocked(self):
-        self.assertIn("PM_WIZARD_OF_YENDOR] && stony_here()", MAKEMON)
-        self.assertIn("mtmp->iswiz && stony_here()", DOG)
+        self.assertIn("PM_WIZARD_OF_YENDOR] && trial_bars_son()", MAKEMON)
+        self.assertIn("mtmp->iswiz && trial_bars_son()", DOG)
 
     def test_reset_restores_chest_and_travelers(self):
         reset = SRC.split("apply_reset", 1)[1].split("stony_setup", 1)[0]

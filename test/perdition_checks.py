@@ -187,6 +187,23 @@ class KeyAndAltar(unittest.TestCase):
         self.assertIn("mtmp->iswiz && svc.context.no_of_wizards == 1", body)
         self.assertIn("clonewiz();", body)
 
+    def test_he_is_barred_from_every_trial(self):
+        dgn = (ROOT / "src" / "dungeon.c").read_text()
+        body = dgn.split("trial_bars_son(", 1)[1].split(
+            "on_gibeon_level", 1)[0]
+        for name in ("The Road to Salvation", "The Wilderness Trial",
+                     "Cave of Gibeon"):
+            self.assertIn('"%s"' % name, body)
+        self.assertIn("Is_medusa_level", body)
+        self.assertIn('!strcmp(slev->proto, "capernaum")', body)
+        self.assertNotIn("perdition", body)
+        self.assertNotIn("hinnom", body.lower())
+        self.assertNotIn("sanctum", body.lower())
+        make = (ROOT / "src" / "makemon.c").read_text()
+        dog = (ROOT / "src" / "dog.c").read_text()
+        self.assertIn("trial_bars_son()", make)
+        self.assertIn("trial_bars_son()", dog)
+
     def test_razing_the_altar_is_the_way_down(self):
         clamp = HINNOM_C.split("hinnom_dest_clamp", 1)[1].split(
             "hinnom_begin_swap", 1)[0]
