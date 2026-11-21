@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 14 /* Stony Ground escort state is saved; old saves will not load */
+#define EDITLEVEL 15 /* tower maps are perdition1/2/3; Moloch's fall is saved */
 
 /*
  * Development status possibilities.

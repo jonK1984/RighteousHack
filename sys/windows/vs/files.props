@@ -143,9 +143,9 @@
     <Luafiles Include = "Wiz-goal.lua"/>
     <Luafiles Include = "Wiz-loca.lua"/>
     <Luafiles Include = "Wiz-strt.lua"/>
-    <Luafiles Include = "wizard1.lua"/>
-    <Luafiles Include = "wizard2.lua"/>
-    <Luafiles Include = "wizard3.lua"/>
+    <Luafiles Include = "perdition1.lua"/>
+    <Luafiles Include = "perdition2.lua"/>
+    <Luafiles Include = "perdition3.lua"/>
   </ItemGroup>
   <ItemGroup>
     <UUFiles Include = "$(SysWindDir)nhico.uu"/>

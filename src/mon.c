@@ -3185,6 +3185,7 @@ mondead(struct monst *mtmp)
     if (!DEADMONSTER(mtmp))
         return;
     hinnom_child_died(mtmp);
+    hinnom_moloch_died(mtmp);
 
     /* vampire in bat/fog/wolf form reverts to vampire instead of dying */
     if (is_vampshifter(mtmp) && vamprises(mtmp))

@@ -18,7 +18,7 @@ WIZARD = (ROOT / "src" / "wizard.c").read_text()
 HINNOM_C = (ROOT / "src" / "hinnom.c").read_text()
 HINNOM = (ROOT / "dat" / "hinnom.lua").read_text()
 BERACHAH = (ROOT / "dat" / "berachah.lua").read_text()
-WIZ1 = (ROOT / "dat" / "wizard1.lua").read_text()
+WIZ1 = (ROOT / "dat" / "perdition1.lua").read_text()
 MONSTERS = (ROOT / "include" / "monsters.h").read_text()
 ZAP = (ROOT / "src" / "zap.c").read_text()
 MON = (ROOT / "src" / "mon.c").read_text()
@@ -152,6 +152,22 @@ class KeyAndAltar(unittest.TestCase):
     def test_key_drops_once_inside_his_tower(self):
         self.assertIn('des.monster({ id = "Son of Perdition"', WIZ1)
         self.assertNotIn("Wizard of Yendor", WIZ1)
+
+    def test_tower_maps_are_named_perdition(self):
+        dungeon = (ROOT / "dat" / "dungeon.lua").read_text()
+        levels = (ROOT / "src" / "dungeon.c").read_text()
+        fake = (ROOT / "dat" / "fakewiz1.lua").read_text()
+        for name in ("perdition1", "perdition2", "perdition3"):
+            self.assertIn('name = "%s"' % name, dungeon)
+            self.assertTrue((ROOT / "dat" / ("%s.lua" % name)).is_file())
+            self.assertIn('"%s"' % name, levels)
+        self.assertNotIn('name = "wizard1"', dungeon)
+        self.assertNotIn('name = "wizard2"', dungeon)
+        self.assertNotIn('name = "wizard3"', dungeon)
+        self.assertIn('name = "fakewiz1"', dungeon)
+        self.assertIn('name = "fakewiz2"', dungeon)
+        self.assertIn('name="perdition3"', fake)
+        self.assertNotIn('name="wizard3"', fake)
         fn = WIZARD.split("perdition_leave_sanctum_key", 1)[1]
         self.assertIn("wayside_sanctum_key_dropped()", fn)
         self.assertIn("On_W_tower_level(&u.uz)", fn)

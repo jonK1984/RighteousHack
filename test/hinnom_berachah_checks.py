@@ -109,6 +109,36 @@ class HinnomField(unittest.TestCase):
         self.assertGreater(len(bars), 100)
 
 
+MOLOCH_FALL = (
+    "The voice of Michael the archangel soundeth across the valley like a trumpet.",
+    "'Moloch is fallen! The abomination of the children of Ammon is cast down, and his fire shall devour the innocent no more.",
+    "Make haste! Throw down his altar and break his image in pieces, that no man may make his son or his daughter to pass through the fire unto Moloch ever again. Raze it to the ground, for the LORD hath delivered this place into thine hand.'",
+)
+
+
+class MolochFallen(unittest.TestCase):
+    def test_the_trumpet_is_exact_and_once(self):
+        body = HINNOM.split("hinnom_moloch_died", 1)[1].split(
+            "michael_briefing", 1)[0]
+        for line in MOLOCH_FALL:
+            self.assertIn(line, body)
+        self.assertIn("u.uevent.hinnom_fallen", body)
+        self.assertIn("Is_hinnom_level", body)
+        mon = (ROOT / "src" / "mon.c").read_text()
+        dead = mon.split("void\nmondead(", 1)[1].split("mvitals", 1)[0]
+        self.assertIn("hinnom_moloch_died(mtmp)", dead)
+        self.assertLess(dead.index("lifesaved_monster(mtmp)"),
+                        dead.index("hinnom_moloch_died(mtmp)"))
+        self.assertLess(dead.index("if (!DEADMONSTER(mtmp))"),
+                        dead.index("hinnom_moloch_died(mtmp)"))
+        you = (ROOT / "include" / "you.h").read_text()
+        self.assertIn("Bitfield(hinnom_fallen, 1)", you)
+        level = int(re.search(
+            r"#define EDITLEVEL (\d+)",
+            (ROOT / "include" / "patchlevel.h").read_text()).group(1))
+        self.assertGreaterEqual(level, 15)
+
+
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     result = unittest.TextTestRunner(verbosity=2).run(suite)

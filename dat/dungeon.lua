@@ -165,20 +165,20 @@ dungeon = {
             range = 6
          },
          {
-            name = "wizard1",
+            name = "perdition1",
             base = 11,
             range = 6
          },
          {
-            name = "wizard2",
+            name = "perdition2",
             bonetag = "X",
-            chainlevel = "wizard1",
+            chainlevel = "perdition1",
             base = 1
          },
          {
-            name = "wizard3",
+            name = "perdition3",
             bonetag = "Y",
-            chainlevel = "wizard1",
+            chainlevel = "perdition1",
             base = 2
          },
          {

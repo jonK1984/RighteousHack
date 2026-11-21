@@ -1178,6 +1178,27 @@ hinnom_screen(const char *const *para, int n)
     destroy_nhwindow(win);
 }
 
+/* Once, when Moloch actually dies on this level. Life-saving returns
+   before mondead reaches here, and hinnom_fallen blocks a later death. */
+void
+hinnom_moloch_died(struct monst *mtmp)
+{
+    static const char *const para[] = {
+        "The voice of Michael the archangel soundeth across the valley like a trumpet.",
+        "'Moloch is fallen! The abomination of the children of Ammon is cast down, and his fire shall devour the innocent no more.",
+        "Make haste! Throw down his altar and break his image in pieces, that no man may make his son or his daughter to pass through the fire unto Moloch ever again. Raze it to the ground, for the LORD hath delivered this place into thine hand.'",
+    };
+
+    if (!mtmp || mtmp->data != &mons[PM_MOLOCH])
+        return;
+    if (!Is_hinnom_level(&u.uz) || u.uevent.berachah)
+        return;
+    if (u.uevent.hinnom_fallen)
+        return;
+    u.uevent.hinnom_fallen = 1;
+    hinnom_screen(para, SIZE(para));
+}
+
 /* PLACEHOLDER: the whole briefing is not final-approved. Shown on
    every #chat with Michael while the field stands. */
 static void

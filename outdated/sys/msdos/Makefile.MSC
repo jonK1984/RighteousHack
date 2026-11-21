@@ -860,9 +860,9 @@ nhdat:	$(U)dlb_main.exe $(DAT)\data $(DAT)\oracles $(DAT)\options \
 	@echo Wiz-goal.lua >>dlb.lst
 	@echo Wiz-loca.lua >>dlb.lst
 	@echo Wiz-strt.lua >>dlb.lst
-	@echo wizard1.lua >>dlb.lst
-	@echo wizard2.lua >>dlb.lst
-	@echo wizard3.lua >>dlb.lst
+	@echo perdition1.lua >>dlb.lst
+	@echo perdition2.lua >>dlb.lst
+	@echo perdition3.lua >>dlb.lst
 ! ELSE
 	@for %%N in (*.lua) do echo %%N >>dlb.lst
 ! ENDIF
