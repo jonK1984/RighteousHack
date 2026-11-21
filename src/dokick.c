@@ -531,6 +531,8 @@ really_kick_object(coordxy x, coordxy y)
 
     if (gk.kickedobj->otyp == MIRROR)
         pride_touch_mirror(gk.kickedobj);
+    /* Kicking your soul while it lies on the Sanctum altar. */
+    sanctum_disturb_soul(gk.kickedobj);
 
     if ((trap = t_at(x, y)) != 0) {
         if ((is_pit(trap->ttyp) && !Passes_walls) || trap->ttyp == WEB) {

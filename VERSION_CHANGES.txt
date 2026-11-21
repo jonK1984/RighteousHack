@@ -10,6 +10,9 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-21
+In the Sanctum, your soul lies on the altar by itself. The High Priestess of the Great Dragon starts at peace. She turns only if the hero harms her, or tries to take the soul off that altar.
+
 2026-11-14
 The Stony Ground is the second trial on the Road to Salvation. The Wayside up stair leads there. Three travelers wait in a lit camp. Old saves will not load.
 

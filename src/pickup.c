@@ -1819,6 +1819,8 @@ pickup_object(
         impossible("pickup_object: count %ld > quan %ld?", count, obj->quan);
         return 0;
     }
+    /* Taking your soul off the Sanctum altar, by hand or by a hook. */
+    sanctum_disturb_soul(obj);
 
     /* In case of auto-pickup, where we haven't had a chance
        to look at it yet; affects docall(SCR_SCARE_MONSTER). */

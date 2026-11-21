@@ -2276,6 +2276,14 @@ domove_fight_empty(coordxy x, coordxy y)
             Strcpy(buf, unknown_obstacle);
             goto futile;
         }
+        /* Force-fighting the altar square that holds your soul. */
+        if (svc.context.forcefight) {
+            struct obj *otmp;
+
+            for (otmp = svl.level.objects[x][y]; otmp; otmp = otmp->nexthere)
+                if (otmp->otyp == PLAYER_SOUL)
+                    sanctum_disturb_soul(otmp);
+        }
 
         if (!Underwater) {
             boulder = sobj_at(BOULDER, x, y);
@@ -6014,16 +6022,116 @@ box_holds_soul(struct obj *box)
     return FALSE;
 }
 
-/* One chest, on the high altar, holding the player's own soul. */
+static boolean
+soul_on_sanctum_altar(struct obj *obj)
+{
+    coordxy x, y;
+
+    if (!obj || obj->otyp != PLAYER_SOUL || obj->where != OBJ_FLOOR)
+        return FALSE;
+    if (!Is_sanctum(&u.uz))
+        return FALSE;
+    if (!get_obj_location(obj, &x, &y, 0))
+        return FALSE;
+    return (boolean) (IS_ALTAR(levl[x][y].typ)
+                      && (levl[x][y].altarmask & AM_SANCTUM));
+}
+
+static struct monst *
+sanctum_high_priest(void)
+{
+    struct monst *mtmp;
+
+    if (!Is_sanctum(&u.uz))
+        return (struct monst *) 0;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (mtmp->ispriest && mtmp->data == &mons[PM_HIGH_CLERIC])
+            return mtmp;
+    }
+    return (struct monst *) 0;
+}
+
+static void spawn_hosts(void);
+
+/* The locked reveal. It used to be the chest on the altar. It is now
+   the first time the hero takes or moves the soul that sits there. */
 static void
-place_soul_chest(void)
+sanctum_reveal(void)
+{
+    char ans;
+    winid win;
+
+    if (u.uevent.soul_opened)
+        return;
+
+    /* One text window, the same kind a Wilderness floor intro uses.
+       Each paragraph is its own line. A blank line separates them.
+       A single putstr is cut near 255 characters, and each of these
+       is shorter than that. */
+    win = create_nhwindow(NHW_TEXT);
+    putstr(win, 0, "You peer inside, and horror grips you. There, bound in chains within the Sanctum of the Great Dragon, is your own soul. At last it all makes sense.");
+    putstr(win, 0, "");
+    putstr(win, 0, "You have walked a path of evil your whole life, and the treasure you sought was the liberation of your very soul. Now the chance for redemption stands before you. But redemption is a choice.");
+    putstr(win, 0, "");
+    putstr(win, 0, "God speaks in a thunderous voice: 'You must choose the path of good, not evil.'");
+    putstr(win, 0, "");
+    putstr(win, 0, "A soft voice speaks into your heart: 'That if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.'");
+    display_nhwindow(win, TRUE);
+    destroy_nhwindow(win);
+    /* y_n() is yn_function() with only y and n. Escape is n. */
+    ans = y_n("Dost thou confess with thy mouth the Lord Jesus, and believe in thine heart that God hath raised him from the dead?");
+
+    u.uevent.soul_opened = 1;
+    pline("From the shadows of the Sanctum, the hosts of darkness rise to claim what they believe is theirs.");
+    spawn_hosts();
+    if (ans == 'y')
+        u.uevent.sanctum_grace = 2;
+    else
+        u.uevent.sanctum_doom = 3;
+}
+
+/* The hero is taking or moving your soul while it still lies on the
+   Sanctum altar. Anger uses the ordinary peaceful-monster path.
+   Walking onto the altar does not call this. */
+void
+sanctum_disturb_soul(struct obj *obj)
+{
+    struct monst *priest;
+
+    if (svc.context.mon_moving || !soul_on_sanctum_altar(obj))
+        return;
+    priest = sanctum_high_priest();
+    if (priest && priest->mpeaceful)
+        setmangry(priest, FALSE);
+    sanctum_reveal();
+}
+
+static void
+pacify_sanctum_priest(void)
+{
+    struct monst *priest = sanctum_high_priest();
+
+    if (!priest)
+        return;
+    priest->female = 1;
+    priest->mpeaceful = 1;
+    set_malign(priest);
+    newsym(priest->mx, priest->my);
+}
+
+/* your soul lies on the high altar by itself. A chest left there by
+   an earlier visit is opened onto the altar and then removed. */
+static void
+place_altar_soul(void)
 {
     coordxy x, y, ax, ay;
-    struct obj *chest, *soul;
+    struct obj *obj, *nobj, *soul;
     struct monst *mtmp;
-    boolean found = FALSE;
+    boolean found = FALSE, on_altar = FALSE;
 
-    if (u.uevent.soul_placed || !Is_sanctum(&u.uz))
+    if (!Is_sanctum(&u.uz))
         return;
     ax = u.ux;
     ay = u.uy;
@@ -6036,24 +6144,51 @@ place_soul_chest(void)
                 found = TRUE;
                 break;
             }
-    chest = mksobj_at(CHEST, ax, ay, FALSE, FALSE);
-    if (!chest)
-        return;
-    chest->olocked = 0;
-    chest->otrapped = 0;
-    soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
-    if (soul) {
-        /* The type name is already "your soul". corpsenm starts at
-           NON_PM (-1); leave it 0 so it is not a monster index. */
-        soul->corpsenm = 0;
-        soul->dknown = soul->known = 1;
-        add_to_container(chest, soul);
+    for (obj = svl.level.objects[ax][ay]; obj; obj = nobj) {
+        struct obj *inside, *ninside;
+
+        nobj = obj->nexthere;
+        if (obj->otyp == PLAYER_SOUL)
+            on_altar = TRUE;
+        if (obj->otyp != CHEST || !box_holds_soul(obj))
+            continue;
+        for (inside = obj->cobj; inside; inside = ninside) {
+            ninside = inside->nobj;
+            if (inside->otyp != PLAYER_SOUL)
+                continue;
+            obj_extract_self(inside);
+            place_object(inside, ax, ay);
+            stackobj(inside);
+            on_altar = TRUE;
+        }
+        if (!Has_contents(obj)) {
+            obj_extract_self(obj);
+            obfree(obj, (struct obj *) 0);
+        }
     }
-    chest->owt = weight(chest);
+    if (on_altar) {
+        if (!u.uevent.soul_placed) {
+            pacify_sanctum_priest();
+            u.uevent.soul_placed = 1;
+            newsym(ax, ay);
+        }
+        return;
+    }
+    if (u.uevent.soul_placed)
+        return;
+    soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
+    if (!soul)
+        return;
+    /* The type name is already "your soul". corpsenm starts at
+       NON_PM (-1); leave it 0 so it is not a monster index. */
+    soul->corpsenm = 0;
+    soul->dknown = soul->known = 1;
+    place_object(soul, ax, ay);
+    stackobj(soul);
     if ((mtmp = m_at(ax, ay)) != 0 && mtmp != &gy.youmonst)
         (void) rloc(mtmp, RLOC_NOMSG);
     newsym(ax, ay);
-    pline("A chest sits on the altar.");
+    pacify_sanctum_priest();
     u.uevent.soul_placed = 1;
 }
 
@@ -6129,7 +6264,7 @@ sanctum_tick(void)
 {
     if (!Is_sanctum(&u.uz))
         return;
-    place_soul_chest();
+    place_altar_soul();
     if (u.uevent.sanctum_grace) {
         u.uevent.sanctum_grace--;
         if (!u.uevent.sanctum_grace)
@@ -6146,36 +6281,16 @@ sanctum_tick(void)
 int
 soul_opening(struct obj *box)
 {
-    char ans;
-    winid win;
+    struct monst *priest;
 
     if (u.uevent.soul_opened || !box_holds_soul(box))
         return 0;
-
-    /* One text window, the same kind a Wilderness floor intro uses.
-       Each paragraph is its own line. A blank line separates them.
-       A single putstr is cut near 255 characters, and each of these
-       is shorter than that. */
-    win = create_nhwindow(NHW_TEXT);
-    putstr(win, 0, "You peer inside, and horror grips you. There, bound in chains within the Sanctum of the Great Dragon, is your own soul. At last it all makes sense.");
-    putstr(win, 0, "");
-    putstr(win, 0, "You have walked a path of evil your whole life, and the treasure you sought was the liberation of your very soul. Now the chance for redemption stands before you. But redemption is a choice.");
-    putstr(win, 0, "");
-    putstr(win, 0, "God speaks in a thunderous voice: 'You must choose the path of good, not evil.'");
-    putstr(win, 0, "");
-    putstr(win, 0, "A soft voice speaks into your heart: 'That if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.'");
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
-    /* y_n() is yn_function() with only y and n. Escape is n. */
-    ans = y_n("Dost thou confess with thy mouth the Lord Jesus, and believe in thine heart that God hath raised him from the dead?");
-
-    u.uevent.soul_opened = 1;
-    pline("From the shadows of the Sanctum, the hosts of darkness rise to claim what they believe is theirs.");
-    spawn_hosts();
-    if (ans == 'y')
-        u.uevent.sanctum_grace = 2;
-    else
-        u.uevent.sanctum_doom = 3;
+    /* A chest from before the soul lay on the altar. Opening it is
+       the same trespass as taking the soul. */
+    priest = sanctum_high_priest();
+    if (priest && priest->mpeaceful)
+        setmangry(priest, FALSE);
+    sanctum_reveal();
     return 1;
 }
 

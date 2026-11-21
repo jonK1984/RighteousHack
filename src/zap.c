@@ -2146,6 +2146,8 @@ bhito(struct obj *obj, struct obj *otmp)
        available in wand form, but the concept still applies...]) */
     if (obj == otmp)
         return 0;
+    /* A zap that strikes your soul on the Sanctum altar. */
+    sanctum_disturb_soul(obj);
 
     if (obj->bypass) {
         /* The bypass bit is currently only used as follows:

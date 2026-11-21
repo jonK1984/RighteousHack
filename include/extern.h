@@ -4110,6 +4110,7 @@ extern boolean wayside_sanctum_key_dropped(void);
 extern void wayside_mark_sanctum_key(void);
 extern void sanctum_tick(void);
 extern int soul_opening(struct obj *);
+extern void sanctum_disturb_soul(struct obj *);
 extern void greed_snapshot_gold(void);
 extern void greed_restore_gold(void);
 extern void pride_unlearn_execution(void);

@@ -250,15 +250,22 @@ priestini(
         EPRI(priest)->shrpos.y = sy;
         assign_level(&(EPRI(priest)->shrlevel), lvl);
         mon_learns_traps(priest, ALL_TRAPS); /* traps are known */
-        /* A priest of an altar that is not lawful starts hostile. */
-        priest->mpeaceful = altar_is_good(sx, sy) ? 1 : 0;
+        /* A priest of an altar that is not lawful starts hostile.
+           The Sanctum high priestess starts at peace. She turns
+           only when the hero harms her or touches the soul. */
+        if (sanctum) {
+            priest->female = 1;
+            priest->mpeaceful = 1;
+        } else {
+            priest->mpeaceful = altar_is_good(sx, sy) ? 1 : 0;
+        }
         priest->ispriest = 1;
         priest->isminion = 0;
         priest->msleeping = 0;
         set_malign(priest); /* mpeaceful may have changed */
 
         /* The Amulet of Yendor is no longer the quest object.
-           The player's soul is in the chest on this altar. */
+           The player's soul lies on this altar. */
         /* 2 to 4 prophetic books */
         for (cnt = rn1(3, 2); cnt > 0; --cnt) {
             (void) mpickobj(priest, mkobj(SPBOOK_no_NOVEL, FALSE));
