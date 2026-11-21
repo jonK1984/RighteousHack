@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-21
+In Berachah the children stand off the throne doors. The fiery steed is orange. When the last Hinnom lever drops the field, the bars glitter and fall before the same blackout text.
+
+2026-11-21
 A yes in the Sanctum plays a yellow light across the map, then the same words as before. The light is not saved.
 
 2026-11-21

@@ -482,17 +482,284 @@ move_angels_to_gate(void)
     }
 }
 
+/* tty and curses can paint a character and a standard color, then
+   wait. A tiled port, or a port with no delay, is left alone. */
+static boolean
+field_can_play(void)
+{
+    const char *port;
+
+    if (iflags.debug_fuzzer || !iflags.window_inited || !u.ux)
+        return FALSE;
+    if (WIN_MAP == WIN_ERR)
+        return FALSE;
+    if (!windowprocs.win_print_glyph || !windowprocs.win_delay_output)
+        return FALSE;
+    if (iflags.wc_tiled_map)
+        return FALSE;
+    port = windowprocs.name;
+    if (!port)
+        return FALSE;
+    return (boolean) (!strcmp(port, "tty") || !strcmp(port, "curses"));
+}
+
+static void
+field_put(coordxy x, coordxy y, char ch, int color)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+
+    *cell = nul_glyphinfo;
+    cell->glyph = cmap_to_glyph(S_room);
+    cell->ttychar = (int) ch;
+    cell->gm.sym.color = color;
+    cell->gm.glyphflags = 0;
+    cell->gm.customcolor = 0;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+field_copy(coordxy x, coordxy y, const glyph_info *src)
+{
+    gg.gbuf[y][x].glyphinfo = *src;
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+field_frame(void)
+{
+    coordxy y;
+
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+    }
+    flush_screen(1);
+    nh_delay_output();
+}
+
+/* 0 outer, 1 on the bar line, 2 one cell inside. -1 is not the ring.
+   One cell outside the bars and one cell inside makes the band
+   about three cells thick. */
+static int
+field_layer(int x, int y, int L, int R, int T, int B)
+{
+    int dx, dy, outside, ix, iy, inside;
+
+    if (x < L)
+        dx = L - x;
+    else if (x > R)
+        dx = x - R;
+    else
+        dx = 0;
+    if (y < T)
+        dy = T - y;
+    else if (y > B)
+        dy = y - B;
+    else
+        dy = 0;
+    outside = (dx > dy) ? dx : dy;
+    if (outside > 1)
+        return -1;
+    if (outside == 1)
+        return 0;
+    ix = (x - L < R - x) ? (x - L) : (R - x);
+    iy = (y - T < B - y) ? (y - T) : (B - y);
+    inside = (ix < iy) ? ix : iy;
+    if (inside > 1)
+        return -1;
+    return (inside == 0) ? 1 : 2;
+}
+
+static void
+field_outward(int x, int y, int cx, int cy, int age,
+              coordxy *ox, coordxy *oy)
+{
+    int step = 1 + age / 2;
+    int sx = (x > cx) - (x < cx);
+    int sy = (y > cy) - (y < cy);
+    int nx = x + sx * step;
+    int ny = y + sy * step;
+
+    if (!isok((coordxy) nx, (coordxy) ny)) {
+        *ox = (coordxy) x;
+        *oy = (coordxy) y;
+        return;
+    }
+    *ox = (coordxy) nx;
+    *oy = (coordxy) ny;
+}
+
+/* The bars are still up. Sixty frames at the 50 ms display delay
+   is about three seconds. Sparkles and holes use the display RNG. */
+static void
+hinnom_field_burst(void)
+{
+    glyph_info *snap;
+    unsigned char *dieat;
+    boolean save_nap;
+    coordxy x, y;
+    int L, R, T, B, cx, cy, frame, n;
+    static const char glitter_ch[4] = { '#', '*', '+', '.' };
+    static const int glitter_co[3] = {
+        CLR_BRIGHT_BLUE, CLR_BLUE, CLR_CYAN
+    };
+
+    if (!field_can_play())
+        return;
+
+    L = COLNO;
+    R = 0;
+    T = ROWNO;
+    B = -1;
+    n = 0;
+    for (x = 1; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++) {
+            if (levl[x][y].typ != IRONBARS)
+                continue;
+            if (x < L)
+                L = x;
+            if (x > R)
+                R = x;
+            if (y < T)
+                T = y;
+            if (y > B)
+                B = y;
+            n++;
+        }
+    if (!n || L > R || T > B)
+        return;
+
+    snap = (glyph_info *) alloc((unsigned) (COLNO * ROWNO * sizeof *snap));
+    dieat = (unsigned char *) alloc((unsigned) (COLNO * ROWNO));
+    for (y = 0; y < ROWNO; y++)
+        for (x = 0; x < COLNO; x++) {
+            int layer = (!isok(x, y)) ? -1
+                        : field_layer((int) x, (int) y, L, R, T, B);
+            int i = y * COLNO + x;
+
+            if (isok(x, y))
+                snap[i] = gg.gbuf[y][x].glyphinfo;
+            if (layer < 0) {
+                dieat[i] = 255;
+                continue;
+            }
+            /* Outer rim dies first. A few cells fail early, as holes. */
+            if (!rn2_on_display_rng(5))
+                dieat[i] = (unsigned char) rn2_on_display_rng(6);
+            else
+                dieat[i] = (unsigned char) (layer * 8
+                                            + rn2_on_display_rng(8));
+        }
+    cx = (L + R) / 2;
+    cy = (T + B) / 2;
+
+    /* curses skips nh_delay_output when timed_delay is off. Hold the
+       option on for this burst and put it back, as the Sanctum light
+       and the frost burst do. */
+    save_nap = flags.nap;
+    flags.nap = TRUE;
+
+    for (frame = 0; frame < 60; frame++) {
+        for (y = 0; y < ROWNO; y++)
+            for (x = 1; x < COLNO; x++) {
+                int i = y * COLNO + x;
+
+                if (frame >= 52) {
+                    if (levl[x][y].typ == IRONBARS)
+                        field_put(x, y, '.', NO_COLOR);
+                    else
+                        field_copy(x, y, &snap[i]);
+                    continue;
+                }
+                field_copy(x, y, &snap[i]);
+                if (dieat[i] == 255)
+                    continue;
+                if (frame < 8) {
+                    field_put(x, y,
+                              glitter_ch[rn2_on_display_rng(4)],
+                              glitter_co[rn2_on_display_rng(3)]);
+                } else if (frame < 20) {
+                    int pulse = frame & 1;
+
+                    field_put(x, y,
+                              rn2_on_display_rng(3) ? '*' : '+',
+                              pulse ? CLR_WHITE : CLR_BRIGHT_CYAN);
+                } else {
+                    int cf = frame - 20;
+                    int die = (int) dieat[i];
+                    int remain;
+
+                    if (cf >= die) {
+                        /* A hole in the bars shows floor, not the bars. */
+                        if (levl[x][y].typ == IRONBARS)
+                            field_put(x, y, '.', NO_COLOR);
+                        continue;
+                    }
+                    remain = die - cf;
+                    if (remain > 8)
+                        field_put(x, y, '*',
+                                  (remain & 1) ? CLR_WHITE
+                                               : CLR_BRIGHT_CYAN);
+                    else if (remain > 4)
+                        field_put(x, y, '+', CLR_BLUE);
+                    else
+                        field_put(x, y, '.', CLR_GRAY);
+                }
+            }
+        if (frame >= 20 && frame < 52) {
+            int cf = frame - 20;
+
+            for (y = 0; y < ROWNO; y++)
+                for (x = 1; x < COLNO; x++) {
+                    int i = y * COLNO + x;
+                    int age, color;
+                    char ch;
+                    coordxy ox, oy;
+
+                    if (dieat[i] == 255)
+                        continue;
+                    age = cf - (int) dieat[i];
+                    if (age < 0 || age > 5)
+                        continue;
+                    field_outward((int) x, (int) y, cx, cy, age, &ox, &oy);
+                    if (age < 2) {
+                        ch = '*';
+                        color = (age & 1) ? CLR_WHITE : CLR_BRIGHT_CYAN;
+                    } else if (age < 4) {
+                        ch = '+';
+                        color = CLR_BLUE;
+                    } else {
+                        ch = '.';
+                        color = CLR_GRAY;
+                    }
+                    field_put(ox, oy, ch, color);
+                }
+        }
+        field_frame();
+    }
+
+    flags.nap = save_nap;
+    free((genericptr_t) dieat);
+    free((genericptr_t) snap);
+}
+
 static void
 hinnom_field_down(void)
 {
     coordxy x, y;
 
+    /* The ring plays while the bars still stand, then they come down. */
+    hinnom_field_burst();
     for (x = 1; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             if (levl[x][y].typ == IRONBARS) {
                 levl[x][y].typ = ROOM;
                 newsym(x, y);
             }
+    docrt();
     /* Once: the bars are gone now, and the levers go dead. */
     {
         static const char *const para[] = {

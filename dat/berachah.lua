@@ -89,7 +89,7 @@ des.monster({ id = "child", x = 66, y = 8, peaceful = 1, waiting = 1 })
 des.monster({ id = "child", x = 68, y = 8, peaceful = 1, waiting = 1 })
 des.monster({ id = "child", x = 70, y = 8, peaceful = 1, waiting = 1 })
 des.monster({ id = "child", x = 66, y = 12, peaceful = 1, waiting = 1 })
-des.monster({ id = "child", x = 68, y = 12, peaceful = 1, waiting = 1 })
+des.monster({ id = "child", x = 68, y = 11, peaceful = 1, waiting = 1 })
 des.monster({ id = "child", x = 70, y = 12, peaceful = 1, waiting = 1 })
 -- Eight jobs. Prisoners, not shopkeepers: the work is #chat, not a shop.
 -- The two chests in the gifted house start empty. Their contents are the
