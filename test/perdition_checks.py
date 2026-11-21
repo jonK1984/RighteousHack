@@ -177,6 +177,16 @@ class KeyAndAltar(unittest.TestCase):
         self.assertIn("perdition_leave_sanctum_key(mtmp, mx, my)", MON)
         self.assertIn("#define WS_SKEY", WAYSIDE)
 
+    def test_clone_spell_keeps_its_mechanic_and_the_legion_line(self):
+        cast = (ROOT / "src" / "mcastu.c").read_text()
+        body = cast.split("mcast_clone_wiz(struct monst *mtmp)", 1)[1].split(
+            "mcast_summon_mons", 1)[0]
+        self.assertIn(
+            'pline("My name is Legion: for we are many.");', body)
+        self.assertNotIn("Double Trouble", body)
+        self.assertIn("mtmp->iswiz && svc.context.no_of_wizards == 1", body)
+        self.assertIn("clonewiz();", body)
+
     def test_razing_the_altar_is_the_way_down(self):
         clamp = HINNOM_C.split("hinnom_dest_clamp", 1)[1].split(
             "hinnom_begin_swap", 1)[0]

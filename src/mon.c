@@ -212,7 +212,7 @@ sanity_check_single_mon(
                 "mimic%s concealed as %s despite Prot-from-shape-changers %s",
                        is_mimic ? "" : "ker", what, msg);
         }
-        /* the Wizard's clone after "double trouble" starts out mimicking
+        /* the Son of Perdition's clone starts out mimicking
            some other monster; pet's quickmimic effect can temporarily take
            on furniture, object, or monster shape, but only until the pet
            finishes eating a mimic corpse */
