@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-21
+Each traveler who reaches the Stony Ground summit gives +10 permanent maximum hit points, once per game.
+
+2026-11-21
 The rod of tranquility calms the young believer when the ray hits him. Reading a prophetic book says "You begin to memorize the prophecy."
 
 2026-11-21

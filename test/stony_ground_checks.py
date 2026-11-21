@@ -165,6 +165,21 @@ class Rules(unittest.TestCase):
         self.assertIn('find_level("stony")', WAYSIDE)
         self.assertIn("up = stony->dlevel", WAYSIDE)
 
+    def test_summit_vitality_is_once_and_survives_reset(self):
+        self.assertIn("#define SG_HP_OLD", SRC)
+        self.assertIn("#define SG_HP_YOUNG", SRC)
+        self.assertIn("#define SG_HP_MOTH", SRC)
+        reset = SRC.split("apply_reset", 1)[1].split("stony_setup", 1)[0]
+        self.assertIn("sg_set(sg_bits() & SG_HP_ALL)", reset)
+        grant = SRC.split("grant_summit_hp", 1)[1].split("check_triggers", 1)[0]
+        self.assertIn("u.uhp += 10", grant)
+        self.assertIn("setuhpmax(u.uhpmax + 10, TRUE)", grant)
+        self.assertIn("setuhpmax(u.mhmax + 10, FALSE)", grant)
+        self.assertIn("if (Upolyd)", grant)
+        deliver = SRC.split("deliver(int who)", 1)[1].split(
+            "grant_summit_hp(int who)", 1)[0]
+        self.assertIn("grant_summit_hp(who)", deliver)
+
     def test_the_sleep_ray_reaches_the_calm(self):
         zap = (ROOT / "src" / "zap.c").read_text()
         hit = zap.split("zap_hit(find_mac(mon), spell_type)", 1)[1]

@@ -29,6 +29,11 @@
 #define SG_CALLED     0x00000400UL
 #define SG_RESET      0x00000800UL
 #define SG_CHAT       0x00001000UL /* young believer's first line has been said */
+/* Permanent summit vitality. Survives apply_reset. One bit each. */
+#define SG_HP_OLD     0x00002000UL
+#define SG_HP_YOUNG   0x00004000UL
+#define SG_HP_MOTH    0x00008000UL
+#define SG_HP_ALL     (SG_HP_OLD | SG_HP_YOUNG | SG_HP_MOTH)
 #define SG_ESC_SHIFT  16
 
 #define SG_OLD   1
@@ -82,6 +87,8 @@ sg_set(unsigned long bits)
 {
     u.ustony.bits = bits;
 }
+
+static void grant_summit_hp(int);
 
 static int
 escort_of(void)
@@ -495,7 +502,8 @@ aim_stairs(void)
 static void
 apply_reset(void)
 {
-    sg_set(0);
+    /* The summit vitality stays. A second escort does not grant it again. */
+    sg_set(sg_bits() & SG_HP_ALL);
     u.ustony.sick = 0;
     clear_persecutors();
     place_traveler(SG_YOUNG, MX(42), MY(11));
@@ -597,6 +605,29 @@ deliver(int who)
     else
         line = "The mother lifteth her child toward the light. 'The LORD is my light and my salvation; whom shall I fear? Thou didst not leave us in the darkness. God bless thee, friend.'";
     pline("%s", line);
+    /* Once per traveler, for the whole game. A later sentence could
+       be added here, after the summit speech. */
+    grant_summit_hp(who);
+}
+
+/* +10 permanent maximum, and +10 current, in this form and in the
+   hero's own body. The bit is what stops a reset from paying twice. */
+static void
+grant_summit_hp(int who)
+{
+    unsigned long bit = (who == SG_OLD) ? SG_HP_OLD
+                        : (who == SG_YOUNG) ? SG_HP_YOUNG
+                                            : SG_HP_MOTH;
+
+    if (sg_bits() & bit)
+        return;
+    sg_set(sg_bits() | bit);
+    u.uhp += 10;
+    setuhpmax(u.uhpmax + 10, TRUE);
+    if (Upolyd) {
+        u.mh += 10;
+        setuhpmax(u.mhmax + 10, FALSE);
+    }
 }
 
 static void
