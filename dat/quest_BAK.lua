@@ -284,7 +284,7 @@ You realize the feeling must be the presence of %o.]],
          synopsis = "[The power of %o flows through your body!  You must return it to %l.]",
          output = "text",
          text = [[The power of %o flows through your body!  You feel
-as if you could now take on the Wizard of Yendor himself and win, but
+as if you could now take on the Son of Perdition himself and win, but
 you know you must return %o to %l.]],
       },
       guardtalk_after = {
@@ -2956,7 +2956,7 @@ tower...  unless something were dreadfully wrong!]],
          text = [[As you touch %o, its comforting power infuses you
 with new energy.  You feel as if you can detect others' thoughts flowing
 through it.  Although you yearn to wear %o and
-attack the Wizard of Yendor, you know you must return it to its rightful
+attack the Son of Perdition, you know you must return it to its rightful
 owner, %l.]],
       },
       guardtalk_after = {
@@ -2977,7 +2977,7 @@ owner, %l.]],
          synopsis = "[Take the Amulet to %ds altar on the Astral Plane.]",
          output = "text",
          text = [["Congratulations, %p.  I always knew that if anyone could succeed
-in defeating the Wizard of Yendor and his minions, it would be you.
+in defeating the Son of Perdition and his minions, it would be you.
 
 "Go now, and take the Amulet to the Astral Plane.  Once there, present
 the Amulet on the altar of %d.  Along the way you shall pass through

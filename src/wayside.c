@@ -12,6 +12,9 @@
 #define WS_GIANT    0x00000200UL
 #define WS_ROAD     0x00000400UL
 #define WS_TOLD     0x00000800UL
+/* The Sanctum key has already dropped from his first tower defeat.
+   Stored in the existing bits word, so the save layout does not grow. */
+#define WS_SKEY     0x00001000UL
 
 #define WS_MODE_LEVEL   1 /* an unvisited ordinary Gehennom level */
 #define WS_MODE_INSERT  2 /* new level between the square and the next */
@@ -277,8 +280,8 @@ wayside_is_villager(struct monst *mtmp)
     return TRUE;
 }
 
-static void
-show_text(const char *text)
+void
+wayside_screen(const char *text)
 {
     winid win;
     char buf[BUFSZ];
@@ -312,7 +315,7 @@ show_text(const char *text)
 static void
 show_intro(void)
 {
-    show_text(
+    wayside_screen(
         "You have come to the Wayside, where seeing, they see not; and hearing, they hear not, neither do they understand.\n"
         "\n"
         "Six homes stand beside the road. Within each waits a troubled villager, holding a riddle whose answer has slipped beyond their grasp.\n"
@@ -660,6 +663,27 @@ confirm_answer(int which)
                 "'%s,' the %s villager repeats softly. 'I hear it now, and I understand.' %s",
                 ws_answer[which], ws_adj[which], tail);
     pline("%s", line);
+    /* The count line is already on the message line, including
+       "(0 riddles remain.)" for the last answer. The blackout follows. */
+    if (riddles_left() == 0)
+        wayside_screen(
+            "Thou hast heard, and thou hast understood.\n"
+            "\n"
+            "A great stillness falleth upon the Wayside, and from the northeast thou hearest a gate swing wide upon its hinges.\n"
+            "\n"
+            "Go forth, for the road to salvation continueth before thee.");
+}
+
+boolean
+wayside_sanctum_key_dropped(void)
+{
+    return (boolean) ((ws_bits() & WS_SKEY) != 0);
+}
+
+void
+wayside_mark_sanctum_key(void)
+{
+    ws_set(ws_bits() | WS_SKEY);
 }
 
 static void
@@ -685,7 +709,7 @@ folly_death(int which)
             "\n"
             "The way of a fool is right in his own eyes.",
             ws_answer[which]);
-    show_text(text);
+    wayside_screen(text);
     /* The hero's own foolishness, not a blow from God. */
     svk.killer.format = NO_KILLER_PREFIX;
     Strcpy(svk.killer.name, "Undone by folly at the Wayside.");
@@ -743,7 +767,7 @@ ask_riddle(struct monst *mtmp)
         verbalize("You already have that answer.");
         return;
     }
-    show_text(ws_body[which]);
+    wayside_screen(ws_body[which]);
     getlin("What am I?", buf);
     if (blank_answer(buf))
         return;

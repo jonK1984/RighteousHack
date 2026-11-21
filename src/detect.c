@@ -1199,7 +1199,7 @@ static const struct crystalballlevels {
     { "Isaiah, prophet of the Lord", &oracle_level },
     { "Sodom and Tyre", &medusa_level },
     { "Babylon's Palace", &stronghold_level },
-    { "the Wizard of Yendor's tower", &wiz1_level },
+    { "the Son of Perdition's tower", &wiz1_level },
 };
 
 void
@@ -1359,7 +1359,7 @@ use_crystal_ball(struct obj **optr)
 
         if (ret) {
             if (!rn2(100)) /* make them nervous */
-                You_see("the Wizard of Yendor gazing out at you.");
+                You_see("the Son of Perdition gazing out at you.");
             else
                 pline_The("vision is unclear.");
         }

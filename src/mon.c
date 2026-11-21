@@ -1559,6 +1559,10 @@ meatobj(struct monst *mtmp) /* for gelatinous cubes */
            dropped again */
         if (is_mines_prize(otmp) || is_soko_prize(otmp))
             continue;
+        /* Armor of God, the sword, and your soul are not food.
+           He takes your soul by theft, not by a cube swallowing it. */
+        if (obj_theft_barred(otmp, mtmp))
+            continue;
 
         /* touch sensitive items */
         if (otmp->otyp == CORPSE && is_rider(&mons[otmp->corpsenm])) {
@@ -1873,6 +1877,10 @@ mpickstuff(struct monst *mtmp)
         /* avoid special items; once hero picks them up, they'll cease
            being special, becoming eligible for normal pickup */
         if (is_mines_prize(otmp) || is_soko_prize(otmp))
+            continue;
+        /* Nymphs and other grabbers leave these on the floor.
+           The Son of Perdition may still pick up your soul. */
+        if (obj_theft_barred(otmp, mtmp))
             continue;
 
         /* Nymphs take everything.  Most monsters don't pick up corpses. */
@@ -2788,6 +2796,9 @@ m_detach(
        leaving the dungeon alive rather than dying */
     if (mtmp->iswiz)
         wizdeadorgone();
+    /* Before his pack is dropped. Only the first death inside the tower. */
+    if (due_to_death && mtmp->iswiz)
+        perdition_leave_sanctum_key(mtmp, mx, my);
     /* foodead() might give quest feedback for foo having died; skip that
        if we're called for mongone() rather than mondead(); saving bones
        or wizard mode genocide of "*" can result in special monsters going

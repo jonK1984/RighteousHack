@@ -112,9 +112,6 @@ des.monster({ id = "prisoner", name = "steward", x = 30, y = 8,
               peaceful = 1, waiting = 1 })
 des.object({ id = "chest", x = 32, y = 7, locked = 0, trapped = 0 })
 des.object({ id = "chest", x = 32, y = 9, locked = 0, trapped = 0 })
--- Spare Key to the Sanctum, in the northeast tower of the town.
--- Moloch may already have dropped the other during the battle.
-des.object({ id = "chest", x = 73, y = 5, locked = 0, trapped = 0,
-             contents = function()
-                des.object("Key to the Sanctum")
-             end })
+-- The northeast tower chest is empty. The Key to the Sanctum
+-- drops when the Son of Perdition is first killed in his tower.
+des.object({ id = "chest", x = 73, y = 5, locked = 0, trapped = 0 })

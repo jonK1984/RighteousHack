@@ -998,6 +998,9 @@ curses_print_glyph(
         if ((special & MG_FEMALE) && wizard && iflags.wizmgender) {
             attr = A_REVERSE;
         }
+        /* Son of Perdition. Wins over a pile or gender highlight. */
+        if ((special & MG_INVERSE) != 0)
+            attr = A_REVERSE;
     }
 
     curses_putch(wid, x, y, ch,

@@ -189,6 +189,8 @@ stealarm(void)
                     if (!dmgtype(mtmp->data, AD_SITM)
                         || distu(mtmp->mx, mtmp->my) > 2)
                         goto botm; /* (could just use 'break' here) */
+                    if (obj_theft_barred(otmp, mtmp))
+                        goto botm;
                     if (otmp->unpaid)
                         subfrombill(otmp, shop_keeper(*u.ushops));
                     freeinv(otmp);
@@ -342,6 +344,34 @@ worn_item_removal(
  * Nymphs and monkeys won't steal coins (so that their "steal item" attack
  * doesn't become a superset of leprechaun's "steal gold" attack).
  */
+/* Armor of God and the Sword of the Spirit cannot be taken from the
+   hero, nor picked up off the floor by a monster that would be
+   stealing them. your soul is the same, except the Son of Perdition
+   may take it while the Helmet of Salvation is not worn. */
+boolean
+obj_theft_barred(struct obj *otmp, struct monst *mtmp)
+{
+    if (!otmp)
+        return FALSE;
+    switch (otmp->oartifact) {
+    case ART_SHOES_GOSPEL_OF_PEACE:
+    case ART_PLATE_OF_RIGHTEOUSNESS:
+    case ART_BELT_OF_TRUTH:
+    case ART_HELMET_OF_SALVATION:
+    case ART_SHIELD_OF_FAITH:
+    case ART_SWORD_OF_THE_SPIRIT:
+        return TRUE;
+    default:
+        break;
+    }
+    if (otmp->otyp == PLAYER_SOUL) {
+        if (mtmp && mtmp->iswiz && !cap_of_salvation_worn())
+            return FALSE;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 int
 steal(struct monst *mtmp, char *objnambuf)
 {
@@ -351,7 +381,7 @@ steal(struct monst *mtmp, char *objnambuf)
         named = 0, retrycnt = 0;
     boolean monkey_business = is_animal(mtmp->data),
             seen = canspotmon(mtmp),
-            was_doffing, was_punished = Punished;
+            was_doffing, was_punished = Punished, took_soul;
 
     if (objnambuf)
         *objnambuf = '\0';
@@ -451,19 +481,16 @@ steal(struct monst *mtmp, char *objnambuf)
         otmp = uarm;
 
  gotobj:
-    if (otmp->otyp == PLAYER_SOUL) {
+    /* Armor of God and the Sword of the Spirit never leave by theft.
+       your soul leaves only in the Son of Perdition's hand, and only
+       while the Helmet of Salvation is not on the hero's head. */
+    if (obj_theft_barred(otmp, mtmp)) {
         if (!retrycnt++)
             goto retry;
-        pline("your soul stays with you.");
-        return 1;
-    }
-    if (otmp->oartifact == ART_SWORD_OF_THE_SPIRIT
-        && (otmp == uwep || otmp == uswapwep)) {
-        if (!retrycnt++)
-            goto retry;
-        pline("The Sword of the Spirit stays in your %s.",
-              bimanual(otmp) ? makeplural(body_part(HAND))
-                             : body_part(HAND));
+        if (otmp->otyp == PLAYER_SOUL)
+            pline("your soul stays with you.");
+        else
+            pline("%s stays with you.", Yname2(otmp));
         return 1;
     }
     if (otmp->o_id == gs.stealoid)
@@ -611,6 +638,7 @@ steal(struct monst *mtmp, char *objnambuf)
     if (!Conflict && !(was_punished && !Punished))
         mtmp->mavenge = 1;
 
+    took_soul = (otmp->otyp == PLAYER_SOUL && mtmp->iswiz);
     if (otmp->unpaid)
         subfrombill(otmp, shop_keeper(*u.ushops));
     freeinv(otmp);
@@ -620,12 +648,21 @@ steal(struct monst *mtmp, char *objnambuf)
     if (iflags.last_msg == PLNMSG_MON_TAKES_OFF_ITEM
         && mtmp->data->mlet == S_NYMPH)
         ++named;
-    urgent_pline("%s stole %s.", named ? "She" : Monnambuf, doname(otmp));
+    /* The soul has its own blackout. Do not add a second theft line. */
+    if (!took_soul)
+        urgent_pline("%s stole %s.", named ? "She" : Monnambuf, doname(otmp));
     encumber_msg();
     could_petrify = (otmp->otyp == CORPSE
                      && touch_petrifies(&mons[otmp->corpsenm]));
     otmp->how_lost = LOST_STOLEN;
     (void) mpickobj(mtmp, otmp); /* may free otmp */
+    if (took_soul)
+        wayside_screen(
+            "Thou hast cast off the helmet of thy salvation, and the Son of Perdition hath seized upon thy soul!\n"
+            "\n"
+            "He fleeth with it into the darkness, laughing.\n"
+            "\n"
+            "Make haste and pursue him, for what shall a man give in exchange for his soul?");
     if (could_petrify && !(mtmp->misc_worn_check & W_ARMG)) {
         minstapetrify(mtmp, TRUE);
         return -1;
@@ -711,18 +748,26 @@ stealamulet(struct monst *mtmp)
     char buf[BUFSZ];
     struct obj *otmp = 0, *obj = 0;
     int real = 0, fake = 0, n;
+    boolean took_soul = FALSE;
+
+    /* While the helmet is off, your soul is what he came for. */
+    if (mtmp->iswiz && !cap_of_salvation_worn())
+        otmp = carried_player_soul();
 
     /* target every quest artifact, not just current role's;
        if hero has more than one, choose randomly so that player
        can't use inventory ordering to influence the theft */
-    for (n = 0, obj = gi.invent; obj; obj = obj->nobj)
-        if (any_quest_artifact(obj))
-            ++n, otmp = obj;
-    if (n > 1) {
-        n = rnd(n);
-        for (otmp = gi.invent; otmp; otmp = otmp->nobj)
-            if (any_quest_artifact(otmp) && !--n)
-                break;
+    if (!otmp) {
+        for (n = 0, obj = gi.invent; obj; obj = obj->nobj)
+            if (any_quest_artifact(obj) && !obj_theft_barred(obj, mtmp))
+                ++n, otmp = obj;
+        if (n > 1) {
+            n = rnd(n);
+            for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+                if (any_quest_artifact(otmp) && !obj_theft_barred(otmp, mtmp)
+                    && !--n)
+                    break;
+        }
     }
 
     if (!otmp) {
@@ -742,13 +787,15 @@ stealamulet(struct monst *mtmp)
 
         /* If we get here, real and fake have been set up. */
         for (n = 0, obj = gi.invent; obj; obj = obj->nobj)
-            if (obj->otyp == real || (obj->otyp == fake && !mtmp->iswiz))
+            if (!obj_theft_barred(obj, mtmp)
+                && (obj->otyp == real || (obj->otyp == fake && !mtmp->iswiz)))
                 ++n, otmp = obj;
         if (n > 1) {
             n = rnd(n);
             for (otmp = gi.invent; otmp; otmp = otmp->nobj)
-                if ((otmp->otyp == real
-                     || (otmp->otyp == fake && !mtmp->iswiz)) && !--n)
+                if (!obj_theft_barred(otmp, mtmp)
+                    && (otmp->otyp == real
+                        || (otmp->otyp == fake && !mtmp->iswiz)) && !--n)
                     break;
         }
     }
@@ -772,6 +819,9 @@ stealamulet(struct monst *mtmp)
             worn_item_removal(mtmp, uarmg);
 
         /* finally, steal the target item */
+        if (obj_theft_barred(otmp, mtmp))
+            return;
+        took_soul = (otmp->otyp == PLAYER_SOUL);
         if (otmp->owornmask)
             worn_item_removal(mtmp, otmp);
         if (otmp->unpaid)
@@ -779,7 +829,15 @@ stealamulet(struct monst *mtmp)
         freeinv(otmp);
         Strcpy(buf, doname(otmp));
         (void) mpickobj(mtmp, otmp); /* could merge and free otmp but won't */
-        pline("%s steals %s!", Some_Monnam(mtmp), buf);
+        if (took_soul)
+            wayside_screen(
+                "Thou hast cast off the helmet of thy salvation, and the Son of Perdition hath seized upon thy soul!\n"
+                "\n"
+                "He fleeth with it into the darkness, laughing.\n"
+                "\n"
+                "Make haste and pursue him, for what shall a man give in exchange for his soul?");
+        else
+            pline("%s steals %s!", Some_Monnam(mtmp), buf);
         if (can_teleport(mtmp->data) && !tele_restrict(mtmp))
             (void) rloc(mtmp, RLOC_MSG);
         encumber_msg();
@@ -795,6 +853,7 @@ maybe_absorb_item(
     int ochance, int achance) /* percent chance for ordinary item, artifact */
 {
     if (obj == uball || obj == uchain || obj->oclass == ROCK_CLASS
+        || obj_theft_barred(obj, mon)
         || obj_resists(obj, 100 - ochance, 100 - achance)
         || !touch_artifact(obj, mon))
         return;
@@ -879,6 +938,10 @@ mdrop_special_objs(struct monst *mon)
            artifacts and ordinary objects are given 0% resistance chance;
            current role's quest artifact is rescued too--quest artifacts
            for the other roles are not */
+        /* He keeps a stolen soul when he changes levels. Death still
+           drops it. Every other monster must leave it behind. */
+        if (obj->otyp == PLAYER_SOUL && mon->iswiz)
+            continue;
         if (obj_resists(obj, 0, 0) || is_quest_artifact(obj)) {
             if (mon->mx) {
                 mdrop_obj(mon, obj, FALSE);

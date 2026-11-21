@@ -3172,6 +3172,7 @@ extern int steal(struct monst *, char *) NONNULLARG1;
    that leads to impossible(). Prevents NONNULLARG12. */
 extern int mpickobj(struct monst *, struct obj *) NONNULLARG1;
 extern void stealamulet(struct monst *) NONNULLARG1;
+extern boolean obj_theft_barred(struct obj *, struct monst *) NONNULLARG1;
 extern void maybe_absorb_item(struct monst *, struct obj *, int, int) NONNULLARG12;
 extern void mdrop_obj(struct monst *, struct obj *, boolean) NONNULLARG12;
 extern void mdrop_special_objs(struct monst *) NONNULLARG1;
@@ -3893,6 +3894,7 @@ extern int nasty(struct monst *) NO_NNARGS;
 extern void resurrect(void);
 extern void intervene(void);
 extern void wizdeadorgone(void);
+extern void perdition_leave_sanctum_key(struct monst *, coordxy, coordxy) NONNULLARG1;
 extern void cuss(struct monst *) NONNULLARG1;
 
 /* ### wizcmds.c ### */
@@ -4091,6 +4093,9 @@ extern void wayside_monster_died(struct monst *);
 extern boolean wayside_take_up(void);
 extern boolean wayside_take_down(void);
 extern boolean wayside_blocks_levelport(void);
+extern void wayside_screen(const char *);
+extern boolean wayside_sanctum_key_dropped(void);
+extern void wayside_mark_sanctum_key(void);
 extern void sanctum_tick(void);
 extern int soul_opening(struct obj *);
 extern void greed_snapshot_gold(void);

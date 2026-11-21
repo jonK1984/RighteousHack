@@ -53,7 +53,7 @@ local wiz1 = des.map({ halign = "center", valign = "center", map = [[
    des.non_passwall(selection.area(11,10,27,12))
    des.non_passwall(selection.area(21,00,27,10))
    -- The wizard and his guards
-   des.monster({ id = "Wizard of Yendor", x=16, y=05, asleep=1 })
+   des.monster({ id = "Son of Perdition", x=16, y=05, asleep=1 })
    des.monster("hell hound", 15, 05)
    des.monster("vampire lord", 17, 05)
    -- The Book of the Dead is removed. The Lamp of God's Word is the
