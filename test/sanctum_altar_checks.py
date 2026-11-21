@@ -63,6 +63,42 @@ class AltarSoul(unittest.TestCase):
         self.assertNotIn("gets angry", disturb)
 
 
+EXPLOSION = (
+    "Then a blinding explosion of light bursts forth from on high. "
+    "The hosts of darkness are frozen where they stand. "
+    "The Lord has given you a way of escape."
+)
+ROAD = "The way back up is the Road to Salvation. It has not been opened."
+
+
+class SalvationLight(unittest.TestCase):
+    def test_yes_still_says_the_locked_lines_and_then_the_light(self):
+        end = HACK.split("sanctum_yes_end", 1)[1].split("sanctum_no_end", 1)[0]
+        self.assertIn(EXPLOSION, end)
+        self.assertIn(ROAD, end)
+        self.assertLess(end.index(EXPLOSION), end.index("sanctum_light_burst()"))
+        self.assertLess(end.index("sanctum_light_burst()"), end.index(ROAD))
+        self.assertIn("u.uevent.sanctum_grace = 2", HACK)
+
+    def test_the_burst_is_display_only(self):
+        body = HACK.split("sanctum_light_can_play", 1)[1].split(
+            "sanctum_yes_end", 1)[0]
+        self.assertIn("sanctum_light_can_play", body)
+        self.assertIn('!strcmp(port, "tty")', HACK)
+        self.assertIn('!strcmp(port, "curses")', HACK)
+        self.assertIn("nh_delay_output()", body)
+        self.assertIn("docrt()", body)
+        self.assertIn("rn2_on_display_rng(", body)
+        self.assertNotIn("rn2(", body)
+        self.assertNotIn("pline(", body)
+        self.assertIn("MG_INVERSE", body)
+        self.assertIn("CLR_YELLOW", body)
+        self.assertIn("CLR_WHITE", body)
+        self.assertIn("CLR_BROWN", body)
+        self.assertIn("flags.nap = save_nap", body)
+        self.assertNotIn("\u2014", body)
+
+
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     result = unittest.TextTestRunner(verbosity=2).run(suite)

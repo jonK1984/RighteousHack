@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-21
+A yes in the Sanctum plays a yellow light across the map, then the same words as before. The light is not saved.
+
+2026-11-21
 In the Sanctum, your soul lies on the altar by itself. The High Priestess of the Great Dragon starts at peace. She turns only if the hero harms her, or tries to take the soul off that altar.
 
 2026-11-14

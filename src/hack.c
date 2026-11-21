@@ -6237,11 +6237,283 @@ give_cap_of_salvation(void)
                                (const char *) 0);
 }
 
+/* Distance from the hero. A terminal cell is about twice as tall as
+   it is wide, so a column counts half as much as a row. The value
+   is the radius of that stretched circle. */
+static int
+light_radius(coordxy x, coordxy y)
+{
+    int dx = (int) x - (int) u.ux;
+    int dy = (int) y - (int) u.uy;
+    int n, lo, hi;
+
+    if (dx < 0)
+        dx = -dx;
+    if (dy < 0)
+        dy = -dy;
+    n = dx * dx + 4 * dy * dy;
+    lo = 0;
+    hi = dx + dy * 2;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+
+        if (mid > 0 && mid <= 400 && mid * mid <= n)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    return lo;
+}
+
+/* tty and curses can paint a character and a standard color, then
+   wait. A tiled port, or a port with no delay, is left alone. */
+static boolean
+sanctum_light_can_play(void)
+{
+    const char *port;
+
+    if (iflags.debug_fuzzer || !iflags.window_inited || !u.ux)
+        return FALSE;
+    if (WIN_MAP == WIN_ERR)
+        return FALSE;
+    if (!windowprocs.win_print_glyph || !windowprocs.win_delay_output)
+        return FALSE;
+    if (iflags.wc_tiled_map)
+        return FALSE;
+    port = windowprocs.name;
+    if (!port)
+        return FALSE;
+    return (boolean) (!strcmp(port, "tty") || !strcmp(port, "curses"));
+}
+
+static void
+light_put(coordxy x, coordxy y, char ch, int color, unsigned flgs)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+
+    *cell = nul_glyphinfo;
+    cell->glyph = cmap_to_glyph(S_room);
+    cell->ttychar = (int) ch;
+    cell->gm.sym.color = color;
+    cell->gm.glyphflags = flgs;
+    cell->gm.customcolor = 0;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+light_recolor(coordxy x, coordxy y, const glyph_info *src, int color)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+    int ch = src->ttychar;
+
+    *cell = *src;
+    if (ch < ' ' || ch > '~')
+        ch = '.';
+    cell->ttychar = ch;
+    cell->gm.sym.color = color;
+    cell->gm.customcolor = 0;
+    cell->gm.glyphflags &= ~(unsigned) MG_INVERSE;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+light_copy(coordxy x, coordxy y, const glyph_info *src)
+{
+    gg.gbuf[y][x].glyphinfo = *src;
+    gg.gbuf[y][x].gnew = 1;
+}
+
+/* One frame. nh_delay_output waits about 50 ms when timed_delay is on. */
+static void
+light_frame(void)
+{
+    coordxy y;
+
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+    }
+    flush_screen(1);
+    nh_delay_output();
+}
+
+static void
+light_halo(glyph_info *snap, int halo, int herocolor, unsigned heroflags)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++) {
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+
+            if (x == u.ux && y == u.uy)
+                light_put(x, y, '@', herocolor, heroflags);
+            else if (halo > 0 && d > 0 && d <= halo)
+                light_put(x, y, '*', herocolor, 0);
+            else
+                light_copy(x, y, &snap[y * COLNO + x]);
+        }
+    }
+    light_frame();
+}
+
+static void
+light_wave(glyph_info *snap, int radius, int thick)
+{
+    static const int spark_dx[8] = { 2, -2, 0, 0, 2, -2, 2, -2 };
+    static const int spark_dy[8] = { 0, 0, 1, -1, 1, 1, -1, -1 };
+    coordxy x, y;
+    int k;
+
+    for (y = 0; y < ROWNO; y++) {
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+            glyph_info *src = &snap[y * COLNO + x];
+
+            if (x == u.ux && y == u.uy)
+                light_put(x, y, '@', CLR_WHITE, 0);
+            else if (d <= 2)
+                light_put(x, y, '*', CLR_WHITE, 0);
+            else if (d >= radius && d < radius + thick)
+                light_put(x, y, '*', CLR_YELLOW, 0);
+            else if (d >= radius - thick && d < radius)
+                light_put(x, y, '+', CLR_YELLOW, 0);
+            else if (d >= radius - 2 * thick && d < radius - thick)
+                light_put(x, y, '.', CLR_YELLOW, 0);
+            else if (d < radius - 2 * thick) {
+                if (radius - d > 3 * thick)
+                    light_recolor(x, y, src, CLR_WHITE);
+                else
+                    light_recolor(x, y, src, CLR_YELLOW);
+            } else {
+                light_copy(x, y, src);
+            }
+        }
+    }
+    /* A handful of stars, ahead of the front and inside it. */
+    for (k = 0; k < 5; k++) {
+        int dir = rn2_on_display_rng(8);
+        int reach = radius + thick + rn2_on_display_rng(thick + 2);
+        int sx = (int) u.ux + spark_dx[dir] * reach / 2;
+        int sy = (int) u.uy + spark_dy[dir] * reach / 2;
+
+        if (isok((coordxy) sx, (coordxy) sy))
+            light_put((coordxy) sx, (coordxy) sy, '*',
+                      rn2_on_display_rng(2) ? CLR_WHITE : CLR_YELLOW, 0);
+    }
+    for (k = 0; k < 4; k++) {
+        int dir = rn2_on_display_rng(8);
+        int reach = 3 + (radius > 4 ? rn2_on_display_rng(radius - 3) : 0);
+        int sx = (int) u.ux + spark_dx[dir] * reach / 2;
+        int sy = (int) u.uy + spark_dy[dir] * reach / 2;
+
+        if (isok((coordxy) sx, (coordxy) sy)
+            && light_radius((coordxy) sx, (coordxy) sy) > 2)
+            light_put((coordxy) sx, (coordxy) sy, '*', CLR_WHITE, 0);
+    }
+    light_frame();
+}
+
+static void
+light_field(int color)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            light_put(x, y, (x == u.ux && y == u.uy) ? '@' : '*', color, 0);
+    light_frame();
+}
+
+static void
+light_fade(glyph_info *snap, int color)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            light_recolor(x, y, &snap[y * COLNO + x], color);
+    light_frame();
+}
+
+/* The light after a yes. Seventy frames at the 50 ms display delay
+   is about three and a half seconds. Nothing here is saved, and the
+   sparkles use the display RNG. */
+static void
+sanctum_light_burst(void)
+{
+    glyph_info *snap;
+    boolean save_nap;
+    coordxy x, y;
+    int maxd, span, thick, i;
+    static const int flashcolor[8] = {
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE,
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE
+    };
+    static const int flashhalo[8] = { 0, 0, 1, 1, 2, 2, 3, 3 };
+    static const int peakcolor[8] = {
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE,
+        CLR_WHITE, CLR_YELLOW, CLR_WHITE, CLR_WHITE
+    };
+
+    if (!sanctum_light_can_play())
+        return;
+
+    snap = (glyph_info *) alloc((unsigned) (COLNO * ROWNO * sizeof *snap));
+    maxd = 1;
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+
+            snap[y * COLNO + x] = gg.gbuf[y][x].glyphinfo;
+            if (d > maxd)
+                maxd = d;
+        }
+    span = (maxd > 2) ? (maxd - 2) : 0;
+    thick = (span + 43) / 44;
+    if (thick < 2)
+        thick = 2;
+
+    /* curses skips nh_delay_output when timed_delay is off, and the
+       tty wait is then only padding. Hold the option on for this
+       burst and put it back, as the frost burst does. */
+    save_nap = flags.nap;
+    flags.nap = TRUE;
+
+    for (i = 0; i < 8; i++)
+        light_halo(snap, flashhalo[i], flashcolor[i], 0);
+    light_halo(snap, 3, CLR_YELLOW, MG_INVERSE);
+    light_halo(snap, 3, CLR_YELLOW, MG_INVERSE);
+
+    for (i = 0; i < 44; i++) {
+        int radius = 2 + (span ? (i * span) / 43 : 0);
+
+        light_wave(snap, radius, thick);
+    }
+    for (i = 0; i < 8; i++)
+        light_field(peakcolor[i]);
+    for (i = 0; i < 4; i++)
+        light_fade(snap, CLR_YELLOW);
+    for (i = 0; i < 4; i++)
+        light_fade(snap, CLR_BROWN);
+
+    flags.nap = save_nap;
+    free((genericptr_t) snap);
+    docrt();
+}
+
 static void
 sanctum_yes_end(void)
 {
     u.uevent.sanctum_frozen = 1;
     pline("Then a blinding explosion of light bursts forth from on high. The hosts of darkness are frozen where they stand. The Lord has given you a way of escape.");
+    sanctum_light_burst();
     give_cap_of_salvation();
     /* The climb is the Road to Salvation, designed later. */
     pline("The way back up is the Road to Salvation. It has not been opened.");
