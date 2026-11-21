@@ -116,6 +116,12 @@ MOLOCH_FALL = (
 )
 
 
+class HinnomTeleport(unittest.TestCase):
+    def test_the_battle_is_a_no_teleport_level(self):
+        flags = HINNOM_LUA.split("des.level_flags(", 1)[1].split(")", 1)[0]
+        self.assertIn('"noteleport"', flags)
+
+
 class MolochFallen(unittest.TestCase):
     def test_the_trumpet_is_exact_and_once(self):
         body = HINNOM.split("hinnom_moloch_died", 1)[1].split(

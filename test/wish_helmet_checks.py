@@ -192,6 +192,18 @@ class SwordWishTests(unittest.TestCase):
         self.assertIn("d.otmp->spe = d.spe", wish)
         self.assertIn("else if (wizard)", wish)
 
+    def test_the_garden_sword_is_not_a_wish(self):
+        garden = (ROOT / "dat" / "wild5.lua").read_text()
+        self.assertIn('name="Sword of the Spirit"', garden)
+        levels = (ROOT / "src" / "sp_lev.c").read_text()
+        body = levels.split("create_object(object *o", 1)[1].split(
+            "if (o->recharged)", 1)[0]
+        self.assertIn('oname(otmp, o->name.str, ONAME_LEVEL_DEF)', body)
+        self.assertNotIn("ONAME_WISH", body)
+        self.assertIn("sword_of_spirit_fix(otmp)", body)
+        knight = (ROOT / "dat" / "Kni-strt.lua").read_text()
+        self.assertIn('name = "Sword of the Spirit"', knight)
+
 
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
