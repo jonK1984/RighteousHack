@@ -1714,7 +1714,9 @@ goto_level(
      */
     /* Same odds and same floors as the Amulet's pull. The trigger is
        your soul, carried, on the ascent after the bottom of Gehennom. */
+    /* The Road climbs. The pull never fires on any level of it. */
     if (Inhell && up && carried_player_soul() && !newdungeon && !portal
+        && !on_the_road(&u.uz)
         && (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
         if (!rn2(4 + svc.context.mysteryforce)) {
             int odds = 3 + (int) u.ualign.type,   /* 2..4 */

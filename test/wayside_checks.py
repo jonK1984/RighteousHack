@@ -482,6 +482,16 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertEqual(remain_words(1), "(1 riddle remains.)")
         self.assertEqual(remain_words(5), "(5 riddles remain.)")
 
+    def test_the_road_is_entered_at_the_bottom(self):
+        lua = (ROOT / "dat" / "dungeon.lua").read_text()
+        road = lua.split('bonetag = "Z"', 1)[1].split(
+            "The Wilderness Trial", 1)[0]
+        self.assertIn("entry = -1", road)
+        self.assertLess(road.index('name = "stony"'), road.index('name = "wayside"'))
+        self.assertIn("up = stony->dlevel", WAYSIDE_C)
+        pull = (ROOT / "src" / "do.c").read_text()
+        self.assertIn("!on_the_road(&u.uz)", pull)
+
     def test_levelport_does_not_complete_later_trials(self):
         block = re.search(
             r"wayside_blocks_levelport\(.*?^\}", WAYSIDE_C, re.S | re.M

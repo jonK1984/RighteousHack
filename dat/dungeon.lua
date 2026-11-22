@@ -123,7 +123,8 @@ dungeon = {
          {
             -- Attaches at the vibrating-square level (second from the
             -- bottom). no_up: that level does not grow a stair on the
-            -- way down. The return ascent is sent here from C.
+            -- way down. The climb is sent here from C and arrives on
+            -- the Wayside, the bottom of the branch.
             name = "The Road to Salvation",
             base = -2,
             direction = "up",
@@ -402,10 +403,12 @@ dungeon = {
       base = 2,
       alignment = "lawful",
       flags = { "mazelike" },
-      entry = 1,
+      -- Bottom of the branch. The Wayside is the deepest level.
+      -- Each next trial is one level up.
+      entry = -1,
       levels = {
-         { name = "wayside", base = 1 },
-         { name = "stony", base = 2 }
+         { name = "stony", base = 1 },
+         { name = "wayside", base = 2 }
       }
    },
    {

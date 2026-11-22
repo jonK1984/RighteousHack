@@ -10,6 +10,9 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-22
+The Road to Salvation is entered at the Wayside, its deepest level. The Stony Ground is one level above it. The soul's pull does not fire anywhere on that branch.
+
 2026-11-21
 The Stony Ground summit stair climbs up, and a delivered traveler waits beside it instead of on it.
 

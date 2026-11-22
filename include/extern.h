@@ -905,6 +905,7 @@ extern const char *ceiling(coordxy, coordxy);
 extern boolean In_quest(d_level *) NONNULLARG1;
 extern boolean In_mines(d_level *) NONNULLARG1;
 extern branch *dungeon_branch(const char *) NONNULL NONNULLARG1;
+extern boolean on_the_road(d_level *) NONNULLARG1;
 extern boolean on_gibeon_level(d_level *) NONNULLARG1;
 extern boolean trial_bars_son(void);
 extern boolean is_gibeon_altar(coordxy, coordxy);

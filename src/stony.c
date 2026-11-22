@@ -474,10 +474,9 @@ clear_persecutors(void)
     }
 }
 
-/* '<' and '>' in the map are not terrain, so des.stair is the only
-   thing that can make a stair. mkstairs() then refuses a down stair
-   on the last level of a dungeon, and the Road ends here, so that
-   call left the summit as ordinary floor. Plant both stairs directly.
+/* '<' and '>' in the map are not terrain. The Stony Ground is the
+   top of the Road, so mkstairs() will not place an up stair here,
+   and the summit leads out of the branch. Plant both stairs.
    The foot goes down to the Wayside. The summit goes up. */
 static void
 plant_one(coordxy x, coordxy y, boolean up, d_level *dest)

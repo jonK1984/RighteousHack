@@ -193,7 +193,12 @@ class Rules(unittest.TestCase):
         self.assertNotIn('des.stair("up", 0, 19)', LUA)
         road = DUNGEON.split('name = "The Road to Salvation"', 1)[1]
         road = road.split("name = \"The Wilderness Trial\"", 1)[0]
-        self.assertLess(road.index('name = "wayside"'), road.index('name = "stony"'))
+        self.assertIn("entry = -1", road)
+        self.assertIn('{ name = "stony", base = 1 }', road)
+        self.assertIn('{ name = "wayside", base = 2 }', road)
+        self.assertIn("base = -2", road)
+        self.assertIn('direction = "up"', road)
+        self.assertIn('branchtype = "no_up"', road)
         self.assertIn("up = stony->dlevel", WAYSIDE)
         setup = SRC.split("stony_setup", 1)[1].split("step_toward", 1)[0]
         self.assertIn("aim_stairs()", setup)

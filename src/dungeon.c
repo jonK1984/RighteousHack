@@ -1923,6 +1923,16 @@ trial_bars_son(void)
     return FALSE;
 }
 
+/* Every level of the Road, including a trial that is not drawn yet. */
+boolean
+on_the_road(d_level *lev)
+{
+    if (lev->dnum < 0 || lev->dnum >= svn.n_dgns)
+        return FALSE;
+    return (boolean) !strcmp(svd.dungeons[lev->dnum].dname,
+                             "The Road to Salvation");
+}
+
 /* The Cave of Gibeon is a one-level branch above the Prophet. */
 boolean
 on_gibeon_level(d_level *lev)
