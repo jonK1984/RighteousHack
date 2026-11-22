@@ -507,16 +507,13 @@ aim_stairs(void)
 {
     d_level back, onward;
 
-    /* The hero may have left the Wayside map on a Gehennom level.
-       That level is not find_level("wayside"). Point the foot back
-       at the level actually left, or the stair search misses it. */
-    if (wayside_at(&u.uz0))
-        back = u.uz0;
-    else if (find_level("wayside"))
-        back = find_level("wayside")->dlevel;
-    else
+    /* A one-level branch cannot grow either stair by itself.
+       The foot returns to the host. The summit climbs to the
+       Gehennom level above that host. */
+    if (!trial_link("stony", &back, &onward)) {
         back = valley_level;
-    wayside_ascent_level(&onward);
+        onward = valley_level;
+    }
     /* Down at the foot, up at the summit. */
     plant_one(START_X, START_Y, FALSE, &back);
     plant_one(EXIT_X, EXIT_Y, TRUE, &onward);
@@ -1052,24 +1049,10 @@ stony_traveler_fell(struct monst *mtmp)
     return TRUE;
 }
 
-/* Where to stand on arrival. The climb from a Gehennom Wayside can
-   increase absolute depth, so goto_level treats it as a descent and
-   u_on_sstairs() selects the summit. */
-void
-stony_receive(d_level *from)
+boolean
+stony_trial_done(void)
 {
-    d_level onward;
-
-    if (!stony_here() || !from)
-        return;
-    wayside_ascent_level(&onward);
-    if (on_level(from, &onward)) {
-        u_on_newpos(EXIT_X, EXIT_Y);
-        return;
-    }
-    if (wayside_at(from)
-        || (from->dnum == u.uz.dnum && from->dlevel > u.uz.dlevel))
-        u_on_newpos(START_X, START_Y);
+    return (boolean) ((sg_bits() & SG_DONE_ALL) == SG_DONE_ALL);
 }
 
 boolean

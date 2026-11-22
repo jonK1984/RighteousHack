@@ -535,12 +535,12 @@ struct you {
     xint16 skill_record[P_SKILL_LIMIT]; /* skill advancements */
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
-    /* Wayside trial. Starts at zero. Saved with struct you.
-       EDITLEVEL 14: older saves do not load. */
+    /* Wayside trial, and the host level of every Road trial.
+       host[i] is the Gehennom dlevel for trial i. 0 means unset.
+       EDITLEVEL 17: the old single-branch save does not load. */
     struct {
         unsigned long bits;
-        xint16 mode;             /* 0 unset, 1 replace a level, 2 insert */
-        xint16 target;           /* Gehennom dlevel when mode is 1 */
+        xint16 host[4];          /* one slot per trial, including future ones */
         unsigned vid[6];         /* villager m_id, house order */
         unsigned mino_id;
         unsigned giant_id;

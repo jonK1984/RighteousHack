@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-22
+Each Road trial is its own branch, entered by the up stair of an ordinary Gehennom level.
+
+2026-11-22
 Climbing from the Wayside to the Stony Ground arrives at the foot of the pass.
 
 2026-11-22

@@ -1908,7 +1908,7 @@ trial_bars_son(void)
     dname = svd.dungeons[u.uz.dnum].dname;
     /* Every level of these branches is a trial, including a later
        one that has not been drawn yet. */
-    if (!strcmp(dname, "The Road to Salvation")
+    if (on_trial(&u.uz)
         || !strcmp(dname, "The Wilderness Trial")
         || !strcmp(dname, "Cave of Gibeon"))
         return TRUE;
@@ -1923,14 +1923,12 @@ trial_bars_son(void)
     return FALSE;
 }
 
-/* Every level of the Road, including a trial that is not drawn yet. */
+/* Every level of every Road trial. The list of branches lives with
+   the trials, so a later trial is covered without a new name here. */
 boolean
 on_the_road(d_level *lev)
 {
-    if (lev->dnum < 0 || lev->dnum >= svn.n_dgns)
-        return FALSE;
-    return (boolean) !strcmp(svd.dungeons[lev->dnum].dname,
-                             "The Road to Salvation");
+    return on_trial(lev);
 }
 
 /* The Cave of Gibeon is a one-level branch above the Prophet. */

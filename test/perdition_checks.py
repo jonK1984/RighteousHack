@@ -191,8 +191,8 @@ class KeyAndAltar(unittest.TestCase):
         dgn = (ROOT / "src" / "dungeon.c").read_text()
         body = dgn.split("trial_bars_son(", 1)[1].split(
             "on_gibeon_level", 1)[0]
-        for name in ("The Road to Salvation", "The Wilderness Trial",
-                     "Cave of Gibeon"):
+        self.assertIn("on_trial(&u.uz)", body)
+        for name in ("The Wilderness Trial", "Cave of Gibeon"):
             self.assertIn('"%s"' % name, body)
         self.assertIn("Is_medusa_level", body)
         self.assertIn('!strcmp(slev->proto, "capernaum")', body)
@@ -220,14 +220,16 @@ class Pull(unittest.TestCase):
         # The condition itself is the trigger. The odds sit just after it.
         after = DO.split("carried_player_soul() && !newdungeon", 1)[1][:1600]
         self.assertIn("Inhell && up && carried_player_soul()", DO)
-        self.assertIn("!on_the_road(&u.uz)", after)
+        self.assertIn("!on_trial(&u.uz)", after)
         self.assertIn("!rn2(4 + svc.context.mysteryforce)", after)
         self.assertIn("dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3", DO)
         gate = (ROOT / "src" / "dungeon.c").read_text()
         body = gate.split("on_the_road(", 1)[1].split("on_gibeon_level", 1)[0]
-        self.assertIn('"The Road to Salvation"', body)
-        self.assertNotIn('"wayside"', body)
-        self.assertNotIn('"stony"', body)
+        self.assertIn("on_trial(lev)", body)
+        wayside = (ROOT / "src" / "wayside.c").read_text()
+        table = wayside.split("trial_list[]", 1)[1].split("N_TRIALS", 1)[0]
+        self.assertIn('"The Wayside"', table)
+        self.assertIn('"The Stony Ground"', table)
         self.assertIn(PULL, joined_c_strings(after))
         self.assertNotIn("u.uhave.amulet && !newdungeon && !portal", block[-400:])
 

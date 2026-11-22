@@ -164,8 +164,8 @@ class Rules(unittest.TestCase):
     def test_bones_and_spring_and_gate(self):
         self.assertIn('find_level("stony")', BONES)
         self.assertIn("if (stony_here())", HINNOM)
-        self.assertIn('find_level("stony")', WAYSIDE)
-        self.assertIn("up = stony->dlevel", WAYSIDE)
+        self.assertIn('"stony", stony_trial_done', WAYSIDE)
+        self.assertIn('trial_link("wayside"', WAYSIDE)
 
     def test_summit_vitality_is_once_and_survives_reset(self):
         self.assertIn("#define SG_HP_OLD", SRC)
@@ -191,15 +191,11 @@ class Rules(unittest.TestCase):
         self.assertIn('des.stair("down", 0, 19)', LUA)
         self.assertNotIn('des.stair("down", 20, 2)', LUA)
         self.assertNotIn('des.stair("up", 0, 19)', LUA)
-        road = DUNGEON.split('name = "The Road to Salvation"', 1)[1]
-        road = road.split("name = \"The Wilderness Trial\"", 1)[0]
-        self.assertIn("entry = -1", road)
-        self.assertIn('{ name = "stony", base = 1 }', road)
-        self.assertIn('{ name = "wayside", base = 2 }', road)
-        self.assertIn("base = -2", road)
-        self.assertIn('direction = "up"', road)
-        self.assertIn('branchtype = "no_up"', road)
-        self.assertIn("up = stony->dlevel", WAYSIDE)
+        self.assertIn('name = "The Stony Ground"', DUNGEON)
+        self.assertIn('{ name = "stony", base = 1 }', DUNGEON)
+        self.assertIn("unconnected", DUNGEON)
+        self.assertNotIn('name = "The Road to Salvation"', DUNGEON)
+        self.assertIn('trial_link("stony"', SRC)
         setup = SRC.split("stony_setup", 1)[1].split("step_toward", 1)[0]
         self.assertIn("aim_stairs()", setup)
         aim = SRC.split("aim_stairs(void)", 1)[1].split("apply_reset", 1)[0]
@@ -241,25 +237,17 @@ class Rules(unittest.TestCase):
         do = (ROOT / "src" / "do.c").read_text()
         placed = do.split("trap door or level_tele", 1)[1].split(
             "if (Punished)", 1)[0]
-        self.assertIn("stony_receive(&u.uz0)", placed)
-        recv = SRC.split("void\nstony_receive(", 1)[1].split(
-            "stony_block_stairs", 1)[0]
-        self.assertLess(
-            recv.index("u_on_newpos(EXIT_X, EXIT_Y)"),
-            recv.index("u_on_newpos(START_X, START_Y)"),
-        )
-        self.assertIn("wayside_at(from)", recv)
-        self.assertIn("from->dlevel > u.uz.dlevel", recv)
-        aim = SRC.split("aim_stairs(void)", 1)[1].split("apply_reset", 1)[0]
-        self.assertLess(
-            aim.index("wayside_at(&u.uz0)"),
-            aim.index("plant_one(START_X, START_Y, FALSE, &back)"),
-        )
+        self.assertIn("trial_receive(&u.uz0)", placed)
         wayside = (ROOT / "src" / "wayside.c").read_text()
-        body = wayside.split("wayside_at(d_level *lev)", 1)[1].split(
+        recv = wayside.split("trial_receive(", 1)[1].split(
             "on_wayside(void)", 1)[0]
-        self.assertIn("u.uwayside.target", body)
-        self.assertIn('find_level("wayside")', body)
+        # From the host, stand on the down stair. From the level
+        # above the host, stand on the up stair.
+        self.assertLess(
+            recv.index("stairway_find_dir(FALSE)"),
+            recv.index("stairway_find_dir(TRUE)"),
+        )
+        self.assertIn("u.uwayside.host[here]", recv)
 
     def test_the_sleep_ray_reaches_the_calm(self):
         zap = (ROOT / "src" / "zap.c").read_text()

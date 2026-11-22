@@ -119,17 +119,9 @@ dungeon = {
             base = 9,
             range = 5,
             direction = "up"
-         },
-         {
-            -- Attaches at the vibrating-square level (second from the
-            -- bottom). no_up: that level does not grow a stair on the
-            -- way down. The climb is sent here from C and arrives on
-            -- the Wayside, the bottom of the branch.
-            name = "The Road to Salvation",
-            base = -2,
-            direction = "up",
-            branchtype = "no_up"
          }
+         -- The Road's trials are separate dungeons. C sends the hero
+         -- into one when the up stair of its host level is taken.
       },
       levels = {
          {
@@ -397,18 +389,26 @@ dungeon = {
          { name = "his-treasure-1", base = 1 }
       }
    },
+   -- One dungeon per trial. To add a trial, add a block like these
+   -- and one row in the trial list in src/wayside.c.
    {
-      name = "The Road to Salvation",
+      name = "The Wayside",
       bonetag = "Z",
-      base = 2,
+      base = 1,
       alignment = "lawful",
-      flags = { "mazelike" },
-      -- Bottom of the branch. The Wayside is the deepest level.
-      -- Each next trial is one level up.
-      entry = -1,
+      flags = { "mazelike", "unconnected" },
       levels = {
-         { name = "stony", base = 1 },
-         { name = "wayside", base = 2 }
+         { name = "wayside", base = 1 }
+      }
+   },
+   {
+      name = "The Stony Ground",
+      bonetag = "S",
+      base = 1,
+      alignment = "lawful",
+      flags = { "mazelike", "unconnected" },
+      levels = {
+         { name = "stony", base = 1 }
       }
    },
    {
