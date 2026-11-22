@@ -961,13 +961,19 @@ wayside_take_up(void)
         pline("The way on is shut.");
         return TRUE;
     }
-    /* Down stairs never call this. Before the Road is open, or after
-       this host's trial is finished, the up stair is an ordinary one. */
-    if (!wayside_road() || !cap_of_salvation_worn())
+    /* Before the Road is open, every up stair is ordinary. */
+    if (!wayside_road())
         return FALSE;
     i = hosting(&u.uz);
+    /* A finished trial, or a level that hosts none, climbs normally. */
     if (i < 0 || trial_list[i].done())
         return FALSE;
+    /* Unfinished host. doup() is the only climb, so every up stair
+       and ladder on this level stops here. The cap and the soul. */
+    if (!sanctum_ascent_open()) {
+        sanctum_ascent_refused();
+        return TRUE;
+    }
     slev = find_level(trial_list[i].proto);
     if (!slev)
         return FALSE;

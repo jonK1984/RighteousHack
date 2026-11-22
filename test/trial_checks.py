@@ -91,8 +91,17 @@ class Stairs(unittest.TestCase):
         self.assertIn("hosting(&u.uz)", up)
         self.assertIn("trial_list[i].done()", up)
         self.assertIn("goto_level(&dest, TRUE, FALSE, FALSE)", up)
-        self.assertIn("cap_of_salvation_worn()", up)
+        self.assertIn("sanctum_ascent_open()", up)
+        self.assertIn("sanctum_ascent_refused()", up)
+        self.assertLess(up.index("trial_list[i].done()"),
+                        up.index("sanctum_ascent_refused()"))
+        self.assertLess(up.index("sanctum_ascent_refused()"),
+                        up.index("goto_level"))
         self.assertLess(up.index("The way on is shut."), up.index("hosting"))
+        self.assertIn(
+            "A voice whispers: Put on the helmet of salvation. You cannot face what lies ahead with your mind unguarded.",
+            (ROOT / "src" / "hack.c").read_text(),
+        )
 
     def test_exit_and_back_stairs(self):
         link = WAYSIDE.split("trial_link(", 1)[1].split("trials_left", 1)[0]
