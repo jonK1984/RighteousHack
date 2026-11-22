@@ -1251,6 +1251,8 @@ dodown(void)
        shut until Peter's key is used on them. */
     if (stairs_down && wayside_take_down())
         return ECMD_TIME;
+    if (stairs_down && stony_block_stairs(FALSE))
+        return ECMD_OK;
     if (stairs_down && invocation_pos(u.ux, u.uy) && !u.uevent.invoked) {
         pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it."); /* PLACEHOLDER */
         return ECMD_OK;
@@ -1370,6 +1372,8 @@ doup(void)
     }
     if (wayside_take_up())
         return ECMD_TIME;
+    if (stony_block_stairs(TRUE))
+        return ECMD_OK;
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;
@@ -1644,10 +1648,6 @@ goto_level(
         }
         wayside_begin();
     }
-    /* A jump that would pass the trial lands on the Wayside instead.
-       Stairs that already end there are left alone. */
-    if (wayside_steer(newlevel))
-        return;
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
     up = (depth(newlevel) < depth(&u.uz));
@@ -1710,7 +1710,9 @@ goto_level(
      */
     /* Same odds and same floors as the Amulet's pull. The trigger is
        your soul, carried, on the ascent after the bottom of Gehennom. */
+    /* The Road climbs. The pull never fires on any level of it. */
     if (Inhell && up && carried_player_soul() && !newdungeon && !portal
+        && !on_trial(&u.uz)
         && (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
         if (!rn2(4 + svc.context.mysteryforce)) {
             int odds = 3 + (int) u.ualign.type,   /* 2..4 */
@@ -2054,6 +2056,9 @@ goto_level(
             do_fall_dmg = TRUE;
         }
     }
+
+    /* After the generic stair pick, including a fall or other arrival. */
+    trial_receive(&u.uz0);
 
     if (Punished)
         placebc();

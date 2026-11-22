@@ -16,8 +16,9 @@
    Stored in the existing bits word, so the save layout does not grow. */
 #define WS_SKEY     0x00001000UL
 
-#define WS_MODE_LEVEL   1 /* an unvisited ordinary Gehennom level */
-#define WS_MODE_INSERT  2 /* new level between the square and the next */
+/* Saved host slots. Adding a trial does not grow this until the
+   fourth one past the two that exist now. */
+#define TRIAL_SLOTS 4
 
 static const char *const ws_name[6] = {
     "Confused villager",
@@ -74,6 +75,24 @@ ws_set(unsigned long bits)
     u.uwayside.bits = bits;
 }
 
+static int gehennom_depth(void);
+static boolean wayside_is_solved(void);
+static void trial_choose(void);
+
+/* To add a trial: a one-level unconnected dungeon, its level file,
+   and one row here. Do not add a row until the level file exists. */
+struct trial_def {
+    const char *dname;
+    const char *proto;
+    boolean (*done)(void);
+};
+
+static const struct trial_def trial_list[] = {
+    { "The Wayside", "wayside", wayside_is_solved },
+    { "The Stony Ground", "stony", stony_trial_done },
+};
+#define N_TRIALS ((int) SIZE(trial_list))
+
 boolean
 wayside_road(void)
 {
@@ -81,9 +100,15 @@ wayside_road(void)
 }
 
 static boolean
-trial_done(void)
+wayside_is_solved(void)
 {
     return (boolean) ((ws_bits() & WS_SOLVED) == WS_SOLVED);
+}
+
+static boolean
+trial_done(void)
+{
+    return wayside_is_solved();
 }
 
 static int
@@ -92,147 +117,220 @@ gehennom_depth(void)
     return svd.dungeons[sanctum_level.dnum].num_dunlevs;
 }
 
+boolean
+wayside_at(d_level *lev)
+{
+    s_level *slev;
+
+    if (!lev)
+        return FALSE;
+    slev = find_level("wayside");
+    return (boolean) (slev && on_level(lev, &slev->dlevel));
+}
+
+static boolean
+gehennom_ordinary(int dlev)
+{
+    d_level lev;
+    int n = gehennom_depth();
+
+    /* The valley is 1. The gateway and the Sanctum are the bottom two. */
+    if (dlev <= 1 || dlev >= n - 1)
+        return FALSE;
+    lev.dnum = sanctum_level.dnum;
+    lev.dlevel = (xint16) dlev;
+    if (Is_special(&lev) || Is_branchlev(&lev))
+        return FALSE;
+    return TRUE;
+}
+
+static int
+trial_index(d_level *lev)
+{
+    int i;
+
+    if (!lev)
+        return -1;
+    for (i = 0; i < N_TRIALS; i++) {
+        s_level *slev = find_level(trial_list[i].proto);
+
+        if (slev && on_level(lev, &slev->dlevel))
+            return i;
+    }
+    return -1;
+}
+
+boolean
+on_trial(d_level *lev)
+{
+    return (boolean) (trial_index(lev) >= 0);
+}
+
+static int
+hosting(d_level *lev)
+{
+    int i;
+
+    if (!lev || lev->dnum != sanctum_level.dnum)
+        return -1;
+    for (i = 0; i < N_TRIALS; i++)
+        if (u.uwayside.host[i] && lev->dlevel == u.uwayside.host[i])
+            return i;
+    return -1;
+}
+
+/* Foot stair returns to the host. Exit stair climbs to the level
+   that host's own up stair would have reached. */
+boolean
+trial_link(const char *proto, d_level *back, d_level *onward)
+{
+    int i;
+
+    if (!proto || !back || !onward)
+        return FALSE;
+    for (i = 0; i < N_TRIALS; i++)
+        if (!strcmp(trial_list[i].proto, proto))
+            break;
+    if (i >= N_TRIALS || !u.uwayside.host[i])
+        return FALSE;
+    back->dnum = onward->dnum = sanctum_level.dnum;
+    back->dlevel = u.uwayside.host[i];
+    onward->dlevel = (xint16) (back->dlevel > 1 ? back->dlevel - 1 : 1);
+    return TRUE;
+}
+
+static int
+trials_left(void)
+{
+    int i, n = 0;
+
+    for (i = 0; i < N_TRIALS; i++)
+        if (!trial_list[i].done())
+            n++;
+    return n;
+}
+
+static boolean
+hosts_chosen(void)
+{
+    int i;
+
+    for (i = 0; i < N_TRIALS && i < TRIAL_SLOTS; i++)
+        if (u.uwayside.host[i])
+            return TRUE;
+    return FALSE;
+}
+
+/* Ordinary Gehennom levels only, with an ordinary level between
+   every pair. The assignment to trials is the order they are drawn. */
+static void
+trial_choose(void)
+{
+    int cand[64];
+    int pick[TRIAL_SLOTS];
+    int n = 0, got = 0, guard = 0, i;
+
+    if (hosts_chosen()) {
+        trial_set_depths();
+        return;
+    }
+    for (i = 1; i <= gehennom_depth() && n < (int) SIZE(cand); i++)
+        if (gehennom_ordinary(i))
+            cand[n++] = i;
+    while (got < N_TRIALS && got < TRIAL_SLOTS && guard++ < 500 && n > 0) {
+        int c = cand[rn2(n)];
+        boolean ok = TRUE;
+        int j;
+
+        for (j = 0; j < got; j++) {
+            int lo = min(c, pick[j]);
+            int hi = max(c, pick[j]);
+            int ord = 0, d;
+
+            if (c == pick[j]) {
+                ok = FALSE;
+                break;
+            }
+            for (d = lo + 1; d < hi; d++)
+                if (gehennom_ordinary(d))
+                    ord++;
+            if (ord < 1)
+                ok = FALSE;
+        }
+        if (ok)
+            pick[got++] = c;
+    }
+    for (i = 0; i < got; i++)
+        u.uwayside.host[i] = (xint16) pick[i];
+    trial_set_depths();
+}
+
+/* Dlvl and the overview both use depth_start. A trial is not
+   dungeon level 1; it sits at the depth of its Gehennom host. */
+void
+trial_set_depths(void)
+{
+    int i;
+
+    for (i = 0; i < N_TRIALS && i < TRIAL_SLOTS; i++) {
+        s_level *slev;
+        d_level host;
+
+        if (!u.uwayside.host[i])
+            continue;
+        slev = find_level(trial_list[i].proto);
+        if (!slev || slev->dlevel.dnum < 0 || slev->dlevel.dnum >= svn.n_dgns)
+            continue;
+        host.dnum = sanctum_level.dnum;
+        host.dlevel = u.uwayside.host[i];
+        svd.dungeons[slev->dlevel.dnum].depth_start = depth(&host);
+    }
+}
+
+/* Arrival in either direction. The generic stair search does not
+   know that a trial stair and a Gehennom stair point at each other. */
+void
+trial_receive(d_level *from)
+{
+    int here, src;
+    stairway *st;
+
+    if (!from)
+        return;
+    here = trial_index(&u.uz);
+    src = trial_index(from);
+    if (here >= 0 && u.uwayside.host[here]) {
+        if (from->dnum == sanctum_level.dnum
+            && from->dlevel == u.uwayside.host[here]) {
+            st = stairway_find_dir(FALSE);
+            if (st)
+                u_on_newpos(st->sx, st->sy);
+        } else if (from->dnum == sanctum_level.dnum
+                   && from->dlevel == (xint16) (u.uwayside.host[here] - 1)) {
+            st = stairway_find_dir(TRUE);
+            if (st)
+                u_on_newpos(st->sx, st->sy);
+        }
+        return;
+    }
+    if (src >= 0 && u.uz.dnum == sanctum_level.dnum
+        && u.uwayside.host[src]) {
+        if (u.uz.dlevel == u.uwayside.host[src]) {
+            st = stairway_find_dir(TRUE);
+            if (st)
+                u_on_newpos(st->sx, st->sy);
+        } else if (u.uz.dlevel == (xint16) (u.uwayside.host[src] - 1)) {
+            st = stairway_find_dir(FALSE);
+            if (st)
+                u_on_newpos(st->sx, st->sy);
+        }
+    }
+}
+
 static boolean
 on_wayside(void)
 {
-    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 0
-        && u.uz.dnum == sanctum_level.dnum
-        && u.uz.dlevel == u.uwayside.target)
-        return TRUE;
-    {
-        s_level *slev = find_level("wayside");
-
-        return (boolean) (slev && on_level(&u.uz, &slev->dlevel));
-    }
-}
-
-boolean
-wayside_generate_here(void)
-{
-    return (boolean) (wayside_road()
-                      && u.uwayside.mode == WS_MODE_LEVEL
-                      && u.uwayside.target > 0
-                      && u.uz.dnum == sanctum_level.dnum
-                      && u.uz.dlevel == u.uwayside.target);
-}
-
-static boolean
-wayside_dest(d_level *dest)
-{
-    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 0) {
-        dest->dnum = sanctum_level.dnum;
-        dest->dlevel = u.uwayside.target;
-        return TRUE;
-    }
-    if (u.uwayside.mode == WS_MODE_INSERT) {
-        s_level *slev = find_level("wayside");
-
-        if (!slev)
-            return FALSE;
-        *dest = slev->dlevel;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/* A move that would pass the trial without landing on it. */
-static boolean
-crosses_wayside(d_level *from, d_level *to)
-{
-    d_level ws;
-    int lo, hi;
-
-    if (!wayside_road() || trial_done())
-        return FALSE;
-    if (!wayside_dest(&ws))
-        return FALSE;
-    if (on_level(to, &ws) || on_level(from, &ws))
-        return FALSE;
-    if (from->dnum != sanctum_level.dnum || to->dnum != sanctum_level.dnum)
-        return FALSE;
-    lo = min(from->dlevel, to->dlevel);
-    hi = max(from->dlevel, to->dlevel);
-    if (u.uwayside.mode == WS_MODE_LEVEL)
-        return (boolean) (lo < u.uwayside.target && hi > u.uwayside.target);
-    /* Inserted level sits between the vibrating square and the
-       level directly above it. */
-    {
-        int n = gehennom_depth();
-
-        return (boolean) (lo <= n - 2 && hi >= n - 1);
-    }
-}
-
-/* TRUE: caller must abort the level change.
-   FALSE: *newlevel may have been rewritten onto the Wayside. */
-boolean
-wayside_steer(d_level *newlevel)
-{
-    d_level ws;
-
-    if (!newlevel || !crosses_wayside(&u.uz, newlevel))
-        return FALSE;
-    if (!cap_of_salvation_worn()) {
-        pline("The Road to Salvation is not yet open.");
-        return TRUE;
-    }
-    if (!wayside_dest(&ws))
-        return FALSE;
-    *newlevel = ws;
-    return FALSE;
-}
-
-static void
-wayside_choose(void)
-{
-    s_level *orc;
-    int od, vd, n, d;
-    int cand[32];
-    d_level lev;
-
-    if (u.uwayside.mode != 0)
-        return;
-    orc = find_level("orcus");
-    vd = (sanctum_level.dlevel > 1) ? sanctum_level.dlevel - 1 : 1;
-    od = (orc && orc->dlevel.dnum == sanctum_level.dnum)
-             ? orc->dlevel.dlevel : 0;
-    n = 0;
-    /* Strictly between Orcustown and the vibrating square.
-       Endpoints are not candidates. */
-    if (od > 0 && od < vd) {
-        for (d = od + 1; d < vd && n < (int) SIZE(cand); d++) {
-            int ledger;
-
-            lev.dnum = sanctum_level.dnum;
-            lev.dlevel = (xint16) d;
-            if (Is_special(&lev) || Is_branchlev(&lev))
-                continue;
-            ledger = ledger_no(&lev);
-            if (ledger <= 0)
-                continue;
-            /* A visited or already-written level is not regenerated. */
-            if (svl.level_info[ledger].flags & (VISITED | LFILE_EXISTS))
-                continue;
-            cand[n++] = d;
-        }
-    }
-    if (n > 0) {
-        u.uwayside.mode = WS_MODE_LEVEL;
-        u.uwayside.target = (xint16) cand[rn2(n)];
-        return;
-    }
-    /* Approved fallback: a new level on the ascent. This is not a
-       stand-in for the random draw; the draw found nobody. */
-    u.uwayside.mode = WS_MODE_INSERT;
-    u.uwayside.target = 0;
-    if (!(ws_bits() & WS_TOLD)) {
-        ws_set(ws_bits() | WS_TOLD);
-        /* New wording, not locked text. */
-        if (od > 0 && od < vd)
-            pline("Every ordinary level between Orcustown and the vibrating square has already been walked. The Wayside is set into the ascent between the vibrating square and the level above it.");
-        else
-            pline("Orcustown is not between you and the vibrating square, so the Wayside is set into the ascent between the vibrating square and the level above it.");
-    }
+    return wayside_at(&u.uz);
 }
 
 void
@@ -240,12 +338,9 @@ wayside_begin(void)
 {
     if (!carried_player_soul())
         return;
-    if (ws_bits() & WS_ROAD) {
-        wayside_choose();
-        return;
-    }
-    ws_set(ws_bits() | WS_ROAD);
-    wayside_choose();
+    if (!(ws_bits() & WS_ROAD))
+        ws_set(ws_bits() | WS_ROAD);
+    trial_choose();
 }
 
 static int
@@ -365,39 +460,45 @@ put_stair(coordxy x, coordxy y, boolean up, d_level *dest)
 }
 
 static void
+aim_one(coordxy x, coordxy y, boolean up, d_level *dest)
+{
+    stairway *st;
+
+    if (!isok(x, y))
+        return;
+    st = stairway_at(x, y);
+    if (!st)
+        put_stair(x, y, up, dest);
+    else {
+        st->up = up;
+        st->isladder = FALSE;
+        assign_level(&st->tolev, dest);
+        levl[x][y].typ = STAIRS;
+        levl[x][y].ladder = up ? LA_UP : LA_DOWN;
+    }
+}
+
+static void
 fix_stairs(void)
 {
     stairway *st, *nxt;
-    d_level down, up;
-    int n = gehennom_depth();
+    d_level back, onward;
     coordxy ux = WX(72), uy = 3, dx = WX(5), dy = 18;
 
-    down.dnum = up.dnum = sanctum_level.dnum;
-    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 1) {
-        up.dlevel = (xint16) (u.uwayside.target - 1);
-        down.dlevel = (xint16) (u.uwayside.target + 1);
-        if (down.dlevel > n)
-            down.dlevel = (xint16) n;
-    } else {
-        down.dlevel = (xint16) (n - 1); /* vibrating square */
-        up.dlevel = (xint16) (n - 2);   /* one level above it */
-        if (up.dlevel < 1)
-            up.dlevel = 1;
+    /* Up leaves the trial for the level above the host.
+       Down returns to the host itself. */
+    if (!trial_link("wayside", &back, &onward)) {
+        back = valley_level;
+        onward = valley_level;
     }
     for (st = gs.stairs; st; st = nxt) {
         nxt = st->next;
-        if (!((st->up && st->sx == ux && st->sy == uy)
-              || (!st->up && st->sx == dx && st->sy == dy)))
+        if (!((st->sx == ux && st->sy == uy)
+              || (st->sx == dx && st->sy == dy)))
             forget_stair(st);
     }
-    if (!stairway_at(ux, uy))
-        put_stair(ux, uy, TRUE, &up);
-    else
-        assign_level(&stairway_at(ux, uy)->tolev, &up);
-    if (!stairway_at(dx, dy))
-        put_stair(dx, dy, FALSE, &down);
-    else
-        assign_level(&stairway_at(dx, dy)->tolev, &down);
+    aim_one(ux, uy, TRUE, &onward);
+    aim_one(dx, dy, FALSE, &back);
 }
 
 static void
@@ -873,99 +974,60 @@ wayside_tick(void)
     ensure_pair();
 }
 
-static boolean
-go_wayside(void)
-{
-    d_level dest;
-
-    if (!wayside_dest(&dest))
-        return FALSE;
-    goto_level(&dest, TRUE, FALSE, FALSE);
-    return TRUE;
-}
-
-static boolean
-cap_still_worn(void)
-{
-    if (trial_done())
-        return TRUE;
-    if (cap_of_salvation_worn())
-        return TRUE;
-    pline("The Road to Salvation is not yet open.");
-    return FALSE;
-}
-
-static boolean
-entering_inserted(boolean up)
-{
-    int n, edge;
-
-    if (!wayside_road() || u.uwayside.mode != WS_MODE_INSERT)
-        return FALSE;
-    if (!In_hell(&u.uz))
-        return FALSE;
-    n = gehennom_depth();
-    if (up)
-        return (boolean) Invocation_lev(&u.uz);
-    edge = n - 2;
-    return (boolean) (u.uz.dlevel == edge);
-}
-
-static boolean
-entering_replaced(boolean up)
-{
-    if (!wayside_road() || u.uwayside.mode != WS_MODE_LEVEL)
-        return FALSE;
-    if (u.uz.dnum != sanctum_level.dnum || u.uwayside.target <= 0)
-        return FALSE;
-    if (up)
-        return (boolean) (u.uz.dlevel == u.uwayside.target + 1);
-    return (boolean) (u.uz.dlevel == u.uwayside.target - 1);
-}
-
 boolean
 wayside_take_up(void)
 {
-    if (!wayside_road())
-        return FALSE;
+    int i;
+    s_level *slev;
+    d_level dest;
+
+    /* Inside the Wayside, the exit stays shut until the riddles are done. */
     if (on_wayside() && !trial_done()) {
-        /* PLACEHOLDER */
         pline("The way on is shut.");
         return TRUE;
     }
-    if (entering_inserted(TRUE) || entering_replaced(TRUE)) {
-        if (!cap_still_worn())
-            return TRUE;
-        if (u.uwayside.mode == WS_MODE_INSERT)
-            return go_wayside();
-        return FALSE; /* ordinary stair into the chosen level */
+    /* Before the Road is open, every up stair is ordinary. */
+    if (!wayside_road())
+        return FALSE;
+    i = hosting(&u.uz);
+    /* A finished trial, or a level that hosts none, climbs normally. */
+    if (i < 0 || trial_list[i].done())
+        return FALSE;
+    /* Unfinished host. doup() is the only climb, so every up stair
+       and ladder on this level stops here. The cap and the soul. */
+    if (!sanctum_ascent_open()) {
+        sanctum_ascent_refused();
+        return TRUE;
     }
-    return FALSE;
+    slev = find_level(trial_list[i].proto);
+    if (!slev)
+        return FALSE;
+    dest = slev->dlevel;
+    goto_level(&dest, TRUE, FALSE, FALSE);
+    return TRUE;
 }
 
 boolean
 wayside_take_down(void)
 {
-    if (!wayside_road())
-        return FALSE;
-    if (entering_inserted(FALSE) || entering_replaced(FALSE)) {
-        if (!cap_still_worn())
-            return TRUE;
-        if (u.uwayside.mode == WS_MODE_INSERT)
-            return go_wayside();
-        return FALSE;
-    }
+    /* The way down through Gehennom never enters a trial. */
     return FALSE;
 }
 
 boolean
 wayside_blocks_levelport(void)
 {
-    /* The other three trials are not in this patch, so the lock
-       stays on once the Road has begun. Nothing here marks them done. */
+    int left;
+
     if (!wayside_road())
         return FALSE;
-    /* New wording, not locked text. The road is actually unfinished. */
-    pline("The Road to Salvation is unfinished, so level teleport is sealed. Only the Wayside has been appointed; three trials are still to come.");
+    left = trials_left();
+    if (left <= 0)
+        return FALSE;
+    if (left == 1)
+        pline("The Road to Salvation is unfinished, so level teleport is sealed. 1 trial remains.");
+    else
+        pline("The Road to Salvation is unfinished, so level teleport is sealed. %d trials remain.",
+              left);
     return TRUE;
 }

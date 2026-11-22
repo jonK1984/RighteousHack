@@ -726,9 +726,9 @@ static struct level_map {
                   { "hinnom", &hinnom_level },
                   { "valley", &valley_level },
                   { "water", &water_level },
-                  { "wizard1", &wiz1_level },
-                  { "wizard2", &wiz2_level },
-                  { "wizard3", &wiz3_level },
+                  { "perdition1", &wiz1_level },
+                  { "perdition2", &wiz2_level },
+                  { "perdition3", &wiz3_level },
                   { "minend", &mineend_level },
                   { "soko1", &sokoend_level },
                   { X_START, &qstart_level },
@@ -1488,6 +1488,11 @@ builds_up(d_level *lev)
 {
     dungeon *dptr = &svd.dungeons[lev->dnum];
     branch *br;
+
+    /* No parent branch. The tutorial and each Road trial are like
+       this. A single-level one must not be reported as missing. */
+    if (dptr->flags.unconnected)
+        return FALSE;
     if (dptr->num_dunlevs > 1)
         return (boolean) (dptr->entry_lev == dptr->num_dunlevs);
     /* else, single-level branch; find branch connection that connects this
@@ -1893,6 +1898,42 @@ dungeon_branch(const char *s)
         panic("dgn_entrance: can't find entrance to %s", s);
 
     return br;
+}
+
+/* The Son of Perdition does not enter a trial. His tower, Hinnom,
+   and the Sanctum are not trials. */
+boolean
+trial_bars_son(void)
+{
+    const char *dname;
+    s_level *slev;
+
+    if (u.uz.dnum < 0 || u.uz.dnum >= svn.n_dgns)
+        return FALSE;
+    dname = svd.dungeons[u.uz.dnum].dname;
+    /* Every level of these branches is a trial, including a later
+       one that has not been drawn yet. */
+    if (on_trial(&u.uz)
+        || !strcmp(dname, "The Wilderness Trial")
+        || !strcmp(dname, "Cave of Gibeon"))
+        return TRUE;
+    /* Sodom and Tyre is the placed Medusa level. */
+    if (Is_medusa_level(&u.uz))
+        return TRUE;
+    /* Capernaum sits inside the mines. The rest of that branch is not
+       this trial. */
+    slev = Is_special(&u.uz);
+    if (slev && !strcmp(slev->proto, "capernaum"))
+        return TRUE;
+    return FALSE;
+}
+
+/* Every level of every Road trial. The list of branches lives with
+   the trials, so a later trial is covered without a new name here. */
+boolean
+on_the_road(d_level *lev)
+{
+    return on_trial(lev);
 }
 
 /* The Cave of Gibeon is a one-level branch above the Prophet. */

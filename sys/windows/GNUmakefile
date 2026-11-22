@@ -493,8 +493,8 @@ LUALIST = air Arc-fila Arc-filb Arc-goal Arc-loca Arc-strt \
 	soko4-2 themerms Tou-fila Tou-filb Tou-goal Tou-loca \
 	Tou-strt tower1 tower2 tower3 Val-fila Val-filb \
 	Val-goal Val-loca Val-strt valley water Wiz-fila \
-	Wiz-filb Wiz-goal Wiz-loca Wiz-strt wizard1 wizard2 \
-	wizard3 tut-1 tut-2
+	Wiz-filb Wiz-goal Wiz-loca Wiz-strt perdition1 perdition2 \
+	perdition3 tut-1 tut-2
 
 LUAFILES = $(addprefix $(DAT)/, $(addsuffix .lua, $(LUALIST)))
 

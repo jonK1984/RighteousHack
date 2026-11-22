@@ -237,22 +237,6 @@ def flood(rows, sx, sy, gate_open=False):
     return seen
 
 
-def eligible(orcus, vibrating, specials, branches, visited, written, nlevels):
-    """The placement rule: strictly between the two endpoints."""
-    found = []
-    if not (0 < orcus < vibrating):
-        return found
-    for depth in range(orcus + 1, vibrating):
-        if depth < 1 or depth > nlevels:
-            continue
-        if depth in specials or depth in branches:
-            continue
-        if depth in visited or depth in written:
-            continue
-        found.append(depth)
-    return found
-
-
 def step(n):
     if n >= 6:
         return "die"
@@ -377,25 +361,16 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertIn("sanctum_ascent_open()", before_begin)
 
     def test_placement_rule(self):
-        choose = re.search(
-            r"wayside_choose\(void\)\s*\{(.*?)\n\}", WAYSIDE_C, re.S
-        ).group(1)
-        self.assertIn("Is_special", choose)
-        self.assertIn("Is_branchlev", choose)
-        self.assertIn("VISITED", choose)
-        self.assertIn("LFILE_EXISTS", choose)
+        choose = WAYSIDE_C.split("trial_choose(void)", 1)[1].split(
+            "trial_receive", 1)[0]
+        self.assertIn("gehennom_ordinary", choose)
+        self.assertIn("Is_special", WAYSIDE_C)
+        self.assertIn("Is_branchlev", WAYSIDE_C)
         self.assertIn("rn2", choose)
-        self.assertIn("WS_MODE_INSERT", choose)
-        self.assertIn("WS_MODE_LEVEL", choose)
-        # Endpoints 10 and 24 are outside. 12 is special. 14 is a branch.
-        # 16 was visited. 18 was already written. The rest of the span remains.
-        self.assertEqual(
-            eligible(10, 24, {12}, {14}, {16}, {18}, 25),
-            [11, 13, 15, 17, 19, 20, 21, 22, 23],
-        )
-        self.assertEqual(eligible(10, 24, set(), set(), set(range(11, 24)), set(), 25), [])
-        self.assertNotIn(10, eligible(10, 24, set(), set(), set(), set(), 25))
-        self.assertNotIn(24, eligible(10, 24, set(), set(), set(), set(), 25))
+        self.assertIn("u.uwayside.host[i]", choose)
+        self.assertNotIn("WS_MODE_INSERT", WAYSIDE_C)
+        self.assertNotIn("VISITED", choose)
+        self.assertNotIn("wayside_generate_here", (ROOT / "src" / "mklev.c").read_text())
 
     def test_pets_are_stopped_before_damage(self):
         plot = MON_C.split("is_plot_npc(struct monst *mtmp)", 1)[1].split(
@@ -465,7 +440,11 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertIn("The way of a fool is right in his own eyes.", WAYSIDE_C)
         self.assertIn("Undone by folly at the Wayside.", WAYSIDE_C)
         self.assertIn("xint16 wrongs", (ROOT / "include" / "you.h").read_text())
-        self.assertIn("EDITLEVEL 13", (ROOT / "include" / "patchlevel.h").read_text())
+        # EDITLEVEL 14 still refuses saves from before the wrongs field.
+        self.assertGreaterEqual(
+            int(re.search(r"#define EDITLEVEL (\d+)",
+                          (ROOT / "include" / "patchlevel.h").read_text()).group(1)),
+            13)
         # Counter: only wrong answers. 4 warns, 5 halves, 6 dies, no reset.
         self.assertEqual([step(i) for i in range(1, 8)], [
             "punish", "punish", "punish", "warn4+punish",
@@ -478,11 +457,22 @@ class WaysideSourceTests(unittest.TestCase):
         self.assertEqual(remain_words(1), "(1 riddle remains.)")
         self.assertEqual(remain_words(5), "(5 riddles remain.)")
 
+    def test_the_road_is_entered_at_the_bottom(self):
+        lua = (ROOT / "dat" / "dungeon.lua").read_text()
+        self.assertIn('name = "The Wayside"', lua)
+        self.assertIn('name = "The Stony Ground"', lua)
+        self.assertNotIn('name = "The Road to Salvation"', lua)
+        self.assertIn('trial_link("wayside"', WAYSIDE_C)
+        pull = (ROOT / "src" / "do.c").read_text()
+        self.assertIn("!on_trial(&u.uz)", pull)
+
     def test_levelport_does_not_complete_later_trials(self):
         block = re.search(
             r"wayside_blocks_levelport\(.*?^\}", WAYSIDE_C, re.S | re.M
         ).group(0)
-        self.assertIn("three trials", block)
+        self.assertIn("trials remain", block)
+        self.assertIn("1 trial remains", block)
+        self.assertNotIn("two trials are still to come", WAYSIDE_C)
         self.assertNotIn("WS_TRIAL2", WAYSIDE_C)
         self.assertNotIn("trial2", WAYSIDE_C.lower())
         self.assertIn("wayside_blocks_levelport()", (ROOT / "src" / "sit.c").read_text())

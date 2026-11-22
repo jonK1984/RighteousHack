@@ -10,6 +10,57 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-22
+A Road trial shows its host's Gehennom depth, and no longer complains that it has no branch.
+
+2026-11-22
+An unfinished trial's host will not let you climb until the helmet of salvation is worn.
+
+2026-11-22
+Each Road trial is its own branch, entered by the up stair of an ordinary Gehennom level.
+
+2026-11-22
+Climbing from the Wayside to the Stony Ground arrives at the foot of the pass.
+
+2026-11-22
+The Road to Salvation is entered at the Wayside, its deepest level. The Stony Ground is one level above it. The soul's pull does not fire anywhere on that branch.
+
+2026-11-21
+The Stony Ground summit stair climbs up, and a delivered traveler waits beside it instead of on it.
+
+2026-11-21
+Each traveler who reaches the Stony Ground summit gives +10 permanent maximum hit points, once per game.
+
+2026-11-21
+The rod of tranquility calms the young believer when the ray hits him. Reading a prophetic book says "You begin to memorize the prophecy."
+
+2026-11-21
+The Son of Perdition does not enter a trial: the Road, the Wilderness, Gibeon, Capernaum, or Sodom and Tyre.
+
+2026-11-21
+The garden Sword of the Spirit is still blessed +2 and rustproof. The Battle of Hinnom does not allow ordinary teleport.
+
+2026-11-21
+A wished Sword of the Spirit keeps the enchantment you asked for. One that is not wished is still blessed +2 and rustproof.
+
+2026-11-21
+When the Son of Perdition clones himself, he says "My name is Legion: for we are many."
+
+2026-11-21
+The Son of Perdition's tower maps are perdition1, perdition2, and perdition3. Old saves will not load. When Moloch falls in Hinnom, Michael's trumpet is shown once.
+
+2026-11-21
+In Berachah the children stand off the throne doors. The fiery steed is orange. When the last Hinnom lever drops the field, the bars glitter and fall before the same blackout text.
+
+2026-11-21
+A yes in the Sanctum plays a yellow light across the map, then the same words as before. The light is not saved.
+
+2026-11-21
+In the Sanctum, your soul lies on the altar by itself. The High Priestess of the Great Dragon starts at peace. She turns only if the hero harms her, or tries to take the soul off that altar.
+
+2026-11-14
+The Stony Ground is the second trial on the Road to Salvation. The Wayside up stair leads there. Three travelers wait in a lit camp. Old saves will not load.
+
 2026-11-14
 The Wizard of Yendor is the Son of Perdition in every player-facing name. He is a bright red @ drawn in reverse on the tty, curses, X11, and Win32 maps. After the Sanctum, carrying your soul can pull you back down by the old Amulet odds, with a new line. The Armor of God and the Sword of the Spirit cannot be stolen. your soul can be stolen only by him, and only while the Helmet of Salvation is not worn. The Key to the Sanctum drops the first time he is killed inside his tower. Moloch and the Berachah tower no longer have it. Razing Moloch's altar opens the way down. The sixth Wayside answer shows the gate blackout after "(0 riddles remain.)".
 

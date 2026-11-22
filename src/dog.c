@@ -420,6 +420,19 @@ void
 mon_arrive(struct monst *mtmp, int when)
 {
     struct trap *t;
+
+    /* Keep the Son of Perdition off a trial. He was already taken
+       off the migrating list by the caller. Send him to the valley
+       instead of placing him here. */
+    if (mtmp->iswiz && trial_bars_son()) {
+        mtmp->nmon = gm.migrating_mons;
+        gm.migrating_mons = mtmp;
+        mtmp->mstate |= MON_MIGRATING;
+        mtmp->mx = mtmp->my = 0;
+        mtmp->mux = valley_level.dnum;
+        mtmp->muy = valley_level.dlevel;
+        return;
+    }
     coordxy xlocale, ylocale, xyloc, xyflags;
     xint16 wander;
     int num_segs;

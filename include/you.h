@@ -83,9 +83,10 @@ struct u_event {
     Bitfield(berachah, 1);          /* Hinnom is now the Valley of Berachah */
     Bitfield(berachah_tears, 1);    /* a child gave the Tears */
     Bitfield(berachah_intro, 1);    /* the Valley arrival text has been shown */
-    /* 64 bits. berachah_intro fills spare padding in the last
-       unsigned unit, so the saved size of this struct is unchanged.
-       The five Hinnom flags need EDITLEVEL 10. */
+    Bitfield(hinnom_fallen, 1);     /* Michael's trumpet after Moloch falls */
+    /* 65 bits. hinnom_fallen starts a new unsigned unit, so this
+       struct grows. EDITLEVEL 15. The five earlier Hinnom flags
+       needed EDITLEVEL 10. */
 };
 
 /*
@@ -534,17 +535,24 @@ struct you {
     xint16 skill_record[P_SKILL_LIMIT]; /* skill advancements */
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
-    /* Wayside trial. Starts at zero. Saved with struct you.
-       EDITLEVEL 13: older saves do not load. */
+    /* Wayside trial, and the host level of every Road trial.
+       host[i] is the Gehennom dlevel for trial i. 0 means unset.
+       EDITLEVEL 17: the old single-branch save does not load. */
     struct {
         unsigned long bits;
-        xint16 mode;             /* 0 unset, 1 replace a level, 2 insert */
-        xint16 target;           /* Gehennom dlevel when mode is 1 */
+        xint16 host[4];          /* one slot per trial, including future ones */
         unsigned vid[6];         /* villager m_id, house order */
         unsigned mino_id;
         unsigned giant_id;
         xint16 wrongs;           /* cumulative wrong riddle answers */
     } uwayside;
+    /* Stony Ground, the second trial. EDITLEVEL 14. */
+    struct {
+        unsigned long bits;
+        unsigned id[3];          /* young believer, old man, mother */
+        unsigned oid[3];         /* rod, healing book, ring */
+        xint16 sick;             /* turns left after the old man falls */
+    } ustony;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

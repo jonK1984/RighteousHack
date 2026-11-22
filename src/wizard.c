@@ -513,7 +513,7 @@ aggravate(void)
     }
 }
 
-/* "Double Trouble" spell cast by the Wizard; caller is responsible for
+/* Clone spell cast by the Son of Perdition; caller is responsible for
    only casting this when there is currently one wizard in existence;
    the clone can't use it unless/until its creator has been killed off */
 void

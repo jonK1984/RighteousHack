@@ -513,6 +513,8 @@ explode(
                         wayside_hero_strikes(mtmp);
                     if (cansee(xx, yy))
                         pline("%s is unharmed.", Monnam(mtmp));
+                } else if (stony_unharmed(mtmp)) {
+                    ; /* the line is the message */
                 } else if (peter_unhurt(mtmp)) {
                     if (cansee(xx, yy))
                         pline("%s is unharmed.", Monnam(mtmp));

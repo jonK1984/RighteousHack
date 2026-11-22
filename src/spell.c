@@ -416,6 +416,9 @@ study_book(struct obj *spellbook)
             return 1;
         }
 
+        /* Reading the prophetic book of healing beside the sick man. */
+        if (booktype == SPE_HEALING)
+            stony_read_healing();
         switch (objects[booktype].oc_level) {
         case 1:
         case 2:
@@ -514,7 +517,7 @@ study_book(struct obj *spellbook)
         }
         spellbook->in_use = FALSE;
 
-        You("begin to %s the runes.",
+        You("begin to %s the prophecy.",
             spellbook->otyp == SPE_BOOK_OF_THE_DEAD ? "recite" : "memorize");
     }
 

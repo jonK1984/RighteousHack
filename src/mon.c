@@ -212,7 +212,7 @@ sanity_check_single_mon(
                 "mimic%s concealed as %s despite Prot-from-shape-changers %s",
                        is_mimic ? "" : "ker", what, msg);
         }
-        /* the Wizard's clone after "double trouble" starts out mimicking
+        /* the Son of Perdition's clone starts out mimicking
            some other monster; pet's quickmimic effect can temporarily take
            on furniture, object, or monster shape, but only until the pet
            finishes eating a mimic corpse */
@@ -3126,6 +3126,8 @@ is_plot_npc(struct monst *mtmp)
     /* Before the name test: a villager is known by m_id. */
     if (wayside_is_villager(mtmp))
         return TRUE;
+    if (stony_is_traveler(mtmp))
+        return TRUE;
     if (mtmp->data == &mons[PM_ORACLE] || is_peter(mtmp))
         return TRUE;
     if (!has_mgivenname(mtmp))
@@ -3170,6 +3172,8 @@ mondead(struct monst *mtmp)
         return;
     if (wayside_villager_stands(mtmp))
         return;
+    if (stony_traveler_fell(mtmp))
+        return;
     wayside_monster_died(mtmp);
 
     /* potential pet message; always clear global flag */
@@ -3181,6 +3185,7 @@ mondead(struct monst *mtmp)
     if (!DEADMONSTER(mtmp))
         return;
     hinnom_child_died(mtmp);
+    hinnom_moloch_died(mtmp);
 
     /* vampire in bat/fog/wolf form reverts to vampire instead of dying */
     if (is_vampshifter(mtmp) && vamprises(mtmp))

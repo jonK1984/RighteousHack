@@ -425,10 +425,12 @@ artifact_exists(
                        the know_arti bit (hero knows that artifact exists) */
                     artifact_origin(otmp, flgs);
                     /* The garden sword is blessed +2, uneroded, and
-                       erodeproof, including when a gift or a wish
-                       creates it again. One flag covers rust, fire,
-                       corrosion, and rot. */
-                    if (!strcmp(a->name, "Sword of the Spirit"))
+                       erodeproof. A wish already chose its enchantment
+                       in readobjnam, the same way an Armor of God wish
+                       does, so that value is left alone. One flag
+                       covers rust, fire, corrosion, and rot. */
+                    if (!strcmp(a->name, "Sword of the Spirit")
+                        && (flgs & ONAME_WISH) == 0)
                         sword_of_spirit_fix(otmp);
                 } else { /* uncreate */
                     /* clear all the flag bits */

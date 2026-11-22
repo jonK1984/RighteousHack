@@ -700,6 +700,8 @@ restgamestate(NHFILE *nhfp)
 #endif /* !SFCTOOL */
 
     restore_dungeon(nhfp);
+    /* Saved depth_start for a trial is 1 until this is applied. */
+    trial_set_depths();
     restlevchn(nhfp);
     /* hero_seq isn't saved and restored because it can be recalculated */
     gh.hero_seq = svm.moves << 3; /* normally handled in moveloop() */

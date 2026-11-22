@@ -23,7 +23,7 @@ goto :EOF
 echo Checking to see if source tree directories are set up properly...
 if not exist ..\..\include\hack.h goto :err_dir
 if not exist ..\..\src\hack.c goto :err_dir
-if not exist ..\..\dat\wizard1.lua goto :err_dir
+if not exist ..\..\dat\perdition1.lua goto :err_dir
 if not exist ..\..\util\makedefs.c goto :err_dir
 if not exist ..\..\sys\windows\windsys.c goto :err_dir
 if not exist ..\..\win\win32\mhmain.c goto :err_dir

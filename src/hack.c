@@ -2276,6 +2276,14 @@ domove_fight_empty(coordxy x, coordxy y)
             Strcpy(buf, unknown_obstacle);
             goto futile;
         }
+        /* Force-fighting the altar square that holds your soul. */
+        if (svc.context.forcefight) {
+            struct obj *otmp;
+
+            for (otmp = svl.level.objects[x][y]; otmp; otmp = otmp->nexthere)
+                if (otmp->otyp == PLAYER_SOUL)
+                    sanctum_disturb_soul(otmp);
+        }
 
         if (!Underwater) {
             boulder = sobj_at(BOULDER, x, y);
@@ -6014,16 +6022,116 @@ box_holds_soul(struct obj *box)
     return FALSE;
 }
 
-/* One chest, on the high altar, holding the player's own soul. */
+static boolean
+soul_on_sanctum_altar(struct obj *obj)
+{
+    coordxy x, y;
+
+    if (!obj || obj->otyp != PLAYER_SOUL || obj->where != OBJ_FLOOR)
+        return FALSE;
+    if (!Is_sanctum(&u.uz))
+        return FALSE;
+    if (!get_obj_location(obj, &x, &y, 0))
+        return FALSE;
+    return (boolean) (IS_ALTAR(levl[x][y].typ)
+                      && (levl[x][y].altarmask & AM_SANCTUM));
+}
+
+static struct monst *
+sanctum_high_priest(void)
+{
+    struct monst *mtmp;
+
+    if (!Is_sanctum(&u.uz))
+        return (struct monst *) 0;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (mtmp->ispriest && mtmp->data == &mons[PM_HIGH_CLERIC])
+            return mtmp;
+    }
+    return (struct monst *) 0;
+}
+
+static void spawn_hosts(void);
+
+/* The locked reveal. It used to be the chest on the altar. It is now
+   the first time the hero takes or moves the soul that sits there. */
 static void
-place_soul_chest(void)
+sanctum_reveal(void)
+{
+    char ans;
+    winid win;
+
+    if (u.uevent.soul_opened)
+        return;
+
+    /* One text window, the same kind a Wilderness floor intro uses.
+       Each paragraph is its own line. A blank line separates them.
+       A single putstr is cut near 255 characters, and each of these
+       is shorter than that. */
+    win = create_nhwindow(NHW_TEXT);
+    putstr(win, 0, "You peer inside, and horror grips you. There, bound in chains within the Sanctum of the Great Dragon, is your own soul. At last it all makes sense.");
+    putstr(win, 0, "");
+    putstr(win, 0, "You have walked a path of evil your whole life, and the treasure you sought was the liberation of your very soul. Now the chance for redemption stands before you. But redemption is a choice.");
+    putstr(win, 0, "");
+    putstr(win, 0, "God speaks in a thunderous voice: 'You must choose the path of good, not evil.'");
+    putstr(win, 0, "");
+    putstr(win, 0, "A soft voice speaks into your heart: 'That if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.'");
+    display_nhwindow(win, TRUE);
+    destroy_nhwindow(win);
+    /* y_n() is yn_function() with only y and n. Escape is n. */
+    ans = y_n("Dost thou confess with thy mouth the Lord Jesus, and believe in thine heart that God hath raised him from the dead?");
+
+    u.uevent.soul_opened = 1;
+    pline("From the shadows of the Sanctum, the hosts of darkness rise to claim what they believe is theirs.");
+    spawn_hosts();
+    if (ans == 'y')
+        u.uevent.sanctum_grace = 2;
+    else
+        u.uevent.sanctum_doom = 3;
+}
+
+/* The hero is taking or moving your soul while it still lies on the
+   Sanctum altar. Anger uses the ordinary peaceful-monster path.
+   Walking onto the altar does not call this. */
+void
+sanctum_disturb_soul(struct obj *obj)
+{
+    struct monst *priest;
+
+    if (svc.context.mon_moving || !soul_on_sanctum_altar(obj))
+        return;
+    priest = sanctum_high_priest();
+    if (priest && priest->mpeaceful)
+        setmangry(priest, FALSE);
+    sanctum_reveal();
+}
+
+static void
+pacify_sanctum_priest(void)
+{
+    struct monst *priest = sanctum_high_priest();
+
+    if (!priest)
+        return;
+    priest->female = 1;
+    priest->mpeaceful = 1;
+    set_malign(priest);
+    newsym(priest->mx, priest->my);
+}
+
+/* your soul lies on the high altar by itself. A chest left there by
+   an earlier visit is opened onto the altar and then removed. */
+static void
+place_altar_soul(void)
 {
     coordxy x, y, ax, ay;
-    struct obj *chest, *soul;
+    struct obj *obj, *nobj, *soul;
     struct monst *mtmp;
-    boolean found = FALSE;
+    boolean found = FALSE, on_altar = FALSE;
 
-    if (u.uevent.soul_placed || !Is_sanctum(&u.uz))
+    if (!Is_sanctum(&u.uz))
         return;
     ax = u.ux;
     ay = u.uy;
@@ -6036,24 +6144,51 @@ place_soul_chest(void)
                 found = TRUE;
                 break;
             }
-    chest = mksobj_at(CHEST, ax, ay, FALSE, FALSE);
-    if (!chest)
-        return;
-    chest->olocked = 0;
-    chest->otrapped = 0;
-    soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
-    if (soul) {
-        /* The type name is already "your soul". corpsenm starts at
-           NON_PM (-1); leave it 0 so it is not a monster index. */
-        soul->corpsenm = 0;
-        soul->dknown = soul->known = 1;
-        add_to_container(chest, soul);
+    for (obj = svl.level.objects[ax][ay]; obj; obj = nobj) {
+        struct obj *inside, *ninside;
+
+        nobj = obj->nexthere;
+        if (obj->otyp == PLAYER_SOUL)
+            on_altar = TRUE;
+        if (obj->otyp != CHEST || !box_holds_soul(obj))
+            continue;
+        for (inside = obj->cobj; inside; inside = ninside) {
+            ninside = inside->nobj;
+            if (inside->otyp != PLAYER_SOUL)
+                continue;
+            obj_extract_self(inside);
+            place_object(inside, ax, ay);
+            stackobj(inside);
+            on_altar = TRUE;
+        }
+        if (!Has_contents(obj)) {
+            obj_extract_self(obj);
+            obfree(obj, (struct obj *) 0);
+        }
     }
-    chest->owt = weight(chest);
+    if (on_altar) {
+        if (!u.uevent.soul_placed) {
+            pacify_sanctum_priest();
+            u.uevent.soul_placed = 1;
+            newsym(ax, ay);
+        }
+        return;
+    }
+    if (u.uevent.soul_placed)
+        return;
+    soul = mksobj(PLAYER_SOUL, FALSE, FALSE);
+    if (!soul)
+        return;
+    /* The type name is already "your soul". corpsenm starts at
+       NON_PM (-1); leave it 0 so it is not a monster index. */
+    soul->corpsenm = 0;
+    soul->dknown = soul->known = 1;
+    place_object(soul, ax, ay);
+    stackobj(soul);
     if ((mtmp = m_at(ax, ay)) != 0 && mtmp != &gy.youmonst)
         (void) rloc(mtmp, RLOC_NOMSG);
     newsym(ax, ay);
-    pline("A chest sits on the altar.");
+    pacify_sanctum_priest();
     u.uevent.soul_placed = 1;
 }
 
@@ -6102,11 +6237,283 @@ give_cap_of_salvation(void)
                                (const char *) 0);
 }
 
+/* Distance from the hero. A terminal cell is about twice as tall as
+   it is wide, so a column counts half as much as a row. The value
+   is the radius of that stretched circle. */
+static int
+light_radius(coordxy x, coordxy y)
+{
+    int dx = (int) x - (int) u.ux;
+    int dy = (int) y - (int) u.uy;
+    int n, lo, hi;
+
+    if (dx < 0)
+        dx = -dx;
+    if (dy < 0)
+        dy = -dy;
+    n = dx * dx + 4 * dy * dy;
+    lo = 0;
+    hi = dx + dy * 2;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+
+        if (mid > 0 && mid <= 400 && mid * mid <= n)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    return lo;
+}
+
+/* tty and curses can paint a character and a standard color, then
+   wait. A tiled port, or a port with no delay, is left alone. */
+static boolean
+sanctum_light_can_play(void)
+{
+    const char *port;
+
+    if (iflags.debug_fuzzer || !iflags.window_inited || !u.ux)
+        return FALSE;
+    if (WIN_MAP == WIN_ERR)
+        return FALSE;
+    if (!windowprocs.win_print_glyph || !windowprocs.win_delay_output)
+        return FALSE;
+    if (iflags.wc_tiled_map)
+        return FALSE;
+    port = windowprocs.name;
+    if (!port)
+        return FALSE;
+    return (boolean) (!strcmp(port, "tty") || !strcmp(port, "curses"));
+}
+
+static void
+light_put(coordxy x, coordxy y, char ch, int color, unsigned flgs)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+
+    *cell = nul_glyphinfo;
+    cell->glyph = cmap_to_glyph(S_room);
+    cell->ttychar = (int) ch;
+    cell->gm.sym.color = color;
+    cell->gm.glyphflags = flgs;
+    cell->gm.customcolor = 0;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+light_recolor(coordxy x, coordxy y, const glyph_info *src, int color)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+    int ch = src->ttychar;
+
+    *cell = *src;
+    if (ch < ' ' || ch > '~')
+        ch = '.';
+    cell->ttychar = ch;
+    cell->gm.sym.color = color;
+    cell->gm.customcolor = 0;
+    cell->gm.glyphflags &= ~(unsigned) MG_INVERSE;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+light_copy(coordxy x, coordxy y, const glyph_info *src)
+{
+    gg.gbuf[y][x].glyphinfo = *src;
+    gg.gbuf[y][x].gnew = 1;
+}
+
+/* One frame. nh_delay_output waits about 50 ms when timed_delay is on. */
+static void
+light_frame(void)
+{
+    coordxy y;
+
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+    }
+    flush_screen(1);
+    nh_delay_output();
+}
+
+static void
+light_halo(glyph_info *snap, int halo, int herocolor, unsigned heroflags)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++) {
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+
+            if (x == u.ux && y == u.uy)
+                light_put(x, y, '@', herocolor, heroflags);
+            else if (halo > 0 && d > 0 && d <= halo)
+                light_put(x, y, '*', herocolor, 0);
+            else
+                light_copy(x, y, &snap[y * COLNO + x]);
+        }
+    }
+    light_frame();
+}
+
+static void
+light_wave(glyph_info *snap, int radius, int thick)
+{
+    static const int spark_dx[8] = { 2, -2, 0, 0, 2, -2, 2, -2 };
+    static const int spark_dy[8] = { 0, 0, 1, -1, 1, 1, -1, -1 };
+    coordxy x, y;
+    int k;
+
+    for (y = 0; y < ROWNO; y++) {
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+            glyph_info *src = &snap[y * COLNO + x];
+
+            if (x == u.ux && y == u.uy)
+                light_put(x, y, '@', CLR_WHITE, 0);
+            else if (d <= 2)
+                light_put(x, y, '*', CLR_WHITE, 0);
+            else if (d >= radius && d < radius + thick)
+                light_put(x, y, '*', CLR_YELLOW, 0);
+            else if (d >= radius - thick && d < radius)
+                light_put(x, y, '+', CLR_YELLOW, 0);
+            else if (d >= radius - 2 * thick && d < radius - thick)
+                light_put(x, y, '.', CLR_YELLOW, 0);
+            else if (d < radius - 2 * thick) {
+                if (radius - d > 3 * thick)
+                    light_recolor(x, y, src, CLR_WHITE);
+                else
+                    light_recolor(x, y, src, CLR_YELLOW);
+            } else {
+                light_copy(x, y, src);
+            }
+        }
+    }
+    /* A handful of stars, ahead of the front and inside it. */
+    for (k = 0; k < 5; k++) {
+        int dir = rn2_on_display_rng(8);
+        int reach = radius + thick + rn2_on_display_rng(thick + 2);
+        int sx = (int) u.ux + spark_dx[dir] * reach / 2;
+        int sy = (int) u.uy + spark_dy[dir] * reach / 2;
+
+        if (isok((coordxy) sx, (coordxy) sy))
+            light_put((coordxy) sx, (coordxy) sy, '*',
+                      rn2_on_display_rng(2) ? CLR_WHITE : CLR_YELLOW, 0);
+    }
+    for (k = 0; k < 4; k++) {
+        int dir = rn2_on_display_rng(8);
+        int reach = 3 + (radius > 4 ? rn2_on_display_rng(radius - 3) : 0);
+        int sx = (int) u.ux + spark_dx[dir] * reach / 2;
+        int sy = (int) u.uy + spark_dy[dir] * reach / 2;
+
+        if (isok((coordxy) sx, (coordxy) sy)
+            && light_radius((coordxy) sx, (coordxy) sy) > 2)
+            light_put((coordxy) sx, (coordxy) sy, '*', CLR_WHITE, 0);
+    }
+    light_frame();
+}
+
+static void
+light_field(int color)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            light_put(x, y, (x == u.ux && y == u.uy) ? '@' : '*', color, 0);
+    light_frame();
+}
+
+static void
+light_fade(glyph_info *snap, int color)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            light_recolor(x, y, &snap[y * COLNO + x], color);
+    light_frame();
+}
+
+/* The light after a yes. Seventy frames at the 50 ms display delay
+   is about three and a half seconds. Nothing here is saved, and the
+   sparkles use the display RNG. */
+static void
+sanctum_light_burst(void)
+{
+    glyph_info *snap;
+    boolean save_nap;
+    coordxy x, y;
+    int maxd, span, thick, i;
+    static const int flashcolor[8] = {
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE,
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE
+    };
+    static const int flashhalo[8] = { 0, 0, 1, 1, 2, 2, 3, 3 };
+    static const int peakcolor[8] = {
+        CLR_YELLOW, CLR_WHITE, CLR_YELLOW, CLR_WHITE,
+        CLR_WHITE, CLR_YELLOW, CLR_WHITE, CLR_WHITE
+    };
+
+    if (!sanctum_light_can_play())
+        return;
+
+    snap = (glyph_info *) alloc((unsigned) (COLNO * ROWNO * sizeof *snap));
+    maxd = 1;
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++) {
+            int d = light_radius(x, y);
+
+            snap[y * COLNO + x] = gg.gbuf[y][x].glyphinfo;
+            if (d > maxd)
+                maxd = d;
+        }
+    span = (maxd > 2) ? (maxd - 2) : 0;
+    thick = (span + 43) / 44;
+    if (thick < 2)
+        thick = 2;
+
+    /* curses skips nh_delay_output when timed_delay is off, and the
+       tty wait is then only padding. Hold the option on for this
+       burst and put it back, as the frost burst does. */
+    save_nap = flags.nap;
+    flags.nap = TRUE;
+
+    for (i = 0; i < 8; i++)
+        light_halo(snap, flashhalo[i], flashcolor[i], 0);
+    light_halo(snap, 3, CLR_YELLOW, MG_INVERSE);
+    light_halo(snap, 3, CLR_YELLOW, MG_INVERSE);
+
+    for (i = 0; i < 44; i++) {
+        int radius = 2 + (span ? (i * span) / 43 : 0);
+
+        light_wave(snap, radius, thick);
+    }
+    for (i = 0; i < 8; i++)
+        light_field(peakcolor[i]);
+    for (i = 0; i < 4; i++)
+        light_fade(snap, CLR_YELLOW);
+    for (i = 0; i < 4; i++)
+        light_fade(snap, CLR_BROWN);
+
+    flags.nap = save_nap;
+    free((genericptr_t) snap);
+    docrt();
+}
+
 static void
 sanctum_yes_end(void)
 {
     u.uevent.sanctum_frozen = 1;
     pline("Then a blinding explosion of light bursts forth from on high. The hosts of darkness are frozen where they stand. The Lord has given you a way of escape.");
+    sanctum_light_burst();
     give_cap_of_salvation();
     /* The climb is the Road to Salvation, designed later. */
     pline("The way back up is the Road to Salvation. It has not been opened.");
@@ -6129,7 +6536,7 @@ sanctum_tick(void)
 {
     if (!Is_sanctum(&u.uz))
         return;
-    place_soul_chest();
+    place_altar_soul();
     if (u.uevent.sanctum_grace) {
         u.uevent.sanctum_grace--;
         if (!u.uevent.sanctum_grace)
@@ -6146,36 +6553,16 @@ sanctum_tick(void)
 int
 soul_opening(struct obj *box)
 {
-    char ans;
-    winid win;
+    struct monst *priest;
 
     if (u.uevent.soul_opened || !box_holds_soul(box))
         return 0;
-
-    /* One text window, the same kind a Wilderness floor intro uses.
-       Each paragraph is its own line. A blank line separates them.
-       A single putstr is cut near 255 characters, and each of these
-       is shorter than that. */
-    win = create_nhwindow(NHW_TEXT);
-    putstr(win, 0, "You peer inside, and horror grips you. There, bound in chains within the Sanctum of the Great Dragon, is your own soul. At last it all makes sense.");
-    putstr(win, 0, "");
-    putstr(win, 0, "You have walked a path of evil your whole life, and the treasure you sought was the liberation of your very soul. Now the chance for redemption stands before you. But redemption is a choice.");
-    putstr(win, 0, "");
-    putstr(win, 0, "God speaks in a thunderous voice: 'You must choose the path of good, not evil.'");
-    putstr(win, 0, "");
-    putstr(win, 0, "A soft voice speaks into your heart: 'That if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.'");
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
-    /* y_n() is yn_function() with only y and n. Escape is n. */
-    ans = y_n("Dost thou confess with thy mouth the Lord Jesus, and believe in thine heart that God hath raised him from the dead?");
-
-    u.uevent.soul_opened = 1;
-    pline("From the shadows of the Sanctum, the hosts of darkness rise to claim what they believe is theirs.");
-    spawn_hosts();
-    if (ans == 'y')
-        u.uevent.sanctum_grace = 2;
-    else
-        u.uevent.sanctum_doom = 3;
+    /* A chest from before the soul lay on the altar. Opening it is
+       the same trespass as taking the soul. */
+    priest = sanctum_high_priest();
+    if (priest && priest->mpeaceful)
+        setmangry(priest, FALSE);
+    sanctum_reveal();
     return 1;
 }
 

@@ -18,7 +18,7 @@ WIZARD = (ROOT / "src" / "wizard.c").read_text()
 HINNOM_C = (ROOT / "src" / "hinnom.c").read_text()
 HINNOM = (ROOT / "dat" / "hinnom.lua").read_text()
 BERACHAH = (ROOT / "dat" / "berachah.lua").read_text()
-WIZ1 = (ROOT / "dat" / "wizard1.lua").read_text()
+WIZ1 = (ROOT / "dat" / "perdition1.lua").read_text()
 MONSTERS = (ROOT / "include" / "monsters.h").read_text()
 ZAP = (ROOT / "src" / "zap.c").read_text()
 MON = (ROOT / "src" / "mon.c").read_text()
@@ -152,6 +152,22 @@ class KeyAndAltar(unittest.TestCase):
     def test_key_drops_once_inside_his_tower(self):
         self.assertIn('des.monster({ id = "Son of Perdition"', WIZ1)
         self.assertNotIn("Wizard of Yendor", WIZ1)
+
+    def test_tower_maps_are_named_perdition(self):
+        dungeon = (ROOT / "dat" / "dungeon.lua").read_text()
+        levels = (ROOT / "src" / "dungeon.c").read_text()
+        fake = (ROOT / "dat" / "fakewiz1.lua").read_text()
+        for name in ("perdition1", "perdition2", "perdition3"):
+            self.assertIn('name = "%s"' % name, dungeon)
+            self.assertTrue((ROOT / "dat" / ("%s.lua" % name)).is_file())
+            self.assertIn('"%s"' % name, levels)
+        self.assertNotIn('name = "wizard1"', dungeon)
+        self.assertNotIn('name = "wizard2"', dungeon)
+        self.assertNotIn('name = "wizard3"', dungeon)
+        self.assertIn('name = "fakewiz1"', dungeon)
+        self.assertIn('name = "fakewiz2"', dungeon)
+        self.assertIn('name="perdition3"', fake)
+        self.assertNotIn('name="wizard3"', fake)
         fn = WIZARD.split("perdition_leave_sanctum_key", 1)[1]
         self.assertIn("wayside_sanctum_key_dropped()", fn)
         self.assertIn("On_W_tower_level(&u.uz)", fn)
@@ -160,6 +176,33 @@ class KeyAndAltar(unittest.TestCase):
         self.assertIn("wayside_mark_sanctum_key()", fn)
         self.assertIn("perdition_leave_sanctum_key(mtmp, mx, my)", MON)
         self.assertIn("#define WS_SKEY", WAYSIDE)
+
+    def test_clone_spell_keeps_its_mechanic_and_the_legion_line(self):
+        cast = (ROOT / "src" / "mcastu.c").read_text()
+        body = cast.split("mcast_clone_wiz(struct monst *mtmp)", 1)[1].split(
+            "mcast_summon_mons", 1)[0]
+        self.assertIn(
+            'pline("My name is Legion: for we are many.");', body)
+        self.assertNotIn("Double Trouble", body)
+        self.assertIn("mtmp->iswiz && svc.context.no_of_wizards == 1", body)
+        self.assertIn("clonewiz();", body)
+
+    def test_he_is_barred_from_every_trial(self):
+        dgn = (ROOT / "src" / "dungeon.c").read_text()
+        body = dgn.split("trial_bars_son(", 1)[1].split(
+            "on_gibeon_level", 1)[0]
+        self.assertIn("on_trial(&u.uz)", body)
+        for name in ("The Wilderness Trial", "Cave of Gibeon"):
+            self.assertIn('"%s"' % name, body)
+        self.assertIn("Is_medusa_level", body)
+        self.assertIn('!strcmp(slev->proto, "capernaum")', body)
+        self.assertNotIn("perdition", body)
+        self.assertNotIn("hinnom", body.lower())
+        self.assertNotIn("sanctum", body.lower())
+        make = (ROOT / "src" / "makemon.c").read_text()
+        dog = (ROOT / "src" / "dog.c").read_text()
+        self.assertIn("trial_bars_son()", make)
+        self.assertIn("trial_bars_son()", dog)
 
     def test_razing_the_altar_is_the_way_down(self):
         clamp = HINNOM_C.split("hinnom_dest_clamp", 1)[1].split(
@@ -177,8 +220,16 @@ class Pull(unittest.TestCase):
         # The condition itself is the trigger. The odds sit just after it.
         after = DO.split("carried_player_soul() && !newdungeon", 1)[1][:1600]
         self.assertIn("Inhell && up && carried_player_soul()", DO)
+        self.assertIn("!on_trial(&u.uz)", after)
         self.assertIn("!rn2(4 + svc.context.mysteryforce)", after)
         self.assertIn("dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3", DO)
+        gate = (ROOT / "src" / "dungeon.c").read_text()
+        body = gate.split("on_the_road(", 1)[1].split("on_gibeon_level", 1)[0]
+        self.assertIn("on_trial(lev)", body)
+        wayside = (ROOT / "src" / "wayside.c").read_text()
+        table = wayside.split("trial_list[]", 1)[1].split("N_TRIALS", 1)[0]
+        self.assertIn('"The Wayside"', table)
+        self.assertIn('"The Stony Ground"', table)
         self.assertIn(PULL, joined_c_strings(after))
         self.assertNotIn("u.uhave.amulet && !newdungeon && !portal", block[-400:])
 

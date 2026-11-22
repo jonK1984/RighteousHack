@@ -728,8 +728,8 @@ LUA_FILES = $(DAT)asmodeus.lua $(DAT)baalz.lua $(DAT)bigrm-1.lua \
 	$(DAT)soko2-1.lua $(DAT)soko2-2.lua $(DAT)soko3-1.lua \
 	$(DAT)soko3-2.lua $(DAT)soko4-1.lua $(DAT)soko4-2.lua \
 	$(DAT)tower1.lua $(DAT)tower2.lua $(DAT)tower3.lua \
-	$(DAT)valley.lua $(DAT)wizard1.lua $(DAT)wizard2.lua \
-	$(DAT)wizard3.lua $(DAT)nhcore.lua $(DAT)nhlib.lua \
+	$(DAT)valley.lua $(DAT)perdition1.lua $(DAT)perdition2.lua \
+	$(DAT)perdition3.lua $(DAT)nhcore.lua $(DAT)nhlib.lua \
 	$(DAT)themerms.lua $(DAT)astral.lua $(DAT)air.lua \
 	$(DAT)earth.lua $(DAT)fire.lua $(DAT)water.lua \
 	$(DAT)hellfill.lua $(DAT)tut-1.lua $(DAT)tut-2.lua \
@@ -763,7 +763,7 @@ LUA_FILES = $(DAT)asmodeus.lua $(DAT)baalz.lua $(DAT)bigrm-1.lua \
 	$(DAT)gibeon.lua \
 	$(DAT)hinnom.lua \
 	$(DAT)berachah.lua \
-	$(DAT)wayside.lua \
+	$(DAT)wayside.lua $(DAT)stony.lua \
 	$(DAT)Adv-fila.lua $(DAT)Adv-filb.lua $(DAT)Adv-goal.lua \
 	$(DAT)Adv-loca.lua $(DAT)Adv-strt.lua \
 	$(DAT)Chp-fila.lua $(DAT)Chp-filb.lua $(DAT)Chp-goal.lua \
@@ -773,7 +773,7 @@ LUA_FILES = $(DAT)asmodeus.lua $(DAT)baalz.lua $(DAT)bigrm-1.lua \
 luawildcards = asmodeus.lua baalz.lua bigrm-*.lua castle.lua fakewiz?.lua \
 	juiblex.lua knox.lua medusa-?.lua minend-?.lua minefill.lua \
 	minetn-?.lua capernaum-?.lua prophet.lua orcus.lua sanctum.lua soko?-?.lua tower?.lua \
-	valley.lua wizard?.lua nhcore.lua nhlib.lua themerms.lua astral.lua \
+	valley.lua perdition?.lua nhcore.lua nhlib.lua themerms.lua astral.lua \
 	air.lua earth.lua fire.lua water.lua hellfill.lua tut-?.lua \
 	???-goal.lua ???-fil?.lua ???-loca.lua ???-strt.lua \
 	dungeon.lua quest.lua
@@ -895,7 +895,8 @@ COREOBJTTY = \
 	$(OTTY)steal.o    $(OTTY)steed.o    $(OTTY)strutil.o  $(OTTY)symbols.o \
 	$(OTTY)sys.o      $(OTTY)teleport.o $(OTTY)timeout.o  $(OTTY)topten.o \
 	$(OTTY)track.o    $(OTTY)trap.o     $(OTTY)u_init.o   $(OTTY)uhitm.o \
-	$(OTTY)utf8map.o  $(OTTY)vault.o    $(OTTY)vision.o   $(OTTY)wayside.o \
+	$(OTTY)utf8map.o  $(OTTY)vault.o    $(OTTY)vision.o   $(OTTY)stony.o \
+	$(OTTY)wayside.o \
 	$(OTTY)weapon.o \
 	$(OTTY)were.o     $(OTTY)wield.o    $(OTTY)windows.o  $(OTTY)wizard.o \
 	$(OTTY)wizcmds.o  $(OTTY)worm.o     $(OTTY)worn.o     $(OTTY)write.o \
@@ -960,7 +961,8 @@ COREOBJGUI = \
 	$(OGUI)steal.o    $(OGUI)steed.o    $(OGUI)strutil.o  $(OGUI)symbols.o \
 	$(OGUI)sys.o      $(OGUI)teleport.o $(OGUI)timeout.o  $(OGUI)topten.o \
 	$(OGUI)track.o    $(OGUI)trap.o     $(OGUI)u_init.o   $(OGUI)uhitm.o \
-	$(OGUI)utf8map.o  $(OGUI)vault.o    $(OGUI)vision.o   $(OGUI)wayside.o \
+	$(OGUI)utf8map.o  $(OGUI)vault.o    $(OGUI)vision.o   $(OGUI)stony.o \
+	$(OGUI)wayside.o \
 	$(OGUI)weapon.o \
 	$(OGUI)were.o     $(OGUI)wield.o    $(OGUI)windows.o  $(OGUI)wizard.o \
 	$(OGUI)wizcmds.o  $(OGUI)worm.o     $(OGUI)worn.o     $(OGUI)write.o \
@@ -3382,6 +3384,7 @@ $(OTTY)utf8map.o: utf8map.c $(HACK_H)
 $(OTTY)vault.o: vault.c $(HACK_H)
 $(OTTY)version.o: version.c $(HACK_H) $(INCL)dlb.h
 $(OTTY)vision.o: vision.c $(HACK_H)
+$(OTTY)stony.o: stony.c $(HACK_H)
 $(OTTY)wayside.o: wayside.c $(HACK_H)
 $(OTTY)weapon.o: weapon.c $(HACK_H)
 $(OTTY)were.o: were.c $(HACK_H)
@@ -3762,6 +3765,7 @@ $(OGUI)utf8map.o: utf8map.c $(HACK_H)
 $(OGUI)vault.o: vault.c $(HACK_H)
 $(OGUI)version.o: version.c $(HACK_H) $(INCL)dlb.h
 $(OGUI)vision.o: vision.c $(HACK_H)
+$(OGUI)stony.o: stony.c $(HACK_H)
 $(OGUI)wayside.o: wayside.c $(HACK_H)
 $(OGUI)weapon.o: weapon.c $(HACK_H)
 $(OGUI)were.o: were.c $(HACK_H)

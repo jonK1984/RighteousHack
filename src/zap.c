@@ -167,6 +167,8 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             wayside_hero_strikes(mtmp);
         return 0;
     }
+    if (stony_absorb_zap(mtmp, otmp))
+        return 0;
     boolean wake = TRUE; /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE, learn_it = FALSE;
     boolean dbldam = Role_if(PM_KNIGHT) && u.uhave.questart;
@@ -2144,6 +2146,8 @@ bhito(struct obj *obj, struct obj *otmp)
        available in wand form, but the concept still applies...]) */
     if (obj == otmp)
         return 0;
+    /* A zap that strikes your soul on the Sanctum altar. */
+    sanctum_disturb_soul(obj);
 
     if (obj->bypass) {
         /* The bypass bit is currently only used as follows:
@@ -5006,7 +5010,25 @@ dobuzz(
                     dy = -dy;
                 } else {
                     boolean mon_could_move = mon->mcanmove;
-                    int tmp = zhitm(mon, type, nd, &otmp);
+                    struct obj rayobj, *zobj = (struct obj *) 0;
+                    int tmp;
+
+                    /* A ray never goes through bhitm(), which is where a
+                       traveler absorbs an immediate rod. The rod of
+                       tranquility is a sleep ray, so the calm was skipped
+                       and the next turn woke him again. */
+                    if (type >= 0 && !svc.context.mon_moving) {
+                        zobj = gc.current_wand;
+                        if (!zobj && is_hero_spell(type)
+                            && damgtype == ZT_SLEEP) {
+                            rayobj = cg.zeroobj;
+                            rayobj.otyp = SPE_SLEEP;
+                            zobj = &rayobj;
+                        }
+                        if (zobj && stony_absorb_zap(mon, zobj))
+                            break;
+                    }
+                    tmp = zhitm(mon, type, nd, &otmp);
 
                     if (is_rider(mon->data)
                         && abs(type) == ZT_BREATH(ZT_DEATH)) {

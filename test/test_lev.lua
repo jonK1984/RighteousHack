@@ -66,9 +66,9 @@ local special_levels = {
 "tower3",
 "valley",
 "water",
-"wizard1",
-"wizard2",
-"wizard3"
+"perdition1",
+"perdition2",
+"perdition3"
 }
 
 local roles = { "Arc", "Bar", "Cav", "Hea", "Kni", "Mon", "Pri", "Ran", "Rog", "Sam", "Tou", "Val", "Wiz" }

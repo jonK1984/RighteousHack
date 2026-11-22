@@ -417,7 +417,7 @@ staticfn void
 mcast_clone_wiz(struct monst *mtmp)
 {
     if (mtmp->iswiz && svc.context.no_of_wizards == 1) {
-        pline("Double Trouble...");
+        pline("My name is Legion: for we are many.");
         clonewiz();
     } else
         impossible("bad wizard cloning?");

@@ -20,6 +20,7 @@ OBJNAM = (ROOT / "src" / "objnam.c").read_text()
 ARTI = (ROOT / "include" / "artilist.h").read_text()
 OBJECTS = (ROOT / "include" / "objects.h").read_text()
 HACK = (ROOT / "src" / "hack.c").read_text()
+ARTIFACT = (ROOT / "src" / "artifact.c").read_text()
 
 ART = "Helmet of Salvation"
 ORDINARY = [
@@ -177,7 +178,34 @@ class HelmetWishTests(unittest.TestCase):
         self.assertFalse(wishymatch("helmet", "Helmet of Salvation"))
 
 
+class SwordWishTests(unittest.TestCase):
+    def test_a_wish_keeps_the_requested_enchantment(self):
+        exists = ARTIFACT.split("artifact_exists(", 1)[1].split(
+            "sword_of_spirit_fix(struct obj", 1)[0]
+        fix = ARTIFACT.split("sword_of_spirit_fix(struct obj", 1)[1].split(
+            "found_artifact", 1)[0]
+        self.assertIn("otmp->spe = 2", fix)
+        self.assertIn("(flgs & ONAME_WISH) == 0", exists)
+        self.assertIn("sword_of_spirit_fix(otmp)", exists)
+        # The wish enchantment is written before the artifact name is applied.
+        wish = OBJNAM.split("d.otmp = oname(d.otmp, d.name, ONAME_WISH)", 1)[0]
+        self.assertIn("d.otmp->spe = d.spe", wish)
+        self.assertIn("else if (wizard)", wish)
+
+    def test_the_garden_sword_is_not_a_wish(self):
+        garden = (ROOT / "dat" / "wild5.lua").read_text()
+        self.assertIn('name="Sword of the Spirit"', garden)
+        levels = (ROOT / "src" / "sp_lev.c").read_text()
+        body = levels.split("create_object(object *o", 1)[1].split(
+            "if (o->recharged)", 1)[0]
+        self.assertIn('oname(otmp, o->name.str, ONAME_LEVEL_DEF)', body)
+        self.assertNotIn("ONAME_WISH", body)
+        self.assertIn("sword_of_spirit_fix(otmp)", body)
+        knight = (ROOT / "dat" / "Kni-strt.lua").read_text()
+        self.assertIn('name = "Sword of the Spirit"', knight)
+
+
 if __name__ == "__main__":
-    suite = unittest.defaultTestLoader.loadTestsFromTestCase(HelmetWishTests)
+    suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(0 if result.wasSuccessful() else 1)
