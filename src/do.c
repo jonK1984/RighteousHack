@@ -2061,6 +2061,9 @@ goto_level(
         }
     }
 
+    /* After the generic stair pick, including a fall or other arrival. */
+    stony_receive(&u.uz0);
+
     if (Punished)
         placebc();
     obj_delivery(FALSE);

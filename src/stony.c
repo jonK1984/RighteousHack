@@ -507,7 +507,12 @@ aim_stairs(void)
 {
     d_level back, onward;
 
-    if (find_level("wayside"))
+    /* The hero may have left the Wayside map on a Gehennom level.
+       That level is not find_level("wayside"). Point the foot back
+       at the level actually left, or the stair search misses it. */
+    if (wayside_at(&u.uz0))
+        back = u.uz0;
+    else if (find_level("wayside"))
         back = find_level("wayside")->dlevel;
     else
         back = valley_level;
@@ -1045,6 +1050,26 @@ stony_traveler_fell(struct monst *mtmp)
     if (who && escort_of() == who)
         fail_screen(who);
     return TRUE;
+}
+
+/* Where to stand on arrival. The climb from a Gehennom Wayside can
+   increase absolute depth, so goto_level treats it as a descent and
+   u_on_sstairs() selects the summit. */
+void
+stony_receive(d_level *from)
+{
+    d_level onward;
+
+    if (!stony_here() || !from)
+        return;
+    wayside_ascent_level(&onward);
+    if (on_level(from, &onward)) {
+        u_on_newpos(EXIT_X, EXIT_Y);
+        return;
+    }
+    if (wayside_at(from)
+        || (from->dnum == u.uz.dnum && from->dlevel > u.uz.dlevel))
+        u_on_newpos(START_X, START_Y);
 }
 
 boolean

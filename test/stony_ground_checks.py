@@ -237,6 +237,30 @@ class Rules(unittest.TestCase):
         self.assertIn("return 0;", MONMOVE.split(
             "stony_traveler_settled(mtmp)", 1)[1][:200])
 
+    def test_arrival_from_the_wayside_is_the_foot(self):
+        do = (ROOT / "src" / "do.c").read_text()
+        placed = do.split("trap door or level_tele", 1)[1].split(
+            "if (Punished)", 1)[0]
+        self.assertIn("stony_receive(&u.uz0)", placed)
+        recv = SRC.split("void\nstony_receive(", 1)[1].split(
+            "stony_block_stairs", 1)[0]
+        self.assertLess(
+            recv.index("u_on_newpos(EXIT_X, EXIT_Y)"),
+            recv.index("u_on_newpos(START_X, START_Y)"),
+        )
+        self.assertIn("wayside_at(from)", recv)
+        self.assertIn("from->dlevel > u.uz.dlevel", recv)
+        aim = SRC.split("aim_stairs(void)", 1)[1].split("apply_reset", 1)[0]
+        self.assertLess(
+            aim.index("wayside_at(&u.uz0)"),
+            aim.index("plant_one(START_X, START_Y, FALSE, &back)"),
+        )
+        wayside = (ROOT / "src" / "wayside.c").read_text()
+        body = wayside.split("wayside_at(d_level *lev)", 1)[1].split(
+            "on_wayside(void)", 1)[0]
+        self.assertIn("u.uwayside.target", body)
+        self.assertIn('find_level("wayside")', body)
+
     def test_the_sleep_ray_reaches_the_calm(self):
         zap = (ROOT / "src" / "zap.c").read_text()
         hit = zap.split("zap_hit(find_mac(mon), spell_type)", 1)[1]

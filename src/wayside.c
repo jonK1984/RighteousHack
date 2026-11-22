@@ -111,18 +111,26 @@ gehennom_depth(void)
     return svd.dungeons[sanctum_level.dnum].num_dunlevs;
 }
 
+boolean
+wayside_at(d_level *lev)
+{
+    s_level *slev;
+
+    if (!lev)
+        return FALSE;
+    /* The map may stand on a Gehennom level, or on the branch level. */
+    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 0
+        && lev->dnum == sanctum_level.dnum
+        && lev->dlevel == u.uwayside.target)
+        return TRUE;
+    slev = find_level("wayside");
+    return (boolean) (slev && on_level(lev, &slev->dlevel));
+}
+
 static boolean
 on_wayside(void)
 {
-    if (u.uwayside.mode == WS_MODE_LEVEL && u.uwayside.target > 0
-        && u.uz.dnum == sanctum_level.dnum
-        && u.uz.dlevel == u.uwayside.target)
-        return TRUE;
-    {
-        s_level *slev = find_level("wayside");
-
-        return (boolean) (slev && on_level(&u.uz, &slev->dlevel));
-    }
+    return wayside_at(&u.uz);
 }
 
 boolean
