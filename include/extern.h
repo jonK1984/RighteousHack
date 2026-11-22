@@ -4087,6 +4087,7 @@ extern boolean wayside_road(void);
 extern boolean wayside_at(d_level *);
 extern boolean trial_link(const char *, d_level *, d_level *);
 extern void trial_receive(d_level *);
+extern void trial_set_depths(void);
 extern void wayside_setup(void);
 extern void wayside_tick(void);
 extern boolean wayside_is_villager(struct monst *);

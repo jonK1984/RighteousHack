@@ -1488,6 +1488,11 @@ builds_up(d_level *lev)
 {
     dungeon *dptr = &svd.dungeons[lev->dnum];
     branch *br;
+
+    /* No parent branch. The tutorial and each Road trial are like
+       this. A single-level one must not be reported as missing. */
+    if (dptr->flags.unconnected)
+        return FALSE;
     if (dptr->num_dunlevs > 1)
         return (boolean) (dptr->entry_lev == dptr->num_dunlevs);
     /* else, single-level branch; find branch connection that connects this

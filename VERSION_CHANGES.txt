@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-22
+A Road trial shows its host's Gehennom depth, and no longer complains that it has no branch.
+
+2026-11-22
 An unfinished trial's host will not let you climb until the helmet of salvation is worn.
 
 2026-11-22

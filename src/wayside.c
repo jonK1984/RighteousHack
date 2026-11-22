@@ -230,8 +230,10 @@ trial_choose(void)
     int pick[TRIAL_SLOTS];
     int n = 0, got = 0, guard = 0, i;
 
-    if (hosts_chosen())
+    if (hosts_chosen()) {
+        trial_set_depths();
         return;
+    }
     for (i = 1; i <= gehennom_depth() && n < (int) SIZE(cand); i++)
         if (gehennom_ordinary(i))
             cand[n++] = i;
@@ -260,6 +262,29 @@ trial_choose(void)
     }
     for (i = 0; i < got; i++)
         u.uwayside.host[i] = (xint16) pick[i];
+    trial_set_depths();
+}
+
+/* Dlvl and the overview both use depth_start. A trial is not
+   dungeon level 1; it sits at the depth of its Gehennom host. */
+void
+trial_set_depths(void)
+{
+    int i;
+
+    for (i = 0; i < N_TRIALS && i < TRIAL_SLOTS; i++) {
+        s_level *slev;
+        d_level host;
+
+        if (!u.uwayside.host[i])
+            continue;
+        slev = find_level(trial_list[i].proto);
+        if (!slev || slev->dlevel.dnum < 0 || slev->dlevel.dnum >= svn.n_dgns)
+            continue;
+        host.dnum = sanctum_level.dnum;
+        host.dlevel = u.uwayside.host[i];
+        svd.dungeons[slev->dlevel.dnum].depth_start = depth(&host);
+    }
 }
 
 /* Arrival in either direction. The generic stair search does not

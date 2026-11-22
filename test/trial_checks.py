@@ -126,6 +126,28 @@ class Stairs(unittest.TestCase):
         self.assertNotIn("Good Ground", DUNGEON)
 
 
+class Depth(unittest.TestCase):
+    def test_unconnected_is_not_a_missing_branch(self):
+        dgn = (ROOT / "src" / "dungeon.c").read_text()
+        body = dgn.split("builds_up(d_level *lev)", 1)[1].split(
+            "next_level", 1)[0]
+        self.assertLess(body.index("flags.unconnected"),
+                        body.index("can't find branch"))
+        self.assertLess(body.index("return FALSE;"),
+                        body.index("can't find branch"))
+
+    def test_overview_and_dlvl_use_the_host_depth(self):
+        body = WAYSIDE.split("trial_set_depths(void)", 1)[1].split(
+            "trial_receive", 1)[0]
+        self.assertIn("depth_start = depth(&host)", body)
+        self.assertIn("host.dlevel = u.uwayside.host[i]", body)
+        choose = WAYSIDE.split("trial_choose(void)", 1)[1].split(
+            "trial_set_depths(void)", 1)[0]
+        self.assertIn("trial_set_depths()", choose)
+        restore = (ROOT / "src" / "restore.c").read_text()
+        self.assertIn("trial_set_depths()", restore)
+
+
 class Seals(unittest.TestCase):
     def test_the_pull_skips_every_trial_branch(self):
         self.assertIn("!on_trial(&u.uz)", DO)
