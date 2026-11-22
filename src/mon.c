@@ -3128,6 +3128,8 @@ is_plot_npc(struct monst *mtmp)
         return TRUE;
     if (stony_is_traveler(mtmp))
         return TRUE;
+    if (thorns_is_tempter(mtmp))
+        return TRUE;
     if (mtmp->data == &mons[PM_ORACLE] || is_peter(mtmp))
         return TRUE;
     if (!has_mgivenname(mtmp))

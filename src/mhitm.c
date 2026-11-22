@@ -192,7 +192,8 @@ mdisplacem(
         && levl[magr->mx][magr->my].typ != ROOM)
         return M_ATTK_MISS;
     /* Wayside villagers are not shoved aside by pets or anyone else. */
-    if (wayside_is_villager(mdef) || stony_is_traveler(mdef))
+    if (wayside_is_villager(mdef) || stony_is_traveler(mdef)
+        || thorns_is_tempter(mdef))
         return M_ATTK_MISS;
     pa = magr->data, pd = mdef->data;
     tx = mdef->mx, ty = mdef->my; /* destination */
@@ -320,6 +321,9 @@ mattackm(
         return M_ATTK_MISS;
     /* Pets never strike a traveler. A persecutor still can. */
     if (stony_is_traveler(mdef) && magr->mtame)
+        return M_ATTK_MISS;
+    /* No monster strikes a tempter, pet or otherwise. */
+    if (thorns_is_tempter(mdef))
         return M_ATTK_MISS;
     if (helpless(magr))
         return M_ATTK_MISS;

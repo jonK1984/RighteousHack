@@ -3836,13 +3836,40 @@ greed_trial_screen(void)
     destroy_nhwindow(win);
 }
 
+/* A verse engraving is shown on the step onto it, with no preamble
+   and no --More--. Waiting on the square does not repeat it.
+   The Wilderness and the Thorns both use this. */
+static void
+show_verse(void)
+{
+    struct engr *ep = engr_at(u.ux, u.uy);
+    static coordxy vx = -1, vy = -1;
+    static d_level vz = { 0, 0 };
+
+    if (!ep || ep->engr_type != VERSE || !ep->engr_txt[actual_text]
+        || !ep->engr_txt[actual_text][0]) {
+        vx = -1;
+        vy = -1;
+    } else if (vx != u.ux || vy != u.uy || !on_level(&vz, &u.uz)) {
+        vx = u.ux;
+        vy = u.uy;
+        vz = u.uz;
+        custompline(PLINE_NOSTOP, "%s", ep->engr_txt[actual_text]);
+        Strcpy(ep->engr_txt[remembered_text], ep->engr_txt[actual_text]);
+        ep->eread = 1;
+        ep->erevealed = 1;
+    }
+}
+
 static void
 wilderness_check(void)
 {
     static d_level garden_shown = { 0, 0 };
 
-    if (!in_wilderness())
+    if (!in_wilderness()) {
+        show_verse();
         return;
+    }
     if (dunlev(&u.uz) == 4) {
         boolean was = on_fear_path(u.ux0, u.uy0)
                       || (isok(u.ux0, u.uy0) && levl[u.ux0][u.uy0].typ == STAIRS);
@@ -3933,28 +3960,7 @@ wilderness_check(void)
         garden_shown = u.uz;
         pline("Light floods the chamber, warm as morning. The air is sweet, and for the first time since entering the wilderness, you are not afraid.");
     }
-    {
-        struct engr *ep = engr_at(u.ux, u.uy);
-        static coordxy vx = -1, vy = -1;
-        static d_level vz = { 0, 0 };
-
-        /* Remember the square only while the hero is still on it, so a
-           later step onto the same verse shows the text again. Waiting
-           there does not. eread does not suppress this. */
-        if (!ep || ep->engr_type != VERSE || !ep->engr_txt[actual_text]
-            || !ep->engr_txt[actual_text][0]) {
-            vx = -1;
-            vy = -1;
-        } else if (vx != u.ux || vy != u.uy || !on_level(&vz, &u.uz)) {
-            vx = u.ux;
-            vy = u.uy;
-            vz = u.uz;
-            custompline(PLINE_NOSTOP, "%s", ep->engr_txt[actual_text]);
-            Strcpy(ep->engr_txt[remembered_text], ep->engr_txt[actual_text]);
-            ep->eread = 1;
-            ep->erevealed = 1;
-        }
-    }
+    show_verse();
 }
 
 static void pride_waken_reflection(void);

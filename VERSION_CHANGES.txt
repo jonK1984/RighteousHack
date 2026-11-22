@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-22
+The Thorns is a Road trial: a gilded city of seventeen tempters. Each gift costs life, and a fourth acceptance chokes the hero. Leaving by the up stair finishes the trial.
+
+2026-11-22
 A Road trial shows its host's Gehennom depth, and no longer complains that it has no branch.
 
 2026-11-22

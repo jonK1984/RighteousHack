@@ -16,8 +16,7 @@
    Stored in the existing bits word, so the save layout does not grow. */
 #define WS_SKEY     0x00001000UL
 
-/* Saved host slots. Adding a trial does not grow this until the
-   fourth one past the two that exist now. */
+/* Saved host slots. Three trials are registered. One slot remains. */
 #define TRIAL_SLOTS 4
 
 static const char *const ws_name[6] = {
@@ -90,6 +89,7 @@ struct trial_def {
 static const struct trial_def trial_list[] = {
     { "The Wayside", "wayside", wayside_is_solved },
     { "The Stony Ground", "stony", stony_trial_done },
+    { "The Thorns", "thorns", thorns_trial_done },
 };
 #define N_TRIALS ((int) SIZE(trial_list))
 

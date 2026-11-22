@@ -553,6 +553,15 @@ struct you {
         unsigned oid[3];         /* rod, healing book, ring */
         xint16 sick;             /* turns left after the old man falls */
     } ustony;
+    /* The Thorns, the third trial. EDITLEVEL 18.
+       given is one bit per tempter. accepts is 0 to 3 while alive.
+       done is set only by the up stair. */
+    struct {
+        unsigned long given;
+        unsigned id[17];
+        xint16 accepts;
+        xint16 done;
+    } uthorns;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

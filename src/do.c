@@ -1374,6 +1374,8 @@ doup(void)
         return ECMD_TIME;
     if (stony_block_stairs(TRUE))
         return ECMD_OK;
+    /* Alive, and taking the up stair: the Thorns counts as finished. */
+    thorns_note_ascent();
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;

@@ -4034,6 +4034,16 @@
         M2_NOPOLY | M2_HUMAN | M2_PEACEFUL,
         M3_WAITFORU | M3_INFRAVISIBLE,
         5, CLR_BRIGHT_CYAN, TRAVELER),
+    /* The Thorns. One per shop, told apart by the given name.
+       They do not fight, and they do not leave their stand. */
+    MON(NAM("tempter"), S_HUMAN,
+        LVL(4, 12, 10, 0, 0), G_NOGEN,
+        A(NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_MALE,
+        M3_WAITFORU | M3_INFRAVISIBLE,
+        5, CLR_ORANGE, TEMPTER),
     /* A weak nuisance. CLR_YELLOW is not used by any other '@'. */
     MON(NAM("persecutor"), S_HUMAN,
         LVL(2, 12, 10, 0, -3), G_NOGEN,

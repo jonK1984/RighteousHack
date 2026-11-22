@@ -412,6 +412,16 @@ dungeon = {
       }
    },
    {
+      name = "The Thorns",
+      bonetag = "H",
+      base = 1,
+      alignment = "lawful",
+      flags = { "mazelike", "unconnected" },
+      levels = {
+         { name = "thorns", base = 1 }
+      }
+   },
+   {
       name = "The Wilderness Trial",
       bonetag = "W",
       base = 5,

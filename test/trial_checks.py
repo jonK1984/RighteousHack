@@ -61,10 +61,11 @@ class Hosts(unittest.TestCase):
         self.assertNotIn(9, cand)
         rng = random.Random(7)
         for _ in range(30):
-            hosts = choose(cand, 2, rng)
-            self.assertEqual(len(hosts), 2)
-            lo, hi = sorted(hosts)
-            self.assertTrue(any(d in cand for d in range(lo + 1, hi)))
+            hosts = choose(cand, 3, rng)
+            self.assertEqual(len(hosts), 3)
+            ordered = sorted(hosts)
+            for lo, hi in zip(ordered, ordered[1:]):
+                self.assertTrue(any(d in cand for d in range(lo + 1, hi)))
 
     def test_the_choice_is_saved_on_the_hero(self):
         self.assertIn("xint16 host[4]", YOU)
@@ -116,14 +117,20 @@ class Stairs(unittest.TestCase):
         self.assertIn('trial_link("stony"', stony)
         self.assertIn("plant_one(START_X, START_Y, FALSE, &back)", stony)
         self.assertIn("plant_one(EXIT_X, EXIT_Y, TRUE, &onward)", stony)
+        thorns = (ROOT / "src" / "thorns.c").read_text()
+        aim = thorns.split("aim_stairs(void)", 1)[1].split("place_tempter", 1)[0]
+        self.assertIn('trial_link("thorns"', aim)
+        self.assertIn("plant_one(TX(37), 19, FALSE, &back)", aim)
+        self.assertIn("plant_one(TX(37), 1, TRUE, &onward)", aim)
 
     def test_each_trial_is_its_own_branch(self):
         self.assertIn('name = "The Wayside"', DUNGEON)
         self.assertIn('name = "The Stony Ground"', DUNGEON)
+        self.assertIn('name = "The Thorns"', DUNGEON)
         self.assertIn("unconnected", DUNGEON)
         self.assertNotIn('name = "The Road to Salvation"', DUNGEON)
-        self.assertNotIn("Thorns", DUNGEON)
         self.assertNotIn("Good Ground", DUNGEON)
+        self.assertIn('{ "The Thorns", "thorns", thorns_trial_done }', WAYSIDE)
 
 
 class Depth(unittest.TestCase):
