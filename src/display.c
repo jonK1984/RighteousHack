@@ -2683,6 +2683,15 @@ const int explodecolors[EXPL_MAX] = {
     explode_color_wet,    explode_color_magical, explode_color_fiery,
     explode_color_frosty,
 };
+/* -1 keeps the fiery explosion orange. The steed's ring cycles
+   yellow, orange, and red through this. */
+static int fiery_expl_override = -1;
+
+void
+set_fiery_expl_color(int color)
+{
+    fiery_expl_override = color;
+}
 
 /* main_walls, mines_walls, gehennom_walls, knox_walls, sokoban_walls */
 int wallcolors[sokoban_walls + 1] = {
@@ -2700,7 +2709,14 @@ int wallcolors[sokoban_walls + 1] = {
 #define warn_color(n) \
     color = iflags.use_color ? def_warnsyms[n].color : NO_COLOR
 #define explode_color(n) \
-    color = iflags.use_color ? explodecolors[n] : NO_COLOR
+    do { \
+        if (!iflags.use_color) \
+            color = NO_COLOR; \
+        else if ((n) == expl_fiery && fiery_expl_override >= 0) \
+            color = fiery_expl_override; \
+        else \
+            color = explodecolors[n]; \
+    } while (0)
 #define wall_color(n) color = iflags.use_color ? wallcolors[n] : NO_COLOR
 #define altar_color(n) color = iflags.use_color ? altarcolors[n] : NO_COLOR
 

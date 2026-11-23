@@ -270,6 +270,8 @@ moveloop_core(void)
                 sanctum_tick();
                 wayside_tick();
                 stony_tick();
+                thorns_tick();
+                steed_fire_tick();
 
                 if (Glib)
                     glibr();

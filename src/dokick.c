@@ -154,6 +154,8 @@ kick_monster(struct monst *mon, coordxy x, coordxy y)
     }
     if (stony_unharmed(mon))
         return;
+    if (thorns_unharmed(mon))
+        return;
 
     /* anger target even if wild miss will occur */
     setmangry(mon, TRUE);

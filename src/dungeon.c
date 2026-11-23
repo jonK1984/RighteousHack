@@ -3629,6 +3629,9 @@ print_mapseen(
     int i, depthstart, dnum;
     boolean died_here = (final == 2 && on_level(&u.uz, &mptr->lev));
     anything any;
+    s_level *thorns_lev = find_level("thorns");
+    boolean gilded_city = (boolean) (thorns_lev
+                                     && on_level(&mptr->lev, &thorns_lev->dlevel));
 
     /* Damnable special cases */
     /* The quest and knox should appear to be level 1 to match
@@ -3692,7 +3695,8 @@ print_mapseen(
     if (mptr->flags.forgot)
         return;
 
-    if (OF_INTEREST(mptr->feat)) {
+    /* The Thorns names itself. Fountains and trees stay off this line. */
+    if (OF_INTEREST(mptr->feat) && !gilded_city) {
         buf[0] = 0;
 
         i = 0; /* interest counter */
@@ -3785,6 +3789,8 @@ print_mapseen(
         Sprintf(buf, "%sGateway to the Sanctum of the Great Dragon.", PREFIX);
     } else if (mptr->flags.msanctum) {
         Sprintf(buf, "%sSanctum of the Great Dragon.", PREFIX);
+    } else if (gilded_city) {
+        Sprintf(buf, "%sA Gilded City.", PREFIX);
     }
     if (*buf) {
         add_menu_str(win, buf);

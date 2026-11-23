@@ -369,7 +369,7 @@ read_engr_at(coordxy x, coordxy y)
             /* The map shows the letter. This is not an engraving. */
             break;
         case VERSE:
-            /* Shown by wilderness_check, with no preamble and no --More--. */
+            /* Shown by show_verse, with no preamble and no --More--. */
             break;
         default:
             impossible("%s is written in a very strange way.", Something);

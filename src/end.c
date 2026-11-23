@@ -1104,7 +1104,11 @@ done(int how)
             disp.botl = TRUE;
         }
     }
-    if (Lifesaved && (how <= GENOCIDED)) {
+    if (thorns_fatal()) {
+        /* Not averted by an amulet of life saving, nor by any
+           other Lifesaved source. Wizard and explore mode still
+           ask "Die?" below. */
+    } else if (Lifesaved && (how <= GENOCIDED)) {
         pline("But wait...");
         /* assumes that only one type of item confers LifeSaved property */
         makeknown(AMULET_OF_LIFE_SAVING);

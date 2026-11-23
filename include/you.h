@@ -553,6 +553,18 @@ struct you {
         unsigned oid[3];         /* rod, healing book, ring */
         xint16 sick;             /* turns left after the old man falls */
     } ustony;
+    /* The Thorns, the third trial. EDITLEVEL 18.
+       given bits 0..16 are one bit per tempter. Bit 31 is the intro.
+       accepts is 0 to 3 while alive. done is set only by the up stair. */
+    struct {
+        unsigned long given;
+        unsigned id[17];
+        xint16 accepts;
+        xint16 done;
+    } uthorns;
+    /* Turns left before the Fiery Steed may breathe again.
+       EDITLEVEL 19. 0 means the fire is ready. */
+    int ufirewait;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

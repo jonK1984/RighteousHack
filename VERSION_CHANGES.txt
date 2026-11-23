@@ -10,6 +10,27 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-23
+In the Thorns, the Goldsmith and Jeweler doors stand on their signs, the end shops can be reached, and the Prince of the city stands on an ordinary throne.
+
+2026-11-23
+The first time you reach the Thorns, a screen describes the gilded city. It is not shown again.
+
+2026-11-23
+The dungeon overview calls the Thorns "A Gilded City."
+
+2026-11-23
+The Stony Ground persecutor is level 10, armor class 4, and strikes for 3d4. Its difficulty is 11.
+
+2026-11-23
+When the last Wayside riddle is answered, the gate shimmers and breaks into sparkles as it opens. No new sentence is printed.
+
+2026-11-23
+While riding the Fiery Steed of the Heavenly Host, #chat at yourself bids it loose a ring of holy fire. The fire then needs time to rekindle.
+
+2026-11-22
+The Thorns is a Road trial: a gilded city of seventeen tempters. Each gift costs life, and a fourth acceptance chokes the hero. Leaving by the up stair finishes the trial.
+
 2026-11-22
 A Road trial shows its host's Gehennom depth, and no longer complains that it has no branch.
 

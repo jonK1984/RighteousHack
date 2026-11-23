@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 17 /* each Road trial is its own branch on a Gehennom host */
+#define EDITLEVEL 19 /* the Fiery Steed's fire cooldown is saved */
 
 /*
  * Development status possibilities.

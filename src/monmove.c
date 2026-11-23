@@ -1852,6 +1852,9 @@ m_move(struct monst *mtmp, int after)
     /* Escorted travelers are stepped by stony_tick, not by wandering. */
     if (stony_is_traveler(mtmp))
         return MMOVE_NOTHING;
+    /* Tempters stay on their stands. thorns_tick puts them back. */
+    if (thorns_is_tempter(mtmp))
+        return MMOVE_NOTHING;
 
     if (mtmp->mtrapped) {
         int i = mintrap(mtmp, NO_TRAP_FLAGS);

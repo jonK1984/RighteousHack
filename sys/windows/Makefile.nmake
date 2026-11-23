@@ -763,7 +763,7 @@ LUA_FILES = $(DAT)asmodeus.lua $(DAT)baalz.lua $(DAT)bigrm-1.lua \
 	$(DAT)gibeon.lua \
 	$(DAT)hinnom.lua \
 	$(DAT)berachah.lua \
-	$(DAT)wayside.lua $(DAT)stony.lua \
+	$(DAT)wayside.lua $(DAT)stony.lua $(DAT)thorns.lua \
 	$(DAT)Adv-fila.lua $(DAT)Adv-filb.lua $(DAT)Adv-goal.lua \
 	$(DAT)Adv-loca.lua $(DAT)Adv-strt.lua \
 	$(DAT)Chp-fila.lua $(DAT)Chp-filb.lua $(DAT)Chp-goal.lua \
@@ -896,7 +896,7 @@ COREOBJTTY = \
 	$(OTTY)sys.o      $(OTTY)teleport.o $(OTTY)timeout.o  $(OTTY)topten.o \
 	$(OTTY)track.o    $(OTTY)trap.o     $(OTTY)u_init.o   $(OTTY)uhitm.o \
 	$(OTTY)utf8map.o  $(OTTY)vault.o    $(OTTY)vision.o   $(OTTY)stony.o \
-	$(OTTY)wayside.o \
+	$(OTTY)wayside.o $(OTTY)thorns.o $(OTTY)steedfire.o \
 	$(OTTY)weapon.o \
 	$(OTTY)were.o     $(OTTY)wield.o    $(OTTY)windows.o  $(OTTY)wizard.o \
 	$(OTTY)wizcmds.o  $(OTTY)worm.o     $(OTTY)worn.o     $(OTTY)write.o \
@@ -962,7 +962,7 @@ COREOBJGUI = \
 	$(OGUI)sys.o      $(OGUI)teleport.o $(OGUI)timeout.o  $(OGUI)topten.o \
 	$(OGUI)track.o    $(OGUI)trap.o     $(OGUI)u_init.o   $(OGUI)uhitm.o \
 	$(OGUI)utf8map.o  $(OGUI)vault.o    $(OGUI)vision.o   $(OGUI)stony.o \
-	$(OGUI)wayside.o \
+	$(OGUI)wayside.o $(OGUI)thorns.o $(OGUI)steedfire.o \
 	$(OGUI)weapon.o \
 	$(OGUI)were.o     $(OGUI)wield.o    $(OGUI)windows.o  $(OGUI)wizard.o \
 	$(OGUI)wizcmds.o  $(OGUI)worm.o     $(OGUI)worn.o     $(OGUI)write.o \
@@ -3386,6 +3386,8 @@ $(OTTY)version.o: version.c $(HACK_H) $(INCL)dlb.h
 $(OTTY)vision.o: vision.c $(HACK_H)
 $(OTTY)stony.o: stony.c $(HACK_H)
 $(OTTY)wayside.o: wayside.c $(HACK_H)
+$(OTTY)thorns.o: thorns.c $(HACK_H)
+$(OTTY)steedfire.o: steedfire.c $(HACK_H)
 $(OTTY)weapon.o: weapon.c $(HACK_H)
 $(OTTY)were.o: were.c $(HACK_H)
 $(OTTY)wield.o: wield.c $(HACK_H)
@@ -3767,6 +3769,8 @@ $(OGUI)version.o: version.c $(HACK_H) $(INCL)dlb.h
 $(OGUI)vision.o: vision.c $(HACK_H)
 $(OGUI)stony.o: stony.c $(HACK_H)
 $(OGUI)wayside.o: wayside.c $(HACK_H)
+$(OGUI)thorns.o: thorns.c $(HACK_H)
+$(OGUI)steedfire.o: steedfire.c $(HACK_H)
 $(OGUI)weapon.o: weapon.c $(HACK_H)
 $(OGUI)were.o: were.c $(HACK_H)
 $(OGUI)wield.o: wield.c $(HACK_H)

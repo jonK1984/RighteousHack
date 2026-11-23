@@ -1302,6 +1302,7 @@ makelevel(void)
                     wayside_setup();
                 if (stony_here())
                     stony_setup();
+                thorns_setup();
             }
             if (on_jacobs_ladder(&u.uz))
                 jacob_set_portal();
