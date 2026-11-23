@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-23
+When the last Wayside riddle is answered, the gate shimmers and breaks into sparkles as it opens. No new sentence is printed.
+
+2026-11-23
 While riding the Fiery Steed of the Heavenly Host, #chat at yourself bids it loose a ring of holy fire. The fire then needs time to rekindle.
 
 2026-11-22

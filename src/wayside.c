@@ -434,6 +434,196 @@ open_gate(void)
     newsym(GATE_X, GATE_Y);
 }
 
+/* tty and curses can paint a character and a standard color, then
+   wait. A tiled port, or a port with no delay, is left alone. */
+static boolean
+gate_can_play(void)
+{
+    const char *port;
+
+    if (iflags.debug_fuzzer || !iflags.window_inited || !u.ux)
+        return FALSE;
+    if (WIN_MAP == WIN_ERR)
+        return FALSE;
+    if (!windowprocs.win_print_glyph || !windowprocs.win_delay_output)
+        return FALSE;
+    if (iflags.wc_tiled_map)
+        return FALSE;
+    port = windowprocs.name;
+    if (!port)
+        return FALSE;
+    return (boolean) (!strcmp(port, "tty") || !strcmp(port, "curses"));
+}
+
+static void
+gate_put(coordxy x, coordxy y, char ch, int color)
+{
+    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+
+    *cell = nul_glyphinfo;
+    cell->glyph = cmap_to_glyph(S_room);
+    cell->ttychar = (int) ch;
+    cell->gm.sym.color = color;
+    cell->gm.glyphflags = 0;
+    cell->gm.customcolor = 0;
+#ifdef ENHANCED_SYMBOLS
+    cell->gm.u = (struct unicode_representation *) 0;
+#endif
+    gg.gbuf[y][x].gnew = 1;
+}
+
+static void
+gate_copy(coordxy x, coordxy y, const glyph_info *src)
+{
+    gg.gbuf[y][x].glyphinfo = *src;
+    gg.gbuf[y][x].gnew = 1;
+}
+
+/* The port naps 50 ms. Two naps are about a tenth of a second,
+   near the 90 ms shimmer and the 110 ms drift. */
+static void
+gate_show(int naps)
+{
+    coordxy y;
+    int i;
+
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+    }
+    flush_screen(1);
+    for (i = 0; i < naps; i++)
+        nh_delay_output();
+}
+
+static void
+gate_restore(glyph_info *snap)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            gate_copy(x, y, &snap[y * COLNO + x]);
+}
+
+static void
+gate_shimmer(coordxy x, coordxy y)
+{
+    static const char chs[3] = { '#', '*', '+' };
+    static const int cols[4] = {
+        CLR_BRIGHT_CYAN, CLR_BRIGHT_BLUE, CLR_CYAN, CLR_WHITE
+    };
+
+    gate_put(x, y, chs[rn2_on_display_rng(3)], cols[rn2_on_display_rng(4)]);
+}
+
+static boolean
+gate_floor(coordxy x, coordxy y)
+{
+    schar typ;
+
+    if (!isok(x, y) || u_at(x, y))
+        return FALSE;
+    if (x == GATE_X && y == GATE_Y)
+        return FALSE;
+    typ = levl[x][y].typ;
+    return (boolean) (typ == ROOM || typ == CORR);
+}
+
+/* The wall is still shut. Ten frames of shimmer, then nine of
+   sparkles drifting onto the floor. The doorway appears after the
+   first three of those. No message. Sparkles use the display RNG. */
+static void
+dissipate_gate(void)
+{
+    glyph_info *snap;
+    boolean save_nap, opened;
+    coordxy x, y;
+    int frame, i;
+    struct {
+        int x, y, dx, dy;
+    } spark[9];
+    static const char fade_ch[4] = { '*', '+', '.', '.' };
+    static const int fade_co[4] = {
+        CLR_BRIGHT_CYAN, CLR_BRIGHT_BLUE, CLR_BLUE, CLR_GRAY
+    };
+
+    if (!gate_can_play()) {
+        open_gate();
+        return;
+    }
+
+    snap = (glyph_info *) alloc((unsigned) (COLNO * ROWNO * sizeof *snap));
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++)
+            snap[y * COLNO + x] = gg.gbuf[y][x].glyphinfo;
+
+    for (i = 0; i < 9; i++) {
+        spark[i].x = (int) GATE_X + rn2_on_display_rng(3) - 1;
+        spark[i].y = (int) GATE_Y;
+        spark[i].dy = rn2_on_display_rng(2) ? 1 : -1;
+        spark[i].dx = rn2_on_display_rng(3) - 1;
+    }
+
+    /* curses skips nh_delay_output when timed_delay is off. Hold the
+       option on for this burst and put it back. */
+    save_nap = flags.nap;
+    flags.nap = TRUE;
+    opened = FALSE;
+
+    for (frame = 0; frame < 10; frame++) {
+        gate_restore(snap);
+        if (!u_at(GATE_X, GATE_Y))
+            gate_shimmer(GATE_X, GATE_Y);
+        if (!u_at(GATE_X - 1, GATE_Y) && rn2_on_display_rng(5) < 3)
+            gate_shimmer(GATE_X - 1, GATE_Y);
+        if (!u_at(GATE_X + 1, GATE_Y) && rn2_on_display_rng(5) < 3)
+            gate_shimmer(GATE_X + 1, GATE_Y);
+        gate_show(2);
+    }
+
+    for (frame = 0; frame < 9; frame++) {
+        int step = frame / 2;
+
+        if (frame == 3) {
+            open_gate();
+            opened = TRUE;
+            snap[GATE_Y * COLNO + GATE_X] =
+                gg.gbuf[GATE_Y][GATE_X].glyphinfo;
+        }
+        gate_restore(snap);
+        if (frame < 3 && !u_at(GATE_X, GATE_Y))
+            gate_put(GATE_X, GATE_Y,
+                     rn2_on_display_rng(2) ? '*' : '+', CLR_BRIGHT_CYAN);
+        if (step > 3)
+            step = 3;
+        for (i = 0; i < 9; i++) {
+            if (frame % 2 == 1) {
+                spark[i].x += spark[i].dx;
+                spark[i].y += spark[i].dy;
+            }
+            if (!gate_floor((coordxy) spark[i].x, (coordxy) spark[i].y))
+                continue;
+            gate_put((coordxy) spark[i].x, (coordxy) spark[i].y,
+                     fade_ch[step], fade_co[step]);
+        }
+        gate_show(2);
+    }
+
+    if (!opened) {
+        open_gate();
+        snap[GATE_Y * COLNO + GATE_X] = gg.gbuf[GATE_Y][GATE_X].glyphinfo;
+    }
+    gate_restore(snap);
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+    }
+    flush_screen(1);
+    flags.nap = save_nap;
+    free((genericptr_t) snap);
+}
+
 static void
 forget_stair(stairway *gone)
 {
@@ -876,7 +1066,7 @@ ask_riddle(struct monst *mtmp)
         ws_set(ws_bits() | (1UL << which));
         confirm_answer(which);
         if (trial_done())
-            open_gate();
+            dissipate_gate();
     } else {
         note_wrong_answer(which);
     }
