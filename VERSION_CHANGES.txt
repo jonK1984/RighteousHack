@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-23
+The dungeon overview calls the Thorns "A Gilded City."
+
+2026-11-23
 The Stony Ground persecutor is level 10, armor class 4, and strikes for 3d4. Its difficulty is 11.
 
 2026-11-23

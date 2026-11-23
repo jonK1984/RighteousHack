@@ -120,6 +120,15 @@ class Rules(unittest.TestCase):
         self.assertGreaterEqual(n, 16)
         self.assertGreater(cap, n)
 
+    def test_the_overview_names_the_gilded_city(self):
+        dgn = (ROOT / "src" / "dungeon.c").read_text()
+        seen = dgn.split("print_mapseen(", 1)[1]
+        self.assertIn('"%sA Gilded City."', seen)
+        self.assertIn("find_level(\"thorns\")", seen)
+        self.assertIn("OF_INTEREST(mptr->feat) && !gilded_city", seen)
+        self.assertLess(seen.index("!gilded_city"),
+                        seen.index('"%sA Gilded City."'))
+
     def test_editlevel_and_save_struct(self):
         you = (ROOT / "include" / "you.h").read_text()
         self.assertIn("The Thorns, the third trial. EDITLEVEL 18.", you)
