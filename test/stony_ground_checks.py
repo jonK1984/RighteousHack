@@ -135,6 +135,19 @@ class Cuts(unittest.TestCase):
             self.assertTrue(cells <= walk, name)
             self.assertFalse(reaches(walk, cells, start, summit), name)
 
+    def test_the_persecutor_hits_harder(self):
+        mons = (ROOT / "include" / "monsters.h").read_text()
+        block = mons.split('NAM("persecutor")', 1)[1].split("PERSECUTOR)", 1)[0]
+        comment = mons.split('NAM("persecutor")', 1)[0].rsplit("/*", 1)[1]
+        self.assertIn("LVL(10, 12, 4, 0, -3)", block)
+        self.assertIn("ATTK(AT_WEAP, AD_PHYS, 3, 4)", block)
+        self.assertIn("G_NOGEN", block)
+        self.assertIn("M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_STALK", block)
+        self.assertIn("M3_INFRAVISIBLE", block)
+        self.assertRegex(block, r"\n\s+11, CLR_YELLOW")
+        self.assertIn("CLR_YELLOW is not used by any other '@'", comment)
+        self.assertNotIn("weak", comment)
+
     def test_camp_is_not_a_spawn_row(self):
         self.assertIn("y >= 10 && y <= 14", SRC)
         self.assertIn("PM_PERSECUTOR", SRC)
