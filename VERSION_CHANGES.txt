@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-23
+In the Thorns, the Goldsmith and Jeweler doors stand on their signs, the end shops can be reached, and the Prince of the city stands on an ordinary throne.
+
+2026-11-23
 The first time you reach the Thorns, a screen describes the gilded city. It is not shown again.
 
 2026-11-23

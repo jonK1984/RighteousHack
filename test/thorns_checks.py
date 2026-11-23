@@ -2,6 +2,7 @@
 """Static checks for the Thorns trial. These do not boot NetHack."""
 
 import pathlib
+import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -55,6 +56,66 @@ SIGNS = [
 DRAIN = "Thorns spring up around thee and tighten. Thou feelest life drain from thee."
 DEATH = "The thorns close over thy heart. Thou art choked by the cares of this world."
 REASON = "Choked by the thorns of this world."
+
+# North shops, numbered as on the design map. Spot 2 is the Goldsmith
+# and spot 5 is the Jeweler. Their doors sit on the sign below them.
+SHOP_DOORS = (
+    (1, 5, 4),
+    (2, 16, 4),
+    (3, 25, 4),
+    (4, 49, 4),
+    (5, 58, 4),
+    (6, 69, 4),
+)
+
+WALKABLE = set(".+<>{")
+
+
+def door_coords():
+    return [
+        (int(x), int(y))
+        for x, y in re.findall(r'des\.door\("open", (\d+), (\d+)\)', LUA)
+    ]
+
+
+def tempter_coords():
+    return [
+        (int(x), int(y))
+        for x, y in re.findall(
+            r'des\.monster\(\{ id = "tempter".*?x = (\d+), y = (\d+)', LUA)
+    ]
+
+
+def reachable_from_up_stair(rows):
+    """Floor, doors, stairs, and fountains. Trees and walls block.
+    A door is entered and left only on the orthogonal."""
+    height, width = len(rows), len(rows[0])
+    start = None
+    for y, row in enumerate(rows):
+        if "<" in row:
+            start = (row.index("<"), y)
+            break
+    seen = set()
+    stack = [start]
+    while stack:
+        x, y = stack.pop()
+        if (x, y) in seen or not (0 <= x < width and 0 <= y < height):
+            continue
+        if rows[y][x] not in WALKABLE:
+            continue
+        seen.add((x, y))
+        for dx, dy in (
+            (1, 0), (-1, 0), (0, 1), (0, -1),
+            (1, 1), (1, -1), (-1, 1), (-1, -1),
+        ):
+            nx, ny = x + dx, y + dy
+            if dx and dy:
+                if not (0 <= nx < width and 0 <= ny < height):
+                    continue
+                if rows[y][x] == "+" or rows[ny][nx] == "+":
+                    continue
+            stack.append((nx, ny))
+    return seen
 
 
 def map_lines():
@@ -194,6 +255,50 @@ class Map(unittest.TestCase):
         self.assertIn("premapped", LUA)
         self.assertIn('name = "The Prince of the city"', LUA)
         self.assertIn('name = "Knight-errant armsman"', LUA)
+        self.assertEqual(rows[4],
+                         "-----+----------+--------+-----.............-----+--------+----------+-----")
+        self.assertEqual(rows[5], rows[15])
+        self.assertEqual(rows[4][15], "-")
+        self.assertEqual(rows[4][59], "-")
+        self.assertEqual(rows[10][37], ".")
+        self.assertIn('des.feature("throne", 37, 10)', LUA)
+        self.assertNotIn("looted", LUA)
+        self.assertIn(
+            'des.engraving({ x=16, y=5, type="verse", degrade=false, text="The Gilded Calf" })',
+            LUA)
+        self.assertIn(
+            'des.engraving({ x=58, y=5, type="verse", degrade=false, text="The Neverending Hour" })',
+            LUA)
+        doors = door_coords()
+        for spot, x, y in SHOP_DOORS:
+            self.assertIn((x, y), doors, spot)
+            self.assertEqual(rows[y][x], "+", spot)
+        self.assertEqual(sorted(doors), sorted(
+            (x, y) for y, row in enumerate(rows) for x, ch in enumerate(row)
+            if ch == "+"))
+
+    def test_every_open_cell_can_be_reached(self):
+        rows = map_lines()
+        reached = reachable_from_up_stair(rows)
+        height, width = len(rows), len(rows[0])
+        for y, row in enumerate(rows):
+            for x, ch in enumerate(row):
+                if ch in WALKABLE:
+                    self.assertIn((x, y), reached, (x, y, ch))
+        tempters = tempter_coords()
+        self.assertEqual(len(tempters), 17)
+        for x, y in tempters:
+            self.assertEqual(rows[y][x], ".", (x, y))
+            self.assertIn((x, y), reached, (x, y))
+        for y, row in enumerate(rows):
+            for x, ch in enumerate(row):
+                if ch != "+":
+                    continue
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < width and 0 <= ny < height:
+                        self.assertNotEqual(rows[ny][nx], "T",
+                                            ((x, y), (nx, ny)))
 
 
 if __name__ == "__main__":

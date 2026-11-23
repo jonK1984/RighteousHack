@@ -7,8 +7,8 @@ des.map({ halign = "left", map = [[
 |.........|.........|.........|......<......|.........|.........|.........|
 |.........|.........|.........|..{.......{..|.........|.........|.........|
 |.........|.........|.........|....T...T....|.........|.........|.........|
------+---------+---------+-----.............-----+---------+---------+-----
-|..T...T...T...T...T...T...T...T...T...T...T...T...T...T...T...T...T...T..|
+-----+----------+--------+-----.............-----+--------+----------+-----
+|..............T...T...T...T...T...T...T...T...T...T...T...T..............|
 -------------.................................................-------------
 |...........|....T...T...T..---------+---------..T...T...T....|...........|
 |...........+...T...T...T...|.................|...T...T...T...+...........|
@@ -29,10 +29,10 @@ des.wallify()
 des.stair("up", 37, 1)
 des.stair("down", 37, 19)
 des.door("open", 5, 4)
-des.door("open", 15, 4)
+des.door("open", 16, 4)
 des.door("open", 25, 4)
 des.door("open", 49, 4)
-des.door("open", 59, 4)
+des.door("open", 58, 4)
 des.door("open", 69, 4)
 des.door("open", 37, 7)
 des.door("open", 12, 8)
@@ -81,4 +81,6 @@ des.monster({ id = "tempter", name = "Scribe", x = 53, y = 18, peaceful = 1, wai
 des.monster({ id = "tempter", name = "Weaponsmith", x = 67, y = 18, peaceful = 1, waiting = 1 })
 des.monster({ id = "tempter", name = "Bathhouse keeper", x = 20, y = 10, peaceful = 1, waiting = 1 })
 des.monster({ id = "tempter", name = "Knight-errant armsman", x = 54, y = 10, peaceful = 1, waiting = 1 })
+-- The Prince stands on an ordinary throne.
+des.feature("throne", 37, 10)
 des.monster({ id = "tempter", name = "The Prince of the city", x = 37, y = 10, peaceful = 1, waiting = 1 })
