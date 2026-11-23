@@ -5612,8 +5612,11 @@ zap_over_floor(
         }
         if (new_doormask >= 0) { /* door gets broken */
             if (peters_closet_door(x, y) || sodom_house_barred(x, y)
-                || hinnom_impassable_door(x, y)) {
-                if (see_it && !hinnom_impassable_door(x, y))
+                || hinnom_impassable_door(x, y)
+                || goodground_gate_closed(x, y)) {
+                if (see_it && goodground_gate_closed(x, y))
+                    pline("The gate is shut.");
+                else if (see_it && !hinnom_impassable_door(x, y))
                     pline("This door will not yield.");
                 else if (hinnom_impassable_door(x, y) && see_it)
                     (void) hinnom_blocks(x, y);

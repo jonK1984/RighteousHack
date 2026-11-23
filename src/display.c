@@ -2298,7 +2298,7 @@ back_to_glyph(coordxy x, coordxy y)
         idx = svl.level.flags.arboreal ? S_tree : S_stone;
         break;
     case ROOM:
-        idx = S_room;
+        idx = (goodground_fig(x, y) >= 0) ? S_tree : S_room;
         break;
     case CORR:
         idx = (ptr->waslit || flags.lit_corridor) ? S_litcorr : S_corr;
@@ -2653,6 +2653,14 @@ map_glyphinfo(
         glyphinfo->gm.sym.symidx = mons[glyph_to_mon(glyph)].mlet + SYM_OFF_M;
     }
     glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+    /* Fig trees keep the tree symbol, colored purple, eaten or not. */
+    if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
+        && !u_at(x, y)) {
+        glyphinfo->gm.sym.symidx = S_tree + SYM_OFF_P;
+        if (iflags.use_color)
+            glyphinfo->gm.sym.color = CLR_MAGENTA;
+        glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+    }
     /* PETRA letters are drawn on the floor itself, in tty as well.
        Unseen squares stay blank. */
     if (glyph_is_cmap(glyph) && isok(x, y)

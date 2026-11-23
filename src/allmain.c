@@ -271,6 +271,7 @@ moveloop_core(void)
                 wayside_tick();
                 stony_tick();
                 thorns_tick();
+                goodground_tick();
                 steed_fire_tick();
 
                 if (Glib)
@@ -360,7 +361,7 @@ moveloop_core(void)
                 age_spells();
                 exerchk();
                 invault();
-                if (u.uhave.amulet)
+                if (u.uhave.amulet || carried_player_soul())
                     amulet();
                 if (!rn2(40 + (int) (ACURR(A_DEX) * 3)))
                     u_wipe_engr(rnd(3));

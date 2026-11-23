@@ -843,7 +843,7 @@ u_entered_shop(char *enterstring)
             set_voice(shkp, 0, 80, 0);
             if (Is_berachah_level(&u.uz))
                 verbalize("Welcome to %s!",
-                          berachah_shop_sign(rt)); /* PLACEHOLDER */
+                          berachah_shop_sign(rt));
             else
                 verbalize("%s, %s!  Welcome%s to %s %s!", Hello(shkp),
                           svp.plname, eshkp->visitct++ ? " again" : "",

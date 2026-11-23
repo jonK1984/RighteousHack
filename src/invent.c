@@ -4080,6 +4080,8 @@ dfeature_at(coordxy x, coordxy y, char *buf)
         } else if (Is_hinnom_level(&u.uz) && !u.uevent.berachah
                    && Amask2align(lev->altarmask & AM_MASK) == A_NONE) {
             dfeature = "altar of Moloch";
+        } else if (Is_sanctum(&u.uz) && (lev->altarmask & AM_SANCTUM)) {
+            dfeature = "evil high altar";
         } else {
             Sprintf(altbuf, "%saltar to %s (%s)",
                     (lev->altarmask & AM_SANCTUM) ? "high " : "",

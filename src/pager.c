@@ -832,6 +832,10 @@ lookat(coordxy x, coordxy y, char *buf, char *monbuf)
                 Strcpy(buf, "altar of Moloch");
                 break;
             }
+            if (Is_sanctum(&u.uz) && (amsk & AM_SANCTUM)) {
+                Strcpy(buf, "evil high altar");
+                break;
+            }
             Sprintf(buf, "%s %saltar",
                     /* like endgame high priests, endgame high altars
                        are only recognizable when immediately adjacent */

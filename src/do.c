@@ -1254,13 +1254,13 @@ dodown(void)
     if (stairs_down && stony_block_stairs(FALSE))
         return ECMD_OK;
     if (stairs_down && invocation_pos(u.ux, u.uy) && !u.uevent.invoked) {
-        pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it."); /* PLACEHOLDER */
+        pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it.");
         return ECMD_OK;
     }
 
     if (on_level(&valley_level, &u.uz) && !u.uevent.gehennom_entered) {
         if (!carrying(KEY_TO_GATES)) {
-            pline("The gates of Gehennom stay shut. The key Peter gave you will open them."); /* PLACEHOLDER */
+            pline("The gates of Gehennom stay shut. The key Peter gave you will open them.");
             return ECMD_OK;
         }
         You("are standing at the gate to Gehennom.");
@@ -1360,7 +1360,8 @@ doup(void)
              levl[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
         return ECMD_TIME;
     }
-    if (ledger_no(&u.uz) == 1) {
+    /* The main dungeon level 1 asks its own leaving question. */
+    if (ledger_no(&u.uz) == 1 && (u.uz.dnum || u.uz.dlevel != 1)) {
         if (iflags.debug_fuzzer)
             return ECMD_OK;
         if (y_n("Beware, there will be no return!  Still climb?") != 'y')
@@ -1376,6 +1377,7 @@ doup(void)
         return ECMD_OK;
     /* Alive, and taking the up stair: the Thorns counts as finished. */
     thorns_note_ascent();
+    goodground_note_ascent();
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;
@@ -1674,8 +1676,8 @@ goto_level(
         return;
     if (newdungeon) {
         if (In_endgame(newlevel)) { /* 1st Endgame Level !!! */
-            if (!u.uhave.amulet)
-                return;  /* must have the Amulet */
+            if (!carried_player_soul())
+                return;  /* the soul stands in for the Amulet */
             if (!wizard) /* wizard ^V can bypass Earth level */
                 assign_level(newlevel, &earth_level); /* (redundant) */
         } else if (In_tutorial(newlevel)) {
@@ -2157,7 +2159,7 @@ goto_level(
         if (new && on_level(&u.uz, &astral_level)) {
             final_level(); /* guardian angel,&c */
             record_achievement(ACH_ASTR); /* reached Astral level */
-        } else if (newdungeon && u.uhave.amulet) {
+        } else if (newdungeon && carried_player_soul()) {
             resurrect(); /* force confrontation with Wizard */
         }
     } else if (In_quest(&u.uz)) {

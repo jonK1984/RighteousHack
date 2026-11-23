@@ -68,9 +68,12 @@ amulet(void)
     if (!u.uhave.amulet)
         return;
 #endif
-    if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR)
-         || ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
-        && !rn2(15)) {
+    if (!(amu = carried_player_soul())) {
+        if (((amu = uamul) == 0 || amu->otyp != AMULET_OF_YENDOR)
+            && ((amu = uwep) == 0 || amu->otyp != AMULET_OF_YENDOR))
+            amu = 0;
+    }
+    if (amu && !rn2(15)) {
         for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap) {
             if (ttmp->ttyp == MAGIC_PORTAL) {
                 int du = distu(ttmp->tx, ttmp->ty);
@@ -94,7 +97,7 @@ amulet(void)
             continue;
         if (mtmp->iswiz && mtmp->msleeping && !rn2(40)) {
             mtmp->msleeping = 0;
-            if (!m_next2u(mtmp))
+            if (!m_next2u(mtmp) && u.uhave.amulet)
                 You(
       "get the creepy feeling that somebody noticed your taking the Amulet.");
             return;
@@ -120,6 +123,7 @@ mon_has_special(struct monst *mtmp)
 
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == AMULET_OF_YENDOR
+            || otmp->otyp == PLAYER_SOUL
             || any_quest_artifact(otmp)
             || otmp->otyp == BELL_OF_OPENING
             || otmp->otyp == CANDELABRUM_OF_INVOCATION

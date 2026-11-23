@@ -2376,7 +2376,8 @@ just_an(char *outbuf, const char *str)
     if (!str[1] || str[1] == ' ') {
         /* single letter; might be used for named fruit or a musical note */
         Strcpy(outbuf, strchr("aefhilmnosx", c0) ? "an " : "a ");
-    } else if (!strncmpi(str, "the ", 4)
+    } else if (!strncmpi(str, "your ", 5)
+               || !strncmpi(str, "the ", 4)
                /* these probably shouldn't be handled here because doing so
                   impacts inventory when using them for named fruit */
                || !strcmpi(str, "molten lava")

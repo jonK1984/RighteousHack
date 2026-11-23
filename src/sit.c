@@ -556,6 +556,10 @@ dosit(void)
     } else if (typ == DRAWBRIDGE_DOWN) {
         You(sit_message, "drawbridge");
     } else if (IS_THRONE(typ)) {
+        int thorn = thorns_throne_sit();
+
+        if (thorn >= 0)
+            return thorn;
         You(sit_message, defsyms[S_throne].explanation);
         throne_sit_effect();
     } else if (lays_eggs(gy.youmonst.data)) {

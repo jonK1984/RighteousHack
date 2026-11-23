@@ -534,7 +534,7 @@ do_attack(struct monst *mtmp)
     if (thorns_unharmed(mtmp))
         return TRUE;
     if (mtmp->data == &mons[PM_MICHAEL]) {
-        pline("You cannot bring yourself to strike %s.", mon_nam(mtmp)); /* PLACEHOLDER */
+        pline("You cannot bring yourself to strike %s.", mon_nam(mtmp));
         return TRUE;
     }
     if (fortress_monster(mtmp))

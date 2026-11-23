@@ -2876,6 +2876,12 @@ doeat(void)
         pline("If you can't breathe air, how can you consume solids?");
         return ECMD_OK;
     }
+    {
+        int fig = goodground_eat_fig();
+
+        if (fig >= 0)
+            return fig;
+    }
     if (!(otmp = floorfood("eat", 0)))
         return ECMD_OK;
     if (lots_wife_statue(otmp)) {

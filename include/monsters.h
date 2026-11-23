@@ -4054,6 +4054,24 @@
         M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_STALK,
         M3_INFRAVISIBLE,
         11, CLR_YELLOW, PERSECUTOR),
+    /* The Good Ground. Created only there. It never moves or strikes. */
+    MON(NAM("sheep"), S_QUADRUPED,
+        LVL(0, 0, 10, 0, 0), G_NOGEN,
+        A(NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(400, 200, MS_SILENT, MZ_MEDIUM), 0, 0,
+        M1_ANIMAL | M1_HERBIVORE | M1_NOHANDS,
+        M2_NOPOLY | M2_PEACEFUL | M2_DOMESTIC,
+        M3_WAITFORU,
+        1, CLR_WHITE, SHEEP),
+    /* The Good Ground. One at the gate, one inside the garden. */
+    MON(NAM("shepherd"), S_HUMAN,
+        LVL(4, 0, 10, 0, 0), G_NOGEN,
+        A(NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_MALE,
+        M3_WAITFORU | M3_INFRAVISIBLE,
+        5, CLR_BROWN, SHEPHERD),
 
     /*
      * mons_init() in monst.c adds a terminator here, mons[NUMMONS].

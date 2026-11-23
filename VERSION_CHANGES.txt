@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-23
+The Good Ground is the last Road trial, in the Dungeons of Doom between Sodom and Tyre and the prophet. Climbing out of the dungeon with the cap, your soul, and that trial done opens the Planes. Old saves will not load.
+
+2026-11-23
 In the Thorns, the Goldsmith and Jeweler doors stand on their signs, the end shops can be reached, and the Prince of the city stands on an ordinary throne.
 
 2026-11-23

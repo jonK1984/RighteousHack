@@ -569,7 +569,7 @@ priest_talk(struct monst *priest)
         priest->mpeaceful = 1;
         if (!hinnom_chat(priest)) {
             SetVoice(priest, 0, 80, 0);
-            verbalize("The fires must never go out."); /* PLACEHOLDER */
+            verbalize("The fires must never go out.");
         }
         return;
     }

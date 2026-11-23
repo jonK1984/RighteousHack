@@ -1517,7 +1517,7 @@ peffects(struct obj *otmp)
         peffect_water(otmp);
         break;
     case POT_TEARS_OF_CHILDREN:
-        pline("You feel the love of the children lift you up."); /* PLACEHOLDER */
+        pline("You feel the love of the children lift you up.");
         pluslvl(FALSE);
         break;
     case POT_BOOZE:

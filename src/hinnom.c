@@ -361,11 +361,11 @@ boolean
 hinnom_blocks(coordxy x, coordxy y)
 {
     if (hinnom_gate_square(x, y) && hinnom_field_up()) {
-        pline("The barrier hums. It will not let you pass."); /* PLACEHOLDER */
+        pline("The barrier hums. It will not let you pass.");
         return TRUE;
     }
     if (hinnom_backroom_door(x, y) && !u.uevent.hinnom_razed) {
-        pline("The door will not yield while the altar of evil stands."); /* PLACEHOLDER */
+        pline("The door will not yield while the altar of evil stands.");
         return TRUE;
     }
     return FALSE;
@@ -791,7 +791,7 @@ hinnom_pull_lever(struct trap *trap)
     metal = (trap->launch.y >= 0 && trap->launch.y <= 4)
                 ? lever_metal[trap->launch.y] : "iron";
     if (!hinnom_field_up()) {
-        pline("The lever is dead."); /* PLACEHOLDER */
+        pline("The lever is dead.");
         return Trap_Effect_Finished;
     }
     Sprintf(qbuf, "Throw the %s lever?", metal);
@@ -801,15 +801,15 @@ hinnom_pull_lever(struct trap *trap)
     rank = trap->launch.x;
     if (rank == progress + 1) {
         trap->once = 1;
-        pline("The lever locks into place with a heavy clunk."); /* PLACEHOLDER */
+        pline("The lever locks into place with a heavy clunk.");
         if (levers_set() >= 5)
             hinnom_field_down();
     } else {
         if (Shock_resistance) {
             shieldeff(u.ux, u.uy);
-            pline("Power crackles around you harmlessly. The levers snap back."); /* PLACEHOLDER */
+            pline("Power crackles around you harmlessly. The levers snap back.");
         } else {
-            pline("A surge of power jolts you! The levers snap back."); /* PLACEHOLDER */
+            pline("A surge of power jolts you! The levers snap back.");
             losehp(d(4, 6), "a power lever", KILLED_BY_AN);
         }
         reset_levers();
@@ -946,7 +946,7 @@ hinnom_altar_razed(void)
         levl[HX(68)][13].doormask = D_CLOSED;
         newsym(HX(68), 13);
     }
-    pline("Somewhere nearby, a heavy bolt slides back."); /* PLACEHOLDER */
+    pline("Somewhere nearby, a heavy bolt slides back.");
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) || mtmp->data != &mons[PM_MOLOCH])
             continue;
@@ -999,7 +999,7 @@ raze_altar(coordxy x, coordxy y, boolean by_hero)
         adjalign(5);
         change_luck(1);
         livelog_printf(LL_ACHIEVE, "razed an altar of evil");
-        pline("You raze the altar of evil to the ground!"); /* PLACEHOLDER */
+        pline("You raze the altar of evil to the ground!");
         pline("But thus shall ye deal with them; ye shall destroy their altars, and break down their images, and cut down their groves, and burn their graven images with fire. (Deuteronomy 7:5)");
     }
     if (Is_hinnom_level(&u.uz))
@@ -1019,11 +1019,11 @@ doraze(void)
         return ECMD_OK;
     }
     if (altar_is_good(u.ux, u.uy)) {
-        pline("You will not lift a hand against the altar of the Lord."); /* PLACEHOLDER */
+        pline("You will not lift a hand against the altar of the Lord.");
         return ECMD_OK;
     }
     if (levl[u.ux][u.uy].altarmask & AM_SANCTUM) {
-        pline("This altar is beyond your strength to raze."); /* PLACEHOLDER */
+        pline("This altar is beyond your strength to raze.");
         return ECMD_OK;
     }
     raze_x = u.ux;
@@ -1377,7 +1377,7 @@ open_field_gate(void)
         unblock_point(HX(41), 10);
     }
     lower_hinnom_bridge();
-    pline("The gate swings open and the drawbridge lowers."); /* PLACEHOLDER */
+    pline("The gate swings open and the drawbridge lowers.");
 }
 
 static void
@@ -1551,10 +1551,10 @@ child_thanks_line(struct monst *speaker)
 
 /* PLACEHOLDER until Jon approves the town elder's lines. */
 static const char *const elder_lines[] = {
-    "Rest a while, champion. You have earned it.", /* PLACEHOLDER */
-    "My grandfather told of the days before Moloch. Now my grandchildren will tell of you.", /* PLACEHOLDER */
-    "Blessed be the LORD, who did not forget this valley.", /* PLACEHOLDER */
-    "Our shops are open to you, and our hearts as well.", /* PLACEHOLDER */
+    "Rest a while, champion. You have earned it.",
+    "My grandfather told of the days before Moloch. Now my grandchildren will tell of you.",
+    "Blessed be the LORD, who did not forget this valley.",
+    "Our shops are open to you, and our hearts as well.",
 };
 
 static boolean
@@ -1750,13 +1750,13 @@ michael_stage_line(void)
         lines = michael_stage_c;
         n = SIZE(michael_stage_c);
     }
-    verbalize("%s", lines[rn2(n)]); /* PLACEHOLDER */
+    verbalize("%s", lines[rn2(n)]);
 }
 
 static void
 michael_berachah_line(void)
 {
-    verbalize("%s", michael_berachah[rn2(SIZE(michael_berachah))]); /* PLACEHOLDER */
+    verbalize("%s", michael_berachah[rn2(SIZE(michael_berachah))]);
 }
 
 boolean
@@ -1784,10 +1784,10 @@ hinnom_chat(struct monst *mtmp)
         if (hinnom_field_up()) {
             michael_briefing();
             if (!u.uevent.hinnom_cloak) {
-                verbalize("Wear this, and the fortress will take you for its high priest."); /* PLACEHOLDER */
+                verbalize("Wear this, and the fortress will take you for its high priest.");
                 give_cloak();
             } else {
-                verbalize("The field must fall before my host can enter."); /* PLACEHOLDER */
+                verbalize("The field must fall before my host can enter.");
             }
             return TRUE;
         }
@@ -1810,7 +1810,7 @@ hinnom_chat(struct monst *mtmp)
 
     if (Is_berachah_level(&u.uz) && is_town_elder(mtmp)) {
         SetVoice(mtmp, 0, 80, 0);
-        verbalize("%s", elder_lines[rn2(SIZE(elder_lines))]); /* PLACEHOLDER */
+        verbalize("%s", elder_lines[rn2(SIZE(elder_lines))]);
         return TRUE;
     }
 
@@ -1818,7 +1818,7 @@ hinnom_chat(struct monst *mtmp)
         SetVoice(mtmp, 0, 80, 0);
         if (Is_berachah_level(&u.uz)) {
             if (!u.uevent.berachah_tears) {
-                verbalize("We saved these for you. Thank you for coming for us."); /* PLACEHOLDER */
+                verbalize("We saved these for you. Thank you for coming for us.");
                 give_tears();
             } else {
                 verbalize("%s", child_thanks_line(mtmp));
@@ -1845,14 +1845,14 @@ hinnom_chat(struct monst *mtmp)
         if (!hinnom_field_up()
             || (levl[HX(41)][10].typ == DOOR
                 && (levl[HX(41)][10].doormask & D_ISOPEN))) {
-            verbalize("None enter without the High Priest's mark."); /* PLACEHOLDER */
+            verbalize("None enter without the High Priest's mark.");
             return TRUE;
         }
         if (moloch_disguise_holds()) {
             verbalize("Pass, High Priest.");
             open_field_gate();
         } else {
-            verbalize("You are not one of us!"); /* PLACEHOLDER */
+            verbalize("You are not one of us!");
             anger_gate_guards();
             hinnom_alarm_fortress();
         }
@@ -2031,74 +2031,74 @@ berachah_job_chat(struct monst *mtmp)
 
     SetVoice(mtmp, 0, 80, 0);
     if (named_job(mtmp, "steward")) {
-        verbalize("%s", steward_lines[rn2(SIZE(steward_lines))]); /* PLACEHOLDER */
+        verbalize("%s", steward_lines[rn2(SIZE(steward_lines))]);
         return TRUE;
     }
 
-    verbalize("%s", villager_thanks[rn2(SIZE(villager_thanks))]); /* PLACEHOLDER */
+    verbalize("%s", villager_thanks[rn2(SIZE(villager_thanks))]);
 
     if (named_job(mtmp, "baker")) {
-        verbalize("Another loaf is %ld gold.", BERACHAH_FEE_BREAD); /* PLACEHOLDER */
-        if (y_n("Buy a loaf of Bread of Berachah?") != 'y') /* PLACEHOLDER */
+        verbalize("Another loaf is %ld gold.", BERACHAH_FEE_BREAD);
+        if (y_n("Buy a loaf of Bread of Berachah?") != 'y')
             return TRUE;
         if (!berachah_pay(mtmp, BERACHAH_FEE_BREAD))
             return TRUE;
         give_berachah_bread(1L, FALSE);
-        verbalize("Fresh from the oven."); /* PLACEHOLDER */
+        verbalize("Fresh from the oven.");
         return TRUE;
     }
     if (named_job(mtmp, "priest")) {
         verbalize("I can fill your Power for %ld gold. I do not treat wounds.",
-                  BERACHAH_FEE_POWER); /* PLACEHOLDER */
+                  BERACHAH_FEE_POWER);
         if (u.uen >= u.uenmax) {
-            verbalize("Your Power is already full."); /* PLACEHOLDER */
+            verbalize("Your Power is already full.");
             return TRUE;
         }
-        if (y_n("Have your Power restored?") != 'y') /* PLACEHOLDER */
+        if (y_n("Have your Power restored?") != 'y')
             return TRUE;
         if (!berachah_pay(mtmp, BERACHAH_FEE_POWER))
             return TRUE;
         u.uen = u.uenmax;
         disp.botl = TRUE;
-        verbalize("Be renewed, and spend it well."); /* PLACEHOLDER */
+        verbalize("Be renewed, and spend it well.");
         return TRUE;
     }
     if (named_job(mtmp, "blacksmith")) {
         verbalize("I can hammer the wear out of your weapons for %ld gold. I do not enchant them.",
-                  BERACHAH_FEE_SMITH); /* PLACEHOLDER */
-        if (y_n("Have your weapons repaired?") != 'y') /* PLACEHOLDER */
+                  BERACHAH_FEE_SMITH);
+        if (y_n("Have your weapons repaired?") != 'y')
             return TRUE;
         if (!touch_erosion(TRUE, FALSE)) {
-            verbalize("Nothing you are carrying needs the hammer."); /* PLACEHOLDER */
+            verbalize("Nothing you are carrying needs the hammer.");
             return TRUE;
         }
         if (!berachah_pay(mtmp, BERACHAH_FEE_SMITH))
             return TRUE;
         (void) touch_erosion(TRUE, TRUE);
-        verbalize("There. Solid again, and no shinier than before."); /* PLACEHOLDER */
+        verbalize("There. Solid again, and no shinier than before.");
         return TRUE;
     }
     if (named_job(mtmp, "tailor")) {
         verbalize("Cloth armor and cloaks, mended for %ld gold.",
-                  BERACHAH_FEE_TAILOR); /* PLACEHOLDER */
-        if (y_n("Have your cloth and cloaks repaired?") != 'y') /* PLACEHOLDER */
+                  BERACHAH_FEE_TAILOR);
+        if (y_n("Have your cloth and cloaks repaired?") != 'y')
             return TRUE;
         if (!touch_erosion(FALSE, FALSE)) {
-            verbalize("I see no worn cloth that needs a needle."); /* PLACEHOLDER */
+            verbalize("I see no worn cloth that needs a needle.");
             return TRUE;
         }
         if (!berachah_pay(mtmp, BERACHAH_FEE_TAILOR))
             return TRUE;
         (void) touch_erosion(FALSE, TRUE);
-        verbalize("Wear it without worrying about the threads."); /* PLACEHOLDER */
+        verbalize("Wear it without worrying about the threads.");
         return TRUE;
     }
     if (named_job(mtmp, "farmer")) {
         if (mtmp->mspare1) {
-            verbalize("The beds are picked for now. Come back another season."); /* PLACEHOLDER */
+            verbalize("The beds are picked for now. Come back another season.");
             return TRUE;
         }
-        verbalize("Take this from the beds. It is fresh."); /* PLACEHOLDER */
+        verbalize("Take this from the beds. It is fresh.");
         give_fresh_food();
         mtmp->mspare1 = 1;
         return TRUE;
@@ -2107,7 +2107,7 @@ berachah_job_chat(struct monst *mtmp)
         if (!(mtmp->mspare1 & 1)) {
             struct obj *otmp = mksobj(QUARTERSTAFF, FALSE, FALSE);
 
-            verbalize("A plain staff, cut this morning. It is yours."); /* PLACEHOLDER */
+            verbalize("A plain staff, cut this morning. It is yours.");
             if (otmp) {
                 uncurse(otmp);
                 otmp->dknown = otmp->known = otmp->bknown = 1;
@@ -2118,29 +2118,29 @@ berachah_job_chat(struct monst *mtmp)
             }
         }
         if (mtmp->mspare1 & 2) {
-            verbalize("The staff I set for you will stay as I left it."); /* PLACEHOLDER */
+            verbalize("The staff I set for you will stay as I left it.");
             return TRUE;
         }
         staff = carried_staff_of_wonders();
         if (!staff) {
-            verbalize("If you carry the Staff of Wonders, I can set it to +2."); /* PLACEHOLDER */
+            verbalize("If you carry the Staff of Wonders, I can set it to +2.");
             return TRUE;
         }
         if (staff->spe >= 2) {
-            verbalize("That staff is already at least +2. I will not take any of it away."); /* PLACEHOLDER */
+            verbalize("That staff is already at least +2. I will not take any of it away.");
             mtmp->mspare1 |= 2;
             return TRUE;
         }
-        if (y_n("Set your Staff of Wonders to +2?") != 'y') /* PLACEHOLDER */
+        if (y_n("Set your Staff of Wonders to +2?") != 'y')
             return TRUE;
         staff->spe = 2;
         staff->known = 1;
         mtmp->mspare1 |= 2;
-        verbalize("There. +2, and no more than that."); /* PLACEHOLDER */
+        verbalize("There. +2, and no more than that.");
         return TRUE;
     }
     if (named_job(mtmp, "scribe")) {
-        verbalize("%s", scribe_advice[rn2(SIZE(scribe_advice))]); /* PLACEHOLDER */
+        verbalize("%s", scribe_advice[rn2(SIZE(scribe_advice))]);
         return TRUE;
     }
     return TRUE;
@@ -2231,7 +2231,7 @@ hinnom_child_died(struct monst *mtmp)
         return;
     adjalign(-5);
     change_luck(-2);
-    pline("You feel a deep sorrow."); /* PLACEHOLDER */
+    pline("You feel a deep sorrow.");
 }
 
 boolean
@@ -2240,7 +2240,7 @@ michael_stands(struct monst *mtmp)
     if (!mtmp || mtmp->data != &mons[PM_MICHAEL])
         return FALSE;
     mtmp->mhp = mtmp->mhpmax;
-    pline("%s stands firm.", pmname(&mons[PM_MICHAEL], MALE)); /* PLACEHOLDER */
+    pline("%s stands firm.", pmname(&mons[PM_MICHAEL], MALE));
     return TRUE;
 }
 

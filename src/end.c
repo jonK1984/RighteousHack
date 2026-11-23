@@ -1104,7 +1104,7 @@ done(int how)
             disp.botl = TRUE;
         }
     }
-    if (thorns_fatal()) {
+    if (thorns_fatal() || goodground_fatal()) {
         /* Not averted by an amulet of life saving, nor by any
            other Lifesaved source. Wizard and explore mode still
            ask "Die?" below. */
@@ -1435,7 +1435,9 @@ really_done(int how)
         dump_redirect(FALSE);
     }
 #endif
-    if (u.uhave.amulet) {
+    if (carried_player_soul()) {
+        Strcat(svk.killer.name, " (with your soul)");
+    } else if (u.uhave.amulet) {
         Strcat(svk.killer.name, " (with the Amulet)");
     } else if (how == ESCAPED) {
         if (Is_astralevel(&u.uz)) /* offered Amulet to wrong deity */

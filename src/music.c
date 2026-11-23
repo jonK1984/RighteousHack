@@ -424,7 +424,7 @@ do_earthquake(int force)
                 algn = Amask2align(amsk & AM_MASK);
                 if (algn == A_LAWFUL) {
                     if (cansee(x, y))
-                        pline("The altar of the Lord stands firm."); /* PLACEHOLDER */
+                        pline("The altar of the Lord stands firm.");
                     break;
                 }
                 raze_altar(x, y, FALSE);

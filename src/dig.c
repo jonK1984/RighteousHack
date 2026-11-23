@@ -511,7 +511,8 @@ dig(void)
                 lev->doormask = D_BROKEN;
         } else if (closed_door(dpx, dpy)) {
             if (peters_door_blocks(dpx, dpy) || sodom_door_blocks(dpx, dpy)
-                || pride_door_blocks(dpx, dpy))
+                || pride_door_blocks(dpx, dpy)
+                || goodground_gate_blocks(dpx, dpy))
                 return 0;
             Sprintf(digbuf, "You break through the door with your %s.",
                     simpleonames(uwep));
@@ -738,9 +739,9 @@ digactualhole(coordxy x, coordxy y, struct monst *madeby, int ttyp)
             levl[x][y].altarmask = old_mask;
             newsym(x, y);
             if (old_aligntyp == A_LAWFUL)
-                pline("The altar of the Lord stands firm."); /* PLACEHOLDER */
+                pline("The altar of the Lord stands firm.");
             else
-                pline("This altar is beyond your strength to raze."); /* PLACEHOLDER */
+                pline("This altar is beyond your strength to raze.");
         } else {
             levl[x][y].typ = ALTAR;
             levl[x][y].altarmask = old_mask;

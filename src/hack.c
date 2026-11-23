@@ -1010,6 +1010,11 @@ test_move(
 
     if (!isok(x, y))
         return FALSE;
+    if (goodground_bars_from(ux, uy, x, y)) {
+        if (mode == DO_MOVE && goodground_gate_closed(x, y))
+            pline("The gate is shut.");
+        return FALSE;
+    }
 
     tmpr = &levl[x][y];
 
@@ -6522,7 +6527,7 @@ sanctum_yes_end(void)
     sanctum_light_burst();
     give_cap_of_salvation();
     /* The climb is the Road to Salvation, designed later. */
-    pline("The way back up is the Road to Salvation. It has not been opened.");
+    pline("The way back up is the Road to Salvation.");
 }
 
 static void

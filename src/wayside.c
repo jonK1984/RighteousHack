@@ -16,7 +16,7 @@
    Stored in the existing bits word, so the save layout does not grow. */
 #define WS_SKEY     0x00001000UL
 
-/* Saved host slots. Three trials are registered. One slot remains. */
+/* Saved host slots. Four trials fill the slots. */
 #define TRIAL_SLOTS 4
 
 static const char *const ws_name[6] = {
@@ -90,6 +90,7 @@ static const struct trial_def trial_list[] = {
     { "The Wayside", "wayside", wayside_is_solved },
     { "The Stony Ground", "stony", stony_trial_done },
     { "The Thorns", "thorns", thorns_trial_done },
+    { "The Good Ground", "goodground", goodground_trial_done },
 };
 #define N_TRIALS ((int) SIZE(trial_list))
 
@@ -166,16 +167,32 @@ on_trial(d_level *lev)
     return (boolean) (trial_index(lev) >= 0);
 }
 
+/* hostdnum 0 is the Dungeons of Doom, a real dungeon, so an unset
+   host is told by host[i] == 0 rather than by the dnum. */
+static void
+host_of(int i, d_level *lev)
+{
+    lev->dlevel = u.uwayside.host[i];
+    lev->dnum = u.uwayside.hostdnum[i];
+    if (lev->dnum < 0 || lev->dnum >= svn.n_dgns)
+        lev->dnum = sanctum_level.dnum;
+}
+
 static int
 hosting(d_level *lev)
 {
     int i;
+    d_level host;
 
-    if (!lev || lev->dnum != sanctum_level.dnum)
+    if (!lev)
         return -1;
-    for (i = 0; i < N_TRIALS; i++)
-        if (u.uwayside.host[i] && lev->dlevel == u.uwayside.host[i])
+    for (i = 0; i < N_TRIALS; i++) {
+        if (!u.uwayside.host[i])
+            continue;
+        host_of(i, &host);
+        if (on_level(lev, &host))
             return i;
+    }
     return -1;
 }
 
@@ -193,8 +210,8 @@ trial_link(const char *proto, d_level *back, d_level *onward)
             break;
     if (i >= N_TRIALS || !u.uwayside.host[i])
         return FALSE;
-    back->dnum = onward->dnum = sanctum_level.dnum;
-    back->dlevel = u.uwayside.host[i];
+    host_of(i, back);
+    *onward = *back;
     onward->dlevel = (xint16) (back->dlevel > 1 ? back->dlevel - 1 : 1);
     return TRUE;
 }
@@ -221,23 +238,65 @@ hosts_chosen(void)
     return FALSE;
 }
 
+/* The Good Ground is hosted in the Dungeons of Doom, strictly
+   between Sodom and Tyre and the prophet, and nowhere else. */
+static s_level *
+placed_medusa(void)
+{
+    s_level *slev = find_level("medusa");
+
+    if (slev)
+        return slev;
+    for (slev = svs.sp_levchn; slev; slev = slev->next)
+        if (slev->proto && !strncmp(slev->proto, "medusa", 6))
+            return slev;
+    return (s_level *) 0;
+}
+
+static boolean
+doom_ordinary(int dlev)
+{
+    s_level *med = placed_medusa();
+    s_level *pro = find_level("prophet");
+    d_level lev;
+    int lo, hi;
+
+    if (!med || !pro || med->dlevel.dnum != pro->dlevel.dnum)
+        return FALSE;
+    lo = min(med->dlevel.dlevel, pro->dlevel.dlevel);
+    hi = max(med->dlevel.dlevel, pro->dlevel.dlevel);
+    if (dlev <= lo || dlev >= hi)
+        return FALSE;
+    lev.dnum = med->dlevel.dnum;
+    lev.dlevel = (xint16) dlev;
+    if (Is_special(&lev) || Is_branchlev(&lev))
+        return FALSE;
+    return TRUE;
+}
+
 /* Ordinary Gehennom levels only, with an ordinary level between
-   every pair. The assignment to trials is the order they are drawn. */
+   every pair. The Good Ground draws its host from the Dungeons. */
 static void
 trial_choose(void)
 {
     int cand[64];
     int pick[TRIAL_SLOTS];
-    int n = 0, got = 0, guard = 0, i;
+    int n = 0, got = 0, guard = 0, i, geh = 0, gslot = -1;
 
     if (hosts_chosen()) {
         trial_set_depths();
         return;
     }
+    for (i = 0; i < N_TRIALS; i++) {
+        if (!strcmp(trial_list[i].proto, "goodground"))
+            gslot = i;
+        else
+            geh++;
+    }
     for (i = 1; i <= gehennom_depth() && n < (int) SIZE(cand); i++)
         if (gehennom_ordinary(i))
             cand[n++] = i;
-    while (got < N_TRIALS && got < TRIAL_SLOTS && guard++ < 500 && n > 0) {
+    while (got < geh && got < TRIAL_SLOTS && guard++ < 500 && n > 0) {
         int c = cand[rn2(n)];
         boolean ok = TRUE;
         int j;
@@ -260,8 +319,34 @@ trial_choose(void)
         if (ok)
             pick[got++] = c;
     }
-    for (i = 0; i < got; i++)
-        u.uwayside.host[i] = (xint16) pick[i];
+    {
+        int k = 0;
+
+        for (i = 0; i < N_TRIALS && i < TRIAL_SLOTS; i++) {
+            if (i == gslot)
+                continue;
+            if (k < got) {
+                u.uwayside.host[i] = (xint16) pick[k++];
+                u.uwayside.hostdnum[i] = sanctum_level.dnum;
+            }
+        }
+    }
+    if (gslot >= 0 && gslot < TRIAL_SLOTS) {
+        s_level *med = placed_medusa();
+        int dcand[64], nd = 0, c, depth;
+
+        if (med) {
+            depth = svd.dungeons[med->dlevel.dnum].num_dunlevs;
+            for (i = 1; i <= depth && nd < (int) SIZE(dcand); i++)
+                if (doom_ordinary(i))
+                    dcand[nd++] = i;
+            if (nd > 0) {
+                c = dcand[rn2(nd)];
+                u.uwayside.host[gslot] = (xint16) c;
+                u.uwayside.hostdnum[gslot] = med->dlevel.dnum;
+            }
+        }
+    }
     trial_set_depths();
 }
 
@@ -281,8 +366,7 @@ trial_set_depths(void)
         slev = find_level(trial_list[i].proto);
         if (!slev || slev->dlevel.dnum < 0 || slev->dlevel.dnum >= svn.n_dgns)
             continue;
-        host.dnum = sanctum_level.dnum;
-        host.dlevel = u.uwayside.host[i];
+        host_of(i, &host);
         svd.dungeons[slev->dlevel.dnum].depth_start = depth(&host);
     }
 }
@@ -300,26 +384,35 @@ trial_receive(d_level *from)
     here = trial_index(&u.uz);
     src = trial_index(from);
     if (here >= 0 && u.uwayside.host[here]) {
-        if (from->dnum == sanctum_level.dnum
-            && from->dlevel == u.uwayside.host[here]) {
+        d_level host, above;
+
+        host_of(here, &host);
+        above = host;
+        if (above.dlevel > 1)
+            above.dlevel--;
+        if (on_level(from, &host)) {
             st = stairway_find_dir(FALSE);
             if (st)
                 u_on_newpos(st->sx, st->sy);
-        } else if (from->dnum == sanctum_level.dnum
-                   && from->dlevel == (xint16) (u.uwayside.host[here] - 1)) {
+        } else if (on_level(from, &above)) {
             st = stairway_find_dir(TRUE);
             if (st)
                 u_on_newpos(st->sx, st->sy);
         }
         return;
     }
-    if (src >= 0 && u.uz.dnum == sanctum_level.dnum
-        && u.uwayside.host[src]) {
-        if (u.uz.dlevel == u.uwayside.host[src]) {
+    if (src >= 0 && u.uwayside.host[src]) {
+        d_level host, above;
+
+        host_of(src, &host);
+        above = host;
+        if (above.dlevel > 1)
+            above.dlevel--;
+        if (on_level(&u.uz, &host)) {
             st = stairway_find_dir(TRUE);
             if (st)
                 u_on_newpos(st->sx, st->sy);
-        } else if (u.uz.dlevel == (xint16) (u.uwayside.host[src] - 1)) {
+        } else if (on_level(&u.uz, &above)) {
             st = stairway_find_dir(FALSE);
             if (st)
                 u_on_newpos(st->sx, st->sy);
@@ -1054,7 +1147,7 @@ ask_riddle(struct monst *mtmp)
         return;
     }
     if (ws_bits() & (1UL << which)) {
-        /* PLACEHOLDER */
+       
         verbalize("You already have that answer.");
         return;
     }

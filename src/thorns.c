@@ -633,3 +633,28 @@ thorns_chat(struct monst *mtmp)
         sell_visit(def);
     return TRUE;
 }
+
+/* The Prince's throne. Every sitting is a thorn. No other effect.
+   -1 means this is not that throne, and the caller sits as usual. */
+int
+thorns_throne_sit(void)
+{
+    int before;
+
+    if (!thorns_here() || u.ux != TX(37) || u.uy != 10)
+        return -1;
+    if (y_n("Wilt thou sit upon the throne of this city?") != 'y')
+        return ECMD_OK;
+    if (u.uthorns.accepts >= 3) {
+        pline("The thorns close over thy heart. Thou art choked by the cares of this world.");
+        u.uthorns.accepts = 4;
+        choke();
+        u.uthorns.accepts = 3;
+        return ECMD_TIME;
+    }
+    before = (int) u.uthorns.accepts;
+    drain_life(10 * (before + 1));
+    pline("Thorns spring up around thee and tighten. Thou feelest life drain from thee.");
+    u.uthorns.accepts = (xint16) (before + 1);
+    return ECMD_TIME;
+}
