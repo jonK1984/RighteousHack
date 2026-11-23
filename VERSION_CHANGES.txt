@@ -10,6 +10,9 @@ RighteousHack will eventually replace lawful, neutral, and chaotic
 with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
+2026-11-23
+While riding the Fiery Steed of the Heavenly Host, #chat at yourself bids it loose a ring of holy fire. The fire then needs time to rekindle.
+
 2026-11-22
 The Thorns is a Road trial: a gilded city of seventeen tempters. Each gift costs life, and a fourth acceptance chokes the hero. Leaving by the up stair finishes the trial.
 

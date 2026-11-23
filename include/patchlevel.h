@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 18 /* the Thorns trial is saved on the hero */
+#define EDITLEVEL 19 /* the Fiery Steed's fire cooldown is saved */
 
 /*
  * Development status possibilities.

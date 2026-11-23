@@ -1483,18 +1483,24 @@ dochat(void)
     }
 
     if (u.dx == 0 && u.dy == 0) {
-        /*
-         * Let's not include this.
-         * It raises all sorts of questions: can you wear
-         * 2 helmets, 2 amulets, 3 pairs of gloves or 6 rings as a marilith,
-         * etc...  --KAA
-        if (u.umonnum == PM_ETTIN) {
-            You("discover that your other head makes boring conversation.");
-            return 1;
+        int fired = steed_loose_fire();
+
+        /* Not the Fiery Steed. The old self-chat stands. */
+        if (fired < 0) {
+            /*
+             * Let's not include this.
+             * It raises all sorts of questions: can you wear
+             * 2 helmets, 2 amulets, 3 pairs of gloves or 6 rings as a marilith,
+             * etc...  --KAA
+            if (u.umonnum == PM_ETTIN) {
+                You("discover that your other head makes boring conversation.");
+                return 1;
+            }
+             */
+            pline("Talking to yourself is a bad habit for a dungeoneer.");
+            return ECMD_OK;
         }
-         */
-        pline("Talking to yourself is a bad habit for a dungeoneer.");
-        return ECMD_OK;
+        return fired;
     }
 
     tx = u.ux + u.dx;

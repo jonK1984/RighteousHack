@@ -562,6 +562,9 @@ struct you {
         xint16 accepts;
         xint16 done;
     } uthorns;
+    /* Turns left before the Fiery Steed may breathe again.
+       EDITLEVEL 19. 0 means the fire is ready. */
+    int ufirewait;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

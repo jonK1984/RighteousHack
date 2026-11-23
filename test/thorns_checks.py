@@ -121,8 +121,9 @@ class Rules(unittest.TestCase):
         self.assertGreater(cap, n)
 
     def test_editlevel_and_save_struct(self):
-        self.assertIn("#define EDITLEVEL 18", PATCH)
         you = (ROOT / "include" / "you.h").read_text()
+        self.assertIn("The Thorns, the third trial. EDITLEVEL 18.", you)
+        self.assertIn("#define EDITLEVEL", PATCH)
         self.assertIn("} uthorns;", you)
         self.assertIn("unsigned id[17]", you)
         self.assertIn("xint16 host[4]", you)
