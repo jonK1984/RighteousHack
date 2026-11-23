@@ -8,6 +8,8 @@
 #define TX(c) ((coordxy) ((c) + 1))
 
 #define TH_N 17
+/* Bits 0..16 are the tempters. This spare bit records the intro. */
+#define TH_INTRO 0x80000000UL
 
 #define TH_GOLD   1
 #define TH_DOUBLE 2
@@ -291,6 +293,15 @@ thorns_tick(void)
 
     if (!thorns_here())
         return;
+    if (!(u.uthorns.given & TH_INTRO)) {
+        wayside_screen(
+            "Behold, a gilded city! Its towers flash like fire in the sun, and its streets shine with gold.\n"
+            "\n"
+            "Merchants in fine robes beckon from every doorway, each holding out a gift fit for a king. Music and laughter drift from the banquet halls, and nothing here is denied thee.\n"
+            "\n"
+            "Here is everything a weary pilgrim could desire. Riches without labor. Healing without suffering. Power without price.");
+        u.uthorns.given |= TH_INTRO;
+    }
     for (i = 0; i < TH_N; i++)
         place_tempter(i);
 }

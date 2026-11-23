@@ -120,6 +120,32 @@ class Rules(unittest.TestCase):
         self.assertGreaterEqual(n, 16)
         self.assertGreater(cap, n)
 
+    def test_the_first_arrival_reads_the_intro(self):
+        tick = THORNS.split("thorns_tick(void)", 1)[1].split(
+            "thorns_note_ascent", 1)[0]
+        self.assertIn("wayside_screen(", tick)
+        self.assertIn("TH_INTRO", tick)
+        self.assertLess(tick.index("wayside_screen("),
+                        tick.index("u.uthorns.given |= TH_INTRO"))
+        screen = tick.split("wayside_screen(", 1)[1].split("TH_INTRO", 1)[0]
+        self.assertIn(
+            "Behold, a gilded city! Its towers flash like fire in the sun, and its streets shine with gold.",
+            screen)
+        self.assertIn(
+            "Merchants in fine robes beckon from every doorway, each holding out a gift fit for a king. Music and laughter drift from the banquet halls, and nothing here is denied thee.",
+            screen)
+        self.assertIn(
+            "Here is everything a weary pilgrim could desire. Riches without labor. Healing without suffering. Power without price.",
+            screen)
+        self.assertLess(screen.index("Behold, a gilded city!"),
+                        screen.index("Merchants in fine robes"))
+        self.assertLess(screen.index("Merchants in fine robes"),
+                        screen.index("Here is everything a weary pilgrim"))
+        self.assertEqual(screen.count('"\\n"'), 2)
+        self.assertIn("0x80000000UL", THORNS)
+        self.assertIn("#define EDITLEVEL 19", PATCH)
+        self.assertNotIn("\u2014", tick)
+
     def test_the_overview_names_the_gilded_city(self):
         dgn = (ROOT / "src" / "dungeon.c").read_text()
         seen = dgn.split("print_mapseen(", 1)[1]

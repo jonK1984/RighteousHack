@@ -554,8 +554,8 @@ struct you {
         xint16 sick;             /* turns left after the old man falls */
     } ustony;
     /* The Thorns, the third trial. EDITLEVEL 18.
-       given is one bit per tempter. accepts is 0 to 3 while alive.
-       done is set only by the up stair. */
+       given bits 0..16 are one bit per tempter. Bit 31 is the intro.
+       accepts is 0 to 3 while alive. done is set only by the up stair. */
     struct {
         unsigned long given;
         unsigned id[17];
