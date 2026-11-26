@@ -25,7 +25,7 @@ class Endcut(unittest.TestCase):
             "Thou foolishly layest thy soul upon the altar of the Great Dragon.",
             "Thou fallest upon the field of heaven, and the war goeth on without thee.",
             "went up by a whirlwind into heaven",
-            "offered thy soul upon the altar of the Great Dragon",
+            "offered thy soul upon the altar of evil",
             "fell upon the field of heaven",
         )
         for line in lines:

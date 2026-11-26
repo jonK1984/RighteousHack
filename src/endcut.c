@@ -80,7 +80,7 @@ static const char heaven_death_text[] =
 
 static const char win_reason[] = "went up by a whirlwind into heaven";
 static const char dragon_reason[] =
-    "offered thy soul upon the altar of the Great Dragon";
+    "offered thy soul upon the altar of evil";
 static const char heaven_death_reason[] = "fell upon the field of heaven";
 
 extern void endcut_frame_at(int, int *, int *, int *, int *);
