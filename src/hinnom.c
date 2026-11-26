@@ -6,7 +6,6 @@ static boolean swap_pending = FALSE;
 static int raze_turns;
 static coordxy raze_x, raze_y;
 
-static void put_wrapped(winid, const char *);
 static void hinnom_screen(const char *const *, int);
 static boolean berachah_job_chat(struct monst *);
 
@@ -1126,42 +1125,6 @@ hinnom_finish_swap(void)
        and the arrival text waits for that visit. */
 }
 
-/* Quest-style text window. Break only at spaces so the words stay
-   the approved text. */
-static void
-put_wrapped(winid win, const char *text)
-{
-    char line[80];
-    const char *p = text;
-
-    while (*p) {
-        int n, cut;
-
-        while (*p == ' ')
-            p++;
-        if (!*p)
-            break;
-        n = 0;
-        while (p[n] && n < 76)
-            n++;
-        cut = n;
-        if (p[n] && p[n] != ' ') {
-            while (cut > 40 && p[cut] != ' ')
-                cut--;
-            if (p[cut] != ' ')
-                cut = n;
-        }
-        while (cut > 0 && p[cut - 1] == ' ')
-            cut--;
-        if (cut <= 0)
-            cut = n;
-        (void) strncpy(line, p, (size_t) cut);
-        line[cut] = '\0';
-        putstr(win, 0, line);
-        p += cut;
-    }
-}
-
 /* Blackout text window, a blank line between paragraphs. */
 static void
 hinnom_screen(const char *const *para, int n)
@@ -1172,7 +1135,7 @@ hinnom_screen(const char *const *para, int n)
     for (i = 0; i < n; i++) {
         if (i)
             putstr(win, 0, "");
-        put_wrapped(win, para[i]);
+        rh_putstr(win, 0, para[i]);
     }
     display_nhwindow(win, TRUE);
     destroy_nhwindow(win);

@@ -471,33 +471,7 @@ wayside_is_villager(struct monst *mtmp)
 void
 wayside_screen(const char *text)
 {
-    winid win;
-    char buf[BUFSZ];
-    const char *p, *nl;
-
-    win = create_nhwindow(NHW_TEXT);
-    p = text;
-    while (p && *p) {
-        nl = strchr(p, '\n');
-        if (!nl) {
-            putstr(win, 0, p);
-            break;
-        }
-        if (nl == p)
-            putstr(win, 0, "");
-        else {
-            size_t len = (size_t) (nl - p);
-
-            if (len >= sizeof buf)
-                len = sizeof buf - 1;
-            (void) strncpy(buf, p, len);
-            buf[len] = '\0';
-            putstr(win, 0, buf);
-        }
-        p = nl + 1;
-    }
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
+    rh_text_window(text);
 }
 
 static void

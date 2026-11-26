@@ -122,12 +122,12 @@ class Endcut(unittest.TestCase):
             "dragon_text[]",
             "heaven_death_text[]",
         )
-        card = src.split("endcut_card(const char *text)", 1)[1].split(
-            "endcut_play(", 1)[0]
-        self.assertIn("endcut_cols()", card)
-        self.assertIn("endcut_put_wrapped", card)
+        card = src.split("rh_text_window(const char *text)", 1)[1].split(
+            "endcut_card(", 1)[0]
+        self.assertIn("rh_putstr", card)
         self.assertIn("display_nhwindow(win, TRUE)", card)
-        self.assertNotIn("sizeof buf - 1", card)
+        self.assertIn("rh_text_window(text)", src.split(
+            "endcut_card(const char *text)", 1)[1][:80])
         self.assertIn("cols = 79", src)
         self.assertIn("CO - 1", src)
         self.assertIn("endcut_card(text)", heaven)

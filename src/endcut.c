@@ -138,10 +138,10 @@ endcut_wait(int ms)
     return FALSE;
 }
 
-/* One less than the tty width, so a line is not cut at BUFSZ.
+/* One less than the tty width, and never past the putstr buffer.
    Anywhere else, 79. */
-static int
-endcut_cols(void)
+int
+rh_text_cols(void)
 {
     int cols = 79;
 
@@ -151,37 +151,41 @@ endcut_cols(void)
 #endif
     if (cols < 20)
         cols = 79;
+    if (cols > BUFSZ - 1)
+        cols = BUFSZ - 1;
     return cols;
 }
 
-/* Fold on a space. A word longer than the screen stays whole. */
+/* Fold one paragraph on a space. A word longer than the screen
+   stays whole. */
 static void
-endcut_put_wrapped(winid win, const char *line, int cols)
+rh_put_para(winid win, int attr, const char *line, size_t len, int cols)
 {
-    size_t len = strlen(line);
-
     if (!len) {
-        putstr(win, 0, "");
+        putstr(win, attr, "");
         return;
     }
-    while ((int) len > cols) {
-        int n = cols;
+    while (len > 0) {
+        int n = (int) len;
         char buf[BUFSZ];
 
-        while (n > 0 && line[n] != ' ')
-            n--;
-        if (n <= 0) {
-            n = 0;
-            while (line[n] && line[n] != ' ')
-                n++;
-            if (!n)
-                break;
+        if (n > cols) {
+            n = cols;
+            while (n > 0 && line[n] != ' ')
+                n--;
+            if (n <= 0) {
+                n = 0;
+                while ((size_t) n < len && line[n] && line[n] != ' ')
+                    n++;
+                if (!n)
+                    return;
+            }
         }
         if (n >= BUFSZ)
             n = BUFSZ - 1;
         (void) strncpy(buf, line, (size_t) n);
         buf[n] = '\0';
-        putstr(win, 0, buf);
+        putstr(win, attr, buf);
         line += n;
         len -= (size_t) n;
         if (len && *line == ' ') {
@@ -189,36 +193,41 @@ endcut_put_wrapped(winid win, const char *line, int cols)
             len--;
         }
     }
-    if (len)
-        putstr(win, 0, line);
+}
+
+/* Newlines stay paragraph breaks. Each paragraph is folded. */
+void
+rh_putstr(winid win, int attr, const char *text)
+{
+    const char *p = text ? text : "";
+    int cols = rh_text_cols();
+
+    while (*p) {
+        const char *nl = strchr(p, '\n');
+        size_t len = nl ? (size_t) (nl - p) : strlen(p);
+
+        rh_put_para(win, attr, p, len, cols);
+        if (!nl)
+            break;
+        p = nl + 1;
+    }
+}
+
+/* Full-screen text. display_nhwindow pages with --More--. */
+void
+rh_text_window(const char *text)
+{
+    winid win = create_nhwindow(NHW_TEXT);
+
+    rh_putstr(win, 0, text ? text : "");
+    display_nhwindow(win, TRUE);
+    destroy_nhwindow(win);
 }
 
 void
 endcut_card(const char *text)
 {
-    winid win;
-    const char *p;
-    int cols = endcut_cols();
-
-    win = create_nhwindow(NHW_TEXT);
-    p = text ? text : "";
-    while (*p) {
-        const char *nl = strchr(p, '\n');
-        char line[1024];
-        size_t len = nl ? (size_t) (nl - p) : strlen(p);
-
-        if (len >= sizeof line)
-            len = sizeof line - 1;
-        (void) strncpy(line, p, len);
-        line[len] = '\0';
-        endcut_put_wrapped(win, line, cols);
-        if (!nl)
-            break;
-        p = nl + 1;
-    }
-    /* display_nhwindow pages a long text window with --More--. */
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
+    rh_text_window(text);
 }
 
 static void

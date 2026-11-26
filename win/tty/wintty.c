@@ -2252,6 +2252,56 @@ tty_putstr(winid window, int attr, const char *str)
     if (str == (const char *) 0
         || ((cw->flags & WIN_CANCELLED) && (cw->type != NHW_MESSAGE)))
         return;
+    /* Fold text and menu lines before compress_str can cut them
+       at BUFSZ. A blank line stays blank. A word is not split. */
+    if ((cw->type == NHW_TEXT || cw->type == NHW_MENU) && *str) {
+        const char *nl = strchr(str, '\n');
+        int cols = (CO > 20) ? CO - 1 : 79;
+        int n, whole;
+
+        if (cols > BUFSZ - 1)
+            cols = BUFSZ - 1;
+        whole = (int) strlen(str);
+        if (nl == str) {
+            tty_putstr(window, attr, "");
+            if (str[1])
+                tty_putstr(window, attr, str + 1);
+            return;
+        }
+        if (nl || whole > cols) {
+            char buf[BUFSZ];
+            const char *rest;
+
+            n = whole;
+            if (nl && (int) (nl - str) < n)
+                n = (int) (nl - str);
+            if (n > cols) {
+                n = cols;
+                while (n > 0 && str[n] != ' ')
+                    n--;
+                if (n <= 0) {
+                    n = 0;
+                    while (str[n] && str[n] != ' ' && str[n] != '\n')
+                        n++;
+                    if (!n)
+                        n = cols;
+                }
+            }
+            if (n >= BUFSZ)
+                n = BUFSZ - 1;
+            if (n <= 0)
+                n = 1;
+            (void) strncpy(buf, str, (size_t) n);
+            buf[n] = '\0';
+            rest = str + n;
+            if (*rest == ' ' || *rest == '\n')
+                rest++;
+            tty_putstr(window, attr, buf);
+            if (*rest)
+                tty_putstr(window, attr, rest);
+            return;
+        }
+    }
     if (cw->type != NHW_MESSAGE
 #ifdef TTY_PERM_INVENT
         && window != WIN_INVEN
