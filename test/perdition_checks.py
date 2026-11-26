@@ -73,8 +73,10 @@ class Text(unittest.TestCase):
         self.assertIn(DONE, seen)
         confirm = WAYSIDE.split("confirm_answer", 1)[1].split(
             "wayside_sanctum_key_dropped", 1)[0]
-        self.assertIn('pline("%s", line);', confirm)
-        self.assertLess(confirm.index('pline("%s", line);'),
+        # The count is on the blackout with the answer, then the
+        # sixth-answer screen follows.
+        self.assertIn("wayside_screen(line);", confirm)
+        self.assertLess(confirm.index("wayside_screen(line);"),
                         confirm.index("Thou hast heard, and thou hast understood."))
         self.assertIn('if (riddles_left() == 0)', confirm)
         self.assertIn('Sprintf(buf, "(%d riddles remain.)", left);', WAYSIDE)

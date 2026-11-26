@@ -68,7 +68,7 @@ EXPLOSION = (
     "The hosts of darkness are frozen where they stand. "
     "The Lord has given you a way of escape."
 )
-ROAD = "The way back up is the Road to Salvation. It has not been opened."
+ROAD = "The way back up is the Road to Salvation."
 
 
 class SalvationLight(unittest.TestCase):
@@ -76,6 +76,7 @@ class SalvationLight(unittest.TestCase):
         end = HACK.split("sanctum_yes_end", 1)[1].split("sanctum_no_end", 1)[0]
         self.assertIn(EXPLOSION, end)
         self.assertIn(ROAD, end)
+        self.assertNotIn("It has not been opened.", end)
         self.assertLess(end.index(EXPLOSION), end.index("sanctum_light_burst()"))
         self.assertLess(end.index("sanctum_light_burst()"), end.index(ROAD))
         self.assertIn("u.uevent.sanctum_grace = 2", HACK)
