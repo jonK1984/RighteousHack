@@ -1043,8 +1043,14 @@ dog_move(
      * monsters with other structures that can be tame.)
      */
     if (!edog && !mtmp->isminion) {
-        impossible("dog_move for non-pet?");
-        return MMOVE_NOTHING;
+        /* Repair a tame monster that never received its pet record.
+           The guardian angel is a minion and is left alone. */
+        rh_attach_edog(mtmp);
+        edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
+        if (!edog) {
+            impossible("dog_move for non-pet?");
+            return MMOVE_NOTHING;
+        }
     }
 
     omx = mtmp->mx;

@@ -328,6 +328,8 @@ rh_fix_strategy(struct monst *mtmp)
     if (mtmp->data != &mons[PM_MOLOCH])
         strat &= ~MOLOCH_HIT_MASK;
     mtmp->mstrategy = strat;
+    /* An old save may have a tame host with no pet record. */
+    rh_attach_edog(mtmp);
 }
 
 /* restore one monster */

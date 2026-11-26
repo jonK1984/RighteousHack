@@ -31,6 +31,36 @@ newedog(struct monst *mtmp)
     }
 }
 
+/* A tame monster needs an edog or dog_move() will panic.
+   The guardian angel is the one exception: it is a minion
+   and keeps emin instead. This does not count as taming
+   for conduct. The monster was already tame. */
+void
+rh_attach_edog(struct monst *mtmp)
+{
+    struct edog *edogp;
+
+    if (!mtmp || !mtmp->mtame || mtmp->isminion || has_edog(mtmp))
+        return;
+    newedog(mtmp);
+    edogp = EDOG(mtmp);
+    edogp->droptime = 0;
+    edogp->dropdist = 10000;
+    edogp->apport = ACURR(A_CHA);
+    if (edogp->apport <= 0)
+        edogp->apport = 1;
+    edogp->whistletime = 0;
+    edogp->hungrytime = svm.moves + 1000L;
+    edogp->ogoal.x = -1;
+    edogp->ogoal.y = -1;
+    edogp->abuse = 0;
+    edogp->revivals = 0;
+    edogp->mhpmax_penalty = 0;
+    edogp->killed_by_u = 0;
+    mtmp->mpeaceful = 1;
+    set_malign(mtmp);
+}
+
 void
 free_edog(struct monst *mtmp)
 {

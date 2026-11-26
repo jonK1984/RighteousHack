@@ -274,6 +274,8 @@ heaven_factions(void)
             mtmp->mstrategy |= STRAT_HEAVEN_LORD;
             mtmp->mtame = max(mtmp->mtame, 10);
             mtmp->mpeaceful = 1;
+            /* A guardian angel stays a minion. Anyone else needs edog. */
+            rh_attach_edog(mtmp);
         } else {
             mtmp->mstrategy |= STRAT_HEAVEN_FALLEN;
             mtmp->mtame = 0;
@@ -490,6 +492,8 @@ heaven_ally(struct monst *mtmp, unsigned extra)
     mtmp->mstrategy &= ~STRAT_HEAVEN_FALLEN;
     mtmp->mpeaceful = 1;
     mtmp->mtame = max(mtmp->mtame, 10);
+    /* Tame without edog is sent to dog_move and panics. */
+    rh_attach_edog(mtmp);
     set_malign(mtmp);
     newsym(mtmp->mx, mtmp->my);
 }

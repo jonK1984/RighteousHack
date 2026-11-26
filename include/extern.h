@@ -792,6 +792,7 @@ extern int count_worn_armor(void);
 /* ### dog.c ### */
 
 extern void newedog(struct monst *) NONNULLARG1;
+extern void rh_attach_edog(struct monst *);
 extern void free_edog(struct monst *) NONNULLARG1;
 extern void initedog(struct monst *, boolean) NONNULLARG1;
 extern struct monst *make_familiar(struct obj *, coordxy, coordxy, boolean);
