@@ -273,6 +273,7 @@ moveloop_core(void)
                 thorns_tick();
                 goodground_tick();
                 steed_fire_tick();
+                heaven_tick();
 
                 if (Glib)
                     glibr();
@@ -365,7 +366,8 @@ moveloop_core(void)
                     amulet();
                 if (!rn2(40 + (int) (ACURR(A_DEX) * 3)))
                     u_wipe_engr(rnd(3));
-                if (u.uevent.udemigod && !u.uinvulnerable) {
+                if (u.uevent.udemigod && !u.uinvulnerable
+                    && !perdition_forever()) {
                     if (u.udg_cnt)
                         u.udg_cnt--;
                     if (!u.udg_cnt) {

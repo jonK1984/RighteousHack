@@ -2172,6 +2172,7 @@ goto_level(
         if (new && on_level(&u.uz, &astral_level)) {
             final_level(); /* guardian angel,&c */
             record_achievement(ACH_ASTR); /* reached Astral level */
+            heaven_tick();
         } else if (newdungeon && carried_player_soul()) {
             resurrect(); /* force confrontation with Wizard */
         }

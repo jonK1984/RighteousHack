@@ -3191,6 +3191,7 @@ mondead(struct monst *mtmp)
     goodground_sheep_died(mtmp);
     hinnom_child_died(mtmp);
     hinnom_moloch_died(mtmp);
+    lucifer_on_death(mtmp);
 
     /* vampire in bat/fog/wolf form reverts to vampire instead of dying */
     if (is_vampshifter(mtmp) && vamprises(mtmp))

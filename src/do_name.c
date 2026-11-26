@@ -843,6 +843,15 @@ x_monnam(
     if (mtmp == &gy.youmonst)
         return strcpy(buf, "you"); /* ignore article, "invisible", &c */
 
+    /* Lucifer wears an angel's likeness until he strikes. */
+    if (!Hallucination && is_lucifer(mtmp)
+        && M_AP_TYPE(mtmp) == M_AP_MONSTER
+        && !(suppress & SUPPRESS_MAPPEARANCE)) {
+        if (article == ARTICLE_NONE)
+            return strcpy(buf, "Angel of the Lord");
+        return strcpy(buf, "an Angel of the Lord");
+    }
+
     if (program_state.gameover)
         suppress |= SUPPRESS_HALLUCINATION;
     if (article == ARTICLE_YOUR && !mtmp->mtame)

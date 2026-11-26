@@ -725,6 +725,8 @@ resurrect(void)
     long elapsed;
     const char *verb;
 
+    if (perdition_forever())
+        return;
     if (!svc.context.no_of_wizards) {
         /* make a new Wizard */
         verb = "kill";
@@ -822,6 +824,11 @@ void
 wizdeadorgone(void)
 {
     svc.context.no_of_wizards--;
+    /* Slain on the Plane of Heaven, he does not rise again. */
+    if (Is_astralevel(&u.uz)) {
+        u.uevent.petra_step |= 1;
+        pline("The Son of Perdition is cast down, and shall rise up no more.");
+    }
     if (!u.uevent.udemigod) {
         u.uevent.udemigod = TRUE;
         u.udg_cnt = rn1(250, 50);

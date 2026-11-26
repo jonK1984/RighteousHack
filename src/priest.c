@@ -316,6 +316,23 @@ priestname(
     char whatcode = '\0';
     const char *what = do_hallu ? rndmonnam(&whatcode) : mon_pmname(mon);
 
+    /* Plane of Heaven. Hostile angels, and those of the Great Dragon,
+       are fallen. The rest stand with the hero. */
+    if (!do_hallu && Is_astralevel(&u.uz)
+        && mon->data == &mons[PM_ANGEL]) {
+        boolean fallen = (mon->mstrategy & STRAT_HEAVEN_FALLEN) != 0L
+                         || (!mon->mtame && !mon->mpeaceful);
+
+        *pname = '\0';
+        if (article == ARTICLE_THE)
+            Strcpy(pname, "the ");
+        else if (article == ARTICLE_A)
+            Strcpy(pname, fallen ? "a " : "an ");
+        Strcat(pname, fallen ? "Fallen Angel of the Great Dragon"
+                             : "Angel of the Lord");
+        return pname;
+    }
+
     if (!mon->ispriest && !mon->isminion) /* should never happen...  */
         return strcpy(pname, what);       /* caller must be confused */
 

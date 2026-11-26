@@ -2653,6 +2653,33 @@ map_glyphinfo(
         glyphinfo->gm.sym.symidx = mons[glyph_to_mon(glyph)].mlet + SYM_OFF_M;
     }
     glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+    /* Plane of Heaven. Fallen angels keep the A, in red. Lucifer is
+       inverse red: Greek psi when this symset can show Unicode, else D. */
+    if (isok(x, y)) {
+        struct monst *hm = m_at(x, y);
+
+        if (hm && hm->data == &mons[PM_ANGEL]
+            && (hm->mstrategy & STRAT_HEAVEN_FALLEN)
+            && iflags.use_color)
+            glyphinfo->gm.sym.color = CLR_RED;
+        if (hm && is_lucifer(hm) && M_AP_TYPE(hm) == M_AP_NOTHING) {
+            glyphinfo->gm.glyphflags |= MG_INVERSE;
+            glyphinfo->ttychar = 'D';
+            if (iflags.use_color)
+                glyphinfo->gm.sym.color = CLR_RED;
+#ifdef ENHANCED_SYMBOLS
+            if (SYMHANDLING(H_UTF8)) {
+                static uint8 lucifer_utf8[] = { 0xCE, 0xA8, 0 };
+                static struct unicode_representation lucifer_psi = {
+                    0x03A8, 0
+                };
+
+                lucifer_psi.utf8str = lucifer_utf8;
+                glyphinfo->gm.u = &lucifer_psi;
+            }
+#endif
+        }
+    }
     /* Fig trees keep the tree symbol, colored purple, eaten or not. */
     if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
         && !u_at(x, y)) {

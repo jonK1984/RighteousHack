@@ -8,7 +8,7 @@ des.level_init({ style = "solidfill", fg = " " });
 
 des.level_flags("mazelevel", "noteleport", "hardfloor", "nommap", "shortsighted", "solidify")
 des.message("You arrive on the Plane of Heaven!")
-des.message("Here the High Temple of %d is located.")
+des.message("Here stand the high altar of the Lord and the high altar of the Great Dragon.")
 des.message("You sense alarm, hostility, and excitement in the air!")
 des.map([[
                               ---------------                              
@@ -79,16 +79,13 @@ des.teleport_region({ region = {29,15,45,15}, exclude = {30,15,44,15} })
 des.region({ region={01,05,16,14},lit=1,type="ordinary",irregular=1 })
 des.region({ region={31,01,44,10},lit=1,type="ordinary",irregular=1 })
 des.region({ region={61,05,74,14},lit=1,type="ordinary",irregular=1 })
--- A Sanctum for each alignment
--- The shrines' alignments are shuffled for
--- each game
+-- Three temple rooms. des.heaven_temples() puts the Lord's altar,
+-- the Great Dragon's altar, and the chest into them at random.
 des.region({ region={04,07,10,11},lit=1,type="temple",filled=2 })
 des.region({ region={34,03,40,07},lit=1,type="temple",filled=2 })
 des.region({ region={64,07,70,11},lit=1,type="temple",filled=2 })
 
-des.altar({ x=07, y=09, align=align[1],type="sanctum" })
-des.altar({ x=37, y=05, align=align[2],type="sanctum" })
-des.altar({ x=67, y=09, align=align[3],type="sanctum" })
+des.heaven_temples()
 -- Doors
 des.door("closed",11,09)
 des.door("closed",17,09)

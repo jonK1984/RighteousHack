@@ -1871,6 +1871,10 @@ hmon_hitmon(
 
     if (hmd.dmg > 0)
         hmon_hitmon_dmg_recalc(&hmd, obj);
+    /* The sword of the Spirit is double against the Great Dragon. */
+    if (hmd.dmg > 0 && is_lucifer(mon) && obj
+        && obj->oartifact == ART_SWORD_OF_THE_SPIRIT)
+        hmd.dmg *= 2;
 
     if (hmd.ispoisoned)
         hmon_hitmon_poison(&hmd, mon, obj);

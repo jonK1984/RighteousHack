@@ -189,6 +189,12 @@ struct monst {
 #define STRAT_HINNOM_RELEASED 0x00000100L
     /* One of the Host making for Moloch once the field is down. */
 #define STRAT_HINNOM_THRONE   0x00000200L
+    /* Plane of Heaven. These live in the unused range, so the
+       monster record is unchanged and EDITLEVEL stays 20. */
+#define STRAT_LUCIFER         0x00000400L
+#define STRAT_LUCIFER_WAIT    0x00000800L
+#define STRAT_HEAVEN_LORD     0x00001000L
+#define STRAT_HEAVEN_FALLEN   0x00002000L
 #define STRAT_GOAL      0x000000ffL
 
     coord mgoal;           /* monster strategy, target location */
@@ -231,6 +237,14 @@ struct monst {
 #define is_peter(mon) \
     (has_mgivenname(mon) \
      && !strcmp(MGIVENNAME(mon), "Peter the Fisherman"))
+
+/* Lucifer is a red dragon marked with STRAT_LUCIFER. A new monster
+   kind would grow the saved mvitals list and break old saves. */
+#define is_lucifer(mon) \
+    ((mon) && ((mon)->mstrategy & STRAT_LUCIFER) != 0L)
+
+/* Bit 0 of the unused petra_step field. The field already exists. */
+#define perdition_forever() ((u.uevent.petra_step & 1) != 0)
 
 /* monsters which cannot be displaced: temple priests, shopkeepers,
    vault guards, Isaiah, Peter, quest leader */

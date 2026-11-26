@@ -1474,11 +1474,25 @@ dosacrifice(void)
     if (!otmp)
         return ECMD_OK;
 
+    /* Any rite at the Great Dragon's high altar ends the game.
+       Other unaligned altars are left as they were. */
+    if (Is_astralevel(&u.uz) && highaltar && altaralign == A_NONE) {
+        heaven_dragon_end();
+        return ECMD_TIME;
+    }
+
     if (otmp->otyp == PLAYER_SOUL) {
         /* The soul stands where the Amulet stood. A wrong altar
            does not give evil dominion over the hero. */
         if (!highaltar) {
             offer_too_soon(altaralign);
+            return ECMD_TIME;
+        }
+        /* The Lord's high altar. The helmet must be worn, or the
+           soul is not taken. */
+        if (Is_astralevel(&u.uz) && altaralign == A_LAWFUL
+            && !cap_of_salvation_worn()) {
+            pline("Nothing happens. Without the helmet of salvation, thou canst not offer thy soul.");
             return ECMD_TIME;
         }
         if (carried(otmp))
@@ -2131,6 +2145,8 @@ prayer_done(void)
     reset_prayer_timer();
 
     pride_altar_after_prayer();
+    /* After the ordinary outcome. Both are holden if they are here. */
+    heaven_prayer();
     return 1;
 }
 

@@ -159,6 +159,7 @@ int lspo_room(lua_State *);
 int lspo_stair(lua_State *);
 int lspo_teleport_region(lua_State *);
 int lspo_gas_cloud(lua_State *);
+int lspo_heaven_temples(lua_State *);
 int lspo_terrain(lua_State *);
 int lspo_trap(lua_State *);
 int lspo_wall_property(lua_State *);
@@ -4969,6 +4970,15 @@ lspo_feature(lua_State *L)
     return 0;
 }
 
+/* des.heaven_temples() places the Lord, the Great Dragon, and the chest. */
+int
+lspo_heaven_temples(lua_State *L)
+{
+    (void) L;
+    heaven_place_temples();
+    return 0;
+}
+
 /* gas_cloud({ selection=SELECTION }); */
 /* gas_cloud({ selection=SELECTION, damage=N }); */
 /* gas_cloud({ selection=SELECTION, damage=N, ttl=N }); */
@@ -6459,6 +6469,7 @@ static const struct luaL_Reg nhl_functions[] = {
     { "reset_level", lspo_reset_level },
     { "finalize_level", lspo_finalize_level },
     { "gas_cloud", lspo_gas_cloud },
+    { "heaven_temples", lspo_heaven_temples },
     /* TODO: { "branch", lspo_branch }, */
     /* TODO: { "portal", lspo_portal }, */
     { NULL, NULL }

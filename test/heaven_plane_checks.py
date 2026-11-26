@@ -77,7 +77,9 @@ class HeavenPlane(unittest.TestCase):
         self.assertIn(
             'des.message("You arrive on the Plane of Heaven!")', lua)
         self.assertIn(
-            'des.message("Here the High Temple of %d is located.")', lua)
+            'des.message("Here stand the high altar of the Lord and the high altar of the Great Dragon.")',
+            lua)
+        self.assertNotIn("High Temple of %d", lua)
         self.assertIn(
             'des.message("You sense alarm, hostility, and excitement in the air!")',
             lua)
