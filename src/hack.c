@@ -6020,6 +6020,38 @@ sanctum_ascent_refused(void)
         pline("A voice whispers: You come empty handed and bare headed. Recover your soul and put on the helmet of salvation.");
 }
 
+/* Set only around wizard #levelchange. Other level changes stay sealed. */
+static boolean wizport_cmd = FALSE;
+
+void
+road_set_wizport(boolean on)
+{
+    wizport_cmd = on;
+}
+
+boolean
+road_wizport_now(void)
+{
+    return wizport_cmd;
+}
+
+/* Once the Road has begun, the hero cannot leave a level without the
+   cap on and the soul in hand. dest NULL means the caller already
+   knows this is a real departure. A destination at or above the
+   surface is a death or an escape and is not sealed. */
+boolean
+road_bars_leave(d_level *dest)
+{
+    if (!wayside_road() || sanctum_ascent_open())
+        return FALSE;
+    if (dest && on_level(dest, &u.uz))
+        return FALSE;
+    if (dest && dest->dlevel <= 0)
+        return FALSE;
+    sanctum_ascent_refused();
+    return TRUE;
+}
+
 static boolean
 box_holds_soul(struct obj *box)
 {

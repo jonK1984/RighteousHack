@@ -1275,6 +1275,8 @@ dodown(void)
         You("are held back by your pet!");
         return ECMD_OK;
     }
+    if (road_bars_leave((d_level *) 0))
+        return ECMD_OK;
 
     if (trap) {
         const char *down_or_thru = trap->ttyp == HOLE ? "down" : "through";
@@ -1337,6 +1339,10 @@ doup(void)
         You_cant("go up here.");
         return ECMD_OK;
     }
+    /* The top of the Dungeons keeps its own leaving question and death.
+       Every other climb is sealed once the Road has begun. */
+    if (!(!u.uz.dnum && u.uz.dlevel == 1) && road_bars_leave((d_level *) 0))
+        return ECMD_OK;
     if (Is_sanctum(&u.uz)
         && (u.uevent.sanctum_grace || u.uevent.sanctum_doom)) {
         pline("The hosts of darkness bar the way.");
@@ -1635,6 +1641,10 @@ goto_level(
 
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
+    /* The bit is set only for wizard #levelchange. It is still on
+       u.utotype when a deferred departure arrives here. */
+    if (!(u.utotype & UTOTYPE_WIZPORT) && road_bars_leave(newlevel))
+        return;
     if (u.uevent.wilderness_sealed
         && !strcmp(svd.dungeons[newlevel->dnum].dname, "The Wilderness Trial")) {
         pline("The wilderness is sealed.");
@@ -2341,8 +2351,14 @@ schedule_goto(
     int utotype_flags,
     const char *pre_msg, const char *post_msg)
 {
+    int depart = utotype_flags | UTOTYPE_DEFERRED;
+
+    if (road_wizport_now())
+        depart |= UTOTYPE_WIZPORT;
+    if (!(depart & UTOTYPE_WIZPORT) && road_bars_leave(tolev))
+        return;
     /* UTOTYPE_DEFERRED is used, so UTOTYPE_NONE can trigger deferred_goto() */
-    u.utotype = utotype_flags | UTOTYPE_DEFERRED;
+    u.utotype = depart;
     /* destination level */
     assign_level(&u.utolev, tolev);
 
