@@ -475,64 +475,10 @@ static const char heaven_host_text[] =
     "\n"
     "Where they set their feet the host of the Great Dragon trembleth, for they are come to execute the righteous judgment of the Lord upon all that wage war against heaven.";
 
-/* The tty text window drops the end of a line once it passes the
-   width of the screen. Fold on a space so every word is shown.
-   A blank line in the source stays a blank line. */
-static void
-heaven_put_line(winid win, const char *line)
-{
-    size_t len = strlen(line);
-
-    if (!len) {
-        putstr(win, 0, "");
-        return;
-    }
-    while (len > 78) {
-        size_t n = 78, i;
-        char buf[80];
-
-        while (n > 0 && line[n] != ' ')
-            n--;
-        if (!n)
-            n = 78;
-        for (i = 0; i < n; i++)
-            buf[i] = line[i];
-        buf[n] = '\0';
-        putstr(win, 0, buf);
-        line += n;
-        len -= n;
-        if (len && *line == ' ') {
-            line++;
-            len--;
-        }
-    }
-    putstr(win, 0, line);
-}
-
 static void
 heaven_blackout(const char *text)
 {
-    winid win;
-    char line[512];
-    const char *p;
-
-    win = create_nhwindow(NHW_TEXT);
-    p = text;
-    while (p && *p) {
-        const char *nl = strchr(p, '\n');
-        size_t len = nl ? (size_t) (nl - p) : strlen(p);
-
-        if (len >= sizeof line)
-            len = sizeof line - 1;
-        (void) strncpy(line, p, len);
-        line[len] = '\0';
-        heaven_put_line(win, line);
-        if (!nl)
-            break;
-        p = nl + 1;
-    }
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
+    endcut_card(text);
 }
 
 static void

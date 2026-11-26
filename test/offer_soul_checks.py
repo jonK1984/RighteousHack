@@ -30,6 +30,12 @@ class OfferSoul(unittest.TestCase):
         guard = body.split("if (otmp && corpsecheck", 1)[1]
         self.assertIn("otmp->otyp == PLAYER_SOUL", guard.split("{", 1)[0])
 
+    def test_the_prompt_asks_what_to_offer(self):
+        invent = (ROOT / "src" / "invent.c").read_text()
+        self.assertEqual(invent.count('"What do you wish to offer?"'), 2)
+        self.assertIn('getobj("sacrifice", offer_ok, GETOBJ_NOFLAGS)', EAT)
+        self.assertNotIn("\u2014", "What do you wish to offer?")
+
 
 if __name__ == "__main__":
     unittest.main()

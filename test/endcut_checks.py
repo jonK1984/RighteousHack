@@ -11,6 +11,54 @@ def read(rel):
     return (ROOT / rel).read_text()
 
 
+def c_text(src, marker):
+    body = src.split(marker, 1)[1]
+    out = []
+    i = 0
+    in_lit = False
+    while i < len(body):
+        c = body[i]
+        if not in_lit:
+            if c == ";":
+                break
+            if c == '"':
+                in_lit = True
+            i += 1
+            continue
+        if c == "\\":
+            n = body[i + 1]
+            out.append("\n" if n == "n" else n)
+            i += 2
+            continue
+        if c == '"':
+            in_lit = False
+            i += 1
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def wrap_card(text, cols):
+    """Same fold as endcut_put_wrapped: spaces only, blank lines kept."""
+    lines = []
+    for para in text.split("\n"):
+        while len(para) > cols:
+            n = cols
+            while n > 0 and para[n] != " ":
+                n -= 1
+            if n <= 0:
+                n = para.find(" ")
+                if n < 0:
+                    n = len(para)
+            lines.append(para[:n])
+            para = para[n:]
+            if para.startswith(" "):
+                para = para[1:]
+        lines.append(para)
+    return lines
+
+
 class Endcut(unittest.TestCase):
     def test_locked_lines(self):
         src = read("src/endcut.c")
@@ -60,6 +108,61 @@ class Endcut(unittest.TestCase):
         self.assertIn("ENDCUT_DRAGON 1", frames)
         self.assertIn("ENDCUT_DEATH 2", frames)
         self.assertIn("endcut_frame_at", frames)
+
+    def test_cards_wrap_to_the_screen(self):
+        src = read("src/endcut.c")
+        heaven = read("src/heaven.c")
+        cols = 79
+        names = (
+            "win_a_lead[]",
+            "win_a_rest[]",
+            "win_c_text[]",
+            "win_e_text[]",
+            "dragon_voice[]",
+            "dragon_text[]",
+            "heaven_death_text[]",
+        )
+        card = src.split("endcut_card(const char *text)", 1)[1].split(
+            "endcut_play(", 1)[0]
+        self.assertIn("endcut_cols()", card)
+        self.assertIn("endcut_put_wrapped", card)
+        self.assertIn("display_nhwindow(win, TRUE)", card)
+        self.assertNotIn("sizeof buf - 1", card)
+        self.assertIn("cols = 79", src)
+        self.assertIn("CO - 1", src)
+        self.assertIn("endcut_card(text)", heaven)
+        for name in names:
+            text = c_text(src, name)
+            shown = wrap_card(text, cols)
+            self.assertGreater(len(text), 0)
+            for line in shown:
+                self.assertLessEqual(len(line), cols, name)
+            self.assertEqual("\n".join(shown).split(), text.split())
+        host = c_text(heaven, "heaven_host_text[]")
+        shown = wrap_card(host, cols)
+        for line in shown:
+            self.assertLessEqual(len(line), cols)
+        self.assertEqual("\n".join(shown).split(), host.split())
+        self.assertGreater(len(c_text(src, "win_a_rest[]")), 254)
+
+    def test_the_battlefield_is_shown_before_the_sparks(self):
+        src = read("src/endcut.c")
+        reveal = src.split("endcut_reveal(void)", 1)[1].split(
+            "endcut_find_altar", 1)[0]
+        self.assertIn("levl[x][y].lit = 1", reveal)
+        self.assertIn("levl[x][y].waslit = 1", reveal)
+        self.assertIn("levl[x][y].seenv = SVALL", reveal)
+        self.assertIn("map_object(obj, 0)", reveal)
+        self.assertIn("magic_map_background(x, y, 0)", reveal)
+        self.assertIn("EDetect_monsters |= I_SPECIAL", reveal)
+        self.assertIn("mtmp->mundetected = 0", reveal)
+        self.assertIn("docrt()", reveal)
+        self.assertIn("flush_screen(1)", reveal)
+        back = src.split("endcut_give_back(coordxy ox", 1)[1].split(
+            "struct endcut_keep", 1)[0]
+        self.assertIn("endcut_sight_off()", back)
+        self.assertIn("EDetect_monsters = endcut_save_det", src)
+        self.assertIn("vision_reset()", back)
 
 
 if __name__ == "__main__":

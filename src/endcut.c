@@ -138,34 +138,85 @@ endcut_wait(int ms)
     return FALSE;
 }
 
+/* One less than the tty width, so a line is not cut at BUFSZ.
+   Anywhere else, 79. */
+static int
+endcut_cols(void)
+{
+    int cols = 79;
+
+#ifdef TTY_GRAPHICS
+    if (windowprocs.wp_id == wp_tty && CO > 1)
+        cols = CO - 1;
+#endif
+    if (cols < 20)
+        cols = 79;
+    return cols;
+}
+
+/* Fold on a space. A word longer than the screen stays whole. */
 static void
+endcut_put_wrapped(winid win, const char *line, int cols)
+{
+    size_t len = strlen(line);
+
+    if (!len) {
+        putstr(win, 0, "");
+        return;
+    }
+    while ((int) len > cols) {
+        int n = cols;
+        char buf[BUFSZ];
+
+        while (n > 0 && line[n] != ' ')
+            n--;
+        if (n <= 0) {
+            n = 0;
+            while (line[n] && line[n] != ' ')
+                n++;
+            if (!n)
+                break;
+        }
+        if (n >= BUFSZ)
+            n = BUFSZ - 1;
+        (void) strncpy(buf, line, (size_t) n);
+        buf[n] = '\0';
+        putstr(win, 0, buf);
+        line += n;
+        len -= (size_t) n;
+        if (len && *line == ' ') {
+            line++;
+            len--;
+        }
+    }
+    if (len)
+        putstr(win, 0, line);
+}
+
+void
 endcut_card(const char *text)
 {
     winid win;
-    char buf[BUFSZ];
-    const char *p, *nl;
+    const char *p;
+    int cols = endcut_cols();
 
     win = create_nhwindow(NHW_TEXT);
-    p = text;
-    while (p && *p) {
-        nl = strchr(p, '\n');
-        if (!nl) {
-            putstr(win, 0, p);
-            break;
-        }
-        if (nl == p)
-            putstr(win, 0, "");
-        else {
-            size_t len = (size_t) (nl - p);
+    p = text ? text : "";
+    while (*p) {
+        const char *nl = strchr(p, '\n');
+        char line[1024];
+        size_t len = nl ? (size_t) (nl - p) : strlen(p);
 
-            if (len >= sizeof buf)
-                len = sizeof buf - 1;
-            (void) strncpy(buf, p, len);
-            buf[len] = '\0';
-            putstr(win, 0, buf);
-        }
+        if (len >= sizeof line)
+            len = sizeof line - 1;
+        (void) strncpy(line, p, len);
+        line[len] = '\0';
+        endcut_put_wrapped(win, line, cols);
+        if (!nl)
+            break;
         p = nl + 1;
     }
+    /* display_nhwindow pages a long text window with --More--. */
     display_nhwindow(win, TRUE);
     destroy_nhwindow(win);
 }
@@ -268,19 +319,45 @@ endcut_burst(coordxy x, coordxy y, int rings)
     return FALSE;
 }
 
+static long endcut_save_det;
+static boolean endcut_det_saved = FALSE;
+
+static void
+endcut_sight_off(void)
+{
+    if (!endcut_det_saved)
+        return;
+    EDetect_monsters = endcut_save_det;
+    endcut_det_saved = FALSE;
+}
+
+/* Light and map the whole level, then show every monster, so the
+   battlefield is on screen under the sparks. Detection is put back
+   by endcut_sight_off before a saved level is read again. */
 static void
 endcut_reveal(void)
 {
     coordxy x, y;
     struct monst *mtmp;
-    long save_det = EDetect_monsters;
 
+    if (!endcut_det_saved) {
+        endcut_save_det = EDetect_monsters;
+        endcut_det_saved = TRUE;
+    }
     for (x = 1; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++)
-            if (levl[x][y].typ)
-                levl[x][y].seenv = SVALL;
+        for (y = 0; y < ROWNO; y++) {
+            struct obj *obj;
+
+            levl[x][y].lit = 1;
+            levl[x][y].waslit = 1;
+            levl[x][y].seenv = SVALL;
+            obj = vobj_at(x, y);
+            if (obj && !covers_objects(x, y))
+                map_object(obj, 0);
+            else
+                magic_map_background(x, y, 0);
+        }
     EDetect_monsters |= I_SPECIAL;
-    see_monsters();
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
@@ -288,7 +365,7 @@ endcut_reveal(void)
         newsym(mtmp->mx, mtmp->my);
     }
     docrt();
-    EDetect_monsters = save_det;
+    flush_screen(1);
 }
 
 static boolean
@@ -421,6 +498,7 @@ endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
     struct monst *mtmp, *found = 0;
     int step;
 
+    endcut_reveal();
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
         if (!DEADMONSTER(mtmp) && is_lucifer(mtmp))
             found = mtmp;
@@ -631,6 +709,7 @@ endcut_give_back(coordxy ox, coordxy oy)
     NHFILE *nhfp, *dead;
     xint8 lev = (xint8) ledger_no(&u.uz);
 
+    endcut_sight_off();
     dead = get_freeing_nhfile();
     if (dead) {
         savelev(dead, lev);

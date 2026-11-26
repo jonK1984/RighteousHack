@@ -1916,7 +1916,10 @@ getobj(
     for (;;) {
         cnt = 0L;
         cntgiven = FALSE;
-        Sprintf(qbuf, "What do you want to %s?", word);
+        if (!strcmp(word, "sacrifice"))
+            Strcpy(qbuf, "What do you wish to offer?");
+        else
+            Sprintf(qbuf, "What do you want to %s?", word);
         if (gi.in_doagain) {
             ilet = readchar();
         } else if (iflags.force_invmenu) {
@@ -1970,9 +1973,13 @@ getobj(
                 allowed_choices = altlets;
 
             menuquery[0] = qbuf[0] = '\0';
-            if (iflags.force_invmenu)
-                Snprintf(menuquery, sizeof menuquery,
-                         "What do you want to %s?", word);
+            if (iflags.force_invmenu) {
+                if (!strcmp(word, "sacrifice"))
+                    Strcpy(menuquery, "What do you wish to offer?");
+                else
+                    Snprintf(menuquery, sizeof menuquery,
+                             "What do you want to %s?", word);
+            }
             if (!allowed_choices || *allowed_choices == HANDS_SYM
                 || *buf == HANDS_SYM)
                 handsbuf = getobj_hands_txt(word, qbuf);

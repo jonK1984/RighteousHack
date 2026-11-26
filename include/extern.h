@@ -3908,6 +3908,7 @@ extern boolean is_heaven_chest(struct obj *);
 extern boolean endcut_testing;
 extern void rng_save(void);
 extern void rng_restore(void);
+extern void endcut_card(const char *);
 extern void endcut_ascend(void);
 extern void endcut_dragon(void);
 extern void endcut_heaven_death(void);
