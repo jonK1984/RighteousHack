@@ -5464,6 +5464,10 @@ mhitm_knockback(
         return FALSE;
     }
 
+    /* The blow would throw the hero. The blanket may keep the seat. */
+    if (dismount && blanket_keeps_seat())
+        return TRUE;
+
     /* subtly vary the message text if monster won't actually move */
     knockedhow = dismount ? "out of your saddle"
                  : will_hurtle(mdef, defx + dx, defy + dy) ? "backward"

@@ -3193,6 +3193,7 @@ extern int doride(void);
 extern boolean mount_steed(struct monst *, boolean) NO_NNARGS;
 extern void exercise_steed(void);
 extern void kick_steed(void);
+extern boolean blanket_keeps_seat(void);
 extern void dismount_steed(int);
 extern void place_monster(struct monst *, coordxy, coordxy) NONNULLARG1;
 extern void poly_steed(struct monst *, struct permonst *) NONNULLARG12;

@@ -1056,7 +1056,9 @@ dog_move(
     /* Let steeds eat and maybe throw rider during Conflict */
     if (mtmp == u.usteed) {
         if (Conflict && !resist_conflict(mtmp)) {
-            dismount_steed(DISMOUNT_THROWN);
+            /* The steed turns and would throw its rider. */
+            if (!blanket_keeps_seat())
+                dismount_steed(DISMOUNT_THROWN);
             return MMOVE_MOVED;
         }
         udist = 1;

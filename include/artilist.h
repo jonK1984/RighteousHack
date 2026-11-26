@@ -284,6 +284,8 @@ static NEARDATA struct artifact artilist[] = {
     * Transforms a horse into a fiery steed of the heavenly host
     * Enables jousting and pounding while mounted for the 
     * following weapon types: Long Sword, Mace, Hammer, Silver Saber
+    * An attack that would throw the rider may fail. Riding skill:
+    * restricted or unskilled 10%, basic 25%, skilled 60%, expert 98%.
     * #invoke tames any horses (including unicorns) in a 5x5 area
     =================================
     */

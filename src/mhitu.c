@@ -1342,6 +1342,10 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
             return M_ATTK_MISS;
         if (failed_grab(mtmp, &gy.youmonst, mattk))
             return M_ATTK_MISS;
+        /* Swallowing plucks a rider off. The blanket may refuse,
+           before the monster steps onto the hero. */
+        if (u.usteed && blanket_keeps_seat())
+            return M_ATTK_MISS;
 
         if (Punished)
             unplacebc(); /* ball&chain go away */
