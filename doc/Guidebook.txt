@@ -3886,7 +3886,7 @@
          Invocation   -  Opened the Gates of Hell into the Sanctum of the Great Dragon.
          Amulet       -  Acquired the fabled Amulet of Yendor.
          Endgame      -  Reached the Elemental Planes.
-         Astral       -  Reached the Astral Plane level.
+         Heaven       -  Reached the Plane of Heaven level.
          Blind        -  Blind from birth.
          Deaf         -  Deaf from birth.
          Nudist       -  Never wore any armor.

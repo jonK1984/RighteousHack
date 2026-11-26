@@ -1562,7 +1562,7 @@ really_done(int how)
             const char *where = svd.dungeons[u.uz.dnum].dname;
 
             if (Is_astralevel(&u.uz))
-                where = "The Astral Plane";
+                where = "The Plane of Heaven";
             else if (Is_sanctum(&u.uz))
                 where = "the Sanctum of the Great Dragon";
             Sprintf(pbuf, "You %s in %s", ends[how], where);

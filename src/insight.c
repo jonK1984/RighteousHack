@@ -63,7 +63,7 @@ static struct ll_achieve_msg achieve_msg [] = {
     { LL_ACHIEVE, "performed the invocation" },
     { LL_ACHIEVE, "acquired The Amulet of Yendor" },
     { LL_ACHIEVE, "entered the Elemental Planes" },
-    { LL_ACHIEVE, "entered the Astral Plane" },
+    { LL_ACHIEVE, "entered the Plane of Heaven" },
     { LL_ACHIEVE, "ascended" },
     /* if the type of item isn't discovered yet, disclosing the event
        via #chronicle would be a spoiler (particularly for gray stone);
@@ -2360,7 +2360,7 @@ show_achievements(
             you_have_X("reached the Elemental Planes");
             break;
         case ACH_ASTR:
-            you_have_X("reached the Astral Plane");
+            you_have_X("reached the Plane of Heaven");
             break;
         case ACH_UWIN:
             /* the ultimate achievement... */

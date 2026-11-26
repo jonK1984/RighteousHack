@@ -302,13 +302,13 @@ you know you must return %o to %l.]],
          "\"So you're %ls prize pupil!  I don't know what he sees in you.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and sacrifice it at the altar of %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and sacrifice it at the altar of %d.]",
          output = "text",
          text = [["Congratulations, %p.  I wondered if anyone could prevail against
 the Wizard and the minions of Moloch.  Now, you must embark on one
 final adventure.
 
-"Take the Amulet, and find your way onto the Astral Plane.
+"Take the Amulet, and find your way onto the Plane of Heaven.
 There you must find the altar of %d and sacrifice the
 Amulet on that altar to fulfill your destiny.
 
@@ -527,7 +527,7 @@ at once, even though you are holding it.]],
          "\"%lC is a strange one, but he has helped defend us.\"",
       },
       hasamulet = {
-         synopsis = "[\"Take the Amulet to the altar of %d on the Astral Plane and offer it.\"]",
+         synopsis = "[\"Take the Amulet to the altar of %d on the Plane of Heaven and offer it.\"]",
          output = "text",
          text = [["This is wondrous, %p.  I feared that you could not possibly
 succeed in your quest, but here you are in possession of the Amulet
@@ -544,8 +544,7 @@ the Book of Skelos, I found this:
 "As you now possess the amulet, %p, I suspect that the Book
 speaks of you.
 
-    The child of %d will take the Amulet, and travel to the Astral
-    Plane, where the Great Temple of %d is to be found.  The Amulet
+    The child of %d will take the Amulet, and travel to the Plane of Heaven, where the Great Temple of %d is to be found.  The Amulet
     will be sacrificed to %d, there on %dJ altar.  Then the child will
     stand by %d as champion of all %cP for eternity.
 
@@ -765,14 +764,14 @@ in your path.]],
          "\"%lC grows old.  We know not who will guide us after he ascends.\"",
       },
       hasamulet = {
-         synopsis = "[\"Take the Amulet to the altar of %d on the Astral Plane and offer it.\"]",
+         synopsis = "[\"Take the Amulet to the altar of %d on the Plane of Heaven and offer it.\"]",
          output = "text",
          text = [["You have been successful, I see, %p.
 
 "Now that the Amulet of Yendor is yours, here is what you must do:
 
 "Journey upwards to the open air.  The Amulet you carry will then
-take you into the Astral Planes, where the Great Temple of %d
+take you into the Planes of Heaven, where the Great Temple of %d
 casts its influence throughout our world.
 
 "Sacrifice the Amulet on the altar.  Thus shall %d become supreme!"]],
@@ -987,12 +986,12 @@ again.]],
          "\"We think %n has used %nj alchemists, and %o, to unleash a new disease we call 'the cold' on Gehennom.\"",
       },
       hasamulet = {
-         synopsis = "[\"You have recovered the Amulet.  Travel to the Astral Plane and return it to %d.\"]",
+         synopsis = "[\"You have recovered the Amulet.  Travel to the Plane of Heaven and return it to %d.\"]",
          output = "text",
          text = [["Ah, you have recovered the Amulet, %p.  Well done!
 
 "Now, you should know that you must travel through the Elemental Planes
-to the Astral, and there return the Amulet to %d.  Go forth and
+to the Plane of Heaven, and there return the Amulet to %d.  Go forth and
 may our prayers be as a wind upon your back."]],
       },
       killed_nemesis = {
@@ -1220,10 +1219,10 @@ a long sleep.]],
          "\"Many brave %cP died when %n attacked.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and deliver it to %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and deliver it to %d.]",
          output = "text",
          text = [["Thou hast succeeded, We see, %p!  Now thou art commanded to take
-the Amulet to be sacrificed to %d in the Plane of the Astral.
+the Amulet to be sacrificed to %d in the Plane of Heaven.
 
 "Merlin hath counseled Us that thou must travel always upwards through
 the Planes of the Elements, to achieve this goal.
@@ -1432,11 +1431,11 @@ as possible.]],
          "\"May %d be with you, %s.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and deliver it to %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and deliver it to %d.]",
          output = "text",
          text = [["You have prevailed, %p!  %d is surely with you.  Now,
 you must take the Amulet, and sacrifice it on %ds altar on
-the Astral Plane.  I suspect that I shall never see you again in this
+the Plane of Heaven.  I suspect that I shall never see you again in this
 life, but I hope to at %ds feet."]],
       },
       killed_nemesis = {
@@ -1646,11 +1645,11 @@ as possible.]],
          "\"May %d be with you, %s.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and offer it on %ds altar.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and offer it on %ds altar.]",
          output = "text",
          text = [["You have prevailed, %p!  %d is surely with you.  Now,
 you must take the amulet, and sacrifice it on %ds altar on
-the Astral Plane.  I suspect that I shall never see you again in this
+the Plane of Heaven.  I suspect that I shall never see you again in this
 life, but I hope to at %ds feet."]],
       },
       killed_nemesis = {
@@ -1868,13 +1867,13 @@ on your speed.]],
          "\"We must regain %o.  Without it we will be overrun.\"",
       },
       hasamulet = {
-         synopsis = "[You have the Amulet!  Take it to the Astral Plane and offer it to %d.]",
+         synopsis = "[You have the Amulet!  Take it to the Plane of Heaven and offer it to %d.]",
          output = "text",
          text = [["You have it!  You have recovered the Amulet of Yendor!
 Now attend to me, %p, and I will tell you what must be done:
 
 "The Amulet has within it magic, the capability to transport you to
-the Astral Plane, where the primary circle of %d resides.
+the Plane of Heaven, where the primary circle of %d resides.
 
 "To activate this magic, you must travel upwards as far as you can.
 When you reach the temple, sacrifice the Amulet to %d.
@@ -2080,12 +2079,12 @@ you know that you must do likewise.]],
          "\"Be careful what you steal, I hear the boss has perfected turning rocks into worthless pieces of glass.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and find %ds temple.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and find %ds temple.]",
          output = "text",
          text = [["I see that with your abilities, and my brains, we could rule this world.
 
 "All that we would need to be all-powerful is for you to take that little
-trinket you've got there up to the Astral Plane.  From there, %d will
+trinket you've got there up to the Plane of Heaven.  From there, %d will
 show you what to do with it.  Once that's done, we will be invincible!"]],
       },
       killed_nemesis = {
@@ -2309,7 +2308,7 @@ sun goddess.]],
          "\"If %o is not returned, we will all be ronin.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane to finish your task.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven to finish your task.]",
          output = "text",
          text = [["Ah, %p-sama.  You have wasted your efforts returning home.
 Now that you are in possession of the Amulet, you are honor-bound to
@@ -2533,7 +2532,7 @@ to quickly return to %H and find %l.]],
          "\"They told me that this was the off season!\"",
       },
       hasamulet = {
-         synopsis = "[You have the Amulet.  Take it to the Astral Plane to finish your task.]",
+         synopsis = "[You have the Amulet.  Take it to the Plane of Heaven to finish your task.]",
          output = "text",
          text = [["Stand back and let me look at you, %p.
 Now that you have recovered the Amulet of Yendor, I'm afraid living
@@ -2755,12 +2754,11 @@ realize that you must return %o to %l immediately.]],
          "\"I would deal with this foul %n myself, but %d forbids it.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to %ds temple on the Astral Plane and offer it.]",
+         synopsis = "[Take the Amulet to %ds temple on the Plane of Heaven and offer it.]",
          output = "text",
          text = [["Excellent, %p.  I see you have recovered the Amulet!
 
-"You must take the Amulet to the Great Temple of %d, on the Astral
-Plane.  There you must offer the Amulet to %d.
+"You must take the Amulet to the Great Temple of %d, on the Plane of Heaven.  There you must offer the Amulet to %d.
 
 "Go now, my %S.  I cannot tell you your fate, as the power of the
 Amulet interferes with mine.  I hope for your success."]],
@@ -2974,12 +2972,12 @@ owner, %l.]],
          "\"I, too, will venture into the world, because %n is but one of many evils to be vanquished.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to %ds altar on the Astral Plane.]",
+         synopsis = "[Take the Amulet to %ds altar on the Plane of Heaven.]",
          output = "text",
          text = [["Congratulations, %p.  I always knew that if anyone could succeed
 in defeating the Son of Perdition and his minions, it would be you.
 
-"Go now, and take the Amulet to the Astral Plane.  Once there, present
+"Go now, and take the Amulet to the Plane of Heaven.  Once there, present
 the Amulet on the altar of %d.  Along the way you shall pass through
 the four Elemental Planes.  These planes are like nothing you have ever
 experienced before, so be prepared!

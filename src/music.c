@@ -485,7 +485,7 @@ staticfn const char *
 generic_lvl_desc(void)
 {
     if (Is_astralevel(&u.uz))
-        return "astral plane";
+        return "plane of heaven";
     else if (In_endgame(&u.uz))
         return "plane";
     else if (Is_sanctum(&u.uz))

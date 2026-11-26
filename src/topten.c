@@ -1006,8 +1006,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
 
             switch (t1->deathlev) {
             case -5:
-                fmt = " on the %s Plane";
-                arg = "Astral";
+                arg = "Heaven";
                 break;
             case -4:
                 arg = "Water";

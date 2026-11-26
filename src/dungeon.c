@@ -2383,6 +2383,8 @@ visible_level_tag(const char *proto)
         return "babylon";
     if (!strcmp(proto, "minend"))
         return "minesend";
+    if (!strcmp(proto, "astral"))
+        return "Plane of Heaven";
     if (!strcmp(proto, "sanctum"))
         return "Sanctum of the Great Dragon";
     if (!strcmp(proto, "hinnom"))
@@ -3521,7 +3523,7 @@ endgamelevelname(char *outbuf, int indx)
     *outbuf = '\0';
     switch (indx) {
     case -5:
-        Strcpy(outbuf, "Astral Plane");
+        Strcpy(outbuf, "Plane of Heaven");
         break;
     case -4:
         planename = "Water";
