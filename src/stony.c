@@ -17,8 +17,8 @@
 static const coord sg_berth[3] = {
     { 17, 1 }, { 18, 1 }, { 18, 3 }
 };
-#define CHEST_X MX(48)
-#define CHEST_Y MY(13)
+#define CHEST_X MX(71)
+#define CHEST_Y MY(18)
 
 #define SG_DONE_OLD   0x00000001UL
 #define SG_DONE_YOUNG 0x00000002UL
