@@ -220,7 +220,11 @@ done_in_by(struct monst *mtmp, int how)
     if (distorted)
         Strcat(buf, "hallucinogen-distorted ");
 
-    if (imitator) {
+    if (is_lucifer(mtmp)) {
+        /* The tombstone names him, with no species in front. */
+        Strcat(buf, "Lucifer");
+        svk.killer.format = KILLED_BY;
+    } else if (imitator) {
         char shape[BUFSZ];
         const char *realnm = pmname(champtr, Mgender(mtmp)),
                    *fakenm = pmname(mptr, Mgender(mtmp));

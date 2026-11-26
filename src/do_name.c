@@ -962,6 +962,10 @@ x_monnam(
 
         Strcat(buf, rname);
         name_at_start = bogon_is_pname(rnamecode);
+    } else if (is_lucifer(mtmp)) {
+        /* Proper name. Looking keeps the title. Combat uses the name alone. */
+        Strcat(buf, called ? "Lucifer (The Great Dragon)" : "Lucifer");
+        name_at_start = TRUE;
     } else if (do_name && has_mgivenname(mtmp)) {
         char *name = MGIVENNAME(mtmp);
 

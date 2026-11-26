@@ -8,7 +8,7 @@
 
 #define LUCIFER_HP 250
 #define LUCIFER_WAIT 15
-#define LUCIFER_NAME "Lucifer (The Great Dragon)"
+#define LUCIFER_NAME "Lucifer"
 
 static void lucifer_mark(struct monst *);
 static void lucifer_disguise(struct monst *);
