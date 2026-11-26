@@ -268,6 +268,10 @@ heaven_factions(void)
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) || mtmp->data != &mons[PM_ANGEL])
             continue;
+        /* The guardian angel is already a tame minion with no edog.
+           Leave it that way. dog_move() allows that one case. */
+        if (mtmp->isminion || has_emin(mtmp))
+            continue;
         if (mtmp->mstrategy & (STRAT_HEAVEN_LORD | STRAT_HEAVEN_FALLEN))
             continue;
         if (mtmp->mtame || mtmp->mpeaceful) {

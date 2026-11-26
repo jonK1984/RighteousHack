@@ -31,6 +31,23 @@ newedog(struct monst *mtmp)
     }
 }
 
+/* The guardian angel is tame, keeps emin, and has no edog.
+   dog_move() allows that only while isminion is set. An old
+   save may still have the emin and a cleared flag. Put the
+   flag back. Any other tame monster gets an edog. */
+void
+rh_fix_tame(struct monst *mtmp)
+{
+    if (!mtmp || !mtmp->mtame)
+        return;
+    if (!has_edog(mtmp) && has_emin(mtmp)
+        && mtmp->data == &mons[PM_ANGEL]) {
+        mtmp->isminion = 1;
+        return;
+    }
+    rh_attach_edog(mtmp);
+}
+
 /* A tame monster needs an edog or dog_move() will panic.
    The guardian angel is the one exception: it is a minion
    and keeps emin instead. This does not count as taming

@@ -1022,7 +1022,7 @@ dog_move(
     int omx, omy; /* original mtmp position */
     int appr, whappr, udist;
     int i, j, k;
-    struct edog *edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
+    struct edog *edog;
     struct obj *obj = (struct obj *) 0;
     xint16 otyp;
     boolean cursemsg[9], do_eat = FALSE;
@@ -1035,6 +1035,10 @@ dog_move(
     struct mfndposdata mfp;
 #define GDIST(x, y) (dist2(x, y, gg.gx, gg.gy))
 
+    /* Restore a guardian angel before the pet-record check. */
+    rh_fix_tame(mtmp);
+    edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
+
     /*
      * Tame Angels have isminion set and an ispriest structure instead of
      * an edog structure.  Fortunately, guardian Angels need not worry
@@ -1043,14 +1047,8 @@ dog_move(
      * monsters with other structures that can be tame.)
      */
     if (!edog && !mtmp->isminion) {
-        /* Repair a tame monster that never received its pet record.
-           The guardian angel is a minion and is left alone. */
-        rh_attach_edog(mtmp);
-        edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
-        if (!edog) {
-            impossible("dog_move for non-pet?");
-            return MMOVE_NOTHING;
-        }
+        impossible("dog_move for non-pet?");
+        return MMOVE_NOTHING;
     }
 
     omx = mtmp->mx;
