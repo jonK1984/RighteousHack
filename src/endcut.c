@@ -16,6 +16,8 @@
         and then unlinked. The hero's coordinates, steed, ball, and
         the saved random-number state, monster tallies, and discovery
         flags are put back. Nothing is left in the save.
+        The scratch file is named through fqname() in the level
+        directory (LEVELPREFIX), not a hard-coded /tmp path.
  */
 
 #include "hack.h"
@@ -26,9 +28,6 @@
 #endif
 #ifdef WIN32
 #include <io.h>
-#include <process.h>
-#else
-#include <unistd.h>
 #endif
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -43,7 +42,7 @@ static boolean endcut_stone = FALSE;
 static boolean endcut_from_dragon = FALSE;
 static unsigned endcut_steed_id, endcut_stuck_id, endcut_ball_id,
     endcut_chain_id;
-static char endcut_scratch[256];
+static char endcut_scratch[FQN_MAX_FILENAME];
 
 static void endcut_give_back(coordxy, coordxy);
 static boolean endcut_borrow(coordxy *, coordxy *);
@@ -98,40 +97,43 @@ endcut_tty(void)
 #endif
 }
 
+/* True if a key is already waiting. Does not block. */
+static boolean
+endcut_key_ready(void)
+{
+#if defined(MICRO) || defined(WIN32)
+    return (boolean) kbhit();
+#else
+    fd_set fds;
+    struct timeval tv;
+
+    FD_ZERO(&fds);
+    FD_SET(0, &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    return (boolean) (select(1, &fds, (fd_set *) 0, (fd_set *) 0, &tv) > 0);
+#endif
+}
+
+/* nh_delay_output is the window port's own pause (about 50 ms on tty).
+   The Windows console implements that with Sleep, which this file
+   does not call by name. */
 static boolean
 endcut_wait(int ms)
 {
+    int ticks;
+
     if (ms < 1)
         ms = 1;
-    while (ms > 0) {
-        int slice = (ms > 20) ? 20 : ms;
-
-#if defined(MICRO) || defined(WIN32)
-        if (kbhit()) {
+    ticks = (ms + 49) / 50;
+    if (ticks < 1)
+        ticks = 1;
+    while (ticks-- > 0) {
+        if (endcut_key_ready()) {
             (void) nhgetch();
             return TRUE;
         }
-        msleep((unsigned) slice);
-#else
-        {
-            fd_set fds;
-            struct timeval tv;
-            int nsel;
-
-            FD_ZERO(&fds);
-            FD_SET(0, &fds);
-            tv.tv_sec = 0;
-            tv.tv_usec = slice * 1000;
-            nsel = select(1, &fds, (fd_set *) 0, (fd_set *) 0, &tv);
-            if (nsel > 0) {
-                (void) nhgetch();
-                return TRUE;
-            }
-            if (nsel < 0)
-                msleep((unsigned) slice);
-        }
-#endif
-        ms -= slice;
+        nh_delay_output();
     }
     return FALSE;
 }
@@ -503,7 +505,7 @@ endcut_open_scratch(boolean writing)
     init_nhfile(nhfp);
     if (writing)
         fd = open(endcut_scratch, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
-                  0600);
+                  FCMASK);
     else
         fd = open(endcut_scratch, O_RDONLY | O_BINARY, 0);
     if (fd < 0) {
@@ -528,7 +530,19 @@ endcut_borrow(coordxy *ox, coordxy *oy)
     coordxy ax, ay;
     xint8 lev;
 
-    Sprintf(endcut_scratch, "/tmp/rh-endcut-%d", (int) getpid());
+    {
+        char base[32];
+        const char *fq;
+
+        /* Level directory, same place as the other per-user level files.
+           hackpid is the process id recorded at startup on every port. */
+        Sprintf(base, "rhend%d", svh.hackpid);
+        fq = fqname(base, LEVELPREFIX, 1);
+        if (!fq || !*fq)
+            fq = base;
+        (void) strncpy(endcut_scratch, fq, sizeof endcut_scratch - 1);
+        endcut_scratch[sizeof endcut_scratch - 1] = '\0';
+    }
     *ox = u.ux;
     *oy = u.uy;
     if (u.usteed)

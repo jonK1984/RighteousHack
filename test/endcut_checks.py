@@ -47,6 +47,11 @@ class Endcut(unittest.TestCase):
         self.assertIn("getlev", src)
         self.assertIn("unlink(endcut_scratch)", src)
         self.assertIn("endcut_testing", src)
+        self.assertIn("nh_delay_output", src)
+        self.assertIn("fqname(base, LEVELPREFIX, 1)", src)
+        self.assertNotIn("msleep", src)
+        self.assertNotIn("/tmp/", src)
+        self.assertNotIn("getpid", src)
         self.assertIn("#define EDITLEVEL 20", read("include/patchlevel.h"))
 
     def test_frames_are_embedded(self):
