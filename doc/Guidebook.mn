@@ -2170,7 +2170,7 @@ Usually that will be the next level down but it can be farther.
 Unlike (level) teleporters, the destination level of a particular trap door
 or hole is persistent, so falling into one will bring you to the same level
 each time\(emthough not necessarily the same spot on the level.
-Magic portals behave similarly, but with some additional variation.
+Ancient portals behave similarly, but with some additional variation.
 Some portals are two-way and their remote destination is always the same:
 another portal which can take you back.
 Others are one-way and send you to a specific destination level but not
@@ -6050,7 +6050,7 @@ y	S_light	(light)
 #	S_litcorr	(lit corridor)
 :	S_lizard	(lizard)
 \\	S_lslant	(diagonal beam [zap animation])
-\(ha	S_magic_portal	(magic portal)
+\(ha	S_magic_portal	(ancient portal)
 \(ha	S_magic_trap	(magic trap)
 m	S_mimic	(mimic)
 ]	S_mimic_def	(mimic)

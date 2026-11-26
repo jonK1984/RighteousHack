@@ -394,12 +394,12 @@ guard it now far better than I.
 May the blessings of %d follow you and guard you."]],
       },
       offeredit2 = {
-         synopsis = "[\"Resume your search for the Amulet beyond the magic portal to %Z.\"]",
+         synopsis = "[\"Resume your search for the Amulet beyond the ancient portal to %Z.\"]",
          output = "text",
          text = [["Careful, %p!  %oC might break, and that would be
 a tragic loss.  You are its keeper now, and the time has come to
 resume your search for the Amulet.  %Z await your
-return through the magic portal that brought you here."]],
+return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.
@@ -640,7 +640,7 @@ will be waiting.]],
 
 "You are its keeper now, and the time has come to resume your search
 for the Amulet.  %Z await your return through the
-magic portal which brought you here."]],
+ancient portal which brought you here."]],
       },
       othertime = {
          text = [[Again, and you think possibly for the last time, you approach
@@ -862,7 +862,7 @@ He smiles and says:
 
 "You are its keeper now, and the time has come to resume your search
 for the Amulet.  %Z await your return through the
-magic portal which brought you here."]],
+ancient portal which brought you here."]],
       },
       othertime = {
          text = [[For some reason, you think that this may be the last time you will
@@ -1095,7 +1095,7 @@ has finished %lh speaks to you.
 
 "You are its keeper now, and the time has come to resume your search
 for the Amulet.  %Z await your return through the
-magic portal which brought you here."]],
+ancient portal which brought you here."]],
       },
       othertime = {
          text = [[Again, you %x %H in the distance.
@@ -1313,7 +1313,7 @@ puny %r.  Thou wilt die in agony!"]],
          text = [["Careful, %p!  %oC might break, and that would
 be a tragic loss.  Thou art its keeper now, and the time hath come
 to resume thy search for the Amulet.  %Z await thy
-return through the magic portal that brought thee here."]],
+return through the ancient portal that brought thee here."]],
       },
       othertime = {
          text = [[Again, you stand before %H.  You vaguely sense that this
@@ -1524,7 +1524,7 @@ then returns his gaze to you.
 
 "%oC must remain with you.  Use %oi
 as you resume your search for the Amulet.
-%Z await your return through the magic portal
+%Z await your return through the ancient portal
 that brought you here."]],
       },
       othertime = {
@@ -1744,7 +1744,7 @@ of Yendor.
          text = [[%lC reiterates that %o is yours now.
 
 "The time has come to resume your search for the Amulet.
-%Z await your return through the magic portal
+%Z await your return through the ancient portal
 that brought you here."]],
       },
       othertime = {
@@ -1976,7 +1976,7 @@ the Amulet."]],
 "With this wondrous bow, one need never run out of arrows.
 You are its keeper now, and the time has come to resume your
 search for the Amulet.  %Z await your return
-through the magic portal that brought you here."]],
+through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You have the oddest feeling that this may be the last time you
@@ -2180,7 +2180,7 @@ the mundane one you detect in his pocket, but noticing your alertness,
 evidently chickens out.
 
 "Go filch the Amulet before someone else beats you to it.
-%Z are back the way you came, through the magic portal."]],
+%Z are back the way you came, through the ancient portal."]],
       },
       othertime = {
          text = [[You rub your hands through your hair, hoping that the little ones on
@@ -2411,7 +2411,7 @@ With that, %l bows, and places his sword atop
 his gaze to you.
 
 "The time is ripe to recover the Amulet.  Return to %Z
-through the magic portal that transported you here so that you may
+through the ancient portal that transported you here so that you may
 achieve the destiny which awaits you."]],
       },
       othertime = {
@@ -2636,7 +2636,7 @@ As he looks up from %o he says:
          synopsis = "[Keep %o and return to %Z through the portal.]",
          output = "text",
          text = [["%oC is yours now.  %Z
-await your return through the magic portal that brought you here."]],
+await your return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.
@@ -2848,7 +2848,7 @@ May your steps be guided by %d, my %S."]],
          text = [["Careful, %p!  %oC might break, and that would be
 a tragic loss.  You are its keeper now, and the time has come to
 resume your search for the Amulet.  %Z await your
-return through the magic portal that brought you here."]],
+return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[Again you materialize near %ls abode.  You have a nagging feeling
@@ -2961,14 +2961,14 @@ owner, %l.]],
       },
       guardtalk_after = {
          "\"I have some eye of newt to trade, do you have a spare blind-worm's sting?\"",
-         "\"The magic portal now seems like it will remain stable for quite some time.\"",
+         "\"The ancient portal now seems like it will remain stable for quite some time.\"",
          "\"Have you noticed how much stronger %l is since %o was recovered?\"",
          "\"Thank %d!  We weren't positive you would defeat %n.\"",
          "\"I, too, will venture into the world, because %n was but one of many evils to be vanquished.\"",
       },
       guardtalk_before = {
          "\"Would you happen to have some eye of newt in that overstuffed pack, %s?\"",
-         "\"Ah, the spell to create the magic portal worked.  Outstanding!\"",
+         "\"Ah, the spell to create the ancient portal worked.  Outstanding!\"",
          "\"Hurry!  %lC may not survive that casting of the portal spell!\"",
          "\"The spells of %n were just too powerful for us to withstand.\"",
          "\"I, too, will venture into the world, because %n is but one of many evils to be vanquished.\"",
@@ -3073,7 +3073,7 @@ beams at you and says:
          output = "text",
          text = [["You are the keeper of %o now.  It is time to
 recover the /other/ Amulet.  %Z await your return through
-the magic portal which brought you here."]],
+the ancient portal which brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.

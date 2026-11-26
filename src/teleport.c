@@ -1475,7 +1475,7 @@ domagicportal(struct trap *ttmp)
     if (!on_level(&u.uz, &u.uz0))
         return;
 
-    You("activated a magic portal!");
+    You("activated an ancient portal!");
 
     /* Every plane-to-plane portal. Earth, Air, Fire, Water, and
        the gate into the Astral Plane. The cap and the soul.

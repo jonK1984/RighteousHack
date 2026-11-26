@@ -95,7 +95,7 @@ des.engraving({ coord = { 2,7 }, type = "engrave", text = "Close the door with '
 
 --
 
-des.engraving({ coord = { 4,5 }, type = "engrave", text = "You can leave the tutorial via the magic portal.", degrade = false });
+des.engraving({ coord = { 4,5 }, type = "engrave", text = "You can leave the tutorial via the ancient portal.", degrade = false });
 des.trap({ type = "magic portal", coord = { 4,4 }, seen = true });
 
 --
@@ -159,7 +159,7 @@ des.monster({ id = "lichen", coord = { 23,15 }, waiting = true, countbirth = fal
 
 --
 
-des.engraving({ coord = { 24,16 }, type = "engrave", text = "Now you know the very basics. You can leave the tutorial via the magic portal.", degrade = false });
+des.engraving({ coord = { 24,16 }, type = "engrave", text = "Now you know the very basics. You can leave the tutorial via the ancient portal.", degrade = false });
 
 des.engraving({ coord = { 26,16 }, type = "engrave", text = "Step into this portal to leave the tutorial", degrade = false });
 des.trap({ type = "magic portal", coord = { 27,16 }, seen = true });
@@ -181,7 +181,7 @@ des.engraving({ coord = { 23,11 }, type = "engrave", text = "Pick up this scroll
 
 --
 
-des.engraving({ coord = { 19,10 }, type = "engrave", text = "Another magic portal, a way to leave this tutorial", degrade = false });
+des.engraving({ coord = { 19,10 }, type = "engrave", text = "Another ancient portal, a way to leave this tutorial", degrade = false });
 des.trap({ type = "magic portal", coord = { 19,11 }, seen = true });
 
 --

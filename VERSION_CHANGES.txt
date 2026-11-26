@@ -237,7 +237,7 @@ not yet speak a line in their own language.
 
 2026-11-04
 Jacob's Ladder is a garden. Its fountains are living water,
-the same full cure as the Wilderness garden. A magic portal
+the same full cure as the Wilderness garden. An ancient portal
 there returns to the Sokoban level where you first arrive,
 on the stair you came in by. Six builders stand in the
 corners of the Sokoban prize room, off that room's stair.
