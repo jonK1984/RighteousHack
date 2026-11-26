@@ -1477,12 +1477,11 @@ domagicportal(struct trap *ttmp)
 
     You("activated a magic portal!");
 
-    /* prevent the poor shnook, whose amulet was stolen while in
-     * the endgame, from accidently triggering the portal to the
-     * next level, and thus losing the game
-     */
-    if (In_endgame(&u.uz) && !u.uhave.amulet) {
-        You_feel("dizzy for a moment, but nothing happens...");
+    /* Every plane-to-plane portal. Earth, Air, Fire, Water, and
+       the gate into the Astral Plane. The cap and the soul, or
+       the same refusal the stairs already use. */
+    if (In_endgame(&u.uz) && !sanctum_ascent_open()) {
+        sanctum_ascent_refused();
         return;
     }
 

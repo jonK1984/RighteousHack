@@ -278,6 +278,37 @@ class Bleat(unittest.TestCase):
         self.assertNotIn("Prove thyself worthy", earth)
         self.assertNotIn("\u2014", earth)
 
+    def test_each_plane_portal_wants_the_cap_and_the_soul(self):
+        tele = (ROOT / "src" / "teleport.c").read_text()
+        gate = tele.split("domagicportal(", 1)[1].split(
+            "target_level = ttmp->dst", 1)[0]
+        self.assertIn("In_endgame(&u.uz)", gate)
+        self.assertIn("!sanctum_ascent_open()", gate)
+        self.assertIn("sanctum_ascent_refused()", gate)
+        self.assertNotIn("dizzy for a moment, but nothing happens", gate)
+        self.assertNotIn("u.uhave.amulet", gate)
+        planes = {
+            "earth": "air",
+            "air": "fire",
+            "fire": "water",
+            "water": "astral",
+        }
+        for here, there in planes.items():
+            lua = (ROOT / "dat" / f"{here}.lua").read_text()
+            self.assertIn('type="portal"', lua)
+            self.assertIn(f'name="{there}"', lua)
+        soul = (ROOT / "src" / "hack.c").read_text()
+        carry = soul.split("carried_player_soul(void)", 1)[1].split(
+            "has_endgame_key(void)", 1)[0]
+        self.assertIn("for (otmp = gi.invent;", carry)
+        self.assertNotIn("cobj", carry)
+        key = soul.split("has_endgame_key(void)", 1)[1].split(
+            "sanctum_ascent_open(void)", 1)[0]
+        self.assertIn("carried_player_soul()", key)
+        potion = (ROOT / "src" / "potion.c").read_text()
+        self.assertIn("on_lvl_1 ? has_endgame_key()", potion)
+        self.assertIn("#define EDITLEVEL 20", PATCH)
+
 
 class Prompts(unittest.TestCase):
     def test_long_greetings_are_screens_and_the_question_is_short(self):

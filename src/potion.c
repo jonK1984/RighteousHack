@@ -1191,7 +1191,7 @@ peffect_gain_level(struct obj *otmp)
 
         gp.potion_unkn++;
         /* they went up a level */
-        if (on_lvl_1 ? u.uhave.amulet : Can_rise_up(u.ux, u.uy, &u.uz)) {
+        if (on_lvl_1 ? has_endgame_key() : Can_rise_up(u.ux, u.uy, &u.uz)) {
             int newlev;
             d_level newlevel;
 

@@ -5990,10 +5990,20 @@ carried_player_soul(void)
 {
     struct obj *otmp;
 
+    /* Open inventory only. A soul inside a container does not count,
+       the same as the Amulet's u.uhave.amulet flag. */
     for (otmp = gi.invent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == PLAYER_SOUL)
             return otmp;
     return (struct obj *) 0;
+}
+
+/* The soul in hand. Checked when the game asks, so a save that
+   already holds the soul needs no new field. */
+boolean
+has_endgame_key(void)
+{
+    return (boolean) (carried_player_soul() != 0);
 }
 
 /* Up out of the Sanctum after the hosts freeze. Both must hold now. */

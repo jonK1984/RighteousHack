@@ -4080,6 +4080,7 @@ extern void greed_leave_gems(void);
 extern boolean sanctum_no_hostility(void);
 extern boolean cap_of_salvation_worn(void);
 extern struct obj *carried_player_soul(void);
+extern boolean has_endgame_key(void);
 extern boolean sanctum_ascent_open(void);
 extern void sanctum_ascent_refused(void);
 extern void road_set_wizport(boolean);
