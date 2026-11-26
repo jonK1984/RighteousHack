@@ -88,14 +88,16 @@ class HeavenWar(unittest.TestCase):
         self.assertIn(
             "Nothing happens. Without the helmet of salvation, thou canst not offer thy soul.",
             pray)
+        self.assertIn("endcut_dragon()", read("src/heaven.c"))
         self.assertIn(
-            "Darkness covereth thee. Thou hast offered unto the Great Dragon, and the light of the Lord is gone out from thee.",
-            read("src/heaven.c"))
-        self.assertIn('Strcpy(svk.killer.name, "offered unto the Great Dragon")',
-                      read("src/heaven.c"))
+            "Thou foolishly layest thy soul upon the altar of the Great Dragon.",
+            read("src/endcut.c"))
+        self.assertIn(
+            'Strcpy(svk.killer.name, dragon_reason)',
+            read("src/endcut.c"))
         for line in (
             "Nothing happens. Without the helmet of salvation, thou canst not offer thy soul.",
-            "Darkness covereth thee. Thou hast offered unto the Great Dragon, and the light of the Lord is gone out from thee.",
+            "Thou foolishly layest thy soul upon the altar of the Great Dragon.",
             "The tail of the Great Dragon sweepeth, and striketh thee.",
             "The dragon casteth out of his mouth water as a flood.",
             "The accuser of the brethren speaketh against thee, and thy prayer is put off.",

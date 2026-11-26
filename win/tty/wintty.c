@@ -5735,6 +5735,84 @@ tty_narrow_way_splash(void)
     (void) fflush(stdout);
 }
 
+boolean
+tty_endcut_ok(void)
+{
+    return (boolean) (ttyDisplay && ttyDisplay->rows >= 24
+                      && ttyDisplay->cols >= 80);
+}
+
+static void
+tty_endcut_paint(winid window, int x, int y, int ch, int color, int inv)
+{
+    tty_curs(window, x, y);
+    if (iflags.use_color) {
+        if (ttyDisplay->color != NO_COLOR)
+            term_end_color();
+        ttyDisplay->color = (uint32) color;
+        if (color != NO_COLOR)
+            term_start_color(color);
+    }
+    if (inv)
+        term_start_attr(ATR_INVERSE);
+    if (ch == 1) {
+#if defined(ENHANCED_SYMBOLS) && (defined(WIN32) || defined(UNIX) || defined(MSDOS))
+        if ((tty_procs.wincap2 & WC2_U_UTF8STR) && SYMHANDLING(H_UTF8)) {
+            static uint8 psi[3] = { 0xCE, 0xA8, 0 };
+
+            g_pututf8(psi);
+        } else
+#endif
+            g_putch('D');
+    } else {
+        g_putch(ch ? ch : ' ');
+    }
+    if (inv)
+        term_end_attr(ATR_INVERSE);
+}
+
+void
+tty_endcut_begin(void)
+{
+    if (ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    ttyDisplay->color = NO_COLOR;
+    term_clear_screen();
+}
+
+void
+tty_endcut_cell(int x, int y, int ch, int color, int inv)
+{
+    tty_endcut_paint(BASE_WINDOW, x + 1, y, ch, color, inv);
+}
+
+void
+tty_endcut_mapcell(int x, int y, int ch, int color, int inv)
+{
+    if (WIN_MAP == WIN_ERR)
+        return;
+    tty_endcut_paint(WIN_MAP, (int) x, (int) y, ch, color, inv);
+}
+
+void
+tty_endcut_flush(void)
+{
+    if (ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    ttyDisplay->color = NO_COLOR;
+    (void) fflush(stdout);
+}
+
+void
+tty_endcut_end(void)
+{
+    term_end_attr(ATR_INVERSE);
+    if (ttyDisplay && ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    if (ttyDisplay)
+        ttyDisplay->color = NO_COLOR;
+}
+
 #endif /* TTY_GRAPHICS */
 
 #undef H2344_BROKEN

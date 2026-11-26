@@ -1151,6 +1151,8 @@ done(int how)
         svk.killer.format = KILLED_BY_AN; /* reset to 0 */
         return;
     }
+    if (how <= GENOCIDED && iflags.window_inited && !program_state.panicking)
+        endcut_heaven_death();
     really_done(how);
     /*NOTREACHED*/
 }
@@ -1420,7 +1422,9 @@ really_done(int how)
         if (!done_stopprint || flags.tombstone)
             endwin = create_nhwindow(NHW_TEXT);
 
-        if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
+        if (endcut_replace_tomb() && endwin != WIN_ERR)
+            endcut_memorial(endwin, endtime);
+        else if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
             outrip(endwin, how, endtime);
     } else
         done_stopprint = 1; /* just avoid any more output */

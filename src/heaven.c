@@ -453,7 +453,9 @@ heaven_fill_chest(struct obj *box)
             obj->quan = (long) rn1(gift->quanhi - gift->quanlo + 1,
                                     gift->quanlo);
         obj->known = obj->dknown = obj->bknown = 1;
-        discover_object(obj->otyp, TRUE, TRUE, FALSE);
+        /* A prophet-mode rehearsal must not teach the hero the gifts. */
+        if (!endcut_testing)
+            discover_object(obj->otyp, TRUE, TRUE, FALSE);
         obj->owt = weight(obj);
         (void) add_to_container(box, obj);
     }
@@ -490,12 +492,60 @@ heaven_place_temples(void)
 }
 
 void
+heaven_wake_lucifer(void)
+{
+    struct monst *mtmp, **mprev;
+
+    for (mprev = &gm.migrating_mons; (mtmp = *mprev) != 0; ) {
+        if (is_lucifer(mtmp) && (mtmp->mstrategy & STRAT_LUCIFER_WAIT)) {
+            *mprev = mtmp->nmon;
+            mtmp->nmon = 0;
+            mtmp->mstrategy &= ~STRAT_LUCIFER_WAIT;
+            lucifer_mark(mtmp);
+            mon_arrive(mtmp, -1);
+            if (mtmp->mx) {
+                mtmp->m_ap_type = M_AP_NOTHING;
+                newsym(mtmp->mx, mtmp->my);
+            }
+            return;
+        }
+        mprev = &mtmp->nmon;
+    }
+}
+
+void
+heaven_ready_host(void)
+{
+    struct monst *mtmp;
+    boolean has_lucifer, has_son;
+
+    heaven_factions();
+    has_lucifer = has_son = FALSE;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (is_lucifer(mtmp))
+            has_lucifer = TRUE;
+        if (mtmp->iswiz)
+            has_son = TRUE;
+    }
+    if (!has_lucifer) {
+        mtmp = makemon(&mons[PM_RED_DRAGON], 0, 0,
+                       MM_NOWAIT | MM_ANGRY | MM_NOMSG | MM_NOCOUNTBIRTH);
+        if (mtmp) {
+            lucifer_mark(mtmp);
+            mtmp->m_ap_type = M_AP_NOTHING;
+        }
+    }
+    if (!has_son)
+        (void) makemon(&mons[PM_WIZARD_OF_YENDOR], 0, 0,
+                       MM_NOWAIT | MM_ANGRY | MM_NOMSG | MM_NOCOUNTBIRTH);
+}
+
+void
 heaven_dragon_end(void)
 {
-    pline("Darkness covereth thee. Thou hast offered unto the Great Dragon, and the light of the Lord is gone out from thee.");
-    svk.killer.format = NO_KILLER_PREFIX;
-    Strcpy(svk.killer.name, "offered unto the Great Dragon");
-    done(DIED);
+    endcut_dragon();
 }
 
 void

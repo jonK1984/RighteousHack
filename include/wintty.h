@@ -233,6 +233,12 @@ extern void g_pututf8(uint8 *);
 #endif /* ENHANCED_SYMBOLS */
 extern void erase_tty_screen(void);
 extern void win_tty_init(int);
+extern boolean tty_endcut_ok(void);
+extern void tty_endcut_begin(void);
+extern void tty_endcut_cell(int, int, int, int, int);
+extern void tty_endcut_mapcell(int, int, int, int, int);
+extern void tty_endcut_flush(void);
+extern void tty_endcut_end(void);
 
 /* tty interface */
 extern void tty_init_nhwindows(int *, char **);

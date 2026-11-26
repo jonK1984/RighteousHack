@@ -28,6 +28,27 @@ static struct rnglist_t rnglist[] = {
     { rn2_on_display_rng, FALSE, { 0 } },       /* DISP */
 };
 
+static struct rnglist_t rng_backup[2];
+static boolean rng_have_backup;
+
+void
+rng_save(void)
+{
+    rng_backup[0] = rnglist[CORE];
+    rng_backup[1] = rnglist[DISP];
+    rng_have_backup = TRUE;
+}
+
+void
+rng_restore(void)
+{
+    if (!rng_have_backup)
+        return;
+    rnglist[CORE] = rng_backup[0];
+    rnglist[DISP] = rng_backup[1];
+    rng_have_backup = FALSE;
+}
+
 staticfn int
 whichrng(int (*fn)(int))
 {
@@ -73,6 +94,16 @@ rn2_on_display_rng(int x)
 }
 
 #else   /* USE_ISAAC64 */
+
+void
+rng_save(void)
+{
+}
+
+void
+rng_restore(void)
+{
+}
 
 /* "Rand()"s definition is determined by [OS]conf.h */
 #if defined(UNIX) || defined(RANDOM)

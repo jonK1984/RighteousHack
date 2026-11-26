@@ -1508,6 +1508,10 @@ dosacrifice(void)
             done(ESCAPED);
             return ECMD_TIME;
         }
+        if (Is_astralevel(&u.uz)) {
+            endcut_ascend();
+            return ECMD_TIME;
+        }
         u.uevent.ascended = 1;
         adjalign(10);
         pline("An invisible choir sings, and you are bathed in radiance...");
