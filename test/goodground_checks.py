@@ -225,6 +225,46 @@ class Approach(unittest.TestCase):
         self.assertIn("GX(38)", kept)
 
 
+class Bleat(unittest.TestCase):
+    def test_the_flock_bleats_and_the_count_stays_in_bits(self):
+        ordinary = (
+            'The lamb saith, \\"Baa.\\"',
+            'The sheep bleateth softly: \\"Baa.\\"',
+            '\\"Baaa,\\" saith the lamb, and looketh upon thee.',
+        )
+        rare = ('\\"Baa,\\" saith the lamb. It is the most profound '
+                'thing thou hast heard all day.')
+        for line in ordinary:
+            self.assertIn(line, GG)
+        self.assertIn(rare, GG)
+        self.assertNotIn("no wool to spare", GG)
+        self.assertNotIn("Go and count the others", GG)
+        self.assertNotIn("thou hast been judged", GG)
+        self.assertNotIn("\u2014", GG)
+        bleat = GG.split("flock_bleat(", 1)[1].split(
+            "goodground_chat(", 1)[0]
+        self.assertIn("goodground_here()", bleat)
+        self.assertIn("PM_SHEEP", bleat)
+        self.assertIn("calm_one(mtmp)", bleat)
+        self.assertIn("note_bleat()", bleat)
+        self.assertLess(bleat.index("note_bleat()"),
+                        bleat.index("bleat_count() >= 7 && !rn2(5)"))
+        self.assertIn("rn2(3)", bleat)
+        self.assertNotIn("GG_GUESS", bleat)
+        self.assertIn("#define GG_BLEAT_SHIFT 16", GG)
+        self.assertIn("GG_BLEAT_MASK", GG)
+        chat = GG.split("goodground_chat(struct monst *mtmp)", 1)[1]
+        self.assertLess(chat.index("flock_bleat(mtmp)"),
+                        chat.index("which_shepherd"))
+        you = (ROOT / "include" / "you.h").read_text()
+        struct = you.split("} ugood;", 1)[0].rsplit("{", 1)[1]
+        self.assertIn("unsigned long bits;", struct)
+        self.assertIn("xint16 sheep;", struct)
+        self.assertIn("unsigned short flock;", struct)
+        self.assertNotIn("bleat", struct)
+        self.assertIn("#define EDITLEVEL 20", PATCH)
+
+
 class Prompts(unittest.TestCase):
     def test_long_greetings_are_screens_and_the_question_is_short(self):
         self.assertIn("wayside_screen(gate_greeting)", GG)

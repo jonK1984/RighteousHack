@@ -571,6 +571,7 @@ struct you {
     int ufirewait;
     /* The Good Ground, the fourth trial. EDITLEVEL 20.
        bits: intro, gate, game, guess, done, then one bit per fig.
+       Bits 16..18 count chats with the flock, and stop at 7.
        sheep is the flock size, 5 to 10. flock marks which spots. */
     struct {
         unsigned long bits;

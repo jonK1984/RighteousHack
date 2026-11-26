@@ -13,6 +13,9 @@
 #define GG_GUESS 0x00000008UL
 #define GG_DONE  0x00000010UL
 #define GG_FIG   5 /* bits 5..15, one per fig square */
+/* Bits 16..18 count sheep chats, and stop at 7. Same word, no new field. */
+#define GG_BLEAT_SHIFT 16
+#define GG_BLEAT_MASK (7UL << GG_BLEAT_SHIFT)
 
 static const coord sheep_at[13] = {
     { 1, 1 }, { 15, 1 }, { 73, 1 }, { 59, 6 }, { 1, 19 }, { 73, 19 },
@@ -643,11 +646,54 @@ count_sheep(void)
     u.ugood.bits |= GG_GUESS;
 }
 
+static const char *const bleat_line[3] = {
+    "The lamb saith, \"Baa.\"",
+    "The sheep bleateth softly: \"Baa.\"",
+    "\"Baaa,\" saith the lamb, and looketh upon thee.",
+};
+
+static const char bleat_rare[] =
+    "\"Baa,\" saith the lamb. It is the most profound thing thou hast heard all day.";
+
+static int
+bleat_count(void)
+{
+    return (int) ((u.ugood.bits >> GG_BLEAT_SHIFT) & 7UL);
+}
+
+static void
+note_bleat(void)
+{
+    int n = bleat_count();
+
+    if (n >= 7)
+        return;
+    u.ugood.bits &= ~GG_BLEAT_MASK;
+    u.ugood.bits |= ((unsigned long) (n + 1) << GG_BLEAT_SHIFT);
+}
+
+/* A flock sheep only. Elsewhere they stay silent, as made. */
+static boolean
+flock_bleat(struct monst *mtmp)
+{
+    if (!goodground_here() || !mtmp || mtmp->data != &mons[PM_SHEEP])
+        return FALSE;
+    calm_one(mtmp);
+    note_bleat();
+    if (bleat_count() >= 7 && !rn2(5))
+        pline("%s", bleat_rare);
+    else
+        pline("%s", bleat_line[rn2(3)]);
+    return TRUE;
+}
+
 boolean
 goodground_chat(struct monst *mtmp)
 {
     int who;
 
+    if (flock_bleat(mtmp))
+        return TRUE;
     who = which_shepherd(mtmp);
     if (who < 0)
         return FALSE;
