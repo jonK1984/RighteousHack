@@ -518,7 +518,7 @@ gain_guardian_angel(void)
         else
             You_feel("a soft voice:");
         SetVoice((struct monst *) 0, 0, 80, voice_deity);
-        verbalize("Thou hast been worthy of me!");
+        verbalize("Well hast thou fought; behold, I send thee help from the sanctuary.");
         mm.x = u.ux;
         mm.y = u.uy;
         if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL])

@@ -76,6 +76,16 @@ class HeavenPlane(unittest.TestCase):
         lua = read("dat/astral.lua")
         self.assertIn(
             'des.message("You arrive on the Plane of Heaven!")', lua)
+        angel = (
+            'verbalize("Well hast thou fought; behold, I send thee help '
+            'from the sanctuary.");'
+        )
+        minion = read("src/minion.c")
+        self.assertIn(angel, minion)
+        self.assertNotIn("Thou hast been worthy of me!", minion)
+        self.assertIn('pline("A voice whispers:")', minion)
+        self.assertIn('You_feel("a soft voice:")', minion)
+        self.assertNotIn("\u2014", angel)
         arrival = (
             "Here standeth the high altar of the Lord, as it hath stood "
             "from the beginning. But the Great Dragon hath raised up an "
