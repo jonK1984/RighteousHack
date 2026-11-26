@@ -237,6 +237,7 @@
     <ClCompile Include="$(SrcDir)thorns.c" />
     <ClCompile Include="$(SrcDir)goodground.c" />
     <ClCompile Include="$(SrcDir)steedfire.c" />
+    <ClCompile Include="$(SrcDir)heaven.c" />
     <ClCompile Include="$(SrcDir)wayside.c" />
     <ClCompile Include="$(SrcDir)weapon.c" />
     <ClCompile Include="$(SrcDir)were.c" />
