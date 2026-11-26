@@ -1478,10 +1478,15 @@ domagicportal(struct trap *ttmp)
     You("activated a magic portal!");
 
     /* Every plane-to-plane portal. Earth, Air, Fire, Water, and
-       the gate into the Astral Plane. The cap and the soul, or
-       the same refusal the stairs already use. */
+       the gate into the Astral Plane. The cap and the soul.
+       The refusal is its own dizzy line, not the stair text. */
     if (In_endgame(&u.uz) && !sanctum_ascent_open()) {
-        sanctum_ascent_refused();
+        if (cap_of_salvation_worn() && !has_endgame_key())
+            pline("Nothing happens. Without thy soul, thou feelest dizzy.");
+        else if (!cap_of_salvation_worn() && has_endgame_key())
+            pline("Nothing happens. Without the helmet of salvation, thou feelest dizzy.");
+        else
+            pline("Nothing happens. Without thy soul and the helmet of salvation, thou feelest dizzy.");
         return;
     }
 

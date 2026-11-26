@@ -284,9 +284,24 @@ class Bleat(unittest.TestCase):
             "target_level = ttmp->dst", 1)[0]
         self.assertIn("In_endgame(&u.uz)", gate)
         self.assertIn("!sanctum_ascent_open()", gate)
-        self.assertIn("sanctum_ascent_refused()", gate)
-        self.assertNotIn("dizzy for a moment, but nothing happens", gate)
+        self.assertNotIn("sanctum_ascent_refused()", gate)
+        self.assertIn(
+            "Nothing happens. Without the helmet of salvation, thou feelest dizzy.",
+            gate)
+        self.assertIn(
+            "Nothing happens. Without thy soul, thou feelest dizzy.",
+            gate)
+        self.assertIn(
+            "Nothing happens. Without thy soul and the helmet of salvation, thou feelest dizzy.",
+            gate)
+        self.assertLess(
+            gate.index("cap_of_salvation_worn() && !has_endgame_key()"),
+            gate.index("Nothing happens. Without thy soul, thou feelest dizzy."))
+        self.assertLess(
+            gate.index("!cap_of_salvation_worn() && has_endgame_key()"),
+            gate.index("Nothing happens. Without the helmet of salvation, thou feelest dizzy."))
         self.assertNotIn("u.uhave.amulet", gate)
+        self.assertNotIn("\u2014", gate)
         planes = {
             "earth": "air",
             "air": "fire",
