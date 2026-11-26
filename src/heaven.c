@@ -663,7 +663,7 @@ heaven_archangels(struct monst *lucifer)
         int lev;
         int hp;
     } four[] = {
-        { "Michael", 30, 220 },
+        { "Michael", 45, 240 },
         { "Gabriel", 24, 160 },
         { "Raphael", 24, 160 },
         { "Uriel", 24, 160 },

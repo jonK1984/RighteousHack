@@ -99,7 +99,7 @@ class HeavenHost(unittest.TestCase):
         self.assertIn("fallen < 3", heaven)
         self.assertIn("priestxy[12]", heaven)
         self.assertIn("n < 2", heaven)
-        self.assertIn('{ "Michael", 30, 220 }', heaven)
+        self.assertIn('{ "Michael", 45, 240 }', heaven)
         self.assertIn('{ "Gabriel", 24, 160 }', heaven)
         self.assertIn('{ "Raphael", 24, 160 }', heaven)
         self.assertIn('{ "Uriel", 24, 160 }', heaven)
