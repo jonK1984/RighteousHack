@@ -5684,7 +5684,7 @@ handler_disclose(void)
        disclosure_options in decl.c */
     static const char *const disclosure_names[] = {
         "inventory", "attributes", "vanquished",
-        "genocides", "conduct",    "overview",
+        "banishments", "conduct",    "overview",
     };
     int disc_cat[NUM_DISCLOSURE_OPTIONS];
     int pick_cnt, pick_idx, opt_idx;

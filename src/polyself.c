@@ -240,7 +240,7 @@ polyman(const char *fmt, const char *arg)
             Strcpy(svk.killer.name, kptr->name);
         } else {
             svk.killer.format = KILLED_BY;
-            Strcpy(svk.killer.name, "self-genocide");
+            Strcpy(svk.killer.name, "self-banishment");
         }
         dealloc_killer(kptr);
         done(GENOCIDED);

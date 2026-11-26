@@ -116,7 +116,7 @@ sanity_check_single_mon(
             return;
         }
         if (chk_geno && (svm.mvitals[mndx].mvflags & G_GENOD) != 0)
-            impossible("genocided %s in play (%s)",
+            impossible("banished %s in play (%s)",
                        pmname(mptr, Mgender(mtmp)), msg);
         if (mtmp->mtame && !mtmp->mpeaceful)
             impossible("tame %s is not peaceful (%s)",
@@ -2917,7 +2917,7 @@ lifesaved_monster(struct monst *mtmp)
         if (!surviver) {
             /* genocided monster can't be life-saved */
             if (cansee(mtmp->mx, mtmp->my))
-                pline("Unfortunately, %s is still genocided...",
+                pline("Unfortunately, %s is still banished...",
                       mon_nam(mtmp));
             mtmp->mhp = 0;
         }

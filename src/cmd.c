@@ -653,8 +653,8 @@ doextlist(void)
                     && (efp->flags & GENERALCMD) != 0 /* minor optimization */
                     && strstri(cmd_desc, "extinct"))
                     cmd_desc = strsubst(strcpy(descbuf, cmd_desc),
-                                        " been genocided or become extinct",
-                                        " been genocided");
+                                        " been banished or become extinct",
+                                        " been banished");
                 /* if searching, skip this command if it doesn't match */
                 if (*searchbuf
                     /* first try case-insensitive substring match */
@@ -1731,7 +1731,7 @@ struct ext_func_tab extcmdlist[] = {
     { M('f'), "force", "force a lock",
               doforce, AUTOCOMPLETE, NULL },
     { M('g'), "genocided",
-              "list monsters that have been genocided or become extinct",
+              "list monsters that have been banished or become extinct",
               dogenocided,
               IFBURIED | AUTOCOMPLETE | GENERALCMD | CMD_M_PREFIX, NULL },
     { ';',    "glance", "show what type of thing a map symbol corresponds to",
