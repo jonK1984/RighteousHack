@@ -76,6 +76,41 @@ def const_name(src, pos):
     return match.group(1) if match else ""
 
 
+def take_folded(text, width):
+    """Same fold as questpgr.c take_folded. A space before a newline
+    is not a blank line. A blank line in the source stays one blank."""
+    lines = []
+    i = 0
+    n = len(text)
+    while i < n:
+        if text[i] == "\n":
+            lines.append("")
+            i += 1
+            continue
+        end = i
+        while end < n and text[end] != "\n" and end - i < width:
+            end += 1
+        cut = end
+        if end < n and text[end] != "\n":
+            while cut > i and text[cut] != " ":
+                cut -= 1
+            if cut <= i:
+                cut = end
+        while cut > i and text[cut - 1] == " ":
+            cut -= 1
+        if cut <= i:
+            cut = end if end > i else i + 1
+        if cut - i > width:
+            cut = i + width
+        lines.append(text[i:cut])
+        i = cut
+        while i < n and text[i] == " ":
+            i += 1
+        if i < n and text[i] == "\n":
+            i += 1
+    return lines
+
+
 def wrap_para(text, cols):
     lines = []
     for para in text.split("\n"):
@@ -111,6 +146,41 @@ class Wrap(unittest.TestCase):
             self.assertFalse(line.endswith(" ") and line[:-1].endswith(" "))
         self.assertEqual(" ".join(shown).split(), believer.split())
         self.assertIn("I thank thee, friend.", " ".join(shown))
+
+    def test_a_space_before_a_newline_is_not_a_blank_line(self):
+        intro = (
+            "As you wander the windswept hills, you come upon the mouth \n"
+            "of an ancient cave. The entrance is hewn smooth, as though "
+            "by no human hand, \n"
+            "and upon the rock above the opening these words are engraved."
+        )
+        shown = take_folded(intro, 100)
+        self.assertEqual(shown, [
+            "As you wander the windswept hills, you come upon the mouth",
+            "of an ancient cave. The entrance is hewn smooth, as though "
+            "by no human hand,",
+            "and upon the rock above the opening these words are engraved.",
+        ])
+        self.assertNotIn("", shown)
+        # A real paragraph break stays a single blank line.
+        self.assertEqual(
+            take_folded("One sentence.\n\nTwo sentences.", 80),
+            ["One sentence.", "", "Two sentences."])
+        # A long line folds on a space and does not invent a blank.
+        long = ("bretheren " * 12).strip()
+        folded = take_folded(long, 30)
+        self.assertTrue(all(folded))
+        self.assertTrue(all(len(line) <= 30 for line in folded))
+        quest = (ROOT / "src" / "questpgr.c").read_text()
+        folder = quest.split("take_folded(", 1)[1].split(
+            "deliver_by_pline(", 1)[0]
+        self.assertIn("while (*s == ' ')", folder)
+        self.assertIn("if (*s == '\\n')", folder)
+        self.assertNotIn("if (*s == ' ' || *s == '\\n')", folder)
+        endcut = (ROOT / "src" / "endcut.c").read_text()
+        self.assertIn("cols = CO - 1", endcut)
+        tty = (ROOT / "win" / "tty" / "wintty.c").read_text()
+        self.assertIn("(CO > 20) ? CO - 1 : 79", tty)
 
     def test_the_display_paths_fold(self):
         endcut = (ROOT / "src" / "endcut.c").read_text()

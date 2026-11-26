@@ -450,7 +450,12 @@ take_folded(char *dst, int dstmax, const char **msgp)
     (void) memcpy(dst, s, (size_t) cut);
     dst[cut] = '\0';
     s += cut;
-    if (*s == ' ' || *s == '\n')
+    /* A source line often ends with a space before its newline.
+       Skip those spaces and that one newline together. Leaving the
+       newline behind makes the next piece a blank line. */
+    while (*s == ' ')
+        s++;
+    if (*s == '\n')
         s++;
     *msgp = s;
 }
