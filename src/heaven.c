@@ -461,40 +461,74 @@ heaven_fill_chest(struct obj *box)
     box->owt = weight(box);
 }
 
-/* The verse is approved. The narration under it is a placeholder
-   until Jon sends the final wording. Do not treat PLACEHOLDER as
-   player text that has been approved. */
+/* Locked. The verse is quoted. The rest is not. A blank line
+   separates the paragraphs. Each archangel is its own line. */
 static const char heaven_host_text[] =
     "\"And there was war in heaven: Michael and his angels fought against the dragon; and the dragon fought and his angels.\"\n"
     "\n"
-    "PLACEHOLDER";
+    "In the midst of the battle the heavens are rent asunder, and the sound of a trumpet pierceth the air. Four mighty archangels descend upon the field of war, clothed in white and girded with gold, their armour shining as the sun and their swords as flames of fire.\n"
+    "\n"
+    "Michael, the great captain of the host, set over the best of mankind and over chaos.\n"
+    "Gabriel, set over Paradise, and over the serpents, and over the Cherubim.\n"
+    "Raphael, set over the spirits of men.\n"
+    "Uriel, set over the world and over Tartarus.\n"
+    "\n"
+    "Where they set their feet the host of the Great Dragon trembleth, for they are come to execute the righteous judgment of the Lord upon all that wage war against heaven.";
+
+/* The tty text window drops the end of a line once it passes the
+   width of the screen. Fold on a space so every word is shown.
+   A blank line in the source stays a blank line. */
+static void
+heaven_put_line(winid win, const char *line)
+{
+    size_t len = strlen(line);
+
+    if (!len) {
+        putstr(win, 0, "");
+        return;
+    }
+    while (len > 78) {
+        size_t n = 78, i;
+        char buf[80];
+
+        while (n > 0 && line[n] != ' ')
+            n--;
+        if (!n)
+            n = 78;
+        for (i = 0; i < n; i++)
+            buf[i] = line[i];
+        buf[n] = '\0';
+        putstr(win, 0, buf);
+        line += n;
+        len -= n;
+        if (len && *line == ' ') {
+            line++;
+            len--;
+        }
+    }
+    putstr(win, 0, line);
+}
 
 static void
 heaven_blackout(const char *text)
 {
     winid win;
-    char buf[BUFSZ];
-    const char *p, *nl;
+    char line[512];
+    const char *p;
 
     win = create_nhwindow(NHW_TEXT);
     p = text;
     while (p && *p) {
-        nl = strchr(p, '\n');
-        if (!nl) {
-            putstr(win, 0, p);
-            break;
-        }
-        if (nl == p)
-            putstr(win, 0, "");
-        else {
-            size_t len = (size_t) (nl - p);
+        const char *nl = strchr(p, '\n');
+        size_t len = nl ? (size_t) (nl - p) : strlen(p);
 
-            if (len >= sizeof buf)
-                len = sizeof buf - 1;
-            (void) strncpy(buf, p, len);
-            buf[len] = '\0';
-            putstr(win, 0, buf);
-        }
+        if (len >= sizeof line)
+            len = sizeof line - 1;
+        (void) strncpy(line, p, len);
+        line[len] = '\0';
+        heaven_put_line(win, line);
+        if (!nl)
+            break;
         p = nl + 1;
     }
     display_nhwindow(win, TRUE);
