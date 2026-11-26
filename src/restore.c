@@ -943,6 +943,10 @@ dorecover(NHFILE *nhfp)
     u.usteed_mid = u.ustuck_mid = 0;
     program_state.beyond_savefile_load = 1;
 
+    /* The loaded level keeps its old floor. Put the stairs back
+       before the first picture, so '<' works without a new game. */
+    goodground_repair();
+
     docrt();
     clear_nhwindow(WIN_MESSAGE);
 

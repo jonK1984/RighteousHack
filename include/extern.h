@@ -4133,6 +4133,7 @@ extern boolean goodground_no_landing(coordxy, coordxy);
 extern int goodground_fig(coordxy, coordxy);
 extern void goodground_setup(void);
 extern void goodground_tick(void);
+extern void goodground_repair(void);
 extern void goodground_note_ascent(void);
 extern void goodground_sheep_died(struct monst *);
 extern int goodground_eat_fig(void);

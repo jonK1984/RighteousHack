@@ -1046,8 +1046,8 @@ confirm_answer(int which)
         Sprintf(line,
                 "'%s,' the %s villager repeats softly. 'I hear it now, and I understand.' %s",
                 ws_answer[which], ws_adj[which], tail);
-    pline("%s", line);
-    /* The count line is already on the message line, including
+    wayside_screen(line);
+    /* The count is in the screen above, including
        "(0 riddles remain.)" for the last answer. The blackout follows. */
     if (riddles_left() == 0)
         wayside_screen(
@@ -1115,10 +1115,10 @@ note_wrong_answer(int which)
         return;
     }
     if (n == 4)
-        pline("Thy folly multiplieth, and thy footing groweth unsure. The fool walketh in darkness; twice more mayest thou err, and then thy foolishness shall be thine undoing.");
+        wayside_screen("Thy folly multiplieth, and thy footing groweth unsure. The fool walketh in darkness; twice more mayest thou err, and then thy foolishness shall be thine undoing.");
     if (n == 5) {
         halve_current_hp();
-        pline("Thy strength faileth thee, for thine own folly hath wounded thee. Pride goeth before destruction. One error more, and thou shalt fall by thine own hand.");
+        wayside_screen("Thy strength faileth thee, for thine own folly hath wounded thee. Pride goeth before destruction. One error more, and thou shalt fall by thine own hand.");
     }
     start_punishment();
 }

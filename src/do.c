@@ -2103,6 +2103,9 @@ goto_level(
     vision_reset(); /* reset the blockages */
     reset_glyphmap(gm_levelchange);
     notice_mon_off(); /* not noticing monsters yet! */
+    /* A saved Good Ground may have floor where the stairs belong.
+       Plant them before the map is drawn. */
+    goodground_repair();
     docrt(); /* does a full vision recalc */
     flush_screen(-1);
 

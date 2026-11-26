@@ -65,6 +65,18 @@ static const char leave_unfinished[] =
     "\n"
     "Thou hast fled the dungeon, but thou hast not been saved. There is no escape apart from the Road.";
 
+static const char gate_greeting[] =
+    "Peace be unto thee, pilgrim. The hard roads are behind thee now. Beyond this gate groweth the fig tree of the good ground. Wilt thou sit with me a while and play at counting?";
+
+static const char flock_greeting[] =
+    "Welcome to the good ground, where the seed bringeth forth an hundredfold. I keep the flock upon this land. Canst thou tell me how many of my sheep graze here? Count well, both near and far, for some are hidden. Wilt thou answer?";
+
+static const char leave_ask[] =
+    "Beyond lieth the open world, and thou art not ready. Wilt thou truly leave the dungeon?";
+
+static const char count_rules[] =
+    "We shall count by turns unto one and twenty. In thy turn thou mayest say one, two, or three numbers. Whosoever must say twenty and one loseth. I shall begin.";
+
 static const char leave_strayed[] =
     "Thou climbest out into the open air, and thou rememberest the Road thou didst once walk.\n"
     "\n"
@@ -254,6 +266,61 @@ calm_one(struct monst *mtmp)
         mtmp->mhp = mtmp->mhpmax;
 }
 
+/* The gate's only outside neighbor is map (37, 17). Once the gate
+   is open the shepherd stands one step west of that square, or east
+   if the west square is taken, so the path stays clear. */
+static boolean
+side_free(coordxy x, coordxy y)
+{
+    if (!isok(x, y) || u_at(x, y))
+        return FALSE;
+    if (levl[x][y].typ != ROOM && levl[x][y].typ != CORR)
+        return FALSE;
+    if (MON_AT(x, y))
+        return FALSE;
+    return TRUE;
+}
+
+static void
+gate_shepherd_home(coordxy *x, coordxy *y)
+{
+    struct monst *mtmp;
+
+    *x = GX(37);
+    *y = 17;
+    if (!gate_open())
+        return;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) || mtmp->data != &mons[PM_SHEPHERD])
+            continue;
+        if (mtmp->my == 17
+            && (mtmp->mx == GX(36) || mtmp->mx == GX(38))) {
+            *x = mtmp->mx;
+            *y = 17;
+            return;
+        }
+    }
+    if (side_free(GX(36), 17)) {
+        *x = GX(36);
+        return;
+    }
+    if (side_free(GX(38), 17))
+        *x = GX(38);
+}
+
+static boolean
+shepherd_home_square(coordxy x, coordxy y)
+{
+    if (x == GX(39) && y == 12)
+        return TRUE;
+    if (y != 17)
+        return FALSE;
+    /* Closed: he waits on the approach. Open: only the squares beside it. */
+    if (!gate_open())
+        return (boolean) (x == GX(37));
+    return (boolean) (x == GX(36) || x == GX(38));
+}
+
 static struct monst *
 standing_at(struct permonst *pm, coordxy x, coordxy y)
 {
@@ -323,8 +390,12 @@ plant_flock(void)
             calm_one(mtmp);
     }
     for (i = 0; i < 2; i++) {
-        x = GX(i ? 39 : 37);
-        y = i ? 12 : 17;
+        if (i == 0)
+            gate_shepherd_home(&x, &y);
+        else {
+            x = GX(39);
+            y = 12;
+        }
         mtmp = standing_at(&mons[PM_SHEPHERD], x, y);
         if (mtmp) {
             calm_one(mtmp);
@@ -334,8 +405,7 @@ plant_flock(void)
         for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
             if (DEADMONSTER(mtmp) || mtmp->data != &mons[PM_SHEPHERD])
                 continue;
-            if ((mtmp->mx == GX(37) && mtmp->my == 17)
-                || (mtmp->mx == GX(39) && mtmp->my == 12))
+            if (shepherd_home_square(mtmp->mx, mtmp->my))
                 continue;
             loose = mtmp;
             break;
@@ -353,26 +423,58 @@ plant_flock(void)
     }
 }
 
+/* '<' and '>' in the map are not terrain, and mkstairs() refuses both
+   ends of a one-level branch. Plant them. A save that was made before
+   they existed is repaired the same way. */
+static void
+plant_one(coordxy x, coordxy y, boolean up, d_level *dest)
+{
+    stairway *st;
+    schar want = up ? LA_UP : LA_DOWN;
+
+    if (!isok(x, y))
+        return;
+    if (levl[x][y].typ != STAIRS || levl[x][y].ladder != want) {
+        levl[x][y].typ = STAIRS;
+        levl[x][y].ladder = want;
+        if (!gi.in_mklev)
+            newsym(x, y);
+    }
+    st = stairway_at(x, y);
+    if (!st)
+        stairway_add(x, y, up, FALSE, dest);
+    else {
+        st->up = up;
+        st->isladder = FALSE;
+        assign_level(&st->tolev, dest);
+    }
+}
+
 static void
 aim_stairs(void)
 {
     d_level back, onward;
-    stairway *st;
 
     if (!trial_link("goodground", &back, &onward)) {
         back = valley_level;
         onward = valley_level;
     }
-    /* Down at the foot, up at the exit. */
-    for (st = gs.stairs; st; st = st->next) {
-        if (st->sx == GX(4) && st->sy == 10) {
-            st->up = FALSE;
-            assign_level(&st->tolev, &back);
-        } else if (st->sx == GX(37) && st->sy == 6) {
-            st->up = TRUE;
-            assign_level(&st->tolev, &onward);
-        }
-    }
+    /* Down at the foot, map (4, 10). Up in the garden, map (37, 6). */
+    plant_one(GX(4), 10, FALSE, &back);
+    plant_one(GX(37), 6, TRUE, &onward);
+}
+
+/* Level creation, every turn, and arrival into a save that predates
+   the planted stairs. The gate shepherd is stepped aside here too. */
+void
+goodground_repair(void)
+{
+    if (!goodground_here())
+        return;
+    aim_stairs();
+    plant_flock();
+    if (gate_open())
+        open_gate();
 }
 
 void
@@ -381,10 +483,7 @@ goodground_setup(void)
     if (!goodground_here())
         return;
     seal_level();
-    aim_stairs();
-    plant_flock();
-    if (gate_open())
-        open_gate();
+    goodground_repair();
 }
 
 void
@@ -397,9 +496,7 @@ goodground_tick(void)
         u.ugood.bits |= GG_INTRO;
     }
     seal_level();
-    plant_flock();
-    if (gate_open())
-        open_gate();
+    goodground_repair();
 }
 
 void
@@ -464,7 +561,7 @@ play_twenty_one(void)
     int cur = 0;
     char list[80];
 
-    pline("We shall count by turns unto one and twenty. In thy turn thou mayest say one, two, or three numbers. Whosoever must say twenty and one loseth. I shall begin.");
+    wayside_screen(count_rules);
     while (cur < 21) {
         int legal = 21 - cur;
         int n, ch;
@@ -478,7 +575,7 @@ play_twenty_one(void)
         pline("The shepherd saith %s.", list);
         cur += n;
         if (cur >= 21) {
-            pline("The shepherd laugheth, for twenty and one falleth to him. 'Well counted! Thy patience hath borne fruit.' Thou feelest much stronger!");
+            wayside_screen("The shepherd laugheth, for twenty and one falleth to him. 'Well counted! Thy patience hath borne fruit.' Thou feelest much stronger!");
             grant_hp(20);
             break;
         }
@@ -502,7 +599,7 @@ play_twenty_one(void)
         pline("Thou sayest %s.", list);
         cur += n;
         if (cur >= 21) {
-            pline("'Twenty and one is thine to say. Fear not, friend, no gate was ever barred for a game.' The shepherd unlocketh the gate.");
+            wayside_screen("'Twenty and one is thine to say. Fear not, friend, no gate was ever barred for a game.' The shepherd unlocketh the gate.");
             break;
         }
     }
@@ -515,10 +612,12 @@ which_shepherd(struct monst *mtmp)
 {
     if (!mtmp || mtmp->data != &mons[PM_SHEPHERD])
         return -1;
-    if (mtmp->mx == GX(37) && mtmp->my == 17)
-        return 0;
     if (mtmp->mx == GX(39) && mtmp->my == 12)
         return 1;
+    /* The gate shepherd, on the approach or stepped aside of it. */
+    if (mtmp->my == 17
+        && (mtmp->mx == GX(36) || mtmp->mx == GX(37) || mtmp->mx == GX(38)))
+        return 0;
     return -1;
 }
 
@@ -558,7 +657,8 @@ goodground_chat(struct monst *mtmp)
             pline("The gate standeth open. Go in peace.");
             return TRUE;
         }
-        if (y_n("Peace be unto thee, pilgrim. The hard roads are behind thee now. Beyond this gate groweth the fig tree of the good ground. Wilt thou sit with me a while and play at counting?") != 'y')
+        wayside_screen(gate_greeting);
+        if (y_n("Wilt thou sit with me a while and play at counting?") != 'y')
             return TRUE;
         play_twenty_one();
         return TRUE;
@@ -567,7 +667,8 @@ goodground_chat(struct monst *mtmp)
         pline("Go in peace, faithful one.");
         return TRUE;
     }
-    if (y_n("Welcome to the good ground, where the seed bringeth forth an hundredfold. I keep the flock upon this land. Canst thou tell me how many of my sheep graze here? Count well, both near and far, for some are hidden. Wilt thou answer?") != 'y')
+    wayside_screen(flock_greeting);
+    if (y_n("Wilt thou answer?") != 'y')
         return TRUE;
     count_sheep();
     return TRUE;
@@ -593,7 +694,8 @@ salvation_climb(stairway *stway)
         goto_level(&dest, TRUE, FALSE, FALSE);
         return TRUE;
     }
-    if (y_n("Beyond lieth the open world, and thou art not ready. Wilt thou truly leave the dungeon?") != 'y')
+    wayside_screen(leave_ask);
+    if (y_n("Wilt thou truly leave the dungeon?") != 'y')
         return TRUE;
     if (goodground_trial_done()) {
         wayside_screen(leave_strayed);

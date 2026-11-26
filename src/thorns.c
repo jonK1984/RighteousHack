@@ -608,12 +608,17 @@ thorns_chat(struct monst *mtmp)
         return FALSE;
     calm_tempter(mtmp);
     def = &thorns[who];
-    pline("%s", def->line);
-    if (u.uthorns.given & (1UL << who)) {
-        pline("I have already given thee my gift.");
-        return TRUE;
+    {
+        char speech[BUFSZ + BUFSZ];
+
+        if (u.uthorns.given & (1UL << who)) {
+            wayside_screen(def->line);
+            pline("I have already given thee my gift.");
+            return TRUE;
+        }
+        Snprintf(speech, sizeof speech, "%s\n\n%s", def->line, def->offer);
+        wayside_screen(speech);
     }
-    pline("%s", def->offer);
     if (y_n("Wilt thou accept this gift?") != 'y')
         return TRUE; /* browsing is free */
     if (u.uthorns.accepts >= 3) {

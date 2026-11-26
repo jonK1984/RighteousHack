@@ -627,7 +627,7 @@ deliver(int who)
         line = "The young believer turneth to thee with tears in his eyes. 'I would have perished in my haste. But let patience have her perfect work, that ye may be perfect and entire, wanting nothing. Thou hast taught me patience, and now my faith hath taken root. I thank thee, friend.'";
     else
         line = "The mother lifteth her child toward the light. 'The LORD is my light and my salvation; whom shall I fear? Thou didst not leave us in the darkness. God bless thee, friend.'";
-    pline("%s", line);
+    wayside_screen(line);
     /* Once per traveler, for the whole game. A later sentence could
        be added here, after the summit speech. */
     grant_summit_hp(who);
@@ -736,14 +736,14 @@ check_triggers(struct monst *mtmp, int who)
 
     if (who == SG_OLD && !(sg_bits() & (SG_HEALED | SG_SICK))
         && on_list(sg_ss, (int) SIZE(sg_ss), x, y)) {
-        pline("The old man sinketh to his knees, pale and trembling. 'My strength faileth me! Pray for me, or lay hands upon me, for I shall not last long!'");
+        wayside_screen("The old man sinketh to his knees, pale and trembling. 'My strength faileth me! Pray for me, or lay hands upon me, for I shall not last long!'");
         u.ustony.sick = 2;
         sg_set(sg_bits() | SG_SICK | SG_FRESH);
         return;
     }
     if (who == SG_YOUNG && !(sg_bits() & SG_CALMED)) {
         if (!(sg_bits() & SG_WARN_Y) && on_list(sg_w, (int) SIZE(sg_w), x, y)) {
-            pline("The young believer's eyes burn with zeal. 'I can wait no longer! If thou wilt not hasten, I shall go on without thee!'");
+            wayside_screen("The young believer's eyes burn with zeal. 'I can wait no longer! If thou wilt not hasten, I shall go on without thee!'");
             sg_set(sg_bits() | SG_WARN_Y);
             return;
         }
@@ -764,7 +764,7 @@ check_triggers(struct monst *mtmp, int who)
                 || (unlit > 0
                     && on_list(sg_band[unlit - 1], sg_band_n[unlit - 1], x, y)))) {
             sg_set((sg_bits() & ~(7UL << 18)) | ((unsigned long) (unlit + 1) << 18));
-            pline("The mother clutcheth her child and trembleth. 'They will take my child! I cannot go on, I must turn back!'");
+            wayside_screen("The mother clutcheth her child and trembleth. 'They will take my child! I cannot go on, I must turn back!'");
         }
         for (i = 0; i < 4; i++) {
             if (band_lit(i))
@@ -912,12 +912,12 @@ stony_chat(struct monst *mtmp)
     }
     if (who == SG_YOUNG) {
         if (!(sg_bits() & SG_CHAT)) {
-            pline("The young believer paceth restlessly. 'Why do we wait? I could be at the summit already! I cannot abide this slowness, my heart burneth within me!'");
+            wayside_screen("The young believer paceth restlessly. 'Why do we wait? I could be at the summit already! I cannot abide this slowness, my heart burneth within me!'");
             sg_set(sg_bits() | SG_CHAT);
         } else if (rn2(2)) {
-            pline("'Make haste, make haste! The LORD is up there, and I will not tarry for anyone. Mine eyes are fixed upon the summit, and my feet will not be still!'");
+            wayside_screen("'Make haste, make haste! The LORD is up there, and I will not tarry for anyone. Mine eyes are fixed upon the summit, and my feet will not be still!'");
         } else {
-            pline("The young believer paceth restlessly. 'Why do we wait? I could be at the summit already! I cannot abide this slowness, my heart burneth within me!'");
+            wayside_screen("The young believer paceth restlessly. 'Why do we wait? I could be at the summit already! I cannot abide this slowness, my heart burneth within me!'");
         }
     }
     if (esc && esc != who) {

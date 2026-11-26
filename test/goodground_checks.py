@@ -140,6 +140,113 @@ class Map(unittest.TestCase):
         self.assertIn("hostdnum[4]", you)
 
 
+class Stairs(unittest.TestCase):
+    def test_both_stairs_are_planted_on_creation_and_on_arrival(self):
+        """mkstairs refuses both ends of a one-level branch, and the
+        map characters '<' and '>' are not terrain. The stairs are
+        planted in code, including when a saved level is entered."""
+        plant = GG.split("plant_one(", 1)[1].split("aim_stairs(void)", 1)[0]
+        self.assertIn("levl[x][y].typ = STAIRS", plant)
+        self.assertIn("stairway_add(x, y, up, FALSE, dest)", plant)
+        aim = GG.split("aim_stairs(void)", 1)[1].split(
+            "goodground_repair(void)", 1)[0]
+        self.assertIn("plant_one(GX(4), 10, FALSE, &back)", aim)
+        self.assertIn("plant_one(GX(37), 6, TRUE, &onward)", aim)
+        self.assertNotIn("mkstairs", aim)
+        repair = GG.split("goodground_repair(void)", 1)[1].split(
+            "goodground_setup", 1)[0]
+        self.assertIn("aim_stairs()", repair)
+        setup = GG.split("goodground_setup(void)", 1)[1].split(
+            "goodground_tick", 1)[0]
+        self.assertIn("goodground_repair()", setup)
+        tick = GG.split("goodground_tick(void)", 1)[1].split(
+            "goodground_note_ascent", 1)[0]
+        self.assertIn("goodground_repair()", tick)
+        do = (ROOT / "src" / "do.c").read_text()
+        arrive = do.split("trial_receive(&u.uz0);", 1)[1].split(
+            "docrt(); /* does a full vision recalc */", 1)[0]
+        self.assertIn("goodground_repair()", arrive)
+        rest = (ROOT / "src" / "restore.c").read_text()
+        loaded = rest.split("beyond_savefile_load = 1;", 1)[1].split(
+            "docrt();", 1)[0]
+        self.assertIn("goodground_repair()", loaded)
+        self.assertIn("#define EDITLEVEL 20", PATCH)
+
+
+class Approach(unittest.TestCase):
+    def test_the_gate_shepherd_steps_off_the_only_approach(self):
+        rows = map_lines()
+        self.assertEqual(rows[16][37], "+")
+        self.assertEqual(rows[17][37], ".")
+        self.assertEqual(rows[17][36], ".")
+        self.assertEqual(rows[17][38], ".")
+        sheep = {
+            (1, 1), (15, 1), (73, 1), (59, 6), (1, 19), (73, 19),
+            (19, 12), (55, 10), (37, 1), (11, 19), (25, 5),
+            (49, 15), (37, 8),
+        }
+        figs = [
+            (36, 9), (37, 9), (38, 9),
+            (35, 10), (36, 10), (37, 10), (38, 10), (39, 10),
+            (36, 11), (37, 11), (38, 11),
+        ]
+        goals = [(37, 6)] + figs
+
+        def reaches(blocked, start):
+            seen = set()
+            stack = [start]
+            while stack:
+                x, y = stack.pop()
+                if (x, y) in seen or not (0 <= x < 75 and 0 <= y < 21):
+                    continue
+                if (x, y) in blocked or rows[y][x] in "-|":
+                    continue
+                seen.add((x, y))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    stack.append((x + dx, y + dy))
+            return all(g in seen for g in goals)
+
+        occupied = sheep | {(39, 12)}
+        self.assertTrue(reaches(occupied | {(36, 17)}, (37, 17)))
+        self.assertTrue(reaches(occupied | {(38, 17)}, (37, 17)))
+        self.assertFalse(reaches(occupied | {(37, 17)}, (36, 17)))
+        self.assertFalse(reaches(occupied | {(37, 17)}, (38, 17)))
+        for spot in sheep | {(39, 12)}:
+            self.assertTrue(reaches({spot}, (37, 17)), spot)
+        home = GG.split("gate_shepherd_home(", 1)[1].split(
+            "shepherd_home_square", 1)[0]
+        self.assertIn("GX(36)", home)
+        self.assertIn("GX(38)", home)
+        self.assertIn("if (!gate_open())", home)
+        kept = GG.split("shepherd_home_square(", 1)[1].split(
+            "standing_at", 1)[0]
+        self.assertIn("if (!gate_open())", kept)
+        self.assertIn("GX(36)", kept)
+        self.assertIn("GX(38)", kept)
+
+
+class Prompts(unittest.TestCase):
+    def test_long_greetings_are_screens_and_the_question_is_short(self):
+        self.assertIn("wayside_screen(gate_greeting)", GG)
+        self.assertIn(
+            'y_n("Wilt thou sit with me a while and play at counting?")', GG)
+        self.assertNotIn(
+            'y_n("Peace be unto thee, pilgrim.', GG)
+        self.assertIn("wayside_screen(flock_greeting)", GG)
+        self.assertIn('y_n("Wilt thou answer?")', GG)
+        self.assertNotIn('y_n("Welcome to the good ground,', GG)
+        self.assertIn("wayside_screen(leave_ask)", GG)
+        self.assertIn('y_n("Wilt thou truly leave the dungeon?")', GG)
+        self.assertIn('y_n("There is a fig here. Eat it?")', GG)
+        self.assertIn("wayside_screen(count_rules)", GG)
+        thorns = (ROOT / "src" / "thorns.c").read_text()
+        chat = thorns.split("thorns_chat(", 1)[1].split(
+            "thorns_throne_sit", 1)[0]
+        self.assertIn("wayside_screen(speech)", chat)
+        self.assertIn('y_n("Wilt thou accept this gift?")', chat)
+        self.assertNotIn("\u2014", GG)
+
+
 class Markers(unittest.TestCase):
     def test_exact_placeholder_markers_are_gone(self):
         for folder in ("src", "dat", "include"):
