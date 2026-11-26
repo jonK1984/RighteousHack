@@ -699,7 +699,7 @@ list of all discovered objects) and the \(oq\f(CR\`\fP\(cq (knownclass,
 show a list of discovered objects in a particular class) commands to offer
 a menu of several sorting alternatives (which sets a new value for the
 .op sortdiscoveries
-option); also for \(lq#vanquished\(rq and \(lq#genocided\(rq commands
+option); also for \(lq#vanquished\(rq and \(lq#banished\(rq commands
 to offer a sorting menu.
 .lp ""
 A few other commands (eat food, offer sacrifice, apply tinning-kit,
@@ -1357,19 +1357,19 @@ Default key is \(oqf\(cq.
 Force a lock.
 Autocompletes.
 Default key is \(oqM-f\(cq.
-.lp #genocided
-List any monster types which have been genocided.
+.lp #banished
+List any monster types which have been banished.
 In explore mode and prophet mode it also shows types which have become
 extinct.
 .lp ""
 The display order is the same as is used by #vanquished.
 The \(oqm\(cq prefix brings up a menu of available sorting orders, and
-doing that for either #genocided or #vanquished changes the order for both.
+doing that for either #banished or #vanquished changes the order for both.
 .lp ""
 If the sorting order is \(lqcount high to low\(rq or \(lqcount low to high\(rq
 (which are applicable for #vanquished), that will be ignored
-for #genocided and alphabetical will be used instead.
-The menu omits those two choices when used for #genocide.
+for #banished and alphabetical will be used instead.
+The menu omits those two choices when used for #banished.
 .lp ""
 Autocompletes.
 Default key is \(oqM-g\(cq.
@@ -1825,7 +1825,7 @@ list contains at least two types of monsters).
 Whichever ordering is picked gets assigned to the
 .op sortvanquished
 option so is remembered for subsequent #vanquished requests.
-The \(lq#genocided\(rq command shares this sorting order.
+The \(lq#banished\(rq command shares this sorting order.
 .lp ""
 During end-of-game disclosure, when asked whether to show vanquished
 monsters answering \(oq\f(CRa\fP\(cq will let you choose from the sort menu.
@@ -2001,7 +2001,7 @@ option is enabled)
 .lp M-f
 #force
 .lp M-g
-#genocided
+#banished
 .lp M-i
 #invoke
 .lp M-j
@@ -4880,7 +4880,7 @@ Sort the pack contents by type when displaying inventory (default on).
 Persistent.
 .lp sortvanquished
 Controls the sorting behavior for the output of the #vanquished command
-and also for the #genocided command.
+and also for the #banished command.
 Persistent.
 .lp ""
 The possible values are:
@@ -4907,7 +4907,7 @@ order by count, low to high; ties broken by internal index.
 .PE
 Can be interactively set via the \(oq\f(CRm O\fP\(cq command or via using
 the \(oq\f(CRm\fP\(cq prefix before either the #vanquished command
-or the #genocided command.
+or the #banished command.
 .lp "sounds "
 Allow sounds to be emitted from an integrated sound library (default on).
 .lp "sparkle "

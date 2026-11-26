@@ -2,7 +2,7 @@
 """Player-visible text no longer says atheist or genocide.
 
 The scroll stays 'judgement to the wicked'. The save still has
-u.uconduct.gnostic. Command names and xlogfile keys stay.
+u.uconduct.gnostic. The disclose g key stays. The command is #banished.
 """
 
 import pathlib
@@ -97,6 +97,22 @@ class Wording(unittest.TestCase):
                       (ROOT / "include" / "patchlevel.h").read_text())
         self.assertNotIn("\u2014", "You never banished any monsters")
         self.assertNotIn("\u2014", "What monster do you want to banish?")
+
+    def test_the_command_is_banished(self):
+        cmd = (ROOT / "src" / "cmd.c").read_text()
+        self.assertIn(
+            '"banished",\n'
+            '              "list monsters that have been banished or become extinct"',
+            cmd)
+        self.assertNotIn('"genocided"', cmd)
+        hh = (ROOT / "dat" / "hh").read_text()
+        self.assertIn(
+            "M-g   banished  list monsters that have been banished or become extinct",
+            hh)
+        self.assertNotIn("genocided", hh)
+        self.assertIn(
+            'const char disclosure_options[] = "iavgco";',
+            (ROOT / "src" / "decl.c").read_text())
 
 
 if __name__ == "__main__":
