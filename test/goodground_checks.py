@@ -264,6 +264,20 @@ class Bleat(unittest.TestCase):
         self.assertNotIn("bleat", struct)
         self.assertIn("#define EDITLEVEL 20", PATCH)
 
+    def test_the_plane_of_earth_is_the_son(self):
+        earth = (ROOT / "dat" / "earth.lua").read_text()
+        self.assertIn(
+            'des.message("The voice of the Son of Perdition thundereth:")',
+            earth)
+        self.assertIn(
+            "So the child climbeth out of the dungeon. Every plane between "
+            "thee and thy God is held by my hosts. Join me, or perish!",
+            earth)
+        self.assertNotIn("Well done, mortal!", earth)
+        self.assertNotIn("final Test", earth)
+        self.assertNotIn("Prove thyself worthy", earth)
+        self.assertNotIn("\u2014", earth)
+
 
 class Prompts(unittest.TestCase):
     def test_long_greetings_are_screens_and_the_question_is_short(self):

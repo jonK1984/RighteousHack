@@ -14,9 +14,8 @@ des.level_init({ style = "solidfill", fg = " " });
 
 des.level_flags("mazelevel", "noteleport", "hardfloor", "shortsighted")
 
-des.message("Well done, mortal!")
-des.message("But now thou must face the final Test...")
-des.message("Prove thyself worthy or perish!")
+des.message("The voice of the Son of Perdition thundereth:")
+des.message("So the child climbeth out of the dungeon. Every plane between thee and thy God is held by my hosts. Join me, or perish!")
 
 -- The player lands, upon arrival, in the
 -- lower-right cavern.  The location of the
