@@ -302,6 +302,34 @@ restobjchn(NHFILE *nhfp, boolean frozen)
     return first;
 }
 
+/* The old Moloch blow count used bits 10 and 11, which are
+   STRAT_LUCIFER and STRAT_LUCIFER_WAIT. A red dragon keeps
+   those bits. Anyone else loses them. Moloch's count is
+   written into MOLOCH_HIT_MASK. */
+void
+rh_fix_strategy(struct monst *mtmp)
+{
+    unsigned long strat, oldhits;
+
+    if (!mtmp || !mtmp->data)
+        return;
+    strat = mtmp->mstrategy;
+    if (mtmp->data != &mons[PM_RED_DRAGON]
+        && (strat & (STRAT_LUCIFER | STRAT_LUCIFER_WAIT)) != 0L) {
+        if (mtmp->data == &mons[PM_MOLOCH]) {
+            oldhits = (strat & MOLOCH_HIT_OLD_MASK) >> MOLOCH_HIT_OLD_SHIFT;
+            strat &= ~MOLOCH_HIT_OLD_MASK;
+            strat = (strat & ~MOLOCH_HIT_MASK)
+                    | (oldhits << MOLOCH_HIT_SHIFT);
+        } else {
+            strat &= ~(STRAT_LUCIFER | STRAT_LUCIFER_WAIT);
+        }
+    }
+    if (mtmp->data != &mons[PM_MOLOCH])
+        strat &= ~MOLOCH_HIT_MASK;
+    mtmp->mstrategy = strat;
+}
+
 /* restore one monster */
 staticfn void
 restmon(NHFILE *nhfp, struct monst *mtmp)
@@ -405,6 +433,10 @@ restmonchn(NHFILE *nhfp)
         }
         offset = mtmp->mnum;
         mtmp->data = &mons[offset];
+        /* A saved Moloch may still keep his blow count in the
+           old Lucifer bits. Move it, and drop a Lucifer mark
+           from anything that is not a red dragon. */
+        rh_fix_strategy(mtmp);
         if (ghostly) {
             int mndx = (mtmp->cham == NON_PM) ? monsndx(mtmp->data)
                                               : mtmp->cham;

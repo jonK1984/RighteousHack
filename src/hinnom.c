@@ -2109,14 +2109,12 @@ berachah_job_chat(struct monst *mtmp)
     return TRUE;
 }
 
-/* Two hero blows, then the floor lifts. Stored in spare strategy
-   bits so a save during the fight keeps the count. */
-#define MOLOCH_HIT_SHIFT 10
-#define MOLOCH_HIT_MASK  0x00000c00L
-
+/* Two hero blows, then the floor lifts. The count lives in
+   MOLOCH_HIT_MASK (include/monst.h) so a save keeps it. */
 static int
 moloch_hero_hits(struct monst *mtmp)
 {
+    rh_fix_strategy(mtmp);
     return (int) ((mtmp->mstrategy & MOLOCH_HIT_MASK) >> MOLOCH_HIT_SHIFT);
 }
 

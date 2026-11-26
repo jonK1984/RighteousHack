@@ -3890,6 +3890,7 @@ extern int mon_has_amulet(struct monst *) NONNULLARG1;
 extern int mon_has_special(struct monst *) NONNULLARG1;
 extern void choose_stairs(coordxy *, coordxy *, boolean) NONNULLARG12;
 extern int tactics(struct monst *) NONNULLARG1;
+extern void rh_fix_strategy(struct monst *);
 extern boolean has_aggravatables(struct monst *) NONNULLARG1;
 extern void aggravate(void);
 extern void clonewiz(void);
