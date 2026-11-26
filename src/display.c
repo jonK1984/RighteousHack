@@ -2680,6 +2680,15 @@ map_glyphinfo(
 #endif
         }
     }
+    /* The Plane of Heaven's named chest is yellow. Ordinary chests
+       stay the color of wood. The name is already saved. */
+    if (iflags.use_color && !Hallucination && isok(x, y)
+        && glyph_is_normal_object(glyph)) {
+        struct obj *goldchest = vobj_at(x, y);
+
+        if (is_heaven_chest(goldchest))
+            glyphinfo->gm.sym.color = CLR_YELLOW;
+    }
     /* Fig trees keep the tree symbol, colored purple, eaten or not. */
     if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
         && !u_at(x, y)) {

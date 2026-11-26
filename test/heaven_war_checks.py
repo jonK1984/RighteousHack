@@ -35,26 +35,42 @@ class HeavenWar(unittest.TestCase):
         self.assertIn("AM_LAWFUL", heaven)
         self.assertIn("AM_NONE", heaven)
         self.assertIn("AM_SANCTUM", heaven)
-        self.assertIn("HEAVEN_DRAW 8", heaven)
-        self.assertIn("{ WAN_WISHING, 1, 1 }", heaven)
-        self.assertIn("!rn2(5)", heaven)
+        self.assertIn("HEAVEN_DRAW_MIN 7", heaven)
+        self.assertIn("HEAVEN_DRAW_MAX 10", heaven)
+        self.assertNotIn("WAN_WISHING", heaven)
+        self.assertNotIn("SILVER_DRAGON_SCALE_MAIL", heaven)
+        self.assertNotIn("SHIELD_OF_REFLECTION", heaven)
+        self.assertNotIn("CLOAK_OF_MAGIC_RESISTANCE", heaven)
+        self.assertNotIn("CRYSTAL_PLATE_MAIL", heaven)
         for gift in (
-            "SILVER_DRAGON_SCALE_MAIL",
-            "CRYSTAL_PLATE_MAIL",
-            "SPEED_BOOTS",
             "GAUNTLETS_OF_POWER",
-            "SHIELD_OF_REFLECTION",
-            "CLOAK_OF_MAGIC_RESISTANCE",
-            "HELM_OF_BRILLIANCE",
-            "RIN_PROTECTION",
-            "RIN_INCREASE_ACCURACY",
-            "RIN_INCREASE_DAMAGE",
+            "RIN_FREE_ACTION",
+            "RIN_CONFLICT",
+            "SCR_GENOCIDE",
             "AMULET_OF_LIFE_SAVING",
             "WAN_DEATH",
-            "SCR_CHARGING",
-            "MAGIC_MARKER",
+            "WAN_DIGGING",
+            "ANO_FULL_HEALING",
+            "MAGIC_MARKER, 80, 1, 1",
+            "SPE_FINGER_OF_DEATH",
+            "POT_WATER",
+            "UNICORN_HORN, 5, 1, 1",
+            "BAG_OF_HOLDING",
+            "ANO_MONSTER_DETECTION, 0, 0, 0, 3, 3",
         ):
             self.assertIn(gift, heaven)
+        self.assertIn(
+            "a gold chest set with every precious stone", heaven)
+        self.assertNotIn("\u2014", "a gold chest set with every precious stone")
+        self.assertIn("is_heaven_chest", heaven)
+        display = read("src/display.c")
+        self.assertIn("is_heaven_chest(goldchest)", display)
+        self.assertIn("gold chest set with every precious stone",
+                      read("src/objnam.c"))
+        self.assertIn('PBOOK("finger of judgement"', read("include/objects.h"))
+        self.assertNotIn('PBOOK("finger of execution"',
+                         read("include/objects.h"))
+        self.assertIn('id="finger of judgement"', read("dat/wild3.lua"))
         self.assertIn("sx[3] = { 7, 37, 67 }", heaven)
         self.assertIn("sy[3] = { 9, 5, 9 }", heaven)
 

@@ -698,6 +698,10 @@ xname_flags(
     case TOOL_CLASS:
         /* note: lenses or towel prefix would overwrite poisoned weapon
            prefix if both were simultaneously possible, but they aren't */
+        if (is_heaven_chest(obj) && dknown) {
+            Strcpy(buf, "gold chest set with every precious stone");
+            break;
+        }
         if (typ == LENSES)
             Strcpy(buf, "pair of ");
         else if (is_wet_towel(obj))
@@ -1053,7 +1057,8 @@ xname_flags(
         }
     }
 
-    if (has_oname(obj) && dknown && !is_berachah_bread(obj)) {
+    if (has_oname(obj) && dknown && !is_berachah_bread(obj)
+        && !is_heaven_chest(obj)) {
         Concat(buf, 0, " named ");
 
         /* jump directly here if obj passes the has-personal-name test */
@@ -1287,7 +1292,7 @@ doname_base(
             vague_quan = (doname_flags & DONAME_VAGUE_QUAN) != 0,
             for_menu = (doname_flags & DONAME_FOR_MENU) != 0;
     boolean known, dknown, cknown, bknown, lknown,
-            fake_arti, force_the;
+            fake_arti, force_the, heaven_gold;
     char prefix[PREFIX];
     char tmpbuf[PREFIX + 1]; /* for when we have to add something at
                               * the start of prefix instead of the
@@ -1312,12 +1317,15 @@ doname_base(
     if (iflags.override_ID) {
         known = dknown = cknown = bknown = lknown = TRUE;
     } else {
-        known = obj->known;
+            known = obj->known;
         dknown = obj->dknown;
         cknown = obj->cknown;
         bknown = obj->bknown;
         lknown = obj->lknown;
     }
+    /* The gold chest's name is the whole phrase. Blessing, emptiness,
+       and the lock are not written in front of it. */
+    heaven_gold = is_heaven_chest(obj) && dknown;
 
     /* When using xname, we want "poisoned arrow", and when using
      * doname, we want "poisoned +0 arrow".  This kludge is about the only
@@ -1357,7 +1365,7 @@ doname_base(
     }
 
     /* "empty" goes at the beginning, but item count goes at the end */
-    if (cknown
+    if (!heaven_gold && cknown
         /* bag of tricks: include "empty" prefix if it's known to
            be empty but its precise number of charges isn't known
            (when that is known, suffix of "(n:0)" will be appended,
@@ -1382,7 +1390,7 @@ doname_base(
             Strcat(prefix, "blessed ");
         /* else: no prefix at all — not even "uncursed" */
     }
-    else if (bknown && obj->oclass != COIN_CLASS
+    else if (!heaven_gold && bknown && obj->oclass != COIN_CLASS
         && (obj->otyp != POT_WATER || !objects[POT_WATER].oc_name_known
             || (!obj->cursed && !obj->blessed))) {
         /* allow 'blessed clear elixer' if we don't know it's holy water;
@@ -1420,9 +1428,10 @@ doname_base(
        yield "a non-trapped large box"? (not "an untrapped large box");
        TODO: this should be ``(Is_box(obj) || obj->otyp == TIN) && ...''
        but at present there's no way to set obj->tknown for tins */
-    if (Is_box(obj) && obj->otrapped && obj->tknown && obj->dknown)
+    if (!heaven_gold && Is_box(obj) && obj->otrapped && obj->tknown
+        && obj->dknown)
         Strcat(prefix,"trapped ");
-    if (lknown && Is_box(obj)) {
+    if (!heaven_gold && lknown && Is_box(obj)) {
         if (obj->obroken)
             /* 3.6.0 used "unlockable" here but that could be misunderstood
                to mean "capable of being unlocked" rather than the intended

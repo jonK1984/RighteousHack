@@ -245,7 +245,7 @@ learn(void)
     if (svc.context.spbook.delay && ublindf
         && ublindf->otyp == LENSES && rn2(2))
         svc.context.spbook.delay++;
-    /* The finger of execution book is not ruined by confusion. */
+    /* The finger of judgement book is not ruined by confusion. */
     if (Confusion && book->otyp != SPE_FINGER_OF_DEATH) { /* became confused while learning */
         (void) confused_book(book);
         svc.context.spbook.book = 0; /* no longer studying */
@@ -328,7 +328,7 @@ learn(void)
             update_inventory();
     }
 
-    /* A cursed finger of execution book still only teaches the spell. */
+    /* A cursed finger of judgement book still only teaches the spell. */
     if (book->cursed && booktype != SPE_FINGER_OF_DEATH) { /* maybe a demon cursed it */
         if (cursed_book(book)) {
             useup(book);
@@ -459,7 +459,7 @@ study_book(struct obj *spellbook)
 
         /* Books are often wiser than their readers (Rus.) */
         spellbook->in_use = TRUE;
-        /* The finger of execution book always teaches its spell. */
+        /* The finger of judgement book always teaches its spell. */
         if (booktype != SPE_FINGER_OF_DEATH
             && !spellbook->blessed
             && spellbook->otyp != SPE_BOOK_OF_THE_DEAD) {
@@ -2070,7 +2070,7 @@ percent_success(int spell)
     boolean paladin_bonus = (Role_if(PM_KNIGHT)
                              && skilltype == P_CLERIC_SPELL);
 
-    /* Finger of execution is a flat 50. No stat, level, skill, armor,
+    /* Finger of judgement is a flat 50. No stat, level, skill, armor,
        shield, or Pride cap. */
     if (spellid(spell) == SPE_FINGER_OF_DEATH)
         return 50;
@@ -2184,7 +2184,7 @@ percent_success(int spell)
     return chance;
 }
 
-/* Drop finger of execution from the spell list entirely. */
+/* Drop finger of judgement from the spell list entirely. */
 void
 pride_unlearn_execution(void)
 {

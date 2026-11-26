@@ -438,7 +438,7 @@ are unchanged.
 2026-11-02
 A Pride reflection is always a doppelganger and does not change
 shape. Its life drain still grows, but one turn never takes more
-than 5 hit points. Reading the finger of execution book always
+than 5 hit points. Reading the finger of judgement book always
 teaches the spell. Casting it is unchanged. The Rod of Frozen
 Power never runs out, and its burst is drawn as a cold explosion.
 The Amulet of Immortality does not save you. An ordinary amulet

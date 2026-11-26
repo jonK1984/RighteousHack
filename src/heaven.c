@@ -342,34 +342,55 @@ heaven_tick(void)
     heaven_ensure();
 }
 
-/* Jon can edit this table. Eight ordinary gifts are drawn each game.
-   The rod of wishing is the rare line: one charge, and only one game
-   in five adds it. */
+/* Jon edits this table. A new Plane of Heaven draws 7 to 10
+   distinct rows. spe_set forces spe (an enchantment, or charges).
+   A rod with spe_set 0 keeps an ordinary charge roll, 4 to 8.
+   blessed calls bless(). quanlo and quanhi are the stack.
+   Both 0 means one object.
+   The names in the comments are the words the player reads. */
 struct heaven_gift {
     int otyp;
     int spe;
-    int rare;
+    int spe_set;
+    int blessed;
+    int quanlo;
+    int quanhi;
 };
 
 static const struct heaven_gift heaven_chest[] = {
-    { SILVER_DRAGON_SCALE_MAIL, 5, 0 },
-    { CRYSTAL_PLATE_MAIL, 5, 0 },
-    { SPEED_BOOTS, 5, 0 },
-    { GAUNTLETS_OF_POWER, 5, 0 },
-    { SHIELD_OF_REFLECTION, 3, 0 },
-    { CLOAK_OF_MAGIC_RESISTANCE, 5, 0 },
-    { HELM_OF_BRILLIANCE, 5, 0 },
-    { RIN_PROTECTION, 5, 0 },
-    { RIN_INCREASE_ACCURACY, 5, 0 },
-    { RIN_INCREASE_DAMAGE, 5, 0 },
-    { AMULET_OF_LIFE_SAVING, 0, 0 },
-    { WAN_DEATH, 3, 0 },
-    { SCR_CHARGING, 0, 0 },
-    { MAGIC_MARKER, 40, 0 },
-    { WAN_WISHING, 1, 1 },
+    /* gauntlets of power */
+    { GAUNTLETS_OF_POWER, 0, 0, 0, 0, 0 },
+    /* ring of free action */
+    { RIN_FREE_ACTION, 0, 0, 0, 0, 0 },
+    /* ring of conflict */
+    { RIN_CONFLICT, 0, 0, 0, 0, 0 },
+    /* verse of judgement to the wicked (vanilla scroll of genocide) */
+    { SCR_GENOCIDE, 0, 0, 0, 0, 0 },
+    /* amulet of life saving */
+    { AMULET_OF_LIFE_SAVING, 0, 0, 0, 0, 0 },
+    /* rod of final judgement (vanilla wand of death) */
+    { WAN_DEATH, 0, 0, 0, 0, 0 },
+    /* rod of move mountains (vanilla wand of digging) */
+    { WAN_DIGGING, 0, 0, 0, 0, 0 },
+    /* blessed anointing oil of full healing, 3 to 6 */
+    { ANO_FULL_HEALING, 0, 0, 1, 3, 6 },
+    /* blessed writing tablet, 80 charges */
+    { MAGIC_MARKER, 80, 1, 1, 0, 0 },
+    /* prophetic book of finger of judgement */
+    { SPE_FINGER_OF_DEATH, 0, 0, 0, 0, 0 },
+    /* elixer of holy water, 5 to 8 */
+    { POT_WATER, 0, 0, 1, 5, 8 },
+    /* blessed +5 unicorn horn */
+    { UNICORN_HORN, 5, 1, 1, 0, 0 },
+    /* blessed bag of holding */
+    { BAG_OF_HOLDING, 0, 0, 1, 0, 0 },
+    /* anointing oil of monster detection, quantity 3 */
+    { ANO_MONSTER_DETECTION, 0, 0, 0, 3, 3 },
 };
 
-#define HEAVEN_DRAW 8
+#define HEAVEN_DRAW_MIN 7
+#define HEAVEN_DRAW_MAX 10
+#define HEAVEN_CHEST_NAME "a gold chest set with every precious stone"
 
 static void
 heaven_altar(coordxy x, coordxy y, unsigned amask)
@@ -387,16 +408,23 @@ heaven_altar(coordxy x, coordxy y, unsigned amask)
     svl.level.flags.has_temple = TRUE;
 }
 
+boolean
+is_heaven_chest(struct obj *obj)
+{
+    return (boolean) (obj && obj->otyp == CHEST && has_oname(obj)
+                      && !strcmp(ONAME(obj), HEAVEN_CHEST_NAME));
+}
+
 static void
 heaven_fill_chest(struct obj *box)
 {
     int i, n, k, pick[SIZE(heaven_chest)];
+    const struct heaven_gift *gift;
     struct obj *obj;
 
-    n = 0;
-    for (i = 0; i < SIZE(heaven_chest); i++)
-        if (!heaven_chest[i].rare)
-            pick[n++] = i;
+    n = SIZE(heaven_chest);
+    for (i = 0; i < n; i++)
+        pick[i] = i;
     for (i = n - 1; i > 0; i--) {
         k = rn2(i + 1);
         if (k != i) {
@@ -406,25 +434,28 @@ heaven_fill_chest(struct obj *box)
             pick[k] = tmp;
         }
     }
-    if (n > HEAVEN_DRAW)
-        n = HEAVEN_DRAW;
+    n = rn1(HEAVEN_DRAW_MAX - HEAVEN_DRAW_MIN + 1, HEAVEN_DRAW_MIN);
+    if (n > SIZE(heaven_chest))
+        n = SIZE(heaven_chest);
     for (i = 0; i < n; i++) {
-        obj = mksobj(heaven_chest[pick[i]].otyp, FALSE, FALSE);
+        gift = &heaven_chest[pick[i]];
+        /* init stays off so a bag of holding is not filled for us */
+        obj = mksobj(gift->otyp, FALSE, FALSE);
         if (!obj)
             continue;
-        bless(obj);
-        obj->spe = heaven_chest[pick[i]].spe;
-        obj->known = obj->dknown = obj->bknown = 1;
-        (void) add_to_container(box, obj);
-    }
-    if (!rn2(5)) {
-        obj = mksobj(WAN_WISHING, FALSE, FALSE);
-        if (obj) {
+        if (gift->spe_set)
+            obj->spe = gift->spe;
+        else if (obj->oclass == WAND_CLASS)
+            obj->spe = rn1(5, (objects[obj->otyp].oc_dir == NODIR) ? 11 : 4);
+        if (gift->blessed)
             bless(obj);
-            obj->spe = 1;
-            obj->known = obj->dknown = obj->bknown = 1;
-            (void) add_to_container(box, obj);
-        }
+        if (gift->quanhi > 0 && gift->quanhi >= gift->quanlo)
+            obj->quan = (long) rn1(gift->quanhi - gift->quanlo + 1,
+                                    gift->quanlo);
+        obj->known = obj->dknown = obj->bknown = 1;
+        discover_object(obj->otyp, TRUE, TRUE, FALSE);
+        obj->owt = weight(obj);
+        (void) add_to_container(box, obj);
     }
     box->owt = weight(box);
 }
@@ -453,6 +484,7 @@ heaven_place_temples(void)
         return;
     bless(box);
     box->olocked = 0;
+    box = oname(box, HEAVEN_CHEST_NAME, ONAME_NO_FLAGS);
     heaven_fill_chest(box);
     place_object(box, sx[order[2]], sy[order[2]]);
 }

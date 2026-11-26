@@ -49,7 +49,7 @@ local lures = {
    { id="ring of protection", name="ring of complete immunity" },
    { id="amulet of life saving", name="Amulet of Immortality" },
    { id="rod of northern wind", name="Rod of Frozen Power" },
-   { id="finger of execution", name="prophecy book of execution" },
+   { id="finger of judgement", name="prophecy book of execution" },
    { id="magic lamp", name="magic lamp of unlimited wishing" },
    { id="bag of holding", name="bag of infinite holding" },
 }
