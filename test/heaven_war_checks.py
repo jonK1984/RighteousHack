@@ -108,7 +108,7 @@ class HeavenWar(unittest.TestCase):
             "Lucifer casteth off the likeness of an angel of light.",
             "At thy prayer, Lucifer and the Son of Perdition are holden still.",
             "The Son of Perdition is cast down, and shall rise up no more.",
-            "Here stand the high altar of the Lord and the high altar of the Great Dragon.",
+            "Here standeth the high altar of the Lord, as it hath stood from the beginning. But the Great Dragon hath raised up an altar of his own in the courts of heaven, and his host is come up to make war.",
         ):
             self.assertNotIn("\u2014", line)
 

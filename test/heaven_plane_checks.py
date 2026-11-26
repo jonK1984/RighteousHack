@@ -76,9 +76,19 @@ class HeavenPlane(unittest.TestCase):
         lua = read("dat/astral.lua")
         self.assertIn(
             'des.message("You arrive on the Plane of Heaven!")', lua)
-        self.assertIn(
-            'des.message("Here stand the high altar of the Lord and the high altar of the Great Dragon.")',
-            lua)
+        arrival = (
+            "Here standeth the high altar of the Lord, as it hath stood "
+            "from the beginning. But the Great Dragon hath raised up an "
+            "altar of his own in the courts of heaven, and his host is "
+            "come up to make war."
+        )
+        self.assertIn('des.message("%s")' % arrival, lua)
+        self.assertNotIn("\u2014", arrival)
+        self.assertGreater(len(arrival), 180)
+        self.assertLess(len(arrival), 255)
+        quest = read("src/questpgr.c")
+        self.assertIn("deliver_by_pline(gl.lev_message)", quest)
+        self.assertIn("take_folded", quest)
         self.assertNotIn("High Temple of %d", lua)
         self.assertIn(
             'des.message("You sense alarm, hostility, and excitement in the air!")',

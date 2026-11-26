@@ -8,7 +8,7 @@ des.level_init({ style = "solidfill", fg = " " });
 
 des.level_flags("mazelevel", "noteleport", "hardfloor", "nommap", "shortsighted", "solidify")
 des.message("You arrive on the Plane of Heaven!")
-des.message("Here stand the high altar of the Lord and the high altar of the Great Dragon.")
+des.message("Here standeth the high altar of the Lord, as it hath stood from the beginning. But the Great Dragon hath raised up an altar of his own in the courts of heaven, and his host is come up to make war.")
 des.message("You sense alarm, hostility, and excitement in the air!")
 des.map([[
                               ---------------                              
