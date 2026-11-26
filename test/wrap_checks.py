@@ -167,7 +167,12 @@ class Wrap(unittest.TestCase):
             take_folded("One sentence.\n\nTwo sentences.", 80),
             ["One sentence.", "", "Two sentences."])
         # A long line folds on a space and does not invent a blank.
-        long = ("bretheren " * 12).strip()
+        quest_text = (ROOT / "dat" / "quest.lua").read_text()
+        self.assertIn(
+            "brethren, that ancient serpent who is called the Devil and Satan,",
+            quest_text)
+        self.assertNotIn("bretheren", quest_text)
+        long = ("brethren " * 12).strip()
         folded = take_folded(long, 30)
         self.assertTrue(all(folded))
         self.assertTrue(all(len(line) <= 30 for line in folded))

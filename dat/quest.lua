@@ -146,7 +146,7 @@ from a throne of glory:
 Trembling, you rise. The voice continues:
 
 "I am sending you to the depths of the earth, where the accuser of the 
-bretheren, that ancient serpent who is called the Devil and Satan,
+brethren, that ancient serpent who is called the Devil and Satan,
 has bound a soul captive which I have ordained for redemption. Descend into the 
 great cave that opens beneath this place. Find the soul, break the chains 
 the Adversary has forged, and bring my %SC into the light. Do exactly as I command. 
