@@ -87,6 +87,12 @@ class HeavenPlane(unittest.TestCase):
         insight = read("src/insight.c")
         self.assertIn('"entered the Plane of Heaven"', insight)
         self.assertIn('"reached the Plane of Heaven"', insight)
+        place = insight.split("endgamelevelname(tmpbuf, egdepth)", 1)[1]
+        place = place.split("you_are(buf, \"\")", 1)[0]
+        self.assertIn('"in the endgame, on the %s%s"', place)
+        self.assertIn('strcmp(tmpbuf, "Plane of Heaven")', place)
+        self.assertIn('"Elemental "', place)
+        self.assertNotIn("Elemental Plane of Heaven", place)
         self.assertIn('return "plane of heaven";', read("src/music.c"))
         score = read("src/topten.c")
         self.assertIn('arg = "Heaven";', score)

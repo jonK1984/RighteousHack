@@ -581,8 +581,13 @@ background_enlightenment(int unused_mode UNUSED, int final)
         int egdepth = observable_depth(&u.uz);
 
         (void) endgamelevelname(tmpbuf, egdepth);
+        /* Air, Fire, Water, and Earth stay "Elemental Plane of ...".
+           Heaven is not an elemental plane. */
         Snprintf(buf, sizeof(buf), "in the endgame, on the %s%s",
-                 !strncmp(tmpbuf, "Plane", 5) ? "Elemental " : "", tmpbuf);
+                 (!strncmp(tmpbuf, "Plane", 5)
+                  && strcmp(tmpbuf, "Plane of Heaven"))
+                     ? "Elemental " : "",
+                 tmpbuf);
     } else if (Is_knox(&u.uz)) {
         /* this gives away the fact that the knox branch is only 1 level */
         Sprintf(buf, "on the %s level", svd.dungeons[u.uz.dnum].dname);
