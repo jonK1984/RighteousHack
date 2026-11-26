@@ -63,7 +63,9 @@ rh_attach_edog(struct monst *mtmp)
     edogp = EDOG(mtmp);
     edogp->droptime = 0;
     edogp->dropdist = 10000;
-    edogp->apport = ACURR(A_CHA);
+    /* ACURR reads worn armor. During the first restore pass those
+       pointers still hold addresses from the save file. */
+    edogp->apport = (gy.youmonst.data) ? ACURR(A_CHA) : 1;
     if (edogp->apport <= 0)
         edogp->apport = 1;
     edogp->whistletime = 0;
@@ -75,7 +77,8 @@ rh_attach_edog(struct monst *mtmp)
     edogp->mhpmax_penalty = 0;
     edogp->killed_by_u = 0;
     mtmp->mpeaceful = 1;
-    set_malign(mtmp);
+    if (mtmp->data && gy.youmonst.data)
+        set_malign(mtmp);
 }
 
 void

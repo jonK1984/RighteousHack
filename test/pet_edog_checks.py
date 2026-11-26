@@ -33,11 +33,18 @@ class PetRecord(unittest.TestCase):
         restore = read("src/restore.c")
         fix = restore.split("rh_fix_strategy(struct monst *mtmp)", 1)[1].split(
             "restmon(", 1)[0]
-        self.assertIn("rh_fix_tame(mtmp);", fix)
+        self.assertNotIn("rh_fix_tame", fix)
+        self.assertIn("before the hero is loaded", restore)
         tame = dog.split("rh_fix_tame(struct monst *mtmp)", 1)[1].split(
             "rh_attach_edog(struct monst *mtmp)", 1)[0]
         self.assertIn("mtmp->isminion = 1", tame)
         self.assertIn("has_emin(mtmp)", tame)
+        self.assertIn("gy.youmonst.data", attach)
+        self.assertLess(attach.index("gy.youmonst.data"),
+                        attach.index("ACURR(A_CHA)"))
+        self.assertIn("program_state.restoring != REST_GSTATE", restore)
+        self.assertLess(restore.index("setuwep(otmp)"),
+                        restore.index("rh_fix_tame(mtmp)"))
         move = read("src/dogmove.c")
         self.assertLess(move.index("rh_fix_tame(mtmp);"),
                         move.index('impossible("dog_move for non-pet?")'))

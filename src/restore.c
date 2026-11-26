@@ -328,9 +328,8 @@ rh_fix_strategy(struct monst *mtmp)
     if (mtmp->data != &mons[PM_MOLOCH])
         strat &= ~MOLOCH_HIT_MASK;
     mtmp->mstrategy = strat;
-    /* An old save may have a tame host with no pet record,
-       or a guardian angel whose minion flag was cleared. */
-    rh_fix_tame(mtmp);
+    /* Pet records are repaired later. This runs from restmonchn
+       while the current level is read, before the hero is loaded. */
 }
 
 /* restore one monster */
@@ -732,6 +731,13 @@ restgamestate(NHFILE *nhfp)
     setuwep(otmp); /* (don't need any null check here) */
     if (!uwep || uwep->otyp == PICK_AXE || uwep->otyp == GRAPPLING_HOOK)
         gu.unweapon = TRUE;
+    /* Migrating pets were read before setworn(). Repair them now. */
+    {
+        struct monst *mtmp;
+
+        for (mtmp = gm.migrating_mons; mtmp; mtmp = mtmp->nmon)
+            rh_fix_tame(mtmp);
+    }
 #endif /* !SFCTOOL */
 
     restore_dungeon(nhfp);
@@ -1220,6 +1226,12 @@ getlev(NHFILE *nhfp, int pid, xint8 lev)
         for (y = 0; y < ROWNO; y++)
             svl.level.monsters[x][y] = (struct monst *) 0;
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        /* The first pass of the current level runs before the
+           hero is loaded. Repairing a pet then would call into
+           attributes through a worn-item pointer that is still
+           the address from the save file. */
+        if (program_state.restoring != REST_GSTATE)
+            rh_fix_tame(mtmp);
         if (mtmp->isshk)
             set_residency(mtmp, FALSE);
         if (mtmp->m_id == u.usteed_mid) {
