@@ -59,7 +59,6 @@ for i = 1, 2 do
      end
      -- extra monsters; was [6 + 3d4] when both wings were opened up at once
      for j = 1, math.random(4,9) do
-        des.monster({ id="Angel", coord = hall:rndcoord(1), align="noalign", peaceful=0 })
         if percent(50) then
            des.monster({ coord = hall:rndcoord(1), peaceful=0 })
         end
@@ -99,78 +98,10 @@ des.door("closed",63,09)
 -- Non diggable and phazeable everywhere
 des.non_diggable(selection.area(00,00,74,19))
 des.non_passwall(selection.area(00,00,74,19))
--- Moloch's horde
--- West round room
-des.monster({ id = "aligned cleric",x=18,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=19,y=08,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=19,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=19,y=10,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=20,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=20,y=10,align="noalign", peaceful=0 })
+-- The three Riders stay on the Dragon's side.
 des.monster({ id = "Pestilence", coord = place:rndcoord(1), peaceful=0 })
--- South-central round room
-des.monster({ id = "aligned cleric",x=36,y=12,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=37,y=12,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=38,y=12,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=36,y=13,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=38,y=13,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=37,y=13,align="noalign", peaceful=0 })
 des.monster({ id = "Death", coord = place:rndcoord(1), peaceful=0 })
--- East round room
-des.monster({ id = "aligned cleric",x=56,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=55,y=08,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=55,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "aligned cleric",x=55,y=10,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=54,y=09,align="noalign", peaceful=0 })
-des.monster({ id = "Angel",x=54,y=10,align="noalign", peaceful=0 })
 des.monster({ id = "Famine", coord = place:rndcoord(1), peaceful=0 })
---
--- The aligned horde
---
--- We do not know in advance the alignment of the
--- player.  The mpeaceful bit will need resetting
--- when the level is created.  The setting here is
--- but a place holder.
---
--- West court
-des.monster({ id = "aligned cleric",x=12,y=07,align="chaos", peaceful=0 })
-des.monster({ id = "aligned cleric",x=13,y=07,align="chaos",peaceful=1 })
-des.monster({ id = "aligned cleric",x=14,y=07,align="law", peaceful=0 })
-des.monster({ id = "aligned cleric",x=12,y=11,align="law",peaceful=1 })
-des.monster({ id = "aligned cleric",x=13,y=11,align="neutral", peaceful=0 })
-des.monster({ id = "aligned cleric",x=14,y=11,align="neutral",peaceful=1 })
-des.monster({ id = "Angel",x=11,y=05,align="chaos", peaceful=0 })
-des.monster({ id = "Angel",x=12,y=05,align="chaos",peaceful=1 })
-des.monster({ id = "Angel",x=13,y=05,align="law", peaceful=0 })
-des.monster({ id = "Angel",x=11,y=13,align="law",peaceful=1 })
-des.monster({ id = "Angel",x=12,y=13,align="neutral", peaceful=0 })
-des.monster({ id = "Angel",x=13,y=13,align="neutral",peaceful=1 })
--- Central court
-des.monster({ id = "aligned cleric",x=32,y=09,align="chaos", peaceful=0 })
-des.monster({ id = "aligned cleric",x=33,y=09,align="chaos",peaceful=1 })
-des.monster({ id = "aligned cleric",x=34,y=09,align="law", peaceful=0 })
-des.monster({ id = "aligned cleric",x=40,y=09,align="law",peaceful=1 })
-des.monster({ id = "aligned cleric",x=41,y=09,align="neutral", peaceful=0 })
-des.monster({ id = "aligned cleric",x=42,y=09,align="neutral",peaceful=1 })
-des.monster({ id = "Angel",x=31,y=08,align="chaos", peaceful=0 })
-des.monster({ id = "Angel",x=32,y=08,align="chaos",peaceful=1 })
-des.monster({ id = "Angel",x=31,y=09,align="law", peaceful=0 })
-des.monster({ id = "Angel",x=42,y=08,align="law",peaceful=1 })
-des.monster({ id = "Angel",x=43,y=08,align="neutral", peaceful=0 })
-des.monster({ id = "Angel",x=43,y=09,align="neutral",peaceful=1 })
--- East court
-des.monster({ id = "aligned cleric",x=60,y=07,align="chaos", peaceful=0 })
-des.monster({ id = "aligned cleric",x=61,y=07,align="chaos",peaceful=1 })
-des.monster({ id = "aligned cleric",x=62,y=07,align="law", peaceful=0 })
-des.monster({ id = "aligned cleric",x=60,y=11,align="law",peaceful=1 })
-des.monster({ id = "aligned cleric",x=61,y=11,align="neutral", peaceful=0 })
-des.monster({ id = "aligned cleric",x=62,y=11,align="neutral",peaceful=1 })
-des.monster({ id = "Angel",x=61,y=05,align="chaos", peaceful=0 })
-des.monster({ id = "Angel",x=62,y=05,align="chaos",peaceful=1 })
-des.monster({ id = "Angel",x=63,y=05,align="law", peaceful=0 })
-des.monster({ id = "Angel",x=61,y=13,align="law",peaceful=1 })
-des.monster({ id = "Angel",x=62,y=13,align="neutral", peaceful=0 })
-des.monster({ id = "Angel",x=63,y=13,align="neutral",peaceful=1 })
 --
 -- Assorted nasties
 des.monster({ class = "L", peaceful=0 })
@@ -182,3 +113,5 @@ des.monster({ class = "V", peaceful=0 })
 des.monster({ class = "D", peaceful=0 })
 des.monster({ class = "D", peaceful=0 })
 des.monster({ class = "D", peaceful=0 })
+-- Both hosts. The chest room is whichever temple has no altar.
+des.heaven_host()

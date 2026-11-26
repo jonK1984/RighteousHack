@@ -365,7 +365,9 @@ endcut_smite(coordxy ax, coordxy ay, boolean harm)
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) || is_lucifer(mtmp))
             continue;
-        if (mtmp->mpeaceful || mtmp->mtame)
+        /* The Lord's host stays. Dragon priests and fallen angels
+           are hostile, so the light takes them with the rest. */
+        if (mtmp->mpeaceful || mtmp->mtame || heaven_lords_host(mtmp))
             continue;
         if (n < (int) SIZE(list))
             list[n++] = mtmp;

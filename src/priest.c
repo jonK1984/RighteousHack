@@ -316,8 +316,26 @@ priestname(
     char whatcode = '\0';
     const char *what = do_hallu ? rndmonnam(&whatcode) : mon_pmname(mon);
 
-    /* Plane of Heaven. Hostile angels, and those of the Great Dragon,
-       are fallen. The rest stand with the hero. */
+    /* Plane of Heaven. The Dragon's priests keep this name on
+       either sex. Hostile angels are fallen. The rest stand
+       with the hero. */
+    if (!do_hallu && is_heaven_priest(mon)) {
+        const char *who = mon->female ? "priestess" : "priest";
+
+        *pname = '\0';
+        if (article == ARTICLE_THE)
+            Strcpy(pname, "the ");
+        else if (article == ARTICLE_A)
+            Strcpy(pname, "a ");
+        if (mon->minvis) {
+            if (!strcmp(pname, "a "))
+                Strcpy(pname, "an ");
+            Strcat(pname, "invisible ");
+        }
+        Strcat(pname, who);
+        Strcat(pname, " of the Great Dragon");
+        return pname;
+    }
     if (!do_hallu && Is_astralevel(&u.uz)
         && mon->data == &mons[PM_ANGEL]) {
         boolean fallen = (mon->mstrategy & STRAT_HEAVEN_FALLEN) != 0L
@@ -513,6 +531,10 @@ intemple(int roomno)
         /* recognize the Valley of the Dead and Moloch's Sanctum
            once hero has encountered the temple priest on those levels */
         mapseen_temple(priest);
+    } else if (Is_astralevel(&u.uz)) {
+        /* No temple priest on this plane, so no ghost rises
+           in an untended shrine. */
+        return;
     } else {
         /* untended */
 

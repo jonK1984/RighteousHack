@@ -45,6 +45,8 @@ lucifer_disguise(struct monst *mtmp)
     newsym(mtmp->mx, mtmp->my);
 }
 
+static void heaven_archangels(struct monst *);
+
 static void
 lucifer_reveal(struct monst *mtmp)
 {
@@ -54,6 +56,9 @@ lucifer_reveal(struct monst *mtmp)
     newsym(mtmp->mx, mtmp->my);
     if (!Deaf)
         pline("Lucifer casteth off the likeness of an angel of light.");
+    /* A rehearsal must not stop for the blackout. */
+    if (!endcut_testing)
+        heaven_archangels(mtmp);
 }
 
 static boolean
@@ -395,16 +400,10 @@ static const struct heaven_gift heaven_chest[] = {
 static void
 heaven_altar(coordxy x, coordxy y, unsigned amask)
 {
-    schar rno;
-    struct mkroom *croom = 0;
-
+    /* No stock high cleric. The Dragon's priests stand in front
+       of the temples, and the Lord's host stands inside. */
     levl[x][y].typ = ALTAR;
     levl[x][y].altarmask = (uchar) (amask | AM_SHRINE | AM_SANCTUM);
-    rno = (schar) *in_rooms(x, y, TEMPLE);
-    if (rno > 0)
-        croom = &svr.rooms[rno - ROOMOFFSET];
-    if (croom)
-        priestini(&u.uz, croom, (int) x, (int) y, TRUE);
     svl.level.flags.has_temple = TRUE;
 }
 
@@ -460,6 +459,247 @@ heaven_fill_chest(struct obj *box)
         (void) add_to_container(box, obj);
     }
     box->owt = weight(box);
+}
+
+/* The verse is approved. The narration under it is a placeholder
+   until Jon sends the final wording. Do not treat PLACEHOLDER as
+   player text that has been approved. */
+static const char heaven_host_text[] =
+    "\"And there was war in heaven: Michael and his angels fought against the dragon; and the dragon fought and his angels.\"\n"
+    "\n"
+    "PLACEHOLDER";
+
+static void
+heaven_blackout(const char *text)
+{
+    winid win;
+    char buf[BUFSZ];
+    const char *p, *nl;
+
+    win = create_nhwindow(NHW_TEXT);
+    p = text;
+    while (p && *p) {
+        nl = strchr(p, '\n');
+        if (!nl) {
+            putstr(win, 0, p);
+            break;
+        }
+        if (nl == p)
+            putstr(win, 0, "");
+        else {
+            size_t len = (size_t) (nl - p);
+
+            if (len >= sizeof buf)
+                len = sizeof buf - 1;
+            (void) strncpy(buf, p, len);
+            buf[len] = '\0';
+            putstr(win, 0, buf);
+        }
+        p = nl + 1;
+    }
+    display_nhwindow(win, TRUE);
+    destroy_nhwindow(win);
+}
+
+static void
+heaven_ally(struct monst *mtmp, unsigned extra)
+{
+    if (!mtmp)
+        return;
+    mtmp->mstrategy |= STRAT_HEAVEN_LORD | extra;
+    mtmp->mstrategy &= ~STRAT_HEAVEN_FALLEN;
+    mtmp->mpeaceful = 1;
+    mtmp->mtame = max(mtmp->mtame, 10);
+    set_malign(mtmp);
+    newsym(mtmp->mx, mtmp->my);
+}
+
+static void
+heaven_enemy(struct monst *mtmp, unsigned extra)
+{
+    if (!mtmp)
+        return;
+    mtmp->mstrategy |= extra;
+    mtmp->mstrategy &= ~(STRAT_HEAVEN_LORD | STRAT_HEAVEN_CHERUB
+                         | STRAT_HEAVEN_SERAPH | STRAT_HEAVEN_ARCH);
+    mtmp->mpeaceful = 0;
+    mtmp->mtame = 0;
+    set_malign(mtmp);
+    newsym(mtmp->mx, mtmp->my);
+}
+
+static struct monst *
+heaven_at(struct permonst *pm, coordxy x, coordxy y)
+{
+    if (!isok(x, y) || m_at(x, y))
+        return (struct monst *) 0;
+    if (levl[x][y].typ != ROOM)
+        return (struct monst *) 0;
+    return makemon(pm, x, y, MM_NOWAIT | MM_NOMSG);
+}
+
+/* Floor inside one temple, skipping the altar square. */
+static int
+heaven_room_floors(coordxy ax, coordxy ay, coordxy spots[][2], int maxs)
+{
+    static const coordxy box[3][4] = {
+        { 5, 8, 9, 10 },
+        { 35, 4, 39, 6 },
+        { 65, 8, 69, 10 },
+    };
+    int n = 0, t, x, y;
+
+    for (t = 0; t < 3; t++) {
+        if (ax < box[t][0] || ax > box[t][2]
+            || ay < box[t][1] || ay > box[t][3])
+            continue;
+        for (y = box[t][1]; y <= box[t][3]; y++)
+            for (x = box[t][0]; x <= box[t][2]; x++) {
+                if (x == ax && y == ay)
+                    continue;
+                if (levl[x][y].typ != ROOM || m_at(x, y))
+                    continue;
+                if (n < maxs) {
+                    spots[n][0] = (coordxy) x;
+                    spots[n][1] = (coordxy) y;
+                    n++;
+                }
+            }
+        break;
+    }
+    return n;
+}
+
+static void
+heaven_cherubim(coordxy ax, coordxy ay)
+{
+    static const coordxy near8[8][2] = {
+        { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 },
+        { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 },
+    };
+    int i, n;
+
+    n = 0;
+    for (i = 0; i < 8 && n < 2; i++) {
+        struct monst *mtmp = heaven_at(&mons[PM_KI_RIN],
+                                        ax + near8[i][0], ay + near8[i][1]);
+
+        if (!mtmp)
+            continue;
+        heaven_ally(mtmp, STRAT_HEAVEN_CHERUB);
+        n++;
+    }
+}
+
+static void
+heaven_altar_host(coordxy ax, coordxy ay, int align)
+{
+    coordxy spots[16][2];
+    int n, i, lords, fallen;
+    struct monst *mtmp;
+
+    if (align != A_LAWFUL && align != A_NONE)
+        return;
+    if (align == A_LAWFUL)
+        heaven_cherubim(ax, ay);
+    n = heaven_room_floors(ax, ay, spots, 16);
+    lords = fallen = 0;
+    for (i = 0; i < n; i++) {
+        if (lords < 3) {
+            mtmp = heaven_at(&mons[PM_ANGEL], spots[i][0], spots[i][1]);
+            if (mtmp) {
+                heaven_ally(mtmp, 0);
+                lords++;
+            }
+        } else if (fallen < 3) {
+            mtmp = heaven_at(&mons[PM_ANGEL], spots[i][0], spots[i][1]);
+            if (mtmp) {
+                heaven_enemy(mtmp, STRAT_HEAVEN_FALLEN);
+                fallen++;
+            }
+        }
+    }
+}
+
+static void
+heaven_archangels(struct monst *lucifer)
+{
+    static const struct {
+        const char *name;
+        int lev;
+        int hp;
+    } four[] = {
+        { "Michael", 30, 220 },
+        { "Gabriel", 24, 160 },
+        { "Raphael", 24, 160 },
+        { "Uriel", 24, 160 },
+    };
+    int i;
+
+    if (heaven_host_arrived())
+        return;
+    u.uevent.petra_step |= 2;
+    heaven_blackout(heaven_host_text);
+    for (i = 0; i < 4; i++) {
+        struct monst *mtmp;
+        coordxy x = lucifer ? lucifer->mx : u.ux;
+        coordxy y = lucifer ? lucifer->my : u.uy;
+
+        mtmp = makemon(&mons[PM_ARCHON], x, y,
+                       MM_ADJACENTOK | MM_NOWAIT | MM_NOMSG);
+        if (!mtmp)
+            mtmp = makemon(&mons[PM_ARCHON], u.ux, u.uy,
+                           MM_ADJACENTOK | MM_NOWAIT | MM_NOMSG);
+        if (!mtmp)
+            continue;
+        mtmp->m_lev = four[i].lev;
+        mtmp->mhp = mtmp->mhpmax = four[i].hp;
+        if (i == 0)
+            mtmp->mspeed = MFAST;
+        (void) christen_monst(mtmp, four[i].name);
+        heaven_ally(mtmp, STRAT_HEAVEN_ARCH);
+    }
+}
+
+/* Called from des.heaven_host() after the Riders and the random
+   monsters, so these squares stay theirs. A save that already has
+   the level is not rebuilt. */
+void
+heaven_place_host(void)
+{
+    static const coordxy altarx[3] = { 7, 37, 67 };
+    static const coordxy altary[3] = { 9, 5, 9 };
+    static const coordxy priestxy[12][2] = {
+        { 18, 9 }, { 19, 8 }, { 19, 9 }, { 19, 10 },
+        { 36, 12 }, { 37, 12 }, { 38, 12 }, { 36, 13 },
+        { 56, 9 }, { 55, 8 }, { 55, 9 }, { 55, 10 },
+    };
+    static const coordxy seraphxy[2][2] = { { 32, 9 }, { 42, 9 } };
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        int align = -1;
+
+        if (IS_ALTAR(levl[altarx[i]][altary[i]].typ))
+            align = Amask2align(levl[altarx[i]][altary[i]].altarmask
+                                 & AM_MASK);
+        heaven_altar_host(altarx[i], altary[i], align);
+    }
+    for (i = 0; i < 12; i++) {
+        struct monst *mtmp = heaven_at(&mons[PM_ALIGNED_CLERIC],
+                                        priestxy[i][0], priestxy[i][1]);
+
+        if (!mtmp)
+            continue;
+        mtmp->female = (i & 1) ? 1 : 0;
+        heaven_enemy(mtmp, STRAT_HEAVEN_PRIEST);
+    }
+    for (i = 0; i < 2; i++) {
+        struct monst *mtmp = heaven_at(&mons[PM_ARCHON],
+                                        seraphxy[i][0], seraphxy[i][1]);
+
+        heaven_ally(mtmp, STRAT_HEAVEN_SERAPH);
+    }
 }
 
 /* Called from des.heaven_temples() while a new Plane of Heaven is built.

@@ -2658,10 +2658,22 @@ map_glyphinfo(
     if (isok(x, y)) {
         struct monst *hm = m_at(x, y);
 
-        if (hm && hm->data == &mons[PM_ANGEL]
-            && (hm->mstrategy & STRAT_HEAVEN_FALLEN)
-            && iflags.use_color)
-            glyphinfo->gm.sym.color = CLR_RED;
+        if (hm && iflags.use_color) {
+            if (hm->data == &mons[PM_ANGEL]
+                && (hm->mstrategy & STRAT_HEAVEN_FALLEN))
+                glyphinfo->gm.sym.color = CLR_RED;
+            else if (is_heaven_priest(hm))
+                glyphinfo->gm.sym.color = CLR_RED;
+            else if (is_heaven_cherub(hm))
+                glyphinfo->gm.sym.color = CLR_BRIGHT_BLUE;
+            else if (is_heaven_seraph(hm))
+                glyphinfo->gm.sym.color = CLR_YELLOW;
+            else if (is_heaven_arch(hm))
+                glyphinfo->gm.sym.color = CLR_WHITE;
+            else if (hm->data == &mons[PM_ANGEL]
+                     && (hm->mstrategy & STRAT_HEAVEN_LORD))
+                glyphinfo->gm.sym.color = CLR_GRAY;
+        }
         if (hm && is_lucifer(hm) && M_AP_TYPE(hm) == M_AP_NOTHING) {
             glyphinfo->gm.glyphflags |= MG_INVERSE;
             glyphinfo->ttychar = 'D';

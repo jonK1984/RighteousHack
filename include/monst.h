@@ -183,18 +183,23 @@ struct monst {
 #define STRAT_PLAYER    0x01000000L
 #define STRAT_NONE      0x00000000L
 #define STRAT_STRATMASK 0x0f000000L
-    /* mstrategy unused 0x00fffc00L */
+    /* mstrategy unused 0x00fc0000L */
     /* Portal host (Michael or an angel with him) has left meditation.
        Lives in the unused range, so the monster record is unchanged. */
 #define STRAT_HINNOM_RELEASED 0x00000100L
     /* One of the Host making for Moloch once the field is down. */
 #define STRAT_HINNOM_THRONE   0x00000200L
     /* Plane of Heaven. These live in the unused range, so the
-       monster record is unchanged and EDITLEVEL stays 20. */
+       monster record is unchanged and EDITLEVEL stays 20.
+       No new monster kind: that would lengthen mvitals. */
 #define STRAT_LUCIFER         0x00000400L
 #define STRAT_LUCIFER_WAIT    0x00000800L
 #define STRAT_HEAVEN_LORD     0x00001000L
 #define STRAT_HEAVEN_FALLEN   0x00002000L
+#define STRAT_HEAVEN_CHERUB   0x00004000L
+#define STRAT_HEAVEN_SERAPH   0x00008000L
+#define STRAT_HEAVEN_ARCH     0x00010000L
+#define STRAT_HEAVEN_PRIEST   0x00020000L
 #define STRAT_GOAL      0x000000ffL
 
     coord mgoal;           /* monster strategy, target location */
@@ -243,8 +248,25 @@ struct monst {
 #define is_lucifer(mon) \
     ((mon) && ((mon)->mstrategy & STRAT_LUCIFER) != 0L)
 
+/* The Lord's host and the Dragon's priests reuse ki-rin, Archon,
+   Angel, and aligned cleric. The bit is the identity. */
+#define is_heaven_cherub(mon) \
+    ((mon) && ((mon)->mstrategy & STRAT_HEAVEN_CHERUB) != 0L)
+#define is_heaven_seraph(mon) \
+    ((mon) && ((mon)->mstrategy & STRAT_HEAVEN_SERAPH) != 0L)
+#define is_heaven_arch(mon) \
+    ((mon) && ((mon)->mstrategy & STRAT_HEAVEN_ARCH) != 0L)
+#define is_heaven_priest(mon) \
+    ((mon) && ((mon)->mstrategy & STRAT_HEAVEN_PRIEST) != 0L)
+#define heaven_lords_host(mon) \
+    ((mon) && ((mon)->mstrategy & (STRAT_HEAVEN_LORD | STRAT_HEAVEN_CHERUB \
+                                   | STRAT_HEAVEN_SERAPH | STRAT_HEAVEN_ARCH)) != 0L)
+
 /* Bit 0 of the unused petra_step field. The field already exists. */
 #define perdition_forever() ((u.uevent.petra_step & 1) != 0)
+
+/* Bit 1 of petra_step. The archangels arrive once. */
+#define heaven_host_arrived() ((u.uevent.petra_step & 2) != 0)
 
 /* monsters which cannot be displaced: temple priests, shopkeepers,
    vault guards, Isaiah, Peter, quest leader */

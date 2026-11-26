@@ -262,7 +262,9 @@ do_mgivenname(void)
      * the existing name, or if the player is trying to remove the
      * monster's existing name without assigning a new one.
      */
-    if ((mtmp->data->geno & G_UNIQ) && !mtmp->ispriest) {
+    if (((mtmp->data->geno & G_UNIQ) && !mtmp->ispriest)
+        || is_lucifer(mtmp) || is_heaven_arch(mtmp)
+        || is_heaven_cherub(mtmp) || is_heaven_seraph(mtmp)) {
         if (!alreadynamed(mtmp, monnambuf, buf))
             pline("%s doesn't like being called names!", upstart(monnambuf));
     } else if (mtmp->isshk
@@ -966,6 +968,16 @@ x_monnam(
         /* Proper name. Looking keeps the title. Combat uses the name alone. */
         Strcat(buf, called ? "Lucifer (The Great Dragon)" : "Lucifer");
         name_at_start = TRUE;
+    } else if (is_heaven_arch(mtmp) && has_mgivenname(mtmp)) {
+        /* "Michael", never "Archon called Michael". */
+        Strcat(buf, MGIVENNAME(mtmp));
+        name_at_start = TRUE;
+    } else if (is_heaven_cherub(mtmp)) {
+        Strcat(buf, "cherub");
+        name_at_start = FALSE;
+    } else if (is_heaven_seraph(mtmp)) {
+        Strcat(buf, "seraph");
+        name_at_start = FALSE;
     } else if (do_name && has_mgivenname(mtmp)) {
         char *name = MGIVENNAME(mtmp);
 
