@@ -84,7 +84,7 @@ static const char win_e_text[] =
     "\n"
     "Strong hands lift thee up. Thy wounds are healed, and every tear is wiped from thine eyes. There is no more death, neither sorrow, nor crying, neither any more pain, for the former things are passed away.\n"
     "\n"
-    "Thy soul is thine again. Thou art redeemed, and thou art home.";
+    "Thy soul is free. Thou art redeemed, and thou art home.";
 static const char dragon_voice[] =
     "A voice from heaven booms: \"Woe unto thee, for thou hast made the gravest of errors.\"";
 static const char dragon_text[] =

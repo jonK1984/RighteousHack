@@ -77,7 +77,7 @@ class Endcut(unittest.TestCase):
             "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing.",
             "The spiritual chains that bound thy soul in the Sanctum of the Great Dragon break asunder, and are rendered as dust.",
             "Well done, thou good and faithful servant. Thou hast been faithful over a few things; I will make thee ruler over many things. Enter thou into the joy of thy Lord.",
-            "Thy soul is thine again. Thou art redeemed, and thou art home.",
+            "Thy soul is free. Thou art redeemed, and thou art home.",
             "Woe unto thee, for thou hast made the gravest of errors.",
             "Thou foolishly layest thy soul upon the altar of the Great Dragon.",
             "Thou fallest upon the field of heaven, and the war goeth on without thee.",
