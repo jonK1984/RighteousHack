@@ -40,9 +40,16 @@ def c_text(src, marker):
 
 
 def wrap_card(text, cols):
-    """Same fold as endcut_put_wrapped: spaces only, blank lines kept."""
+    """Same fold as rh_putstr. A space before a newline is not a blank
+    line. An empty piece, from a blank line in the source, stays one
+    blank. Trailing spaces are not shown."""
     lines = []
-    for para in text.split("\n"):
+    for raw in text.split("\n"):
+        para = raw.rstrip(" ")
+        if not para:
+            if raw == "":
+                lines.append("")
+            continue
         while len(para) > cols:
             n = cols
             while n > 0 and para[n] != " ":
@@ -64,7 +71,9 @@ class Endcut(unittest.TestCase):
         src = read("src/endcut.c")
         lines = (
             "Thou offerest thy soul up to the Lord... a heart submitted to the will of God Most High...",
-            "For a moment there is silence in heaven. Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof.",
+            "For a moment there is silence in heaven.",
+            "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof.",
+            "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee.",
             "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing.",
             "The chains that bound thee in the Sanctum of the Great Dragon break asunder, and fall as dust about thy feet.",
             "Well done, thou good and faithful servant. Thou hast been faithful over a few things; I will make thee ruler over many things. Enter thou into the joy of thy Lord.",
@@ -148,6 +157,28 @@ class Endcut(unittest.TestCase):
             self.assertLessEqual(len(line), cols)
         self.assertEqual("\n".join(shown).split(), host.split())
         self.assertGreater(len(c_text(src, "win_a_rest[]")), 254)
+
+    def test_altar_card_has_three_paragraphs(self):
+        text = c_text(read("src/endcut.c"), "win_a_rest[]")
+        paras = text.split("\n\n")
+        self.assertEqual(paras, [
+            "For a moment there is silence in heaven.",
+            "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon.",
+            "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.",
+        ])
+        self.assertNotIn(" \n", text)
+        self.assertFalse(any(p.endswith(" ") or p.startswith(" ") for p in paras))
+        shown = wrap_card(text, 79)
+        blanks = [i for i, line in enumerate(shown) if line == ""]
+        self.assertEqual(len(blanks), 2)
+        self.assertGreater(blanks[1], blanks[0] + 1)
+        self.assertTrue(all(line == line.rstrip(" ") for line in shown))
+        # A space before a newline does not become its own blank line.
+        spaced = wrap_card("mouth \nof an ancient cave.", 40)
+        self.assertEqual(spaced, ["mouth", "of an ancient cave."])
+        self.assertEqual(
+            wrap_card("One sentence.\n\nTwo sentences.", 40),
+            ["One sentence.", "", "Two sentences."])
 
     def test_the_battlefield_is_shown_before_the_sparks(self):
         src = read("src/endcut.c")

@@ -66,7 +66,11 @@ void endcut_memorial(winid, time_t);
 static const char win_a_lead[] =
     "Thou offerest thy soul up to the Lord... a heart submitted to the will of God Most High...";
 static const char win_a_rest[] =
-    "For a moment there is silence in heaven. Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon. The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.";
+    "For a moment there is silence in heaven.\n"
+    "\n"
+    "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon.\n"
+    "\n"
+    "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.";
 static const char win_c_text[] =
     "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing. The brightness of the Lord's coming falleth upon him, and he is cast down, bound in chains of darkness, and the war in heaven is ended.";
 static const char win_e_text[] =
@@ -247,14 +251,14 @@ rh_text_cols(void)
 }
 
 /* Fold one paragraph on a space. A word longer than the screen
-   stays whole. */
+   stays whole. Trailing spaces are not put. */
 static void
 rh_put_para(winid win, int attr, const char *line, size_t len, int cols)
 {
-    if (!len) {
-        putstr(win, attr, "");
+    while (len > 0 && line[len - 1] == ' ')
+        len--;
+    if (!len)
         return;
-    }
     while (len > 0) {
         int n = (int) len;
         char buf[BUFSZ];
@@ -274,11 +278,18 @@ rh_put_para(winid win, int attr, const char *line, size_t len, int cols)
         if (n >= BUFSZ)
             n = BUFSZ - 1;
         (void) strncpy(buf, line, (size_t) n);
-        buf[n] = '\0';
-        putstr(win, attr, buf);
-        line += n;
-        len -= (size_t) n;
-        if (len && *line == ' ') {
+        {
+            int took = n;
+
+            while (n > 0 && line[n - 1] == ' ')
+                n--;
+            buf[n] = '\0';
+            if (n)
+                putstr(win, attr, buf);
+            line += took;
+            len -= (size_t) took;
+        }
+        while (len > 0 && *line == ' ') {
             line++;
             len--;
         }
@@ -294,9 +305,17 @@ rh_putstr(winid win, int attr, const char *text)
 
     while (*p) {
         const char *nl = strchr(p, '\n');
-        size_t len = nl ? (size_t) (nl - p) : strlen(p);
+        size_t raw = nl ? (size_t) (nl - p) : strlen(p);
+        size_t len = raw;
 
-        rh_put_para(win, attr, p, len, cols);
+        /* A space before a newline is not a blank line. A source
+           line that is empty, from \n\n, is one blank line. */
+        while (len > 0 && p[len - 1] == ' ')
+            len--;
+        if (len)
+            rh_put_para(win, attr, p, len, cols);
+        else if (raw == 0)
+            putstr(win, attr, "");
         if (!nl)
             break;
         p = nl + 1;
