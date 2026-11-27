@@ -195,7 +195,9 @@ endcut_wait(int ms)
 }
 
 /* Exact milliseconds. endcut_wait rounds to the tty's 50 ms tick, which
-   misses the mockup. Windows tty links Delay, which is Sleep. */
+   misses the mockup. Windows tty links Delay, which is Sleep. Sleep does
+   not present the console back buffer; tty_endcut_flush does that, the
+   same present tty_delay_output performs for the older scenes. */
 static boolean
 endcut_wait_ms(int ms)
 {

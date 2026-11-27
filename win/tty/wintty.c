@@ -5851,6 +5851,12 @@ tty_endcut_flush(void)
         term_end_color();
     ttyDisplay->color = NO_COLOR;
     (void) fflush(stdout);
+#if defined(WIN32) || defined(WIN32CON)
+    /* The console keeps output in a back buffer. The older cutscene
+       wait presents that buffer from tty_delay_output. fflush does not,
+       so a Sleep here would leave every new frame invisible. */
+    synch_cursor();
+#endif
 }
 
 void
