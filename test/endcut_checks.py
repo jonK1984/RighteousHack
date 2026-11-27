@@ -97,7 +97,11 @@ class Endcut(unittest.TestCase):
         self.assertIn("endcut_testing", src)
         self.assertIn("nh_delay_output", src)
         self.assertIn("fqname(base, LEVELPREFIX, 1)", src)
-        self.assertNotIn("msleep", src)
+        # Windows tty does not link the Unix helper. Only the VMS
+        # branch may name it.
+        self.assertNotIn("msleep", src.split("#elif defined(VMS)", 1)[0])
+        self.assertIn("Delay(", src)
+        self.assertIn("nanosleep", src)
         self.assertNotIn("/tmp/", src)
         self.assertNotIn("getpid", src)
         self.assertIn("#define EDITLEVEL 20", read("include/patchlevel.h"))
@@ -172,12 +176,14 @@ class Endcut(unittest.TestCase):
         self.assertIn("EDetect_monsters = endcut_save_det", src)
         self.assertIn("vision_reset()", back)
         self.assertIn('load_special("astral.lua")', src)
-        burst = src.split("endcut_burst(coordxy x", 1)[1].split(
-            "endcut_save_det", 1)[0]
-        self.assertIn("endcut_show()", burst)
-        quake = src.split("endcut_quake(coordxy ax", 1)[1].split(
-            "endcut_dist", 1)[0]
-        self.assertGreaterEqual(quake.count("endcut_show()"), 2)
+        scene = src.split("endcut_altar_scene(boolean harm)", 1)[1].split(
+            "endcut_stamp_lucifer", 1)[0]
+        self.assertIn("endcut_reveal()", scene)
+        self.assertIn("endcut_show()", scene)
+        self.assertIn("endcut_wait_ms(", scene)
+        compose = src.split("endcut_compose(int shx", 1)[1].split(
+            "endcut_restore_burst", 1)[0]
+        self.assertNotIn("docrt()", compose)
 
 
 if __name__ == "__main__":
