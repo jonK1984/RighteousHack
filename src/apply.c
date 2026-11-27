@@ -1680,22 +1680,26 @@ word_lamp_bearing(void)
     return "toward the vibrating square";
 }
 
-/* The lamp stays lit. Applying it again only reads the flame. */
+/* Applying a lit lamp puts it out. Applying an unlit one lights
+   it, speaks the verse once, and reads the flame. */
 static int
 use_word_lamp(struct obj *obj)
 {
     const char *bearing;
 
+    if (obj->lamplit) {
+        pline("%s is now off.", Yname2(obj));
+        end_burn(obj, TRUE);
+        return ECMD_TIME;
+    }
     if (Underwater) {
         pline("This is not a diving lamp.");
         return ECMD_TIME;
     }
-    if (!obj->lamplit) {
-        check_unpaid(obj);
-        obj->spe = 1;
-        begin_burn(obj, FALSE);
-        pline("%s is now on.", Yname2(obj));
-    }
+    check_unpaid(obj);
+    obj->spe = 1;
+    begin_burn(obj, FALSE);
+    pline("%s is now on.", Yname2(obj));
     if (!u.uevent.lamp_verse) {
         /* Psalm 119:105 KJV, without the acrostic heading "NUN." */
         pline("Thy word is a lamp unto my feet, and a light unto my path.");

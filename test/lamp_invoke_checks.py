@@ -80,6 +80,32 @@ class LampInvokeTests(unittest.TestCase):
         self.assertIn("nh_delay_output", shared)
         self.assertIn("flags.nap", shared)
 
+    def test_apply_toggles_like_a_magic_lamp(self):
+        apply = read("src/apply.c")
+        body = apply.split("use_word_lamp(struct obj *obj)", 1)[1]
+        body = body.split("lamp_levels_above_invocation", 1)[0]
+        self.assertNotIn("The lamp stays lit", apply)
+        self.assertLess(body.index("obj->lamplit"), body.index("Underwater"))
+        off = body.split("if (obj->lamplit)", 1)[1].split("Underwater", 1)[0]
+        self.assertIn('pline("%s is now off.", Yname2(obj));', off)
+        self.assertIn("end_burn(obj, TRUE);", off)
+        self.assertLess(off.index("is now off."), off.index("end_burn"))
+        self.assertLess(off.index("end_burn"), off.index("return ECMD_TIME;"))
+        self.assertNotIn("lamp_verse", off)
+        self.assertNotIn("word_lamp_bearing", off)
+        self.assertIn('pline("%s is now on.", Yname2(obj));', body)
+        self.assertLess(body.index("is now on."), body.index("lamp_verse"))
+        self.assertLess(body.index("lamp_verse"),
+                        body.index("word_lamp_bearing()"))
+        invoke = apply.split("invoke_word_lamp(struct obj *obj)", 1)[1]
+        invoke = invoke.split("light_cocktail", 1)[0]
+        self.assertNotIn("lamplit", invoke)
+        timeout = read("src/timeout.c")
+        radius = timeout.split("int radius = 3;", 1)[1]
+        radius = radius.split("do_timer = FALSE;", 1)[0]
+        self.assertIn("case LAMP_OF_GODS_WORD:", radius)
+        self.assertIn("case MAGIC_LAMP:", radius)
+
 
 if __name__ == "__main__":
     unittest.main()
