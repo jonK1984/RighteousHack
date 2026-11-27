@@ -92,6 +92,59 @@ class Endcut(unittest.TestCase):
             "Thou layest thy soul upon the altar of the Lord.", src)
         self.assertNotIn("a heart truly submitted", src)
 
+    def test_win_frame_text_is_the_city_of_god(self):
+        import re
+        frames_src = read("src/endframes.c")
+        self.assertNotIn("Thou layest thy soul upon the altar of the Lord.",
+                         frames_src)
+        self.assertNotIn("Thy soul is thine again, and thou art redeemed.",
+                         frames_src)
+        run_body = frames_src.split(
+            "static const struct endrun end_runs[] = {", 1)[1]
+        run_body = run_body.split(
+            "static const struct endframe", 1)[0]
+        runs = [(int(a), int(b), int(c), int(d))
+                for a, b, c, d in re.findall(
+                    r"\{(\d+),(\d+),(\d+),(\d+)\}", run_body)]
+        frame_body = frames_src.split(
+            "static const struct endframe end_frames[] = {", 1)[1]
+        frame_body = frame_body.split("static const int end_nframes", 1)[0]
+        frames = [(int(a), int(b), int(c), int(d))
+                  for a, b, c, d in re.findall(
+                      r"\{(\d+),(\d+),(\d+),(\d+)\}", frame_body)]
+        want = [
+            "Thou passest through the pearly gates, and the city of God is before",
+            'thee. "And the city had no need of the sun, neither of the moon, to',
+            "shine in it: for the glory of God did lighten it, and the Lamb is the",
+            'light thereof."',
+        ]
+
+        def grid(st, nr):
+            cells = []
+            for n, ch, col, inv in runs[st:st + nr]:
+                cells.extend([(ch, col, inv)] * n)
+            self.assertEqual(len(cells), 24 * 80)
+            return cells
+
+        seq0 = [(i, f) for i, f in enumerate(frames) if f[1] == 0]
+        for nth in (32, 33, 34):
+            i, (ms, seq, st, nr) = seq0[nth]
+            cells = grid(st, nr)
+            rows = []
+            for y in range(19, 24):
+                row = "".join(chr(cells[y * 80 + x][0]) for x in range(80))
+                rows.append(row.rstrip())
+            self.assertEqual([r.strip() for r in rows[:4]], want)
+            self.assertEqual(rows[4], "")
+            for line, raw in zip(want, rows[:4]):
+                pad = len(raw) - len(raw.lstrip(" "))
+                self.assertEqual(pad, (80 - len(line)) // 2)
+            letters = [c for y in range(19, 23) for x in range(80)
+                       for c in [cells[y * 80 + x]] if c[0] != 32]
+            self.assertTrue(letters)
+            self.assertEqual({c[1] for c in letters}, {0 if nth == 32 else 7 if nth == 33 else 15})
+            self.assertTrue(all(c[2] == 0 for c in letters))
+
     def test_proanimate_is_prophet_only(self):
         cmd = read("src/cmd.c")
         src = read("src/endcut.c")
