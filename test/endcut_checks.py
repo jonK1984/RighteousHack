@@ -152,17 +152,32 @@ class Endcut(unittest.TestCase):
         self.assertIn("levl[x][y].lit = 1", reveal)
         self.assertIn("levl[x][y].waslit = 1", reveal)
         self.assertIn("levl[x][y].seenv = SVALL", reveal)
+        self.assertIn("endcut_omniscient = TRUE", reveal)
         self.assertIn("map_object(obj, 0)", reveal)
-        self.assertIn("magic_map_background(x, y, 0)", reveal)
+        self.assertIn("magic_map_background(x, y, 1)", reveal)
         self.assertIn("EDetect_monsters |= I_SPECIAL", reveal)
         self.assertIn("mtmp->mundetected = 0", reveal)
-        self.assertIn("docrt()", reveal)
-        self.assertIn("flush_screen(1)", reveal)
+        self.assertIn("endcut_show()", reveal)
+        show = src.split("endcut_show(void)", 1)[1].split(
+            "endcut_sight_off", 1)[0]
+        self.assertIn("docrt()", show)
+        self.assertIn("flush_screen(1)", show)
+        vision = read("src/vision.c")
+        self.assertIn("endcut_omniscient && control != 2", vision)
+        self.assertIn("IN_SIGHT | COULD_SEE", vision)
         back = src.split("endcut_give_back(coordxy ox", 1)[1].split(
             "struct endcut_keep", 1)[0]
         self.assertIn("endcut_sight_off()", back)
+        self.assertIn("endcut_omniscient = FALSE", src)
         self.assertIn("EDetect_monsters = endcut_save_det", src)
         self.assertIn("vision_reset()", back)
+        self.assertIn('load_special("astral.lua")', src)
+        burst = src.split("endcut_burst(coordxy x", 1)[1].split(
+            "endcut_save_det", 1)[0]
+        self.assertIn("endcut_show()", burst)
+        quake = src.split("endcut_quake(coordxy ax", 1)[1].split(
+            "endcut_dist", 1)[0]
+        self.assertGreaterEqual(quake.count("endcut_show()"), 2)
 
 
 if __name__ == "__main__":

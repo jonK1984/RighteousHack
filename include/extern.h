@@ -3910,6 +3910,7 @@ extern void heaven_wake_lucifer(void);
 extern void heaven_ready_host(void);
 extern boolean is_heaven_chest(struct obj *);
 extern boolean endcut_testing;
+extern boolean endcut_omniscient;
 extern void rng_save(void);
 extern void rng_restore(void);
 extern int rh_text_cols(void);

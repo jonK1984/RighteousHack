@@ -37,6 +37,10 @@
 #endif
 
 boolean endcut_testing = FALSE;
+/* While the battle is on screen, vision must not shrink the map
+   back to the hero's sight. The Plane of Heaven does not remember
+   the map, and the hero's sight is short. */
+boolean endcut_omniscient = FALSE;
 
 static boolean endcut_stone = FALSE;
 static boolean endcut_from_dragon = FALSE;
@@ -45,6 +49,7 @@ static unsigned endcut_steed_id, endcut_stuck_id, endcut_ball_id,
 static char endcut_scratch[FQN_MAX_FILENAME];
 
 static void endcut_give_back(coordxy, coordxy);
+static void endcut_show(void);
 static boolean endcut_borrow(coordxy *, coordxy *);
 void endcut_memorial(winid, time_t);
 
@@ -323,7 +328,7 @@ endcut_burst(coordxy x, coordxy y, int rings)
         endcut_ring(x, y, r);
         if (endcut_wait(80))
             return TRUE;
-        docrt();
+        endcut_show();
     }
     return FALSE;
 }
@@ -332,8 +337,17 @@ static long endcut_save_det;
 static boolean endcut_det_saved = FALSE;
 
 static void
+endcut_show(void)
+{
+    gv.vision_full_recalc = 1;
+    docrt();
+    flush_screen(1);
+}
+
+static void
 endcut_sight_off(void)
 {
+    endcut_omniscient = FALSE;
     if (!endcut_det_saved)
         return;
     EDetect_monsters = endcut_save_det;
@@ -349,6 +363,7 @@ endcut_reveal(void)
     coordxy x, y;
     struct monst *mtmp;
 
+    endcut_omniscient = TRUE;
     if (!endcut_det_saved) {
         endcut_save_det = EDetect_monsters;
         endcut_det_saved = TRUE;
@@ -364,7 +379,7 @@ endcut_reveal(void)
             if (obj && !covers_objects(x, y))
                 map_object(obj, 0);
             else
-                magic_map_background(x, y, 0);
+                magic_map_background(x, y, 1);
         }
     EDetect_monsters |= I_SPECIAL;
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
@@ -373,8 +388,9 @@ endcut_reveal(void)
         mtmp->mundetected = 0;
         newsym(mtmp->mx, mtmp->my);
     }
-    docrt();
-    flush_screen(1);
+    /* The text card cleared the screen. Draw the whole battlefield
+       and push it out before any spark is painted. */
+    endcut_show();
 }
 
 static boolean
@@ -409,7 +425,7 @@ endcut_quake(coordxy ax, coordxy ay)
     for (step = 0; step < 8; step++) {
         int radius = 2 + step;
 
-        docrt();
+        endcut_show();
         for (dy = -radius; dy <= radius; dy++)
             for (dx = -radius; dx <= radius; dx++) {
                 coordxy x = ax + dx + shiftx[step];
@@ -430,7 +446,7 @@ endcut_quake(coordxy ax, coordxy ay)
         if (endcut_wait(70))
             break;
     }
-    docrt();
+    endcut_show();
 }
 
 static int
@@ -479,7 +495,7 @@ endcut_smite(coordxy ax, coordxy ay, boolean harm)
             newsym(x, y);
         }
     }
-    docrt();
+    endcut_show();
 }
 
 static coordxy
@@ -518,7 +534,7 @@ endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
         newsym(x, y);
     }
     for (step = 4; step >= 1; step--) {
-        docrt();
+        endcut_show();
         endcut_ring(x, y, step);
 #ifdef TTY_GRAPHICS
         if (endcut_tty()) {
@@ -529,13 +545,13 @@ endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
         if (endcut_wait(120))
             break;
     }
-    docrt();
+    endcut_show();
     (void) endcut_burst(x, y, 2);
     if (harm && found && !DEADMONSTER(found)) {
         mongone(found);
         newsym(x, y);
     }
-    docrt();
+    endcut_show();
 }
 
 static void
@@ -657,7 +673,7 @@ endcut_borrow(coordxy *ox, coordxy *oy)
 
     gi.in_mklev = TRUE;
     (void) lspo_reset_level((lua_State *) 0);
-    if (!load_special("astral")) {
+    if (!load_special("astral.lua")) {
         gi.in_mklev = FALSE;
         endcut_steed_id = steed_id;
         endcut_stuck_id = stuck_id;
