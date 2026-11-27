@@ -305,6 +305,86 @@ class Endcut(unittest.TestCase):
             "endcut_restore_burst", 1)[0]
         self.assertNotIn("docrt()", compose)
 
+    def test_fiery_steed_sunset_is_last_and_has_no_map_redraw(self):
+        endcut = read("src/endcut.c")
+        end = read("src/end.c")
+        frames = read("src/endframes.c")
+        self.assertIn("#define ENDCUT_STEED 5", endcut)
+        self.assertIn("#define ENDCUT_STEED 5", frames)
+        self.assertIn("end_nframes = 251", frames)
+        menu = endcut.split("endcut_menu_line[]", 1)[1].split("};", 1)[0]
+        self.assertNotIn("steed", menu.lower())
+        self.assertIn("The number is from 1 to 8.", endcut)
+        finish = endcut.split("endcut_finish_ascent(void)", 1)[1]
+        finish = finish.split("endcut_dragon", 1)[0]
+        self.assertIn("u.usteed", finish)
+        self.assertIn("PM_FIERY_STEED_OF_HEAVEN", finish)
+        self.assertLess(finish.index("endcut_on_fiery_steed"),
+                        finish.index("done(ASCENDED)"))
+        self.assertLess(finish.index("u.usteed"),
+                        finish.index("done(ASCENDED)"))
+        helper = endcut.split("endcut_play_frames(int seq)", 1)[1]
+        helper = helper.split("endcut_play(int seq)", 1)[0]
+        self.assertNotIn("docrt()", helper)
+        self.assertIn("tty_endcut_begin()", helper)
+        self.assertIn("tty_endcut_cell(", helper)
+        self.assertIn("tty_endcut_flush()", helper)
+        self.assertIn("endcut_wait(ms)", helper)
+        self.assertIn("tty_endcut_end()", helper)
+        play = endcut.split("endcut_play(int seq)", 1)[1]
+        play = play.split("endcut_steed_sunset", 1)[0]
+        self.assertIn("endcut_play_frames(seq)", play)
+        self.assertLess(play.index("endcut_play_frames(seq)"),
+                        play.index("docrt()"))
+        sunset = endcut.split("endcut_steed_sunset(void)", 1)[1]
+        sunset = sunset.split("endcut_show", 1)[0]
+        self.assertIn("endcut_play_frames(ENDCUT_STEED)", sunset)
+        self.assertIn("endcut_begin_scene()", sunset)
+        self.assertNotIn("docrt()", sunset)
+        self.assertNotIn("endcut_card(", sunset)
+        before, after = end.split("topten(how, endtime);", 1)
+        quiet = before.split("!iflags.toptenwin", 1)[1]
+        self.assertLess(quiet.index("endcut_steed_sunset()"),
+                        quiet.index("exit_nhwindows"))
+        shown = after.split("nh_terminate", 1)[0]
+        self.assertLess(shown.index("endcut_steed_sunset()"),
+                        shown.index("exit_nhwindows"))
+        self._steed_frames_match_generator(frames)
+
+    def _steed_frames_match_generator(self, frames_src):
+        import importlib.util
+        import re
+
+        spec = importlib.util.spec_from_file_location(
+            "gen_steed_frames", ROOT / "util" / "gen_steed_frames.py")
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        gen.build()
+        self.assertEqual(len(gen.frames), 71)
+        self.assertEqual(sum(fr["ms"] for fr in gen.frames), 8700)
+        start = frames_src.index("static const struct endrun end_runs[]")
+        mid = frames_src.index("static const struct endframe end_frames[]")
+        tail = frames_src.index("static const int end_nframes")
+        runs = [(int(a), int(b), int(c), int(d))
+                for a, b, c, d in re.findall(
+                    r"\{(\d+),(\d+),(\d+),(\d+)\}", frames_src[start:mid])]
+        frames = [(int(a), int(b), int(c), int(d))
+                  for a, b, c, d in re.findall(
+                      r"\{(\d+),(\d+),(\d+),(\d+)\}", frames_src[mid:tail])]
+        steed = [f for f in frames if f[1] == 5]
+        self.assertEqual(len(steed), 71)
+        self.assertEqual(steed[0][2], 93793)
+        for i, fr in enumerate(gen.frames):
+            want = list(gen.frame_cells(fr))
+            self.assertEqual(len(want), 1920)
+            ms, seq, st, nr = steed[i]
+            got = []
+            for n, ch, col, inv in runs[st:st + nr]:
+                got.extend([(ch, col, inv)] * n)
+            self.assertEqual(got, want)
+            self.assertEqual(ms, fr["ms"])
+            self.assertEqual(seq, 5)
+
 
 if __name__ == "__main__":
     unittest.main()

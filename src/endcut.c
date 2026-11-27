@@ -49,6 +49,9 @@ boolean endcut_omniscient = FALSE;
 
 static boolean endcut_stone = FALSE;
 static boolean endcut_from_dragon = FALSE;
+/* Recorded before done() clears the steed. really_done plays the
+   sunset after the end screens, when u.usteed is already gone. */
+static boolean endcut_on_fiery_steed = FALSE;
 static unsigned endcut_steed_id, endcut_stuck_id, endcut_ball_id,
     endcut_chain_id;
 static char endcut_scratch[FQN_MAX_FILENAME];
@@ -61,6 +64,7 @@ void endcut_memorial(winid, time_t);
 #define ENDCUT_WIN 0
 #define ENDCUT_DRAGON 1
 #define ENDCUT_DEATH 2
+#define ENDCUT_STEED 5
 
 /* Locked verbatim. */
 static const char win_a_lead[] =
@@ -343,15 +347,16 @@ endcut_card(const char *text)
     rh_text_window(text);
 }
 
-static void
-endcut_play(int seq)
+/* Full-screen frames on the base window. Does not redraw the map:
+   the sunset runs after really_done has destroyed WIN_MAP. */
+static boolean
+endcut_play_frames(int seq)
 {
-    endcut_begin_scene();
 #ifdef TTY_GRAPHICS
     int i, n, total;
 
     if (!endcut_tty())
-        return;
+        return FALSE;
     total = endcut_nframes();
     tty_endcut_begin();
     for (i = 0; i < total; i++) {
@@ -385,10 +390,33 @@ endcut_play(int seq)
             break;
     }
     tty_endcut_end();
-    docrt();
+    return TRUE;
 #else
     (void) seq;
+    return FALSE;
 #endif
+}
+
+static void
+endcut_play(int seq)
+{
+    endcut_begin_scene();
+    if (endcut_play_frames(seq))
+        docrt();
+}
+
+/* Last picture of an ascent on the fiery steed. No words, no map redraw.
+   really_done calls this while the tty is still up. Other ports return. */
+void
+endcut_steed_sunset(void)
+{
+    if (!endcut_on_fiery_steed)
+        return;
+    endcut_on_fiery_steed = FALSE;
+    if (!endcut_tty())
+        return;
+    endcut_begin_scene();
+    (void) endcut_play_frames(ENDCUT_STEED);
 }
 
 static long endcut_save_det;
@@ -1532,6 +1560,10 @@ endcut_finish_ascent(void)
 {
     if (u.uevent.ascended)
         return;
+    /* done() drops the steed. The sunset is the last screen, so the
+       fact of the ride has to be kept from here. */
+    endcut_on_fiery_steed = (boolean) (u.usteed
+            && u.usteed->data == &mons[PM_FIERY_STEED_OF_HEAVEN]);
     endcut_play(ENDCUT_WIN);
     u.uevent.ascended = 1;
     endcut_stone = TRUE;

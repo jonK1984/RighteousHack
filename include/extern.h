@@ -3928,6 +3928,7 @@ extern void rh_text_window(const char *);
 extern void endcut_card(const char *);
 extern void endcut_ascend(void);
 extern void endcut_finish_ascent(void);
+extern void endcut_steed_sunset(void);
 extern void endcut_dragon(void);
 extern void endcut_heaven_death(void);
 extern boolean endcut_replace_tomb(void);

@@ -1631,11 +1631,19 @@ really_done(int how)
      *  raw_prompt("--More--") (or "Press <return> to continue.") that
      *  topten() can call for !toptenwin before returning here.
      */
-    if (have_windows && !iflags.toptenwin)
+    if (have_windows && !iflags.toptenwin) {
+        /* Scores are raw_print after the windows close, and closing
+           them shuts the tty down. This is the last moment it can
+           still draw, after the memorial and the stats window. */
+        endcut_steed_sunset();
         exit_nhwindows((char *) 0), have_windows = FALSE;
+    }
     topten(how, endtime);
-    if (have_windows)
+    if (have_windows) {
+        /* The score window's --More-- has already been dismissed. */
+        endcut_steed_sunset();
         exit_nhwindows((char *) 0);
+    }
 
     if (done_stopprint) {
         raw_print("");
