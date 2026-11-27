@@ -180,6 +180,25 @@ class Endcut(unittest.TestCase):
             wrap_card("One sentence.\n\nTwo sentences.", 40),
             ["One sentence.", "", "Two sentences."])
 
+    def test_ascension_title_is_the_faithful(self):
+        end = read("src/end.c")
+        farewell = end.split("Goodbye(), svp.plname", 1)[1]
+        farewell = farewell.split("dump_forward_putstr", 1)[0]
+        self.assertIn('"Faithful"', farewell)
+        self.assertNotIn("Demigod", farewell)
+        self.assertNotIn("Demigoddess", farewell)
+        # The same line is what the dumplog receives.
+        self.assertIn("dump_forward_putstr(endwin, 0, pbuf", end)
+        topten = read("src/topten.c")
+        self.assertIn("ascended as the Faithful", topten)
+        self.assertNotIn("demigod", topten)
+        self.assertNotIn("Demigod", topten)
+        pray = read("src/pray.c")
+        self.assertEqual(pray.count("ascend to the status of the Faithful"), 2)
+        self.assertNotIn("Demigod", pray)
+        self.assertNotIn("demigod-hood", pray)
+        self.assertIn("udemigod", pray)
+
     def test_dragon_card_has_three_paragraphs(self):
         text = c_text(read("src/endcut.c"), "dragon_text[]")
         self.assertTrue(text.startswith('"') and text.endswith('"'))

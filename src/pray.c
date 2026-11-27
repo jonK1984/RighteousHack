@@ -1334,8 +1334,7 @@ offer_real_amulet(struct obj *otmp, aligntyp altaralign)
         SetVoice((struct monst *) 0, 0, 80, voice_deity);
         verbalize(
           "In return for thy service, I grant thee the gift of Immortality!");
-        You("ascend to the status of Demigod%s...",
-            flags.female ? "dess" : "");
+        You("ascend to the status of the Faithful...");
         done(ASCENDED);
         /*NOTREACHED*/
     }
@@ -1520,8 +1519,7 @@ dosacrifice(void)
         SetVoice((struct monst *) 0, 0, 80, voice_deity);
         verbalize(
           "In return for thy service, I grant thee the gift of Immortality!");
-        You("ascend to the status of Demigod%s...",
-            flags.female ? "dess" : "");
+        You("ascend to the status of the Faithful...");
         done(ASCENDED);
         return ECMD_TIME;
     }
