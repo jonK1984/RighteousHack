@@ -55,7 +55,10 @@ class FallenCuss(unittest.TestCase):
             self.assertNotIn("\u2014", line)
         faithful = quest.split("angel_cuss = {", 1)[1].split(
             "fallen_angel_cuss", 1)[0]
-        self.assertIn("enternal", faithful)
+        self.assertIn(
+            "the gift of God is eternal life through Christ Jesus our Lord.",
+            faithful)
+        self.assertNotIn("enternal", faithful)
         self.assertNotIn("fallen_angel_cuss", faithful)
 
     def test_the_callers_choose_the_fallen_set(self):

@@ -77,7 +77,7 @@ questtext = {
          "\"Repent, for the Kingdom of Heaven is at hand!\"",
          "\"It is written: 'Thou shalt worship the Lord thy God, and Him only shalt thou serve.'\"",
          "\"Depart from me, ye worker of iniquity!\"",
-         "\"The wages of sin is death - but the gift of God is enternal life through Christ Jesus our Lord.\"",
+         "\"The wages of sin is death - but the gift of God is eternal life through Christ Jesus our Lord.\"",
          "\"Who has told you of the wrath that is to come!\"",
          "\"Behold, the Lamb of God cometh to judge the living and the dead.\"",
          "\"Even now the axe is laid to the root of the tree.\"",
