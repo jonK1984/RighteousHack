@@ -1320,14 +1320,19 @@ domonnoise(struct monst *mtmp)
         }
         FALLTHROUGH;
         /* FALLTHRU */
-    case MS_CUSS:
-        if (!mtmp->mpeaceful || speaks_as_fallen(mtmp))
+    case MS_CUSS: {
+        const char *arch = archangel_speech(mtmp);
+
+        if (arch)
+            com_pager(arch);
+        else if (!mtmp->mpeaceful || speaks_as_fallen(mtmp))
             cuss(mtmp);
         else if (is_lminion(mtmp))
             verbl_msg = "It's not too late.";
         else
             verbl_msg = "We're all doomed.";
         break;
+    }
     case MS_SPELL:
         /* deliberately vague, since it's not actually casting any spell */
         pline_msg = "seems to mutter a cantrip.";

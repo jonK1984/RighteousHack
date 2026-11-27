@@ -609,6 +609,27 @@ heaven_altar_host(coordxy ax, coordxy ay, int align)
     }
 }
 
+/* Michael, Gabriel, Raphael, Uriel. The name is saved with the
+   monster, and STRAT_HEAVEN_ARCH is part of mstrategy. */
+const char *
+archangel_speech(struct monst *mtmp)
+{
+    const char *nm;
+
+    if (!is_heaven_arch(mtmp) || !has_mgivenname(mtmp))
+        return (const char *) 0;
+    nm = MGIVENNAME(mtmp);
+    if (!strcmp(nm, "Michael"))
+        return "michael_speech";
+    if (!strcmp(nm, "Gabriel"))
+        return "gabriel_speech";
+    if (!strcmp(nm, "Raphael"))
+        return "raphael_speech";
+    if (!strcmp(nm, "Uriel"))
+        return "uriel_speech";
+    return (const char *) 0;
+}
+
 static void
 heaven_archangels(struct monst *lucifer)
 {

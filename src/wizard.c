@@ -882,6 +882,8 @@ static const char *const random_malediction[] = {
 void
 cuss(struct monst *mtmp)
 {
+    const char *arch;
+
     if (Deaf)
         return;
     if (mtmp->iswiz) {
@@ -905,6 +907,8 @@ cuss(struct monst *mtmp)
                       ROLL_FROM(random_malediction),
                       ROLL_FROM(random_insult));
         }
+    } else if ((arch = archangel_speech(mtmp)) != 0) {
+        com_pager(arch);
     } else if (speaks_as_fallen(mtmp)) {
         com_pager("fallen_angel_cuss");
     } else if (is_lminion(mtmp)) {

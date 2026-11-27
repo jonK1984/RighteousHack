@@ -94,6 +94,31 @@ questtext = {
          "\"Thou art but dust, and unto dust thou shalt return. We are flame.\"",
          "\"We were cast down once. We shall not be cast down again.\"",
       },
+      michael_speech = {
+         "\"Take thy place beside me, and let the dragon see that the Lord's host lacketh not for warriors.\"",
+         "\"Stand fast, soldier of the Lord. The dragon's host breaketh upon us as the sea upon the rock.\"",
+         "\"I cast him down once from these courts. By the Lord's hand I shall cast him down again.\"",
+         "\"Who is like unto God? Not the dragon, nor any of his host.\"",
+      },
+      gabriel_speech = {
+         "\"I am Gabriel, that stand in the presence of God.\"",
+         "\"For with God nothing shall be impossible.\"",
+         "\"I have borne good tidings to the lowly. Now I bear the sword against the serpent.\"",
+         "\"Fear not. The trumpet that hath sounded this day shall sound again at the last.\"",
+      },
+      raphael_speech = {
+         "\"I am but a servant of the Most High. Give thanks unto Him, for He hath kept thee unto this hour.\"",
+         "\"Thy wounds are seen, mortal. Endure, for healing cometh in the morning.\"",
+         "\"Many have fallen on the road thou hast walked. Thou art still standing, and that is the Lord's doing.\"",
+         "\"Be of good courage, mortal. No wound the dragon giveth can reach the soul the Lord hath kept.\"",
+         "\"Thy soul was bought at a great price. Let not the dragon steal it back.\"",
+      },
+      uriel_speech = {
+         "\"I have kept the deep and the chains thereof. There is room yet in Tartarus for the dragon's host.\"",
+         "\"I watched over thee in the world below. Now behold the war thou wast made for.\"",
+         "\"The light of God shineth here, and no darkness may hide from it.\"",
+         "\"Lift thine eyes, mortal. The end of thy road is at hand.\"",
+      },
       banished = {
          synopsis = "[You have been cast out from the fellowship of the faithful.]",
          output = "text",

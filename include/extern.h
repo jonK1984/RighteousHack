@@ -3904,6 +3904,7 @@ extern void heaven_tick(void);
 extern void heaven_prayer(void);
 extern void heaven_place_temples(void);
 extern void heaven_place_host(void);
+extern const char *archangel_speech(struct monst *);
 extern void heaven_dragon_end(void);
 extern void heaven_wake_lucifer(void);
 extern void heaven_ready_host(void);

@@ -48,7 +48,7 @@ class FallenCuss(unittest.TestCase):
     def test_the_fallen_lines_are_verbatim(self):
         quest = (ROOT / "dat" / "quest.lua").read_text()
         block = quest.split("fallen_angel_cuss = {", 1)[1].split(
-            "banished = {", 1)[0]
+            "michael_speech = {", 1)[0]
         spoken = [s for s in lua_strings(block) if s.startswith('"')]
         self.assertEqual(spoken, list(LINES))
         for line in spoken:
