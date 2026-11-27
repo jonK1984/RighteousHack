@@ -3908,6 +3908,7 @@ extern void heaven_begin_peace(void);
 extern void heaven_gate_enter(void);
 extern boolean heaven_bars_arrival(struct monst *);
 extern const char *heaven_peace_angel(void);
+extern boolean heaven_peace_chat(struct monst *);
 extern boolean heaven_is_altar_verse(const char *);
 extern void heaven_prayer(void);
 extern void heaven_place_temples(void);

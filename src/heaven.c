@@ -852,6 +852,50 @@ heaven_peace_angel(void)
     return lines[rn2(SIZE(lines))];
 }
 
+static const char *
+heaven_peace_cherub(void)
+{
+    static const char *const lines[] = {
+        "We kept the way of the tree of life. Now the way is opened unto thee.",
+        "The flaming sword is sheathed. Pass in peace, mortal.",
+        "We have guarded the holy places since the beginning. Rest thou here a while.",
+    };
+
+    return lines[rn2(SIZE(lines))];
+}
+
+static const char *
+heaven_peace_seraph(void)
+{
+    static const char *const lines[] = {
+        "Holy, holy, holy is the Lord of hosts.",
+        "We cover our faces before the throne. Lift thou thy voice in praise with us.",
+        "The fire that burned the dragon's host burneth in us, and it is the Lord's.",
+    };
+
+    return lines[rn2(SIZE(lines))];
+}
+
+/* #chat during the peace. Cherubim are ki-rin and seraphim are
+   archons, so this runs before the ordinary sound switch. */
+boolean
+heaven_peace_chat(struct monst *mtmp)
+{
+    const char *line = 0;
+
+    if (!heaven_peace() || !mtmp || !mtmp->mpeaceful)
+        return FALSE;
+    if (is_heaven_cherub(mtmp))
+        line = heaven_peace_cherub();
+    else if (is_heaven_seraph(mtmp))
+        line = heaven_peace_seraph();
+    if (!line)
+        return FALSE;
+    SetVoice(mtmp, 0, 80, 0);
+    verbalize("%s", line);
+    return TRUE;
+}
+
 /* Jon edits this table. A new Plane of Heaven draws 7 to 10
    distinct rows. spe_set forces spe (an enchantment, or charges).
    A rod with spe_set 0 keeps an ordinary charge roll, 4 to 8.

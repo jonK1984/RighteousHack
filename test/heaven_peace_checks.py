@@ -29,6 +29,16 @@ URIEL = (
     "Look upon the field, mortal. Where darkness stood, there is only light.",
     "The way is opened before thee. Enter when thou art ready.",
 )
+CHERUBIM = (
+    "We kept the way of the tree of life. Now the way is opened unto thee.",
+    "The flaming sword is sheathed. Pass in peace, mortal.",
+    "We have guarded the holy places since the beginning. Rest thou here a while.",
+)
+SERAPHIM = (
+    "Holy, holy, holy is the Lord of hosts.",
+    "We cover our faces before the throne. Lift thou thy voice in praise with us.",
+    "The fire that burned the dragon's host burneth in us, and it is the Lord's.",
+)
 ANGELS = (
     "Well fought, child of dust. Give glory to God.",
     "The host of the dragon is no more. Rejoice!",
@@ -195,6 +205,32 @@ class HeavenPeace(unittest.TestCase):
                         sounds.index('"It\'s not too late."'))
         self.assertLess(sounds.index("archangel_speech(mtmp)"),
                         sounds.index("heaven_peace_angel()"))
+        chat = src("sounds.c").split("domonnoise(struct monst *mtmp)", 1)[1]
+        early = chat.split("case MS_SPELL:", 1)[0]
+        self.assertLess(early.index("heaven_peace_chat(mtmp)"),
+                        early.index("case MS_CUSS:"))
+
+    def test_cherubim_and_seraphim_peace_lines(self):
+        heaven = src("heaven.c")
+        for name, lines in (("cherub", CHERUBIM), ("seraph", SERAPHIM)):
+            block = heaven.split("heaven_peace_%s(void)" % name, 1)[1]
+            block = block.split("\n}\n", 1)[0]
+            for line in lines:
+                self.assertIn('"%s"' % line, block)
+                self.assertNotIn("\u2014", line)
+                self.assertNotIn("--", line)
+            self.assertIn("rn2(SIZE(lines))", block)
+        talk = heaven.split("heaven_peace_chat(struct monst *mtmp)", 1)[1]
+        talk = talk.split("Jon edits this table", 1)[0]
+        self.assertLess(talk.index("heaven_peace()"),
+                        talk.index("is_heaven_cherub(mtmp)"))
+        self.assertLess(talk.index("!mtmp->mpeaceful"),
+                        talk.index("heaven_peace_cherub()"))
+        self.assertLess(talk.index("is_heaven_cherub(mtmp)"),
+                        talk.index("is_heaven_seraph(mtmp)"))
+        self.assertIn("verbalize(\"%s\", line)", talk)
+        sounds = src("sounds.c")
+        self.assertIn("heaven_peace_chat(mtmp)", sounds)
 
     def test_the_portal_is_in_the_temple_and_the_prompt_defaults_to_no(self):
         heaven = src("heaven.c")

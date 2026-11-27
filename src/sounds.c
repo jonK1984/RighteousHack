@@ -695,6 +695,10 @@ domonnoise(struct monst *mtmp)
         return ECMD_TIME;
     if (hinnom_chat(mtmp))
         return ECMD_TIME;
+    /* Cherubim mutter cantrips and seraphim cuss. During the peace
+       both use the approved lines instead. */
+    if (heaven_peace_chat(mtmp))
+        return ECMD_TIME;
     /* shk_chat can handle nonverbal monsters */
     if (is_silent(ptr) && !mtmp->isshk)
         return ECMD_OK;
