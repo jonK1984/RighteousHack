@@ -568,10 +568,12 @@ baalz_fixup(void)
     gb.bughack.inarea.y2 = gb.bughack.delarea.y2 = 0;
 }
 
-/* Oracle already places one branch (Sokoban is the next level down).
-   Add a second up stair on the Oracle level itself, into the Cave of Gibeon.
-   place_branch() only allows one branch stair per level, so this stair is
-   added directly. It sits in a corner of the Oracle's chamber. */
+/* The Prophet level is the Cave of Gibeon's end1 (dungeon.lua base 0).
+   Sokoban joins the next level down (base 1), not this one. The generic
+   branch placement is skipped on this level, so the stair added here is
+   the only one up into the Cave of Gibeon. It sits in a corner of the
+   Oracle's chamber. Coming down from Gibeon, goto_level finds this stair
+   by its destination and lands the hero on it. */
 staticfn boolean
 gibeon_stair_ok(coordxy x, coordxy y)
 {
@@ -714,12 +716,15 @@ fixup_special(void)
             free((genericptr_t) r->rname.str), r->rname.str = 0;
     }
 
-    /* place dungeon branch if not placed above */
-    if (!added_branch && Is_branchlev(&u.uz)) {
+    /* place dungeon branch if not placed above.
+       The Prophet level is itself the Cave of Gibeon branch end, so the
+       generic stair would be a second way up. The chamber stair is the
+       only one. */
+    if (!added_branch && Is_branchlev(&u.uz) && !Is_oracle_level(&u.uz)) {
         place_lregion(0, 0, 0, 0, 0, 0, 0, 0, LR_BRANCH, (d_level *) 0);
     }
 
-    /* second stair on the Oracle: up into the Cave of Gibeon */
+    /* the stair up into the Cave of Gibeon, in the Oracle's chamber */
     if (Is_oracle_level(&u.uz))
         place_gibeon_stair();
 
