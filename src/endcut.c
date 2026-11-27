@@ -88,7 +88,11 @@ static const char win_e_text[] =
 static const char dragon_voice[] =
     "A voice from heaven booms: \"Woe unto thee, for thou hast made the gravest of errors.\"";
 static const char dragon_text[] =
-    "\"Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim. Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more. Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.\"";
+    "\"Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim.\n"
+    "\n"
+    "Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more.\n"
+    "\n"
+    "Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.\"";
 static const char heaven_death_text[] =
     "Thou fallest upon the field of heaven, and the war goeth on without thee. The Great Dragon setteth his foot upon thy soul and beareth it away. Thy race is ended, though the crown was within thy reach.";
 

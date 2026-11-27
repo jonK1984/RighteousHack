@@ -180,6 +180,23 @@ class Endcut(unittest.TestCase):
             wrap_card("One sentence.\n\nTwo sentences.", 40),
             ["One sentence.", "", "Two sentences."])
 
+    def test_dragon_card_has_three_paragraphs(self):
+        text = c_text(read("src/endcut.c"), "dragon_text[]")
+        self.assertTrue(text.startswith('"') and text.endswith('"'))
+        paras = text[1:-1].split("\n\n")
+        self.assertEqual(paras, [
+            "Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim.",
+            "Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more.",
+            "Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.",
+        ])
+        self.assertNotIn(" \n", text)
+        self.assertNotIn("\u2014", text)
+        shown = wrap_card(text, 79)
+        blanks = [i for i, line in enumerate(shown) if line == ""]
+        self.assertEqual(len(blanks), 2)
+        self.assertGreater(blanks[1], blanks[0] + 1)
+        self.assertTrue(all(line == line.rstrip(" ") for line in shown))
+
     def test_the_battlefield_is_shown_before_the_sparks(self):
         src = read("src/endcut.c")
         reveal = src.split("endcut_reveal(void)", 1)[1].split(
