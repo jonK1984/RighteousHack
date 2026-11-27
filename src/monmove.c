@@ -1462,6 +1462,10 @@ m_search_items(
     struct monst *mtoo;
     boolean costly;
 
+    /* The victory lap: do not go looking for floor items. */
+    if (heaven_peace())
+        return FALSE;
+
     /* cut down the search radius if it thinks character is closer. */
     if (distmin(mtmp->mux, mtmp->muy, omx, omy) < SQSRCHRADIUS
         && !mtmp->mpeaceful)

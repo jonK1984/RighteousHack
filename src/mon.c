@@ -1475,6 +1475,9 @@ meatmetal(struct monst *mtmp)
     /* If a pet, eating is handled separately, in dog.c */
     if (mtmp->mtame)
         return 0;
+    /* The victory lap: nothing on the floor is taken. */
+    if (heaven_peace())
+        return 0;
 
     /* Eats topmost metal object if it is there */
     for (otmp = svl.level.objects[mtmp->mx][mtmp->my]; otmp;
@@ -1546,6 +1549,8 @@ meatobj(struct monst *mtmp) /* for gelatinous cubes */
     buf[0] = '\0';
     /* If a pet, eating is handled separately, in dog.c */
     if (mtmp->mtame)
+        return 0;
+    if (heaven_peace())
         return 0;
 
     /* eat organic objects, including cloth and wood, if present;
@@ -1672,6 +1677,8 @@ meatcorpse(
 
     /* if a pet, eating is handled separately, in dog.c */
     if (mtmp->mtame)
+        return 0;
+    if (heaven_peace())
         return 0;
 
     /* skips past any globs */
@@ -1839,6 +1846,8 @@ mpickgold(struct monst *mtmp)
     struct obj *gold;
     int mat_idx;
 
+    if (heaven_peace())
+        return;
     if ((gold = g_at(mtmp->mx, mtmp->my)) != 0) {
         mat_idx = objects[gold->otyp].oc_material;
         obj_extract_self(gold);
@@ -1858,6 +1867,10 @@ mpickstuff(struct monst *mtmp)
 {
     struct obj *otmp, *otmp2, *otmp3;
     int carryamt = 0;
+
+    /* The victory lap: floor items stay for the hero. */
+    if (heaven_peace())
+        return FALSE;
 
     /* prevent shopkeepers from leaving the door of their shop */
     if (mtmp->isshk && inhishop(mtmp))

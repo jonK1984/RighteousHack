@@ -365,6 +365,44 @@ class HeavenPeace(unittest.TestCase):
         patch = (ROOT / "include" / "patchlevel.h").read_text()
         self.assertIn("#define EDITLEVEL 20", patch)
 
+    def test_peace_keeps_floor_items_on_the_floor(self):
+        def head(path, marker, stop):
+            body = src(path).split(marker, 1)[1]
+            return body.split(stop, 1)[0]
+
+        stuff = head("mon.c", "mpickstuff(struct monst *mtmp)",
+                     "pick only one object")
+        self.assertLess(stuff.index("heaven_peace()"),
+                        stuff.index("picks up"))
+        gold = head("mon.c", "mpickgold(struct monst *mtmp)", "g_at(")
+        self.assertIn("heaven_peace()", gold)
+        for marker, stop in (
+            ("meatobj(struct monst *mtmp)", "m_consume_obj"),
+            ("meatmetal(struct monst *mtmp)", "Eats topmost"),
+            ("meatcorpse(", "skips past any globs"),
+        ):
+            body = head("mon.c", marker, stop)
+            self.assertIn("heaven_peace()", body, marker)
+        pet = head("dogmove.c", "dog_invent(struct monst *mtmp", "helpless")
+        self.assertIn("heaven_peace()", pet)
+        eat = head("dogmove.c", "dog_eat(struct monst *mtmp", "hungrytime")
+        self.assertIn("heaven_peace()", eat)
+        goal = head("dogmove.c", "nearby food is the first choice",
+                    "for (obj = fobj")
+        self.assertIn("!heaven_peace()", goal)
+        search = head("monmove.c",
+                      "m_search_items(\n    struct monst *mtmp",
+                      "cut down the search radius")
+        self.assertIn("heaven_peace()", search)
+        steal = head("steal.c", "steal(struct monst *mtmp", "monnear")
+        self.assertIn("heaven_peace()", steal)
+        wield = head("weapon.c", "mon_wield_item(struct monst *mon)",
+                     'pline_mon(mon, "%s wields %s')
+        self.assertIn("if (heaven_peace())", wield)
+        self.assertIn("return 0", wield)
+        wear = head("worn.c", "m_dowear(struct monst *mon", "verysmall")
+        self.assertIn("heaven_peace()", wear)
+
 
 if __name__ == "__main__":
     unittest.main()

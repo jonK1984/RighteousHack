@@ -762,6 +762,10 @@ m_dowear(struct monst *mon, boolean creation)
 {
     boolean can_wear_armor;
 
+    /* The victory lap: no "wears" or "puts on" lines. */
+    if (heaven_peace())
+        return;
+
 #define RACE_EXCEPTION TRUE
     /* Note the restrictions here are the same as in dowear in do_wear.c
      * except for the additional restriction on intelligence.  (Players
