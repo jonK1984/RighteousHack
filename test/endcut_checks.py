@@ -40,9 +40,16 @@ def c_text(src, marker):
 
 
 def wrap_card(text, cols):
-    """Same fold as endcut_put_wrapped: spaces only, blank lines kept."""
+    """Same fold as rh_putstr. A space before a newline is not a blank
+    line. An empty piece, from a blank line in the source, stays one
+    blank. Trailing spaces are not shown."""
     lines = []
-    for para in text.split("\n"):
+    for raw in text.split("\n"):
+        para = raw.rstrip(" ")
+        if not para:
+            if raw == "":
+                lines.append("")
+            continue
         while len(para) > cols:
             n = cols
             while n > 0 and para[n] != " ":
@@ -64,11 +71,13 @@ class Endcut(unittest.TestCase):
         src = read("src/endcut.c")
         lines = (
             "Thou offerest thy soul up to the Lord... a heart submitted to the will of God Most High...",
-            "For a moment there is silence in heaven. Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof.",
+            "For a moment there is silence in heaven.",
+            "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof.",
+            "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee.",
             "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing.",
-            "The chains that bound thee in the Sanctum of the Great Dragon break asunder, and fall as dust about thy feet.",
+            "The spiritual chains that bound thy soul in the Sanctum of the Great Dragon break asunder, and are rendered as dust.",
             "Well done, thou good and faithful servant. Thou hast been faithful over a few things; I will make thee ruler over many things. Enter thou into the joy of thy Lord.",
-            "Thy soul is thine again. Thou art redeemed, and thou art home.",
+            "Thy soul is free. Thou art redeemed, and thou art home.",
             "Woe unto thee, for thou hast made the gravest of errors.",
             "Thou foolishly layest thy soul upon the altar of the Great Dragon.",
             "Thou fallest upon the field of heaven, and the war goeth on without thee.",
@@ -82,6 +91,59 @@ class Endcut(unittest.TestCase):
         self.assertNotIn(
             "Thou layest thy soul upon the altar of the Lord.", src)
         self.assertNotIn("a heart truly submitted", src)
+
+    def test_win_frame_text_is_the_city_of_god(self):
+        import re
+        frames_src = read("src/endframes.c")
+        self.assertNotIn("Thou layest thy soul upon the altar of the Lord.",
+                         frames_src)
+        self.assertNotIn("Thy soul is thine again, and thou art redeemed.",
+                         frames_src)
+        run_body = frames_src.split(
+            "static const struct endrun end_runs[] = {", 1)[1]
+        run_body = run_body.split(
+            "static const struct endframe", 1)[0]
+        runs = [(int(a), int(b), int(c), int(d))
+                for a, b, c, d in re.findall(
+                    r"\{(\d+),(\d+),(\d+),(\d+)\}", run_body)]
+        frame_body = frames_src.split(
+            "static const struct endframe end_frames[] = {", 1)[1]
+        frame_body = frame_body.split("static const int end_nframes", 1)[0]
+        frames = [(int(a), int(b), int(c), int(d))
+                  for a, b, c, d in re.findall(
+                      r"\{(\d+),(\d+),(\d+),(\d+)\}", frame_body)]
+        want = [
+            "Thou passest through the pearly gates, and the city of God is before",
+            'thee. "And the city had no need of the sun, neither of the moon, to',
+            "shine in it: for the glory of God did lighten it, and the Lamb is the",
+            'light thereof."',
+        ]
+
+        def grid(st, nr):
+            cells = []
+            for n, ch, col, inv in runs[st:st + nr]:
+                cells.extend([(ch, col, inv)] * n)
+            self.assertEqual(len(cells), 24 * 80)
+            return cells
+
+        seq0 = [(i, f) for i, f in enumerate(frames) if f[1] == 0]
+        for nth in (32, 33, 34):
+            i, (ms, seq, st, nr) = seq0[nth]
+            cells = grid(st, nr)
+            rows = []
+            for y in range(19, 24):
+                row = "".join(chr(cells[y * 80 + x][0]) for x in range(80))
+                rows.append(row.rstrip())
+            self.assertEqual([r.strip() for r in rows[:4]], want)
+            self.assertEqual(rows[4], "")
+            for line, raw in zip(want, rows[:4]):
+                pad = len(raw) - len(raw.lstrip(" "))
+                self.assertEqual(pad, (80 - len(line)) // 2)
+            letters = [c for y in range(19, 23) for x in range(80)
+                       for c in [cells[y * 80 + x]] if c[0] != 32]
+            self.assertTrue(letters)
+            self.assertEqual({c[1] for c in letters}, {0 if nth == 32 else 7 if nth == 33 else 15})
+            self.assertTrue(all(c[2] == 0 for c in letters))
 
     def test_proanimate_is_prophet_only(self):
         cmd = read("src/cmd.c")
@@ -97,7 +159,11 @@ class Endcut(unittest.TestCase):
         self.assertIn("endcut_testing", src)
         self.assertIn("nh_delay_output", src)
         self.assertIn("fqname(base, LEVELPREFIX, 1)", src)
-        self.assertNotIn("msleep", src)
+        # Windows tty does not link the Unix helper. Only the VMS
+        # branch may name it.
+        self.assertNotIn("msleep", src.split("#elif defined(VMS)", 1)[0])
+        self.assertIn("Delay(", src)
+        self.assertIn("nanosleep", src)
         self.assertNotIn("/tmp/", src)
         self.assertNotIn("getpid", src)
         self.assertIn("#define EDITLEVEL 20", read("include/patchlevel.h"))
@@ -145,6 +211,64 @@ class Endcut(unittest.TestCase):
         self.assertEqual("\n".join(shown).split(), host.split())
         self.assertGreater(len(c_text(src, "win_a_rest[]")), 254)
 
+    def test_altar_card_has_three_paragraphs(self):
+        text = c_text(read("src/endcut.c"), "win_a_rest[]")
+        paras = text.split("\n\n")
+        self.assertEqual(paras, [
+            "For a moment there is silence in heaven.",
+            "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon.",
+            "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.",
+        ])
+        self.assertNotIn(" \n", text)
+        self.assertFalse(any(p.endswith(" ") or p.startswith(" ") for p in paras))
+        shown = wrap_card(text, 79)
+        blanks = [i for i, line in enumerate(shown) if line == ""]
+        self.assertEqual(len(blanks), 2)
+        self.assertGreater(blanks[1], blanks[0] + 1)
+        self.assertTrue(all(line == line.rstrip(" ") for line in shown))
+        # A space before a newline does not become its own blank line.
+        spaced = wrap_card("mouth \nof an ancient cave.", 40)
+        self.assertEqual(spaced, ["mouth", "of an ancient cave."])
+        self.assertEqual(
+            wrap_card("One sentence.\n\nTwo sentences.", 40),
+            ["One sentence.", "", "Two sentences."])
+
+    def test_ascension_title_is_the_faithful(self):
+        end = read("src/end.c")
+        farewell = end.split("Goodbye(), svp.plname", 1)[1]
+        farewell = farewell.split("dump_forward_putstr", 1)[0]
+        self.assertIn('"Faithful"', farewell)
+        self.assertNotIn("Demigod", farewell)
+        self.assertNotIn("Demigoddess", farewell)
+        # The same line is what the dumplog receives.
+        self.assertIn("dump_forward_putstr(endwin, 0, pbuf", end)
+        topten = read("src/topten.c")
+        self.assertIn("ascended as the Faithful", topten)
+        self.assertNotIn("demigod", topten)
+        self.assertNotIn("Demigod", topten)
+        pray = read("src/pray.c")
+        self.assertEqual(pray.count("ascend to the status of the Faithful"), 2)
+        self.assertNotIn("Demigod", pray)
+        self.assertNotIn("demigod-hood", pray)
+        self.assertIn("udemigod", pray)
+
+    def test_dragon_card_has_three_paragraphs(self):
+        text = c_text(read("src/endcut.c"), "dragon_text[]")
+        self.assertTrue(text.startswith('"') and text.endswith('"'))
+        paras = text[1:-1].split("\n\n")
+        self.assertEqual(paras, [
+            "Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim.",
+            "Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more.",
+            "Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.",
+        ])
+        self.assertNotIn(" \n", text)
+        self.assertNotIn("\u2014", text)
+        shown = wrap_card(text, 79)
+        blanks = [i for i, line in enumerate(shown) if line == ""]
+        self.assertEqual(len(blanks), 2)
+        self.assertGreater(blanks[1], blanks[0] + 1)
+        self.assertTrue(all(line == line.rstrip(" ") for line in shown))
+
     def test_the_battlefield_is_shown_before_the_sparks(self):
         src = read("src/endcut.c")
         reveal = src.split("endcut_reveal(void)", 1)[1].split(
@@ -172,12 +296,94 @@ class Endcut(unittest.TestCase):
         self.assertIn("EDetect_monsters = endcut_save_det", src)
         self.assertIn("vision_reset()", back)
         self.assertIn('load_special("astral.lua")', src)
-        burst = src.split("endcut_burst(coordxy x", 1)[1].split(
-            "endcut_save_det", 1)[0]
-        self.assertIn("endcut_show()", burst)
-        quake = src.split("endcut_quake(coordxy ax", 1)[1].split(
-            "endcut_dist", 1)[0]
-        self.assertGreaterEqual(quake.count("endcut_show()"), 2)
+        scene = src.split("endcut_altar_scene(boolean harm)", 1)[1].split(
+            "endcut_stamp_lucifer", 1)[0]
+        self.assertIn("endcut_reveal()", scene)
+        self.assertIn("endcut_show()", scene)
+        self.assertIn("endcut_wait_ms(", scene)
+        compose = src.split("endcut_compose(int shx", 1)[1].split(
+            "endcut_restore_burst", 1)[0]
+        self.assertNotIn("docrt()", compose)
+
+    def test_fiery_steed_sunset_is_last_and_has_no_map_redraw(self):
+        endcut = read("src/endcut.c")
+        end = read("src/end.c")
+        frames = read("src/endframes.c")
+        self.assertIn("#define ENDCUT_STEED 5", endcut)
+        self.assertIn("#define ENDCUT_STEED 5", frames)
+        self.assertIn("end_nframes = 251", frames)
+        menu = endcut.split("endcut_menu_line[]", 1)[1].split("};", 1)[0]
+        self.assertNotIn("steed", menu.lower())
+        self.assertIn("The number is from 1 to 8.", endcut)
+        finish = endcut.split("endcut_finish_ascent(void)", 1)[1]
+        finish = finish.split("endcut_dragon", 1)[0]
+        self.assertIn("u.usteed", finish)
+        self.assertIn("PM_FIERY_STEED_OF_HEAVEN", finish)
+        self.assertLess(finish.index("endcut_on_fiery_steed"),
+                        finish.index("done(ASCENDED)"))
+        self.assertLess(finish.index("u.usteed"),
+                        finish.index("done(ASCENDED)"))
+        helper = endcut.split("endcut_play_frames(int seq)", 1)[1]
+        helper = helper.split("endcut_play(int seq)", 1)[0]
+        self.assertNotIn("docrt()", helper)
+        self.assertIn("tty_endcut_begin()", helper)
+        self.assertIn("tty_endcut_cell(", helper)
+        self.assertIn("tty_endcut_flush()", helper)
+        self.assertIn("endcut_wait(ms)", helper)
+        self.assertIn("tty_endcut_end()", helper)
+        play = endcut.split("endcut_play(int seq)", 1)[1]
+        play = play.split("endcut_steed_sunset", 1)[0]
+        self.assertIn("endcut_play_frames(seq)", play)
+        self.assertLess(play.index("endcut_play_frames(seq)"),
+                        play.index("docrt()"))
+        sunset = endcut.split("endcut_steed_sunset(void)", 1)[1]
+        sunset = sunset.split("endcut_show", 1)[0]
+        self.assertIn("endcut_play_frames(ENDCUT_STEED)", sunset)
+        self.assertIn("endcut_begin_scene()", sunset)
+        self.assertNotIn("docrt()", sunset)
+        self.assertNotIn("endcut_card(", sunset)
+        before, after = end.split("topten(how, endtime);", 1)
+        quiet = before.split("!iflags.toptenwin", 1)[1]
+        self.assertLess(quiet.index("endcut_steed_sunset()"),
+                        quiet.index("exit_nhwindows"))
+        shown = after.split("nh_terminate", 1)[0]
+        self.assertLess(shown.index("endcut_steed_sunset()"),
+                        shown.index("exit_nhwindows"))
+        self._steed_frames_match_generator(frames)
+
+    def _steed_frames_match_generator(self, frames_src):
+        import importlib.util
+        import re
+
+        spec = importlib.util.spec_from_file_location(
+            "gen_steed_frames", ROOT / "util" / "gen_steed_frames.py")
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        gen.build()
+        self.assertEqual(len(gen.frames), 71)
+        self.assertEqual(sum(fr["ms"] for fr in gen.frames), 8700)
+        start = frames_src.index("static const struct endrun end_runs[]")
+        mid = frames_src.index("static const struct endframe end_frames[]")
+        tail = frames_src.index("static const int end_nframes")
+        runs = [(int(a), int(b), int(c), int(d))
+                for a, b, c, d in re.findall(
+                    r"\{(\d+),(\d+),(\d+),(\d+)\}", frames_src[start:mid])]
+        frames = [(int(a), int(b), int(c), int(d))
+                  for a, b, c, d in re.findall(
+                      r"\{(\d+),(\d+),(\d+),(\d+)\}", frames_src[mid:tail])]
+        steed = [f for f in frames if f[1] == 5]
+        self.assertEqual(len(steed), 71)
+        self.assertEqual(steed[0][2], 93793)
+        for i, fr in enumerate(gen.frames):
+            want = list(gen.frame_cells(fr))
+            self.assertEqual(len(want), 1920)
+            ms, seq, st, nr = steed[i]
+            got = []
+            for n, ch, col, inv in runs[st:st + nr]:
+                got.extend([(ch, col, inv)] * n)
+            self.assertEqual(got, want)
+            self.assertEqual(ms, fr["ms"])
+            self.assertEqual(seq, 5)
 
 
 if __name__ == "__main__":

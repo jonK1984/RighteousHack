@@ -321,6 +321,14 @@ typedef char rh_strat_bits_overlap[
 /* Bit 1 of petra_step. The archangels arrive once. */
 #define heaven_host_arrived() ((u.uevent.petra_step & 2) != 0)
 
+/* Bit 2 of petra_step. The battle on the Plane of Heaven is over.
+   The field already exists and is saved with the hero. Existing
+   saves have the bit clear, so they load with the war still on.
+   The bit stays set if a wizard leaves the level; the peace
+   itself is only while the hero is on that plane. */
+#define heaven_peace() \
+    (((u.uevent.petra_step & 4) != 0) && Is_astralevel(&u.uz))
+
 /* monsters which cannot be displaced: temple priests, shopkeepers,
    vault guards, Isaiah, Peter, quest leader */
 #define mundisplaceable(mon) \

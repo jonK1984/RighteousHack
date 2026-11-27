@@ -129,9 +129,9 @@ class HeavenHost(unittest.TestCase):
         self.assertIn("AT_WEAP", sword)
         self.assertIn("AD_FIRE", sword)
         self.assertIn("alt_attk_buf->adtyp = AD_FIRE", attack)
-        smite = read("src/endcut.c").split("endcut_smite(", 1)[1].split(
-            "for (i = 1;", 1)[0]
-        self.assertIn("heaven_lords_host(mtmp)", smite)
+        spared = read("src/endcut.c").split("endcut_hostiles(", 1)[1].split(
+            "endcut_kill_from", 1)[0]
+        self.assertIn("heaven_lords_host(mtmp)", spared)
         display = read("src/display.c")
         self.assertIn("CLR_BRIGHT_BLUE", display)
         self.assertIn("CLR_YELLOW", display)

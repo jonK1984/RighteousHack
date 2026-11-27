@@ -224,6 +224,8 @@ losestr(int num, const char *knam, schar k_format)
     int ustr = ABASE(A_STR) - num, amt, dmg;
     boolean waspolyd = Upolyd;
 
+    if (heaven_peace())
+        return;
     if (num <= 0 || ABASE(A_STR) < ATTRMIN(A_STR)) {
         impossible("losestr: %d - %d", ABASE(A_STR), num);
         return;

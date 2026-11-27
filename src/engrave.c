@@ -376,6 +376,18 @@ read_engr_at(coordxy x, coordxy y)
             sensed = 1;
         }
 
+        if (sensed && heaven_is_altar_verse(ep->engr_txt[actual_text])) {
+            /* The citation is part of the verse. A text window folds
+               the whole line on the Windows tty. The message buffer
+               would cut it, and a menu line is cut at the screen width. */
+            Strcpy(ep->engr_txt[remembered_text], ep->engr_txt[actual_text]);
+            ep->eread = 1;
+            ep->erevealed = 1;
+            if (svc.context.run > 0)
+                nomul(0);
+            rh_text_window(ep->engr_txt[actual_text]);
+            return;
+        }
         if (sensed) {
             char *et, buf[BUFSZ];
             const char *endpunct;
@@ -472,6 +484,9 @@ del_engr_at(coordxy x, coordxy y)
 {
     struct engr *ep = engr_at(x, y);
 
+    /* The altar verses are burned in and stay. */
+    if (ep && heaven_is_altar_verse(ep->engr_txt[actual_text]))
+        return;
     if (ep)
         del_engr(ep);
 }
@@ -1020,7 +1035,8 @@ doengrave(void)
             initial_msg_given = TRUE;
         }
     }
-    if (engr_at(u.ux, u.uy) && engr_at(u.ux, u.uy)->engr_type == VERSE) {
+    if (de->oep && (de->oep->engr_type == VERSE
+                    || heaven_is_altar_verse(de->oep->engr_txt[actual_text]))) {
         pline("The words will not be altered.");
         goto doengr_exit;
     }

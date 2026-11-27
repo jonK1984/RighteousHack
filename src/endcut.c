@@ -25,6 +25,11 @@
 #include <time.h>
 #if !defined(MICRO) && !defined(WIN32)
 #include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+#ifdef __GLIBC__
+#include <stdio_ext.h>
+#endif
 #endif
 #ifdef WIN32
 #include <io.h>
@@ -44,6 +49,9 @@ boolean endcut_omniscient = FALSE;
 
 static boolean endcut_stone = FALSE;
 static boolean endcut_from_dragon = FALSE;
+/* Recorded before done() clears the steed. really_done plays the
+   sunset after the end screens, when u.usteed is already gone. */
+static boolean endcut_on_fiery_steed = FALSE;
 static unsigned endcut_steed_id, endcut_stuck_id, endcut_ball_id,
     endcut_chain_id;
 static char endcut_scratch[FQN_MAX_FILENAME];
@@ -56,16 +64,21 @@ void endcut_memorial(winid, time_t);
 #define ENDCUT_WIN 0
 #define ENDCUT_DRAGON 1
 #define ENDCUT_DEATH 2
+#define ENDCUT_STEED 5
 
 /* Locked verbatim. */
 static const char win_a_lead[] =
     "Thou offerest thy soul up to the Lord... a heart submitted to the will of God Most High...";
 static const char win_a_rest[] =
-    "For a moment there is silence in heaven. Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon. The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.";
+    "For a moment there is silence in heaven.\n"
+    "\n"
+    "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof. And the altar is filled with the glory of the Lord, and a sound goeth forth from the throne as of a mighty thunder, and the whole field of heaven is shaken. A great and terrible light breaketh out from the presence of the Lord, as a fire that consumeth, and it goeth forth over all the host of the Great Dragon.\n"
+    "\n"
+    "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee. And slowly, before thine eyes, they are turned to dust, and the wind of the Lord carrieth them away, and their place is found no more.";
 static const char win_c_text[] =
     "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing. The brightness of the Lord's coming falleth upon him, and he is cast down, bound in chains of darkness, and the war in heaven is ended.";
 static const char win_e_text[] =
-    "The chains that bound thee in the Sanctum of the Great Dragon break asunder, and fall as dust about thy feet.\n"
+    "The spiritual chains that bound thy soul in the Sanctum of the Great Dragon break asunder, and are rendered as dust.\n"
     "\n"
     "Thou didst walk the Narrow Way when the broad road called thee. Thou didst hear the Word in the Wayside amid the voices of deceit. Thou didst bear the thorns, and set thy face toward Zion, and kept the faith when thy strength was gone. Thou hast run with patience the race that was set before thee. Thou hast fought a good fight, thou hast finished thy course, thou hast kept the faith. Henceforth there is laid up for thee a crown of righteousness.\n"
     "\n"
@@ -75,11 +88,15 @@ static const char win_e_text[] =
     "\n"
     "Strong hands lift thee up. Thy wounds are healed, and every tear is wiped from thine eyes. There is no more death, neither sorrow, nor crying, neither any more pain, for the former things are passed away.\n"
     "\n"
-    "Thy soul is thine again. Thou art redeemed, and thou art home.";
+    "Thy soul is free. Thou art redeemed, and thou art home.";
 static const char dragon_voice[] =
     "A voice from heaven booms: \"Woe unto thee, for thou hast made the gravest of errors.\"";
 static const char dragon_text[] =
-    "\"Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim. Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more. Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.\"";
+    "\"Thou foolishly layest thy soul upon the altar of the Great Dragon. The stone of the altar groweth cold beneath thy hand, and the light of heaven beginneth to dim.\n"
+    "\n"
+    "Lucifer, that old serpent, called the Devil and Satan, the deceiver which deceiveth the whole world, laugheth, and thou feelest the chains from the floor rising up to close upon thy soul once more.\n"
+    "\n"
+    "Thou art pulled down into outer darkness, where there is weeping and gnashing of teeth.\"";
 static const char heaven_death_text[] =
     "Thou fallest upon the field of heaven, and the war goeth on without thee. The Great Dragon setteth his foot upon thy soul and beareth it away. Thy race is ended, though the crown was within thy reach.";
 
@@ -102,11 +119,14 @@ endcut_tty(void)
 #endif
 }
 
-/* True if a key is already waiting. Does not block. */
+/* True if a new key is waiting. Does not block. On Windows, key-up
+   and non-key console records are not keys. */
 static boolean
 endcut_key_ready(void)
 {
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
+    return (boolean) win32_key_pending();
+#elif defined(MICRO)
     return (boolean) kbhit();
 #else
     fd_set fds;
@@ -118,6 +138,49 @@ endcut_key_ready(void)
     tv.tv_usec = 0;
     return (boolean) (select(1, &fds, (fd_set *) 0, (fd_set *) 0, &tv) > 0);
 #endif
+}
+
+/* Drop keys left over from the text card. The Enter that closed it
+   must not count as a skip. */
+static void
+endcut_flush_keys(void)
+{
+#if defined(WIN32)
+    win32_flush_keys();
+#elif defined(MICRO)
+    while (kbhit())
+        (void) nhgetch();
+#else
+    int fd = fileno(stdin);
+    char junk;
+
+    (void) tcflush(fd, TCIFLUSH);
+#ifdef __GLIBC__
+    /* getchar() may already have pulled the extra LF into its buffer. */
+    __fpurge(stdin);
+#endif
+    for (;;) {
+        fd_set fds;
+        struct timeval tv;
+
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+        if (select(fd + 1, &fds, (fd_set *) 0, (fd_set *) 0, &tv) <= 0)
+            break;
+        if (read(fd, &junk, 1) != 1)
+            break;
+    }
+#endif
+}
+
+/* Every cutscene starts here, so the card's Enter is gone before
+   the first wait. */
+static void
+endcut_begin_scene(void)
+{
+    endcut_flush_keys();
 }
 
 /* nh_delay_output is the window port's own pause (about 50 ms on tty).
@@ -143,6 +206,40 @@ endcut_wait(int ms)
     return FALSE;
 }
 
+/* Exact milliseconds. endcut_wait rounds to the tty's 50 ms tick, which
+   misses the mockup. Windows tty links Delay, which is Sleep. Sleep does
+   not present the console back buffer; tty_endcut_flush does that, the
+   same present tty_delay_output performs for the older scenes. */
+static boolean
+endcut_wait_ms(int ms)
+{
+#if !defined(WIN32) && !defined(WIN32CON) && !defined(VMS)
+    struct timespec ts;
+#endif
+
+    if (iflags.debug_fuzzer || ms < 1)
+        return FALSE;
+    while (ms > 0) {
+        unsigned step = (unsigned) ((ms > 20) ? 20 : ms);
+
+        if (endcut_key_ready()) {
+            (void) nhgetch();
+            return TRUE;
+        }
+#if defined(WIN32) || defined(WIN32CON)
+        Delay((int) step);
+#elif defined(VMS)
+        msleep(step);
+#else
+        ts.tv_sec = 0;
+        ts.tv_nsec = (long) step * 1000000L;
+        (void) nanosleep(&ts, (struct timespec *) 0);
+#endif
+        ms -= (int) step;
+    }
+    return FALSE;
+}
+
 /* One less than the tty width, and never past the putstr buffer.
    Anywhere else, 79. */
 int
@@ -162,14 +259,14 @@ rh_text_cols(void)
 }
 
 /* Fold one paragraph on a space. A word longer than the screen
-   stays whole. */
+   stays whole. Trailing spaces are not put. */
 static void
 rh_put_para(winid win, int attr, const char *line, size_t len, int cols)
 {
-    if (!len) {
-        putstr(win, attr, "");
+    while (len > 0 && line[len - 1] == ' ')
+        len--;
+    if (!len)
         return;
-    }
     while (len > 0) {
         int n = (int) len;
         char buf[BUFSZ];
@@ -189,11 +286,18 @@ rh_put_para(winid win, int attr, const char *line, size_t len, int cols)
         if (n >= BUFSZ)
             n = BUFSZ - 1;
         (void) strncpy(buf, line, (size_t) n);
-        buf[n] = '\0';
-        putstr(win, attr, buf);
-        line += n;
-        len -= (size_t) n;
-        if (len && *line == ' ') {
+        {
+            int took = n;
+
+            while (n > 0 && line[n - 1] == ' ')
+                n--;
+            buf[n] = '\0';
+            if (n)
+                putstr(win, attr, buf);
+            line += took;
+            len -= (size_t) took;
+        }
+        while (len > 0 && *line == ' ') {
             line++;
             len--;
         }
@@ -209,9 +313,17 @@ rh_putstr(winid win, int attr, const char *text)
 
     while (*p) {
         const char *nl = strchr(p, '\n');
-        size_t len = nl ? (size_t) (nl - p) : strlen(p);
+        size_t raw = nl ? (size_t) (nl - p) : strlen(p);
+        size_t len = raw;
 
-        rh_put_para(win, attr, p, len, cols);
+        /* A space before a newline is not a blank line. A source
+           line that is empty, from \n\n, is one blank line. */
+        while (len > 0 && p[len - 1] == ' ')
+            len--;
+        if (len)
+            rh_put_para(win, attr, p, len, cols);
+        else if (raw == 0)
+            putstr(win, attr, "");
         if (!nl)
             break;
         p = nl + 1;
@@ -235,14 +347,16 @@ endcut_card(const char *text)
     rh_text_window(text);
 }
 
-static void
-endcut_play(int seq)
+/* Full-screen frames on the base window. Does not redraw the map:
+   the sunset runs after really_done has destroyed WIN_MAP. */
+static boolean
+endcut_play_frames(int seq)
 {
 #ifdef TTY_GRAPHICS
     int i, n, total;
 
     if (!endcut_tty())
-        return;
+        return FALSE;
     total = endcut_nframes();
     tty_endcut_begin();
     for (i = 0; i < total; i++) {
@@ -276,61 +390,33 @@ endcut_play(int seq)
             break;
     }
     tty_endcut_end();
-    docrt();
+    return TRUE;
 #else
     (void) seq;
-#endif
-}
-
-static void
-endcut_spark(coordxy x, coordxy y, int dx, int dy, int kind)
-{
-#ifdef TTY_GRAPHICS
-    static const char glyph[] = { '*', '*', '/', '\\', '\'', ',' };
-    int color;
-
-    if (!endcut_tty() || !isok(x, y))
-        return;
-    color = (kind & 1) ? CLR_WHITE : CLR_YELLOW;
-    if (kind & 2)
-        color = CLR_BROWN;
-    tty_endcut_mapcell(x, y, glyph[(dx + dy + kind) & 5], color, 0);
-#else
-    (void) x; (void) y; (void) dx; (void) dy; (void) kind;
-#endif
-}
-
-static void
-endcut_ring(coordxy x, coordxy y, int radius)
-{
-    int dx, dy;
-
-    for (dy = -radius; dy <= radius; dy++)
-        for (dx = -radius; dx <= radius; dx++) {
-            if (distmin(x, y, x + dx, y + dy) != radius)
-                continue;
-            if (!isok(x + dx, y + dy))
-                continue;
-            endcut_spark(x + dx, y + dy, dx, dy, radius);
-        }
-#ifdef TTY_GRAPHICS
-    if (endcut_tty())
-        tty_endcut_flush();
-#endif
-}
-
-static boolean
-endcut_burst(coordxy x, coordxy y, int rings)
-{
-    int r;
-
-    for (r = 1; r <= rings; r++) {
-        endcut_ring(x, y, r);
-        if (endcut_wait(80))
-            return TRUE;
-        endcut_show();
-    }
     return FALSE;
+#endif
+}
+
+static void
+endcut_play(int seq)
+{
+    endcut_begin_scene();
+    if (endcut_play_frames(seq))
+        docrt();
+}
+
+/* Last picture of an ascent on the fiery steed. No words, no map redraw.
+   really_done calls this while the tty is still up. Other ports return. */
+void
+endcut_steed_sunset(void)
+{
+    if (!endcut_on_fiery_steed)
+        return;
+    endcut_on_fiery_steed = FALSE;
+    if (!endcut_tty())
+        return;
+    endcut_begin_scene();
+    (void) endcut_play_frames(ENDCUT_STEED);
 }
 
 static long endcut_save_det;
@@ -415,89 +501,6 @@ endcut_find_altar(coordxy *ax, coordxy *ay)
     return FALSE;
 }
 
-static void
-endcut_quake(coordxy ax, coordxy ay)
-{
-    int step, dx, dy;
-    static const int shiftx[] = { 1, -1, 2, -2, 1, 0, -1, 0 };
-    static const int shifty[] = { 0, 1, -1, 1, -1, 1, 0, -1 };
-
-    for (step = 0; step < 8; step++) {
-        int radius = 2 + step;
-
-        endcut_show();
-        for (dy = -radius; dy <= radius; dy++)
-            for (dx = -radius; dx <= radius; dx++) {
-                coordxy x = ax + dx + shiftx[step];
-                coordxy y = ay + dy + shifty[step];
-
-                if (((dx + dy + step) & 3) != 0)
-                    continue;
-                if (!isok(x, y))
-                    continue;
-                if (distmin(ax, ay, ax + dx, ay + dy) > radius)
-                    continue;
-                endcut_spark(x, y, dx, dy, step);
-            }
-#ifdef TTY_GRAPHICS
-        if (endcut_tty())
-            tty_endcut_flush();
-#endif
-        if (endcut_wait(70))
-            break;
-    }
-    endcut_show();
-}
-
-static int
-endcut_dist(struct monst *mtmp, coordxy ax, coordxy ay)
-{
-    int dx = mtmp->mx - ax, dy = mtmp->my - ay;
-
-    return dx * dx + dy * dy;
-}
-
-static void
-endcut_smite(coordxy ax, coordxy ay, boolean harm)
-{
-    struct monst *mtmp, *list[256];
-    int n, i, j;
-
-    n = 0;
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp) || is_lucifer(mtmp))
-            continue;
-        /* The Lord's host stays. Dragon priests and fallen angels
-           are hostile, so the light takes them with the rest. */
-        if (mtmp->mpeaceful || mtmp->mtame || heaven_lords_host(mtmp))
-            continue;
-        if (n < (int) SIZE(list))
-            list[n++] = mtmp;
-    }
-    for (i = 1; i < n; i++) {
-        struct monst *key = list[i];
-        int keyd = endcut_dist(key, ax, ay);
-
-        j = i;
-        while (j > 0 && endcut_dist(list[j - 1], ax, ay) > keyd) {
-            list[j] = list[j - 1];
-            j--;
-        }
-        list[j] = key;
-    }
-    for (i = 0; i < n; i++) {
-        coordxy x = list[i]->mx, y = list[i]->my;
-
-        if (endcut_burst(x, y, 3))
-            break;
-        if (harm && !DEADMONSTER(list[i])) {
-            mongone(list[i]);
-            newsym(x, y);
-        }
-    }
-    endcut_show();
-}
-
 static coordxy
 endcut_beside(coordxy *y)
 {
@@ -517,13 +520,601 @@ endcut_beside(coordxy *y)
     return u.ux;
 }
 
+
+/* Altar light and Lucifer, timed from the approved mockup.
+   ENDCUT_REF_ALTAR and ENDCUT_REF_LUCIFER in endframes.c are the
+   frames. Effects are stamped onto the real altar and the real
+   Lucifer. docrt is not called between frames, so the overlays
+   are not wiped. The fixed altar delays plus nine strikes (the
+   mockup's own count) were 5515 ms. Every delay is seven tenths of
+   that, rounded to the nearest millisecond: the fixed part is 2037 ms
+   and each strike is 203 ms. Every hostile is struck, so a crowded
+   level runs longer. Lucifer's list is 4019 ms. */
+#define ENDCUT_REF_ALTAR 3
+#define ENDCUT_REF_LUCIFER 4
+#define ENDREF_ROWS 24
+#define ENDREF_COLS 80
+#define MOCK_ALT_X 39
+#define MOCK_ALT_Y 10
+#define MOCK_LUC_X 54
+#define MOCK_LUC_Y 9
+
+/* Seven tenths of the mockup delays, nearest millisecond. */
+static const int endcut_altar_ms[] = {
+    280, 210,
+    91, 91, 91,
+    67, 67, 67, 67, 67, 67, 67,
+    175, 630
+};
+static const int endcut_strike_ms[] = { 77, 77, 49 };
+static const int endcut_lucifer_ms[] = {
+    315, 175,
+    63,
+    63, 98,
+    74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+    49, 49, 49, 49, 49, 49, 49, 63,
+    67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67,
+    77, 77,
+    84, 63, 56, 56,
+    245, 630
+};
+
+struct endov {
+    uchar on, ch, col, inv;
+};
+
+static struct endov end_light[COLNO][ROWNO];
+static struct endov end_scorch[COLNO][ROWNO];
+static uchar endref_ch[ENDREF_ROWS][ENDREF_COLS];
+static uchar endref_col[ENDREF_ROWS][ENDREF_COLS];
+static uchar endref_inv[ENDREF_ROWS][ENDREF_COLS];
+
+static void
+endcut_light_clear(void)
+{
+    memset(end_light, 0, sizeof end_light);
+}
+
+static void
+endcut_layers_clear(void)
+{
+    memset(end_light, 0, sizeof end_light);
+    memset(end_scorch, 0, sizeof end_scorch);
+}
+
+static void
+endcut_ov_put(int scorch, int x, int y, int ch, int col, int inv)
+{
+    struct endov *cell;
+
+    if (!isok(x, y))
+        return;
+    cell = scorch ? &end_scorch[x][y] : &end_light[x][y];
+    cell->on = 1;
+    cell->ch = (uchar) (ch ? ch : ' ');
+    cell->col = (uchar) col;
+    cell->inv = inv ? 1 : 0;
+}
+
+static int
+endcut_load_ref(int seq, int nth)
+{
+    int i, seen, total, fms, which, start, nruns, r, pos;
+
+    seen = 0;
+    total = endcut_nframes();
+    which = -1;
+    start = nruns = fms = 0;
+    for (i = 0; i < total; i++) {
+        endcut_frame_at(i, &fms, &which, &start, &nruns);
+        if (which != seq)
+            continue;
+        if (seen == nth)
+            break;
+        seen++;
+    }
+    if (which != seq || seen != nth)
+        return 0;
+    memset(endref_ch, ' ', sizeof endref_ch);
+    memset(endref_col, 0, sizeof endref_col);
+    memset(endref_inv, 0, sizeof endref_inv);
+    pos = 0;
+    for (r = 0; r < nruns; r++) {
+        int rn, rch, rcol, rinv, k;
+
+        if (!endcut_run_at(start + r, &rn, &rch, &rcol, &rinv))
+            break;
+        for (k = 0; k < rn && pos < ENDREF_ROWS * ENDREF_COLS; k++, pos++) {
+            endref_ch[pos / ENDREF_COLS][pos % ENDREF_COLS] = (uchar) rch;
+            endref_col[pos / ENDREF_COLS][pos % ENDREF_COLS] = (uchar) rcol;
+            endref_inv[pos / ENDREF_COLS][pos % ENDREF_COLS] = (uchar) rinv;
+        }
+    }
+    return 1;
+}
+
+static void
+endcut_mock_shake(int *sx, int *sy)
+{
+    int x, y;
+
+    *sx = 0;
+    *sy = 0;
+    for (y = 0; y < ENDREF_ROWS; y++)
+        for (x = 0; x < ENDREF_COLS; x++)
+            if (endref_ch[y][x] == 1 && endref_col[y][x] == CLR_ORANGE) {
+                *sx = x - MOCK_LUC_X;
+                *sy = y - MOCK_LUC_Y;
+                return;
+            }
+}
+
+static boolean
+endcut_altar_fx(int ch, int col)
+{
+    if (ch == '*' || ch == '+')
+        return TRUE;
+    if (ch == '.' && col == CLR_YELLOW)
+        return TRUE;
+    if ((ch == '\\' || ch == '/' || ch == '|') && col == CLR_WHITE)
+        return TRUE;
+    return FALSE;
+}
+
+static void
+endcut_stamp_altar(coordxy ax, coordxy ay, int shx, int shy)
+{
+    int x, y;
+
+    for (y = 0; y < ENDREF_ROWS; y++)
+        for (x = 0; x < ENDREF_COLS; x++) {
+            int ch = endref_ch[y][x];
+            int col = endref_col[y][x];
+            int mx, my;
+
+            if (!endcut_altar_fx(ch, col))
+                continue;
+            mx = ax + ((x - shx) - MOCK_ALT_X);
+            my = ay + ((y - shy) - MOCK_ALT_Y);
+            endcut_ov_put(0, mx, my, ch, col, 0);
+        }
+}
+
+/* The mockup sprite is 18 by 11, centered on cell (54, 9).
+   Rays above him are stretched so they start at the top of the map. */
+static boolean
+endcut_at_lucifer(int lx, int ly, int cell_x, int cell_y, int ray,
+                  coordxy *ox, coordxy *oy)
+{
+    int x = lx + (cell_x - MOCK_LUC_X);
+    int y;
+
+    if (ray && cell_y < MOCK_LUC_Y && ly > 0)
+        y = (cell_y * ly) / MOCK_LUC_Y;
+    else
+        y = ly + (cell_y - MOCK_LUC_Y);
+    if (!isok(x, y))
+        return FALSE;
+    *ox = (coordxy) x;
+    *oy = (coordxy) y;
+    return TRUE;
+}
+
+static void
+endcut_redraw_map(void)
+{
+    coordxy x, y;
+
+    for (y = 0; y < ROWNO; y++) {
+        gg.gbuf_start[y] = 1;
+        gg.gbuf_stop[y] = COLNO - 1;
+        for (x = 1; x < COLNO; x++)
+            gg.gbuf[y][x].gnew = 1;
+    }
+    flush_screen(0);
+}
+
+#ifdef TTY_GRAPHICS
+static void
+endcut_paint_mapcell(coordxy sx, coordxy sy, coordxy dx, coordxy dy)
+{
+    glyph_info ginfo;
+    struct monst *mtmp;
+    int inv;
+
+    if (!isok(sx, sy)) {
+        tty_endcut_mapcell((int) dx, (int) dy, ' ', NO_COLOR, 0);
+        return;
+    }
+    mtmp = m_at(sx, sy);
+    if (mtmp && is_lucifer(mtmp) && M_AP_TYPE(mtmp) == M_AP_NOTHING) {
+        tty_endcut_mapcell((int) dx, (int) dy, 1, CLR_RED, 1);
+        return;
+    }
+    map_glyphinfo(sx, sy, glyph_at(sx, sy), 0, &ginfo);
+    inv = (ginfo.gm.glyphflags & MG_INVERSE) ? 1 : 0;
+    tty_endcut_mapcell((int) dx, (int) dy, ginfo.ttychar ? ginfo.ttychar : ' ',
+                       (int) ginfo.gm.sym.color, inv);
+}
+
+static void
+endcut_paint_ov(coordxy x, coordxy y, struct endov *cell)
+{
+    tty_endcut_mapcell((int) x, (int) y, cell->ch, (int) cell->col,
+                       (int) cell->inv);
+}
+#endif
+
+/* Redraw the whole map, then the light and the scorches. A non-zero
+   shift slides every cell, including the map, by that many squares. */
+static void
+endcut_compose(int shx, int shy)
+{
+#ifdef TTY_GRAPHICS
+    coordxy x, y;
+
+    if (!endcut_tty())
+        return;
+    if (!shx && !shy) {
+        endcut_redraw_map();
+        for (y = 0; y < ROWNO; y++)
+            for (x = 1; x < COLNO; x++) {
+                if (end_scorch[x][y].on)
+                    endcut_paint_ov(x, y, &end_scorch[x][y]);
+                else if (end_light[x][y].on)
+                    endcut_paint_ov(x, y, &end_light[x][y]);
+            }
+        tty_endcut_flush();
+        return;
+    }
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++) {
+            int sx = (int) x - shx;
+            int sy = (int) y - shy;
+
+            if (isok(sx, sy) && end_scorch[sx][sy].on)
+                endcut_paint_ov(x, y, &end_scorch[sx][sy]);
+            else if (isok(sx, sy) && end_light[sx][sy].on)
+                endcut_paint_ov(x, y, &end_light[sx][sy]);
+            else
+                endcut_paint_mapcell((coordxy) sx, (coordxy) sy, x, y);
+        }
+    tty_endcut_flush();
+#else
+    (void) shx;
+    (void) shy;
+#endif
+}
+
+static void
+endcut_restore_burst(coordxy ax, coordxy ay)
+{
+    int shx = 0, shy = 0;
+
+    endcut_light_clear();
+    if (!endcut_load_ref(ENDCUT_REF_ALTAR, 11))
+        return;
+    endcut_mock_shake(&shx, &shy);
+    endcut_stamp_altar(ax, ay, shx, shy);
+}
+
+static void
+endcut_beam(coordxy x0, coordxy y0, coordxy x1, coordxy y1)
+{
+    int dx = (x1 > x0) ? (x1 - x0) : (x0 - x1);
+    int sx = (x0 < x1) ? 1 : -1;
+    int dy = (y1 > y0) ? (y0 - y1) : (y1 - y0);
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;
+    int n = 0;
+
+    for (;;) {
+        int e2;
+
+        if (!(x0 == x1 && y0 == y1)) {
+            endcut_ov_put(0, x0, y0, (n & 1) ? '*' : '+',
+                          (n & 1) ? CLR_WHITE : CLR_YELLOW, 0);
+            n++;
+        }
+        if (x0 == x1 && y0 == y1)
+            break;
+        e2 = err * 2;
+        if (e2 >= dy) {
+            err += dy;
+            x0 = (coordxy) (x0 + sx);
+        }
+        if (e2 <= dx) {
+            err += dx;
+            y0 = (coordxy) (y0 + sy);
+        }
+    }
+}
+
+static void
+endcut_sparks(coordxy x, coordxy y)
+{
+    int dx, dy;
+
+    for (dy = -2; dy <= 2; dy++)
+        for (dx = -2; dx <= 2; dx++) {
+            int adx = (dx < 0) ? -dx : dx;
+            int ady = (dy < 0) ? -dy : dy;
+
+            if (!dx && !dy)
+                continue;
+            if (adx + ady > 3)
+                continue;
+            endcut_ov_put(0, x + dx, y + dy, ((dx + dy) & 1) ? '*' : '+',
+                          ((dx + dy) & 1) ? CLR_WHITE : CLR_YELLOW, 0);
+        }
+}
+
+static void
+endcut_flash_mon(struct monst *mtmp)
+{
+    glyph_info ginfo;
+    int ch;
+
+    map_glyphinfo(mtmp->mx, mtmp->my, glyph_at(mtmp->mx, mtmp->my), 0, &ginfo);
+    ch = ginfo.ttychar ? ginfo.ttychar : 'A';
+    endcut_ov_put(0, mtmp->mx, mtmp->my, ch, CLR_WHITE, 1);
+}
+
+static int
+endcut_dist(struct monst *mtmp, coordxy ax, coordxy ay)
+{
+    int dx = mtmp->mx - ax, dy = mtmp->my - ay;
+
+    return dx * dx + dy * dy;
+}
+
+/* Every hostile, nearest the altar first. Lucifer and the Lord's
+   host are not in the list. There is no cap. */
+static struct monst **
+endcut_hostiles(coordxy ax, coordxy ay, int *count)
+{
+    struct monst *mtmp, **list, *key;
+    int n, i, j, keyd;
+
+    *count = 0;
+    n = 0;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) || is_lucifer(mtmp))
+            continue;
+        if (mtmp->mpeaceful || mtmp->mtame || heaven_lords_host(mtmp))
+            continue;
+        n++;
+    }
+    if (!n)
+        return (struct monst **) 0;
+    list = (struct monst **) alloc((unsigned) n * sizeof (struct monst *));
+    i = 0;
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) || is_lucifer(mtmp))
+            continue;
+        if (mtmp->mpeaceful || mtmp->mtame || heaven_lords_host(mtmp))
+            continue;
+        list[i++] = mtmp;
+    }
+    for (i = 1; i < n; i++) {
+        key = list[i];
+        keyd = endcut_dist(key, ax, ay);
+        j = i;
+        while (j > 0 && endcut_dist(list[j - 1], ax, ay) > keyd) {
+            list[j] = list[j - 1];
+            j--;
+        }
+        list[j] = key;
+    }
+    *count = n;
+    return list;
+}
+
+static void
+endcut_kill_from(struct monst **list, int n, int from, boolean harm)
+{
+    int i;
+
+    if (!harm || !list)
+        return;
+    for (i = from; i < n; i++) {
+        coordxy x, y;
+
+        if (!list[i] || DEADMONSTER(list[i]))
+            continue;
+        x = list[i]->mx;
+        y = list[i]->my;
+        mongone(list[i]);
+        list[i] = 0;
+        newsym(x, y);
+    }
+}
+
+static void
+endcut_altar_scene(boolean harm)
+{
+    coordxy ax, ay;
+    struct monst **list;
+    int n, i, step, shx, shy;
+    boolean skip;
+
+    endcut_begin_scene();
+    endcut_reveal();
+    (void) endcut_find_altar(&ax, &ay);
+    endcut_layers_clear();
+    skip = FALSE;
+    list = 0;
+    n = 0;
+    for (step = 0; step < 12 && !skip; step++) {
+        shx = shy = 0;
+        endcut_light_clear();
+        if (step >= 2 && endcut_load_ref(ENDCUT_REF_ALTAR, step)) {
+            endcut_mock_shake(&shx, &shy);
+            endcut_stamp_altar(ax, ay, shx, shy);
+        }
+        endcut_compose(shx, shy);
+        if (endcut_wait_ms(endcut_altar_ms[step]))
+            skip = TRUE;
+    }
+    list = endcut_hostiles(ax, ay, &n);
+    for (i = 0; i < n; i++) {
+        coordxy x, y;
+
+        if (skip || !list[i] || DEADMONSTER(list[i])) {
+            endcut_kill_from(list, n, i, harm);
+            break;
+        }
+        x = list[i]->mx;
+        y = list[i]->my;
+        endcut_restore_burst(ax, ay);
+        endcut_beam(ax, ay, x, y);
+        endcut_flash_mon(list[i]);
+        endcut_compose(0, 0);
+        if (endcut_wait_ms(endcut_strike_ms[0])) {
+            endcut_kill_from(list, n, i, harm);
+            skip = TRUE;
+            break;
+        }
+        endcut_restore_burst(ax, ay);
+        endcut_sparks(x, y);
+        endcut_compose(0, 0);
+        if (endcut_wait_ms(endcut_strike_ms[1])) {
+            endcut_kill_from(list, n, i, harm);
+            skip = TRUE;
+            break;
+        }
+        if (harm && !DEADMONSTER(list[i])) {
+            mongone(list[i]);
+            list[i] = 0;
+            newsym(x, y);
+        }
+        endcut_ov_put(1, x, y, '%', CLR_GRAY, 0);
+        endcut_restore_burst(ax, ay);
+        endcut_compose(0, 0);
+        if (endcut_wait_ms(endcut_strike_ms[2])) {
+            endcut_kill_from(list, n, i + 1, harm);
+            skip = TRUE;
+            break;
+        }
+    }
+    endcut_restore_burst(ax, ay);
+    endcut_compose(0, 0);
+    if (!skip && endcut_wait_ms(endcut_altar_ms[12]))
+        skip = TRUE;
+    if (!skip)
+        (void) endcut_wait_ms(endcut_altar_ms[13]);
+    if (list)
+        free((genericptr_t) list);
+    endcut_layers_clear();
+    endcut_show();
+}
+
+static void
+endcut_stamp_lucifer(coordxy lx, coordxy ly, int frame)
+{
+    int x, y;
+    int wide = (frame >= 23);
+
+    for (y = 0; y < ENDREF_ROWS; y++)
+        for (x = 0; x < ENDREF_COLS; x++) {
+            int ch = endref_ch[y][x];
+            int col = endref_col[y][x];
+            int inv = endref_inv[y][x];
+            int ray = 0;
+            int take = 0;
+            coordxy mx, my;
+
+            if (!inv && abs(x - MOCK_ALT_X) <= 2 && abs(y - MOCK_ALT_Y) <= 2)
+                continue;
+            if (inv)
+                take = 1;
+            else if ((ch == '|' || ch == '\\' || ch == '/')
+                     && (col == CLR_WHITE || col == CLR_YELLOW
+                         || col == CLR_BROWN)) {
+                ray = 1;
+                take = 1;
+            } else if ((ch == '*' || ch == '+' || ch == '.')
+                       && (col == CLR_WHITE || col == CLR_YELLOW
+                           || col == CLR_BROWN)) {
+                if (wide || (abs(x - MOCK_LUC_X) <= 16
+                             && abs(y - MOCK_LUC_Y) <= 12))
+                    take = 1;
+            }
+            if (!take)
+                continue;
+            if (!endcut_at_lucifer((int) lx, (int) ly, x, y, ray, &mx, &my))
+                continue;
+            endcut_ov_put(0, mx, my, ch, col, inv);
+        }
+}
+
+static void
+endcut_wash(int which)
+{
+#ifdef TTY_GRAPHICS
+    coordxy x, y;
+    int color, spaces;
+
+    if (!endcut_tty())
+        return;
+    spaces = (which == 38);
+    color = (which == 40) ? CLR_GRAY
+                          : (which == 41) ? CLR_BLACK : CLR_WHITE;
+    for (y = 0; y < ROWNO; y++)
+        for (x = 1; x < COLNO; x++) {
+            if (spaces) {
+                tty_endcut_mapcell((int) x, (int) y, ' ', color, 1);
+            } else {
+                glyph_info ginfo;
+
+                map_glyphinfo(x, y, glyph_at(x, y), 0, &ginfo);
+                tty_endcut_mapcell((int) x, (int) y,
+                                   ginfo.ttychar ? ginfo.ttychar : ' ', color, 1);
+            }
+        }
+    tty_endcut_flush();
+#else
+    (void) which;
+#endif
+}
+
+static void
+endcut_lucifer_frame(coordxy lx, coordxy ly, int i)
+{
+    endcut_light_clear();
+    if (i <= 1) {
+        endcut_compose(0, 0);
+        return;
+    }
+    if (i == 2) {
+        endcut_ov_put(0, lx, ly, 1, CLR_WHITE, 1);
+        endcut_compose(0, 0);
+        return;
+    }
+    if (i >= 38 && i <= 41) {
+        endcut_wash(i);
+        return;
+    }
+    if (i >= 42) {
+        endcut_compose(0, 0);
+        return;
+    }
+    if (endcut_load_ref(ENDCUT_REF_LUCIFER, i))
+        endcut_stamp_lucifer(lx, ly, i);
+    endcut_compose(0, 0);
+}
+
 static void
 endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
 {
-    struct monst *mtmp, *found = 0;
-    int step;
+    struct monst *mtmp, *found;
+    int i;
+    boolean skip;
+    coordxy lx, ly;
 
+    endcut_begin_scene();
     endcut_reveal();
+    found = 0;
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
         if (!DEADMONSTER(mtmp) && is_lucifer(mtmp))
             found = mtmp;
@@ -533,39 +1124,33 @@ endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
         found->m_ap_type = M_AP_NOTHING;
         newsym(x, y);
     }
-    for (step = 4; step >= 1; step--) {
-        endcut_show();
-        endcut_ring(x, y, step);
-#ifdef TTY_GRAPHICS
-        if (endcut_tty()) {
-            tty_endcut_mapcell(x, y, 1, (step & 1) ? CLR_RED : CLR_WHITE, 1);
-            tty_endcut_flush();
+    lx = x;
+    ly = y;
+    endcut_layers_clear();
+    skip = FALSE;
+    for (i = 0; i < (int) SIZE(endcut_lucifer_ms); i++) {
+        if (i == 42) {
+            endcut_ov_put(1, lx, ly, '%', CLR_GRAY, 0);
+            if (harm && found && !DEADMONSTER(found)) {
+                mongone(found);
+                found = 0;
+                newsym(lx, ly);
+            }
         }
-#endif
-        if (endcut_wait(120))
-            break;
+        if (skip)
+            continue;
+        endcut_lucifer_frame(lx, ly, i);
+        if (endcut_wait_ms(endcut_lucifer_ms[i]))
+            skip = TRUE;
     }
-    endcut_show();
-    (void) endcut_burst(x, y, 2);
     if (harm && found && !DEADMONSTER(found)) {
         mongone(found);
-        newsym(x, y);
+        newsym(lx, ly);
     }
+    endcut_layers_clear();
     endcut_show();
 }
 
-static void
-endcut_altar_scene(boolean harm)
-{
-    coordxy ax, ay;
-
-    endcut_reveal();
-    (void) endcut_find_altar(&ax, &ay);
-    endcut_quake(ax, ay);
-    if (endcut_burst(ax, ay, 6))
-        return;
-    endcut_smite(ax, ay, harm);
-}
 
 static void
 endcut_win_map(boolean harm)
@@ -870,7 +1455,8 @@ static const char *const endcut_menu_line[] = {
     "4 Win: full sequence",
     "5 Dragon's altar",
     "6 Death on the Plane of Heaven",
-    "7 Victory memorial stone"
+    "7 Victory memorial stone",
+    "8 Peace on the Plane of Heaven"
 };
 
 static void
@@ -898,8 +1484,15 @@ endcut_run_number(int n)
     case 7:
         endcut_memorial(WIN_ERR, 0);
         break;
+    case 8:
+        if (!Is_astralevel(&u.uz)) {
+            pline("Prophet mode: not on the Plane of Heaven.");
+            break;
+        }
+        heaven_begin_peace();
+        break;
     default:
-        pline("The number is from 1 to 7.");
+        pline("The number is from 1 to 8.");
         break;
     }
     docrt();
@@ -957,6 +1550,20 @@ endcut_ascend(void)
     endcut_card(win_c_text);
     endcut_lucifer_at(u.ux, u.uy, TRUE);
     endcut_card(win_e_text);
+    /* The ascension cutscene waits until the hero steps through
+       the gate and agrees. The battle does not resume. */
+    heaven_begin_peace();
+}
+
+void
+endcut_finish_ascent(void)
+{
+    if (u.uevent.ascended)
+        return;
+    /* done() drops the steed. The sunset is the last screen, so the
+       fact of the ride has to be kept from here. */
+    endcut_on_fiery_steed = (boolean) (u.usteed
+            && u.usteed->data == &mons[PM_FIERY_STEED_OF_HEAVEN]);
     endcut_play(ENDCUT_WIN);
     u.uevent.ascended = 1;
     endcut_stone = TRUE;
@@ -1048,6 +1655,7 @@ endcut_memorial(winid extra, time_t when)
     rows[5] = "the joy of thy";
     rows[6] = "Lord";
     rows[7] = "Redeemed on";
+    endcut_begin_scene();
 
 #ifdef TTY_GRAPHICS
     if (endcut_tty()) {

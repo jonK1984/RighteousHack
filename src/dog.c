@@ -483,6 +483,13 @@ mon_arrive(struct monst *mtmp, int when)
         mtmp->muy = valley_level.dlevel;
         return;
     }
+    /* The battle is over. A hostile still on the migrating list
+       is not placed, and is not put back onto that list. */
+    if (heaven_bars_arrival(mtmp)) {
+        mtmp->nmon = 0;
+        dealloc_monst(mtmp);
+        return;
+    }
     coordxy xlocale, ylocale, xyloc, xyflags;
     xint16 wander;
     int num_segs;

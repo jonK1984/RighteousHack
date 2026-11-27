@@ -229,6 +229,8 @@ dog_eat(struct monst *mtmp,
     char objnambuf[BUFSZ], *obj_name;
 
     objnambuf[0] = '\0';
+    if (heaven_peace())
+        return 0;
     if (edog->hungrytime < svm.moves)
         edog->hungrytime = svm.moves;
     nutrit = dog_nutrition(mtmp, obj);
@@ -405,6 +407,8 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
     int carryamt = 0;
     struct obj *obj, *otmp;
 
+    if (heaven_peace())
+        return 0;
     if (helpless(mtmp) || mtmp->meating)
         return 0;
 
@@ -553,7 +557,9 @@ dog_goal(
         if ((max_y = omy + SQSRCHRADIUS) >= ROWNO)
             max_y = ROWNO - 1;
 
-        /* nearby food is the first choice, then other objects */
+        /* nearby food is the first choice, then other objects.
+           During the victory lap, pets do not seek either. */
+        if (!heaven_peace())
         for (obj = fobj; obj; obj = obj->nobj) {
             nx = obj->ox;
             ny = obj->oy;

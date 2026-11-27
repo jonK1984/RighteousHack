@@ -22,6 +22,20 @@ static boolean lucifer_tail(struct monst *);
 static boolean lucifer_flood(struct monst *);
 static void lucifer_accuse(struct monst *);
 static boolean lucifer_summon(struct monst *);
+static boolean heaven_keep_during_peace(struct monst *);
+static void heaven_dismiss_hostiles(void);
+static void heaven_drop_migrants(void);
+static boolean heaven_find_altar(coordxy *, coordxy *);
+static struct mkroom *heaven_altar_room(coordxy, coordxy);
+static boolean heaven_room_floor(struct mkroom *, coordxy, coordxy);
+static void heaven_room_center(coordxy, coordxy, coordxy *, coordxy *);
+static boolean heaven_portal_square(coordxy, coordxy, coordxy *, coordxy *);
+static boolean heaven_verse_spot(coordxy, coordxy);
+static boolean heaven_spare_spot(coordxy, coordxy, int, int, coordxy *,
+                                 coordxy *, int, coordxy *, coordxy *);
+static void heaven_shift_off(coordxy, coordxy, coordxy, coordxy,
+                             coordxy *, coordxy *, int);
+static void heaven_lay_verses(coordxy, coordxy);
 
 static void
 lucifer_mark(struct monst *mtmp)
@@ -346,11 +360,540 @@ heaven_raise(void)
 void
 heaven_tick(void)
 {
-    if (!Is_astralevel(&u.uz))
+    if (!Is_astralevel(&u.uz) || heaven_peace())
         return;
     heaven_factions();
     heaven_raise();
     heaven_ensure();
+}
+
+/* The battle is over. Heal whatever the turn has already applied,
+   and clear the deaths that do not go through losehp. */
+void
+heaven_spare_hero(void)
+{
+    int i;
+
+    if (!heaven_peace())
+        return;
+    if (u.uhpmax < 1)
+        u.uhpmax = 1;
+    if (u.uhp < u.uhpmax)
+        u.uhp = u.uhpmax;
+    if (Upolyd) {
+        if (u.mhmax < 1)
+            u.mhmax = 1;
+        if (u.mh < u.mhmax)
+            u.mh = u.mhmax;
+    }
+    if (u.uhunger < 900 || u.uhs >= HUNGRY) {
+        u.uhunger = 900;
+        newuhs(FALSE);
+    }
+    if (Stoned)
+        make_stoned(0L, (char *) 0, 0, (char *) 0);
+    if (Slimed)
+        make_slimed(0L, (char *) 0);
+    if (Strangled)
+        Strangled = 0L;
+    if (Sick)
+        make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+    if (u.utrap && (u.utraptype == TT_LAVA || u.utraptype == TT_INFLOOR
+                    || u.utraptype == TT_BURIEDBALL))
+        reset_utrap(FALSE);
+    for (i = 0; i < A_MAX; i++)
+        if (ABASE(i) < AMAX(i))
+            ABASE(i) = AMAX(i);
+    disp.botl = TRUE;
+}
+
+static boolean
+heaven_keep_during_peace(struct monst *mtmp)
+{
+    if (!mtmp || DEADMONSTER(mtmp))
+        return FALSE;
+    if (is_lucifer(mtmp) || mtmp->iswiz || is_heaven_fallen(mtmp)
+        || is_heaven_priest(mtmp))
+        return FALSE;
+    return heaven_lords_host(mtmp) || mtmp->mpeaceful || mtmp->mtame;
+}
+
+boolean
+heaven_bars_arrival(struct monst *mtmp)
+{
+    return heaven_peace() && !heaven_keep_during_peace(mtmp);
+}
+
+static void
+heaven_dismiss_hostiles(void)
+{
+    struct monst *mtmp, *nxt;
+
+    for (mtmp = fmon; mtmp; mtmp = nxt) {
+        nxt = mtmp->nmon;
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (!heaven_keep_during_peace(mtmp)) {
+            mongone(mtmp);
+            continue;
+        }
+        mtmp->mpeaceful = 1;
+        if (mtmp->mhp < mtmp->mhpmax)
+            mtmp->mhp = mtmp->mhpmax;
+    }
+}
+
+static void
+heaven_drop_migrants(void)
+{
+    struct monst *mtmp, **mp;
+
+    for (mp = &gm.migrating_mons; (mtmp = *mp) != 0; ) {
+        if (heaven_keep_during_peace(mtmp)) {
+            mtmp->mpeaceful = 1;
+            mp = &mtmp->nmon;
+            continue;
+        }
+        *mp = mtmp->nmon;
+        mtmp->nmon = 0;
+        dealloc_monst(mtmp);
+    }
+}
+
+/* The same lawful sanctum altar the altar-light scene uses. */
+static boolean
+heaven_find_altar(coordxy *ax, coordxy *ay)
+{
+    coordxy x, y;
+
+    for (x = 1; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++) {
+            if (levl[x][y].typ != ALTAR)
+                continue;
+            if (!(levl[x][y].altarmask & AM_SANCTUM))
+                continue;
+            if (Amask2align(levl[x][y].altarmask & AM_MASK) != A_LAWFUL)
+                continue;
+            *ax = x;
+            *ay = y;
+            return TRUE;
+        }
+    return FALSE;
+}
+
+/* The temple (or other room) that holds the lawful altar. */
+static struct mkroom *
+heaven_altar_room(coordxy ax, coordxy ay)
+{
+    int i;
+    struct mkroom *croom, *any;
+
+    if ((int) levl[ax][ay].roomno >= ROOMOFFSET) {
+        i = (int) levl[ax][ay].roomno - ROOMOFFSET;
+        if (i >= 0 && i < svn.nroom && svr.rooms[i].hx >= svr.rooms[i].lx)
+            return &svr.rooms[i];
+    }
+    any = (struct mkroom *) 0;
+    for (i = 0; i < svn.nroom; i++) {
+        croom = &svr.rooms[i];
+        if (croom->hx < croom->lx)
+            continue;
+        if (!inside_room(croom, ax, ay))
+            continue;
+        if (croom->rtype == TEMPLE || croom->orig_rtype == TEMPLE)
+            return croom;
+        if (!any)
+            any = croom;
+    }
+    return any;
+}
+
+/* Floor of that room, including the altar, excluding its walls. */
+static boolean
+heaven_room_floor(struct mkroom *croom, coordxy x, coordxy y)
+{
+    int rno;
+
+    if (!croom || !isok(x, y))
+        return FALSE;
+    if (levl[x][y].typ != ROOM && levl[x][y].typ != CORR
+        && levl[x][y].typ != ICE && !IS_ALTAR(levl[x][y].typ))
+        return FALSE;
+    if (croom->irregular) {
+        rno = (int) ((croom - svr.rooms) + ROOMOFFSET);
+        return (boolean) (!levl[x][y].edge
+                          && (int) levl[x][y].roomno == rno);
+    }
+    return (boolean) (x >= croom->lx && x <= croom->hx
+                      && y >= croom->ly && y <= croom->hy);
+}
+
+/* Midpoint of the room's floor. On these temples that is the altar. */
+static void
+heaven_room_center(coordxy ax, coordxy ay, coordxy *cx, coordxy *cy)
+{
+    struct mkroom *croom;
+    coordxy x, y;
+    int minx, maxx, miny, maxy, n;
+
+    *cx = ax;
+    *cy = ay;
+    croom = heaven_altar_room(ax, ay);
+    if (!croom)
+        return;
+    minx = COLNO;
+    maxx = 0;
+    miny = ROWNO;
+    maxy = 0;
+    n = 0;
+    for (x = max(croom->lx, (coordxy) 1); x <= min(croom->hx, (coordxy) (COLNO - 1));
+         x++)
+        for (y = max(croom->ly, (coordxy) 0);
+             y <= min(croom->hy, (coordxy) (ROWNO - 1)); y++) {
+            if (!heaven_room_floor(croom, x, y))
+                continue;
+            if (x < minx)
+                minx = x;
+            if (x > maxx)
+                maxx = x;
+            if (y < miny)
+                miny = y;
+            if (y > maxy)
+                maxy = y;
+            n++;
+        }
+    if (!n)
+        return;
+    *cx = (coordxy) ((minx + maxx) / 2);
+    *cy = (coordxy) ((miny + maxy) / 2);
+}
+
+/* The hero is standing on the altar, so the gate is not put there.
+   The center of the temple is used when it is open floor. Otherwise
+   the nearest open floor to that center, never the altar. */
+static boolean
+heaven_portal_square(coordxy ax, coordxy ay, coordxy *px, coordxy *py)
+{
+    coordxy cx, cy, dummyx, dummyy;
+
+    heaven_room_center(ax, ay, &cx, &cy);
+    if ((cx != ax || cy != ay) && !IS_ALTAR(levl[cx][cy].typ)
+        && heaven_verse_spot(cx, cy)) {
+        *px = cx;
+        *py = cy;
+        return TRUE;
+    }
+    return heaven_spare_spot(cx, cy, 0, 0, px, py, 0, &dummyx, &dummyy);
+}
+
+/* North, east, south, west of the gate. y grows south. */
+static const struct {
+    int dx, dy;
+    const char *text;
+} heaven_verses[] = {
+    { 0, -1,
+      "Strait is the gate, and narrow is the way, which leadeth unto life (Matthew 7:14)" },
+    { 1, 0,
+      "I am the way, the truth, and the life: no man cometh unto the Father, but by me. (John 14:6)" },
+    { 0, 1,
+      "This is the way, walk ye in it (Isaiah 30:21)" },
+    { -1, 0,
+      "And God shall wipe away all tears from their eyes; and there shall be no more death (Revelation 21:4)" },
+};
+
+boolean
+heaven_is_altar_verse(const char *s)
+{
+    int i;
+
+    if (!s || !*s)
+        return FALSE;
+    for (i = 0; i < (int) SIZE(heaven_verses); i++)
+        if (!strcmp(s, heaven_verses[i].text))
+            return TRUE;
+    return FALSE;
+}
+
+/* A floor the engraving symbol can be drawn on. Not the altar. */
+static boolean
+heaven_verse_spot(coordxy x, coordxy y)
+{
+    if (!isok(x, y))
+        return FALSE;
+    if (levl[x][y].typ != ROOM && levl[x][y].typ != CORR
+        && levl[x][y].typ != ICE)
+        return FALSE;
+    if (is_pool_or_lava(x, y) || IS_AIR(levl[x][y].typ))
+        return FALSE;
+    if (t_at(x, y))
+        return FALSE;
+    return TRUE;
+}
+
+/* Nearest free floor if the cardinal square cannot hold a verse.
+   Prefer the intended side when two squares are the same distance. */
+static boolean
+heaven_spare_spot(
+    coordxy ax, coordxy ay,
+    int pdx, int pdy,
+    coordxy *sx, coordxy *sy,
+    int nused, coordxy *ux, coordxy *uy)
+{
+    int r, dx, dy, best, found;
+    coordxy bx, by;
+
+    found = 0;
+    best = 0;
+    bx = by = 0;
+    for (r = 1; r <= 4; r++) {
+        for (dy = -r; dy <= r; dy++)
+            for (dx = -r; dx <= r; dx++) {
+                coordxy x, y;
+                int i, score, taken;
+
+                if (abs(dx) != r && abs(dy) != r)
+                    continue;
+                x = (coordxy) (ax + dx);
+                y = (coordxy) (ay + dy);
+                if (!heaven_verse_spot(x, y))
+                    continue;
+                taken = 0;
+                for (i = 0; i < nused; i++)
+                    if (ux[i] == x && uy[i] == y)
+                        taken = 1;
+                if (taken)
+                    continue;
+                score = (dx * dx + dy * dy) * 8
+                        + abs(dx - pdx) + abs(dy - pdy);
+                if (!found || score < best) {
+                    found = 1;
+                    best = score;
+                    bx = x;
+                    by = y;
+                }
+            }
+        if (found)
+            break;
+    }
+    if (!found)
+        return FALSE;
+    *sx = bx;
+    *sy = by;
+    return TRUE;
+}
+
+/* Floor items hide the engraving. Move them off the verse square. */
+static void
+heaven_shift_off(
+    coordxy x, coordxy y,
+    coordxy ax, coordxy ay,
+    coordxy *ux, coordxy *uy, int nused)
+{
+    struct obj *obj, *nxt;
+    coordxy nx, ny;
+    int r, dx, dy, found;
+
+    if (!svl.level.objects[x][y])
+        return;
+    found = 0;
+    nx = ny = 0;
+    for (r = 1; r <= 3 && !found; r++)
+        for (dy = -r; dy <= r && !found; dy++)
+            for (dx = -r; dx <= r; dx++) {
+                coordxy tx, ty;
+                int i, taken;
+
+                if (!dx && !dy)
+                    continue;
+                if (abs(dx) != r && abs(dy) != r)
+                    continue;
+                tx = (coordxy) (x + dx);
+                ty = (coordxy) (y + dy);
+                if (!isok(tx, ty) || (tx == ax && ty == ay))
+                    continue;
+                if (!ACCESSIBLE(levl[tx][ty].typ) || is_pool_or_lava(tx, ty))
+                    continue;
+                taken = 0;
+                for (i = 0; i < nused; i++)
+                    if (ux[i] == tx && uy[i] == ty)
+                        taken = 1;
+                if (taken)
+                    continue;
+                nx = tx;
+                ny = ty;
+                found = 1;
+                break;
+            }
+    if (!found)
+        return;
+    for (obj = svl.level.objects[x][y]; obj; obj = nxt) {
+        nxt = obj->nexthere;
+        obj_extract_self(obj);
+        place_object(obj, nx, ny);
+        stackobj(obj);
+    }
+    newsym(nx, ny);
+}
+
+static void
+heaven_lay_verses(coordxy ax, coordxy ay)
+{
+    coordxy ux[4], uy[4];
+    int i, nused;
+
+    nused = 0;
+    for (i = 0; i < (int) SIZE(heaven_verses); i++) {
+        coordxy x, y;
+        struct engr *ep;
+
+        x = (coordxy) (ax + heaven_verses[i].dx);
+        y = (coordxy) (ay + heaven_verses[i].dy);
+        {
+            int j, taken = 0;
+
+            for (j = 0; j < nused; j++)
+                if (ux[j] == x && uy[j] == y)
+                    taken = 1;
+            if (taken || !heaven_verse_spot(x, y)) {
+                if (!heaven_spare_spot(ax, ay, heaven_verses[i].dx,
+                                       heaven_verses[i].dy, &x, &y,
+                                       nused, ux, uy))
+                    continue;
+            }
+        }
+        ux[nused] = x;
+        uy[nused] = y;
+        nused++;
+        heaven_shift_off(x, y, ax, ay, ux, uy, nused);
+        make_engr_at(x, y, heaven_verses[i].text, (char *) 0, 0L, BURN);
+        ep = engr_at(x, y);
+        if (!ep)
+            continue;
+        ep->nowipeout = 1;
+        ep->erevealed = 1;
+        levl[x][y].lit = 1;
+        levl[x][y].waslit = 1;
+        levl[x][y].seenv = SVALL;
+        map_engraving(ep, TRUE);
+        newsym(x, y);
+    }
+}
+
+void
+heaven_begin_peace(void)
+{
+    coordxy ax, ay, px, py;
+    struct trap *ttmp;
+    boolean first;
+
+    if (!Is_astralevel(&u.uz))
+        return;
+    first = !heaven_peace();
+    u.uevent.petra_step |= 4;
+    svl.level.flags.rndmongen = 0;
+    heaven_dismiss_hostiles();
+    heaven_drop_migrants();
+    heaven_spare_hero();
+    if (!heaven_find_altar(&ax, &ay))
+        return;
+    /* The hero is on the altar. The gate opens at the center of
+       that room, and the verses stand around the gate. */
+    if (!heaven_portal_square(ax, ay, &px, &py))
+        return;
+    ttmp = t_at(ax, ay);
+    if (ttmp && ttmp->ttyp == MAGIC_PORTAL)
+        deltrap(ttmp);
+    heaven_shift_off(px, py, ax, ay, (coordxy *) 0, (coordxy *) 0, 0);
+    ttmp = t_at(px, py);
+    if (ttmp && ttmp->ttyp != MAGIC_PORTAL) {
+        deltrap(ttmp);
+        ttmp = (struct trap *) 0;
+    }
+    if (!ttmp)
+        ttmp = maketrap(px, py, MAGIC_PORTAL);
+    if (!ttmp)
+        return;
+    ttmp->tseen = 1;
+    levl[px][py].seenv = SVALL;
+    levl[px][py].lit = 1;
+    levl[px][py].waslit = 1;
+    map_trap(ttmp, TRUE);
+    newsym(px, py);
+    newsym(ax, ay);
+    heaven_lay_verses(px, py);
+    docrt();
+    if (first) {
+        pline("A gate of light openeth upon the field of heaven, and a voice saith: Come up hither.");
+    }
+}
+
+void
+heaven_gate_enter(void)
+{
+    /* The portal trap runs when the hero arrives on its square,
+       including a step and a teleport. Waiting there does not
+       run it again. No is the default, so closing the prompt
+       leaves the hero on the altar. */
+    if (y_n("Art thou ready to go up? (This ends the game.)") == 'y')
+        endcut_finish_ascent();
+}
+
+const char *
+heaven_peace_angel(void)
+{
+    static const char *const lines[] = {
+        "Well fought, child of dust. Give glory to God.",
+        "The host of the dragon is no more. Rejoice!",
+        "We sing praise unto the Lord this day, and thou art among us.",
+        "Rest a while, mortal. Nothing here shall harm thee now.",
+        "Thou art welcome among the host of the Lord.",
+    };
+
+    return lines[rn2(SIZE(lines))];
+}
+
+static const char *
+heaven_peace_cherub(void)
+{
+    static const char *const lines[] = {
+        "We kept the way of the tree of life. Now the way is opened unto thee.",
+        "The flaming sword is sheathed. Pass in peace, mortal.",
+        "We have guarded the holy places since the beginning. Rest thou here a while.",
+    };
+
+    return lines[rn2(SIZE(lines))];
+}
+
+static const char *
+heaven_peace_seraph(void)
+{
+    static const char *const lines[] = {
+        "Holy, holy, holy is the Lord of hosts.",
+        "We cover our faces before the throne. Lift thou thy voice in praise with us.",
+        "The fire that burned the dragon's host burneth in us, and it is the Lord's.",
+    };
+
+    return lines[rn2(SIZE(lines))];
+}
+
+/* #chat during the peace. Cherubim are ki-rin and seraphim are
+   archons, so this runs before the ordinary sound switch. */
+boolean
+heaven_peace_chat(struct monst *mtmp)
+{
+    const char *line = 0;
+
+    if (!heaven_peace() || !mtmp || !mtmp->mpeaceful)
+        return FALSE;
+    if (is_heaven_cherub(mtmp))
+        line = heaven_peace_cherub();
+    else if (is_heaven_seraph(mtmp))
+        line = heaven_peace_seraph();
+    if (!line)
+        return FALSE;
+    SetVoice(mtmp, 0, 80, 0);
+    verbalize("%s", line);
+    return TRUE;
 }
 
 /* Jon edits this table. A new Plane of Heaven draws 7 to 10
@@ -619,6 +1162,17 @@ archangel_speech(struct monst *mtmp)
     if (!is_heaven_arch(mtmp) || !has_mgivenname(mtmp))
         return (const char *) 0;
     nm = MGIVENNAME(mtmp);
+    if (heaven_peace()) {
+        if (!strcmp(nm, "Michael"))
+            return "michael_peace";
+        if (!strcmp(nm, "Gabriel"))
+            return "gabriel_peace";
+        if (!strcmp(nm, "Raphael"))
+            return "raphael_peace";
+        if (!strcmp(nm, "Uriel"))
+            return "uriel_peace";
+        return (const char *) 0;
+    }
     if (!strcmp(nm, "Michael"))
         return "michael_speech";
     if (!strcmp(nm, "Gabriel"))

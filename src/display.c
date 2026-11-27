@@ -2699,6 +2699,25 @@ map_glyphinfo(
         if (is_heaven_chest(goldchest))
             glyphinfo->gm.sym.color = CLR_YELLOW;
     }
+    /* The gate is the ordinary magic-portal symbol,
+       drawn bright yellow for the duration of the peace. */
+    if (iflags.use_color && heaven_peace() && isok(x, y)
+        && glyph_is_trap(glyph)) {
+        struct trap *gate = t_at(x, y);
+
+        if (gate && gate->ttyp == MAGIC_PORTAL)
+            glyphinfo->gm.sym.color = CLR_YELLOW;
+    }
+    /* The four burned verses stand out: bright white, on a lit floor. */
+    if (iflags.use_color && heaven_peace() && isok(x, y)
+        && glyph_is_cmap(glyph)) {
+        struct engr *verse = engr_at(x, y);
+        int vcmap = glyph_to_cmap(glyph);
+
+        if (verse && heaven_is_altar_verse(verse->engr_txt[actual_text])
+            && (vcmap == S_engroom || vcmap == S_engrcorr))
+            glyphinfo->gm.sym.color = CLR_WHITE;
+    }
     /* Fig trees keep the tree symbol, colored purple, eaten or not. */
     if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
         && !u_at(x, y)) {

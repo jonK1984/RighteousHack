@@ -803,6 +803,9 @@ mon_wield_item(struct monst *mon)
     struct obj *obj;
     boolean exclaim = TRUE; /* assume mon is planning to attack */
 
+    /* The victory lap: no "wields" lines, and nothing is equipped. */
+    if (heaven_peace())
+        return 0;
     /* This case actually should never happen */
     if (mon->weapon_check == NO_WEAPON_WANTED)
         return 0;

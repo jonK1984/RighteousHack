@@ -979,8 +979,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
             *bp = (t1->deathdnum == astral_level.dnum) ? '\0' : ' ';
         second_line = FALSE;
     } else if (!strncmp("ascended", t1->death, 8)) {
-        Sprintf(eos(linebuf), "ascended to demigod%s-hood",
-                (t1->plgend[0] == 'F') ? "dess" : "");
+        Strcat(linebuf, "ascended as the Faithful");
         second_line = FALSE;
     } else {
         if (!strncmp(t1->death, "quit", 4)) {

@@ -283,6 +283,73 @@ Delay(int ms)
     (void) Sleep(ms);
 }
 
+/* Drop every record still in the console input queue. The Enter that
+   closed a text window leaves its key-up, and sometimes a second
+   CR/LF record, after the key-down has been read. */
+void
+win32_flush_keys(void)
+{
+    HANDLE hin = GetStdHandle(STD_INPUT_HANDLE);
+
+    if (hin != NULL && hin != INVALID_HANDLE_VALUE)
+        (void) FlushConsoleInputBuffer(hin);
+}
+
+/* A key-down that is not only a modifier. Key-up, mouse, focus, and
+   menu records are discarded so they cannot skip a cutscene. */
+static int
+win32_is_real_key(const KEY_EVENT_RECORD *key)
+{
+    WORD vk;
+
+    if (!key->bKeyDown)
+        return 0;
+    if (key->uChar.AsciiChar)
+        return 1;
+    vk = key->wVirtualKeyCode;
+    switch (vk) {
+    case VK_SHIFT:
+    case VK_LSHIFT:
+    case VK_RSHIFT:
+    case VK_CONTROL:
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+    case VK_MENU:
+    case VK_LMENU:
+    case VK_RMENU:
+    case VK_CAPITAL:
+    case VK_NUMLOCK:
+    case VK_SCROLL:
+    case VK_LWIN:
+    case VK_RWIN:
+        return 0;
+    default:
+        return vk != 0;
+    }
+}
+
+int
+win32_key_pending(void)
+{
+    HANDLE hin = GetStdHandle(STD_INPUT_HANDLE);
+    INPUT_RECORD ir;
+    DWORD got;
+    int n;
+
+    if (hin == NULL || hin == INVALID_HANDLE_VALUE)
+        return 0;
+    for (n = 0; n < 64; n++) {
+        got = 0;
+        if (!PeekConsoleInput(hin, &ir, 1, &got) || got == 0)
+            return 0;
+        if (ir.EventType == KEY_EVENT && win32_is_real_key(&ir.Event.KeyEvent))
+            return 1;
+        if (!ReadConsoleInput(hin, &ir, 1, &got))
+            return 0;
+    }
+    return 0;
+}
+
 void
 win32_abort(void)
 {

@@ -1182,6 +1182,9 @@ makemon(
     fakemon = cg.zeromonst;
     cc.x = cc.y = 0;
 
+    /* The victory lap: nothing is generated on the Plane of Heaven. */
+    if (heaven_peace())
+        return (struct monst *) 0;
     if (iflags.debug_mongen || (!svl.level.flags.rndmongen && !ptr))
         return (struct monst *) 0;
     /* The Son of Perdition does not enter a trial. */

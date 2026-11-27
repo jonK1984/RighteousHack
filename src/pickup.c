@@ -1833,9 +1833,10 @@ pickup_object(
                && engulfing_u(obj->ocarry)) {
         You_cant("pick %s up.", ysimple_name(obj));
         return 0;
-    } else if (obj->oartifact && !touch_artifact(obj, &gy.youmonst)) {
+    } else if (!heaven_peace() && obj->oartifact
+               && !touch_artifact(obj, &gy.youmonst)) {
         return 0;
-    } else if (obj->otyp == CORPSE) {
+    } else if (!heaven_peace() && obj->otyp == CORPSE) {
         if (fatal_corpse_mistake(obj, telekinesis)
             || rider_corpse_revival(obj, telekinesis))
             return -1;

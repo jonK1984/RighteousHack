@@ -3800,6 +3800,10 @@ stolen_value(
     boolean was_unpaid;
     long c_count = 0L, u_count = 0L;
 
+    /* The victory lap: floor items are free to take. */
+    if (heaven_peace())
+        return 0L;
+
     if ((shkp = find_objowner(obj, x, y)) != (struct monst *) 0) {
         roomno = ESHK(shkp)->shoproom;
     } else {

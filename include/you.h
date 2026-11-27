@@ -58,7 +58,9 @@ struct u_event {
     Bitfield(petra_step, 3);        /* bit 0: Son of Perdition slain for good
                                      * on the Plane of Heaven.
                                      * bit 1: the four archangels have
-                                     * descended. Bit 2 stays unused. */
+                                     * descended.
+                                     * bit 2: the Plane of Heaven is at
+                                     * peace. Old saves have it clear. */
     Bitfield(peter_rewarded, 1);    /* Peter kept the net and gave the keys */
     Bitfield(babylon_hint, 1);      /* prayer has named the palace key */
     Bitfield(peter_quest, 1);       /* Peter has given the quest scroll */

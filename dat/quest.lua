@@ -119,6 +119,22 @@ questtext = {
          "\"The light of God shineth here, and no darkness may hide from it.\"",
          "\"Lift thine eyes, mortal. The end of thy road is at hand.\"",
       },
+      michael_peace = {
+         "\"The dragon is cast down, and his host is no more. The battle was the Lord's, and thou hast stood in it.\"",
+         "\"Lay down thy sword, soldier of the Lord. There is no more war in heaven.\"",
+      },
+      gabriel_peace = {
+         "\"I bring thee good tidings once more: the enemy is fallen, and thou art found faithful.\"",
+         "\"Go in peace. The way before thee is open.\"",
+      },
+      raphael_peace = {
+         "\"Rest now, mortal. The long road is behind thee, and no wound shall trouble thee here.\"",
+         "\"Give thanks unto the Lord, for He hath brought thee through the fire.\"",
+      },
+      uriel_peace = {
+         "\"Look upon the field, mortal. Where darkness stood, there is only light.\"",
+         "\"The way is opened before thee. Enter when thou art ready.\"",
+      },
       banished = {
          synopsis = "[You have been cast out from the fellowship of the faithful.]",
          output = "text",

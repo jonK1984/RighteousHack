@@ -385,7 +385,7 @@ steal(struct monst *mtmp, char *objnambuf)
 
     if (objnambuf)
         *objnambuf = '\0';
-    if (fear_protected())
+    if (fear_protected() || heaven_peace())
         return 0;
     /* the following is true if successful on first of two attacks. */
     if (!monnear(mtmp, u.ux, u.uy))
