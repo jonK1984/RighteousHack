@@ -905,8 +905,9 @@ cuss(struct monst *mtmp)
                       ROLL_FROM(random_malediction),
                       ROLL_FROM(random_insult));
         }
-    } else if (is_lminion(mtmp)
-               && !(mtmp->isminion && EMIN(mtmp)->renegade)) {
+    } else if (speaks_as_fallen(mtmp)) {
+        com_pager("fallen_angel_cuss");
+    } else if (is_lminion(mtmp)) {
         com_pager("angel_cuss"); /* TODO: the Hallucination msg */
         /*com_pager(rn2(QTN_ANGELIC - 1 + (Hallucination ? 1 : 0))
           + QT_ANGELIC);*/

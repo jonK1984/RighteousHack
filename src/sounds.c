@@ -1321,7 +1321,7 @@ domonnoise(struct monst *mtmp)
         FALLTHROUGH;
         /* FALLTHRU */
     case MS_CUSS:
-        if (!mtmp->mpeaceful)
+        if (!mtmp->mpeaceful || speaks_as_fallen(mtmp))
             cuss(mtmp);
         else if (is_lminion(mtmp))
             verbl_msg = "It's not too late.";

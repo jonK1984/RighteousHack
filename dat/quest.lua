@@ -82,6 +82,18 @@ questtext = {
          "\"Behold, the Lamb of God cometh to judge the living and the dead.\"",
          "\"Even now the axe is laid to the root of the tree.\"",
       },
+      fallen_angel_cuss = {
+         "\"Ye shall not surely die.\"",
+         "\"I will ascend above the heights of the clouds; I will be like the most High.\"",
+         "\"Fall down before the Dragon, and rise up a king.\"",
+         "\"What profit hath thy faithfulness brought thee? Kneel, and know true power.\"",
+         "\"We have beheld His face, and we chose otherwise.\"",
+         "\"Why serve when thou mightest reign?\"",
+         "\"We kept not our first estate, and we repent not of it.\"",
+         "\"The Dragon hath promised us thrones. What hath thy Lord promised thee?\"",
+         "\"Thou art but dust, and unto dust thou shalt return. We are flame.\"",
+         "\"We were cast down once. We shall not be cast down again.\"",
+      },
       banished = {
          synopsis = "[You have been cast out from the fellowship of the faithful.]",
          output = "text",

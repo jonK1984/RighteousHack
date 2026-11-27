@@ -301,6 +301,12 @@ typedef char rh_strat_bits_overlap[
     ((mon) && (mon)->data == &mons[PM_ANGEL] \
      && ((mon)->mstrategy & STRAT_HEAVEN_FALLEN) != 0L \
      && rh_on_heaven(mon))
+/* Fallen angels, and minions who have turned, do not use the
+   faithful angel lines. */
+#define speaks_as_fallen(mon) \
+    ((mon) && (is_heaven_fallen(mon) \
+               || ((mon)->isminion && has_emin(mon) \
+                   && EMIN(mon)->renegade)))
 #define is_heaven_lord(mon) \
     ((mon) && (mon)->data == &mons[PM_ANGEL] \
      && ((mon)->mstrategy & STRAT_HEAVEN_LORD) != 0L \
