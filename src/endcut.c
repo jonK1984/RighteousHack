@@ -494,8 +494,10 @@ endcut_beside(coordxy *y)
    frames. Effects are stamped onto the real altar and the real
    Lucifer. docrt is not called between frames, so the overlays
    are not wiped. The fixed altar delays plus nine strikes (the
-   mockup's own count) are 5515 ms. Every hostile is struck, so a
-   crowded level runs longer. Lucifer's list is 5725 ms. */
+   mockup's own count) were 5515 ms. Every delay is seven tenths of
+   that, rounded to the nearest millisecond: the fixed part is 2037 ms
+   and each strike is 203 ms. Every hostile is struck, so a crowded
+   level runs longer. Lucifer's list is 4019 ms. */
 #define ENDCUT_REF_ALTAR 3
 #define ENDCUT_REF_LUCIFER 4
 #define ENDREF_ROWS 24
@@ -505,23 +507,24 @@ endcut_beside(coordxy *y)
 #define MOCK_LUC_X 54
 #define MOCK_LUC_Y 9
 
+/* Seven tenths of the mockup delays, nearest millisecond. */
 static const int endcut_altar_ms[] = {
-    400, 300,
-    130, 130, 130,
-    95, 95, 95, 95, 95, 95, 95,
-    250, 900
+    280, 210,
+    91, 91, 91,
+    67, 67, 67, 67, 67, 67, 67,
+    175, 630
 };
-static const int endcut_strike_ms[] = { 110, 110, 70 };
+static const int endcut_strike_ms[] = { 77, 77, 49 };
 static const int endcut_lucifer_ms[] = {
-    450, 250,
-    90,
-    90, 140,
-    105, 105, 105, 105, 105, 105, 105, 105, 105, 105,
-    70, 70, 70, 70, 70, 70, 70, 90,
-    95, 95, 95, 95, 95, 95, 95, 95, 95, 95, 95, 95, 95,
-    110, 110,
-    120, 90, 80, 80,
-    350, 900
+    315, 175,
+    63,
+    63, 98,
+    74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+    49, 49, 49, 49, 49, 49, 49, 63,
+    67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67,
+    77, 77,
+    84, 63, 56, 56,
+    245, 630
 };
 
 struct endov {

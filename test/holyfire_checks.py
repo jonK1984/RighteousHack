@@ -7,14 +7,16 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-ALTAR_FIXED = [
+# The approved mockup clock. Played delays are seven tenths of these,
+# rounded to the nearest millisecond (halves round up).
+MOCK_ALTAR = [
     400, 300,
     130, 130, 130,
     95, 95, 95, 95, 95, 95, 95,
     250, 900,
 ]
-STRIKE = [110, 110, 70]
-LUCIFER = [
+MOCK_STRIKE = [110, 110, 70]
+MOCK_LUCIFER = [
     450, 250,
     90,
     90, 140,
@@ -25,6 +27,10 @@ LUCIFER = [
     120, 90, 80, 80,
     350, 900,
 ]
+
+
+def scale_ms(ms):
+    return int(ms * 0.7 + 0.5)
 
 
 def read(rel):
@@ -43,13 +49,16 @@ class HolyFire(unittest.TestCase):
         altar = c_ints(src, "endcut_altar_ms[]")
         strike = c_ints(src, "endcut_strike_ms[]")
         lucifer = c_ints(src, "endcut_lucifer_ms[]")
-        self.assertEqual(altar, ALTAR_FIXED)
-        self.assertEqual(strike, STRIKE)
-        self.assertEqual(lucifer, LUCIFER)
+        self.assertEqual(altar, [scale_ms(n) for n in MOCK_ALTAR])
+        self.assertEqual(strike, [scale_ms(n) for n in MOCK_STRIKE])
+        self.assertEqual(lucifer, [scale_ms(n) for n in MOCK_LUCIFER])
+        self.assertEqual(strike, [77, 77, 49])
         # Nine strikes is the mockup's own count. The scene strikes every
         # hostile, so the played time grows by one strike per extra enemy.
-        self.assertEqual(sum(altar) + 9 * sum(strike), 5515)
-        self.assertEqual(sum(lucifer), 5725)
+        self.assertEqual(sum(altar), 2037)
+        self.assertEqual(sum(strike), 203)
+        self.assertEqual(sum(altar) + 9 * sum(strike), 3864)
+        self.assertEqual(sum(lucifer), 4019)
         self.assertEqual(len(lucifer), 44)
 
     def test_exact_wait_is_used_for_these_sequences(self):
