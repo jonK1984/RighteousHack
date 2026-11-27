@@ -74,7 +74,7 @@ static const char win_a_rest[] =
 static const char win_c_text[] =
     "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing. The brightness of the Lord's coming falleth upon him, and he is cast down, bound in chains of darkness, and the war in heaven is ended.";
 static const char win_e_text[] =
-    "The chains that bound thee in the Sanctum of the Great Dragon break asunder, and fall as dust about thy feet.\n"
+    "The spiritual chains that bound thy soul in the Sanctum of the Great Dragon break asunder, and are rendered as dust.\n"
     "\n"
     "Thou didst walk the Narrow Way when the broad road called thee. Thou didst hear the Word in the Wayside amid the voices of deceit. Thou didst bear the thorns, and set thy face toward Zion, and kept the faith when thy strength was gone. Thou hast run with patience the race that was set before thee. Thou hast fought a good fight, thou hast finished thy course, thou hast kept the faith. Henceforth there is laid up for thee a crown of righteousness.\n"
     "\n"

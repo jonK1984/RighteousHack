@@ -75,7 +75,7 @@ class Endcut(unittest.TestCase):
             "Then the voice of a trumpet soundeth, exceeding loud, and all of heaven trembleth at the sound thereof.",
             "The fallen angels are smitten where they stand; their weapons fall from their hands, and they are made still as stone, and cannot flee.",
             "Lucifer, that old serpent, called the Devil and Satan, which deceiveth the whole world, lifteth up his voice in rage, but it availeth him nothing.",
-            "The chains that bound thee in the Sanctum of the Great Dragon break asunder, and fall as dust about thy feet.",
+            "The spiritual chains that bound thy soul in the Sanctum of the Great Dragon break asunder, and are rendered as dust.",
             "Well done, thou good and faithful servant. Thou hast been faithful over a few things; I will make thee ruler over many things. Enter thou into the joy of thy Lord.",
             "Thy soul is thine again. Thou art redeemed, and thou art home.",
             "Woe unto thee, for thou hast made the gravest of errors.",
