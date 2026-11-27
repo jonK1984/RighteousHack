@@ -4425,6 +4425,10 @@ setmangry(struct monst *mtmp, boolean via_attack)
         mtmp->mpeaceful = 1;
         return;
     }
+    if (heaven_peace()) {
+        mtmp->mpeaceful = 1;
+        return;
+    }
 
     if (via_attack && sengr_at("PSALM 91", u.ux, u.uy, TRUE)
         /* only hypocritical if monster is vulnerable to PSALM 91 (or

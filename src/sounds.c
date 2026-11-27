@@ -1325,6 +1325,8 @@ domonnoise(struct monst *mtmp)
 
         if (arch)
             com_pager(arch);
+        else if (heaven_peace() && is_heaven_lord(mtmp))
+            verbl_msg = heaven_peace_angel();
         else if (!mtmp->mpeaceful || speaks_as_fallen(mtmp))
             cuss(mtmp);
         else if (is_lminion(mtmp))

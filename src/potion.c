@@ -2188,7 +2188,7 @@ potionbreathe(struct obj *obj)
         exercise(A_CON, TRUE);
         break;
     case POT_SICKNESS:
-        if (!Role_if(PM_HEALER)) {
+        if (!Role_if(PM_HEALER) && !heaven_peace()) {
             if (Upolyd) {
                 if (u.mh <= 5)
                     u.mh = 1;

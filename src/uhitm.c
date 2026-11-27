@@ -4178,7 +4178,7 @@ mhitm_ad_phys(
                 if (Half_physical_damage)
                     tmp = (tmp + 1) / 2;
 
-                if (u.mh - tmp > 1
+                if (!heaven_peace() && u.mh - tmp > 1
                     && (objects[otmp->otyp].oc_material == IRON
                         /* relevant 'metal' objects are scalpel and tsurugi */
                         || objects[otmp->otyp].oc_material == METAL)

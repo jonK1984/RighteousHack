@@ -1462,6 +1462,13 @@ domagicportal(struct trap *ttmp)
     int totype;
     const char *stunmsg = (char *) 0;
 
+    /* The gate on the altar ends the game only when the hero agrees.
+       Anything else this portal does is for the planes below. */
+    if (heaven_peace()) {
+        heaven_gate_enter();
+        return;
+    }
+
     if (u.utrap && u.utraptype == TT_BURIEDBALL)
         buried_ball_to_punishment();
 

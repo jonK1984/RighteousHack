@@ -594,6 +594,9 @@ nh_timeout(void)
     int m_idx;
     int baseluck = (flags.moonphase == FULL_MOON) ? 1 : 0;
 
+    if (heaven_peace())
+        heaven_spare_hero();
+
     if (flags.friday13)
         baseluck -= 1;
 
@@ -672,6 +675,10 @@ nh_timeout(void)
             kptr = find_delayed_killer((int) (upp - u.uprops));
             switch (upp - u.uprops) {
             case STONED:
+                if (heaven_peace()) {
+                    heaven_spare_hero();
+                    break;
+                }
                 if (kptr && kptr->name[0]) {
                     svk.killer.format = kptr->format;
                     Strcpy(svk.killer.name, kptr->name);
@@ -684,12 +691,20 @@ nh_timeout(void)
                 done_timeout(STONING, STONED);
                 break;
             case SLIMED:
+                if (heaven_peace()) {
+                    heaven_spare_hero();
+                    break;
+                }
                 slimed_to_death(kptr); /* done_timeout(TURNED_SLIME,SLIMED) */
                 break;
             case VOMITING:
                 make_vomiting(0L, TRUE);
                 break;
             case SICK:
+                if (heaven_peace()) {
+                    heaven_spare_hero();
+                    break;
+                }
                 /* hero might be able to bounce back from food poisoning,
                    but not other forms of illness */
                 if ((u.usick_type & SICK_NONVOMITABLE) == 0
@@ -888,6 +903,10 @@ nh_timeout(void)
                 }
                 break;
             case STRANGLED:
+                if (heaven_peace()) {
+                    heaven_spare_hero();
+                    break;
+                }
                 svk.killer.format = KILLED_BY;
                 Strcpy(svk.killer.name,
                        (u.uburied) ? "suffocation" : "strangulation");

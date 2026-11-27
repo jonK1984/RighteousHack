@@ -476,7 +476,8 @@ maketrap(coordxy x, coordxy y, int typ)
         /* old <tx,ty> remain valid */
     } else if (!CAN_OVERWRITE_TERRAIN(lev->typ) /* stairs */
                || is_pool_or_lava(x, y)
-               || (IS_FURNITURE(lev->typ) && (typ != PIT && typ != HOLE))
+               || (IS_FURNITURE(lev->typ) && typ != PIT && typ != HOLE
+                   && !(typ == MAGIC_PORTAL && lev->typ == ALTAR))
                || (lev->typ == DRAWBRIDGE_UP && typ == MAGIC_PORTAL)
                || (IS_AIR(lev->typ) && typ != MAGIC_PORTAL)
                || (typ == LEVEL_TELEP && single_level_branch(&u.uz))) {

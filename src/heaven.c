@@ -22,6 +22,11 @@ static boolean lucifer_tail(struct monst *);
 static boolean lucifer_flood(struct monst *);
 static void lucifer_accuse(struct monst *);
 static boolean lucifer_summon(struct monst *);
+static boolean heaven_keep_during_peace(struct monst *);
+static void heaven_dismiss_hostiles(void);
+static void heaven_drop_migrants(void);
+static boolean heaven_find_altar(coordxy *, coordxy *);
+static void heaven_shift_objs(coordxy, coordxy);
 
 static void
 lucifer_mark(struct monst *mtmp)
@@ -346,11 +351,220 @@ heaven_raise(void)
 void
 heaven_tick(void)
 {
-    if (!Is_astralevel(&u.uz))
+    if (!Is_astralevel(&u.uz) || heaven_peace())
         return;
     heaven_factions();
     heaven_raise();
     heaven_ensure();
+}
+
+/* The battle is over. Heal whatever the turn has already applied,
+   and clear the deaths that do not go through losehp. */
+void
+heaven_spare_hero(void)
+{
+    int i;
+
+    if (!heaven_peace())
+        return;
+    if (u.uhpmax < 1)
+        u.uhpmax = 1;
+    if (u.uhp < u.uhpmax)
+        u.uhp = u.uhpmax;
+    if (Upolyd) {
+        if (u.mhmax < 1)
+            u.mhmax = 1;
+        if (u.mh < u.mhmax)
+            u.mh = u.mhmax;
+    }
+    if (u.uhunger < 900 || u.uhs >= HUNGRY) {
+        u.uhunger = 900;
+        newuhs(FALSE);
+    }
+    if (Stoned)
+        make_stoned(0L, (char *) 0, 0, (char *) 0);
+    if (Slimed)
+        make_slimed(0L, (char *) 0);
+    if (Strangled)
+        Strangled = 0L;
+    if (Sick)
+        make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+    if (u.utrap && (u.utraptype == TT_LAVA || u.utraptype == TT_INFLOOR
+                    || u.utraptype == TT_BURIEDBALL))
+        reset_utrap(FALSE);
+    for (i = 0; i < A_MAX; i++)
+        if (ABASE(i) < AMAX(i))
+            ABASE(i) = AMAX(i);
+    disp.botl = TRUE;
+}
+
+static boolean
+heaven_keep_during_peace(struct monst *mtmp)
+{
+    if (!mtmp || DEADMONSTER(mtmp))
+        return FALSE;
+    if (is_lucifer(mtmp) || mtmp->iswiz || is_heaven_fallen(mtmp)
+        || is_heaven_priest(mtmp))
+        return FALSE;
+    return heaven_lords_host(mtmp) || mtmp->mpeaceful || mtmp->mtame;
+}
+
+boolean
+heaven_bars_arrival(struct monst *mtmp)
+{
+    return heaven_peace() && !heaven_keep_during_peace(mtmp);
+}
+
+static void
+heaven_dismiss_hostiles(void)
+{
+    struct monst *mtmp, *nxt;
+
+    for (mtmp = fmon; mtmp; mtmp = nxt) {
+        nxt = mtmp->nmon;
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (!heaven_keep_during_peace(mtmp)) {
+            mongone(mtmp);
+            continue;
+        }
+        mtmp->mpeaceful = 1;
+        if (mtmp->mhp < mtmp->mhpmax)
+            mtmp->mhp = mtmp->mhpmax;
+    }
+}
+
+static void
+heaven_drop_migrants(void)
+{
+    struct monst *mtmp, **mp;
+
+    for (mp = &gm.migrating_mons; (mtmp = *mp) != 0; ) {
+        if (heaven_keep_during_peace(mtmp)) {
+            mtmp->mpeaceful = 1;
+            mp = &mtmp->nmon;
+            continue;
+        }
+        *mp = mtmp->nmon;
+        mtmp->nmon = 0;
+        dealloc_monst(mtmp);
+    }
+}
+
+/* The same lawful sanctum altar the altar-light scene uses. */
+static boolean
+heaven_find_altar(coordxy *ax, coordxy *ay)
+{
+    coordxy x, y;
+
+    for (x = 1; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++) {
+            if (levl[x][y].typ != ALTAR)
+                continue;
+            if (!(levl[x][y].altarmask & AM_SANCTUM))
+                continue;
+            if (Amask2align(levl[x][y].altarmask & AM_MASK) != A_LAWFUL)
+                continue;
+            *ax = x;
+            *ay = y;
+            return TRUE;
+        }
+    return FALSE;
+}
+
+/* Floor items hide a trap. Move them aside so the gate can be seen. */
+static void
+heaven_shift_objs(coordxy ax, coordxy ay)
+{
+    coordxy nx = 0, ny = 0;
+    struct obj *obj, *nxt;
+    int dx, dy;
+    boolean found = FALSE;
+
+    for (dy = -1; dy <= 1 && !found; dy++)
+        for (dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy)
+                continue;
+            if (isok(ax + dx, ay + dy)
+                && ACCESSIBLE(levl[ax + dx][ay + dy].typ)) {
+                nx = (coordxy) (ax + dx);
+                ny = (coordxy) (ay + dy);
+                found = TRUE;
+            }
+        }
+    if (!found)
+        return;
+    for (obj = svl.level.objects[ax][ay]; obj; obj = nxt) {
+        nxt = obj->nexthere;
+        obj_extract_self(obj);
+        place_object(obj, nx, ny);
+        stackobj(obj);
+    }
+    newsym(nx, ny);
+}
+
+void
+heaven_begin_peace(void)
+{
+    coordxy ax, ay;
+    struct trap *ttmp;
+    boolean first;
+
+    if (!Is_astralevel(&u.uz))
+        return;
+    first = !heaven_peace();
+    u.uevent.petra_step |= 4;
+    svl.level.flags.rndmongen = 0;
+    heaven_dismiss_hostiles();
+    heaven_drop_migrants();
+    heaven_spare_hero();
+    if (!heaven_find_altar(&ax, &ay))
+        return;
+    heaven_shift_objs(ax, ay);
+    ttmp = t_at(ax, ay);
+    if (ttmp && ttmp->ttyp != MAGIC_PORTAL) {
+        deltrap(ttmp);
+        ttmp = (struct trap *) 0;
+    }
+    if (!ttmp)
+        ttmp = maketrap(ax, ay, MAGIC_PORTAL);
+    if (!ttmp)
+        return;
+    ttmp->tseen = 1;
+    levl[ax][ay].seenv = SVALL;
+    levl[ax][ay].lit = 1;
+    levl[ax][ay].waslit = 1;
+    map_trap(ttmp, TRUE);
+    newsym(ax, ay);
+    docrt();
+    if (first) {
+        pline("A gate of light openeth upon the field of heaven, and a voice saith: Come up hither.");
+    }
+}
+
+void
+heaven_gate_enter(void)
+{
+    /* The portal trap runs when the hero arrives on its square,
+       including a step and a teleport. Waiting there does not
+       run it again. No is the default, so closing the prompt
+       leaves the hero on the altar. */
+    if (y_n("Art thou ready to go up? (This ends the game.)") == 'y')
+        endcut_finish_ascent();
+}
+
+const char *
+heaven_peace_angel(void)
+{
+    static const char *const lines[] = {
+        "Well fought, child of dust. Give glory to God.",
+        "The host of the dragon is no more. Rejoice!",
+        "We sing praise unto the Lord this day, and thou art among us.",
+        "Rest a while, mortal. Nothing here shall harm thee now.",
+        "Thou art welcome among the host of the Lord.",
+    };
+
+    return lines[rn2(SIZE(lines))];
 }
 
 /* Jon edits this table. A new Plane of Heaven draws 7 to 10
@@ -619,6 +833,17 @@ archangel_speech(struct monst *mtmp)
     if (!is_heaven_arch(mtmp) || !has_mgivenname(mtmp))
         return (const char *) 0;
     nm = MGIVENNAME(mtmp);
+    if (heaven_peace()) {
+        if (!strcmp(nm, "Michael"))
+            return "michael_peace";
+        if (!strcmp(nm, "Gabriel"))
+            return "gabriel_peace";
+        if (!strcmp(nm, "Raphael"))
+            return "raphael_peace";
+        if (!strcmp(nm, "Uriel"))
+            return "uriel_peace";
+        return (const char *) 0;
+    }
     if (!strcmp(nm, "Michael"))
         return "michael_speech";
     if (!strcmp(nm, "Gabriel"))

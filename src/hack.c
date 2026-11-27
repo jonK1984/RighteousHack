@@ -5649,7 +5649,7 @@ losehp(int n, const char *knam, schar k_format)
         return;
     }
 #endif
-    if (n > 0 && fear_protected())
+    if (n > 0 && (fear_protected() || heaven_peace()))
         return;
     disp.botl = TRUE; /* u.uhp or u.mh is changing */
     end_running(TRUE);

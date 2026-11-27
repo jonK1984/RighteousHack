@@ -1423,7 +1423,8 @@ static const char *const endcut_menu_line[] = {
     "4 Win: full sequence",
     "5 Dragon's altar",
     "6 Death on the Plane of Heaven",
-    "7 Victory memorial stone"
+    "7 Victory memorial stone",
+    "8 Peace on the Plane of Heaven"
 };
 
 static void
@@ -1451,8 +1452,15 @@ endcut_run_number(int n)
     case 7:
         endcut_memorial(WIN_ERR, 0);
         break;
+    case 8:
+        if (!Is_astralevel(&u.uz)) {
+            pline("Prophet mode: not on the Plane of Heaven.");
+            break;
+        }
+        heaven_begin_peace();
+        break;
     default:
-        pline("The number is from 1 to 7.");
+        pline("The number is from 1 to 8.");
         break;
     }
     docrt();
@@ -1510,6 +1518,16 @@ endcut_ascend(void)
     endcut_card(win_c_text);
     endcut_lucifer_at(u.ux, u.uy, TRUE);
     endcut_card(win_e_text);
+    /* The ascension cutscene waits until the hero steps through
+       the gate and agrees. The battle does not resume. */
+    heaven_begin_peace();
+}
+
+void
+endcut_finish_ascent(void)
+{
+    if (u.uevent.ascended)
+        return;
     endcut_play(ENDCUT_WIN);
     u.uevent.ascended = 1;
     endcut_stone = TRUE;

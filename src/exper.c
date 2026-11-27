@@ -213,7 +213,7 @@ losexp(
        wizard mode request to reduce level; never fatal though */
     if (drainer && !strcmp(drainer, "#levelchange"))
         drainer = 0;
-    else if (fear_protected())
+    else if (fear_protected() || heaven_peace())
         return;
     else if (resists_drli(&gy.youmonst))
         return;

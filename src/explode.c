@@ -617,13 +617,13 @@ explode(
         /* do property damage first, in case we end up leaving bones */
         if (adtyp == AD_FIRE)
             burn_away_slime();
-        if (Invulnerable || fear_protected()) {
+        if (Invulnerable || fear_protected() || heaven_peace()) {
             damu = 0;
             if (Invulnerable)
                 You("are unharmed!");
         } else if (adtyp == AD_PHYS || adtyp == AD_ACID)
             damu = Maybe_Half_Phys(damu);
-        if (!fear_protected()) {
+        if (!fear_protected() && !heaven_peace()) {
             if (adtyp == AD_FIRE) {
                 (void) burnarmor(&gy.youmonst);
                 ignite_items(gi.invent);

@@ -3506,6 +3506,11 @@ newuhs(boolean incr)
            suppressed per-turn uhunger decrement but being fainted didn't;
            now uhunger becomes more negative at a slower rate */
         } else if (u.uhunger < -(100 + 10 * (int) ACURR(A_CON))) {
+            if (heaven_peace()) {
+                u.uhunger = 900;
+                newuhs(FALSE);
+                return;
+            }
             u.uhs = STARVED;
             disp.botl = TRUE;
             bot();

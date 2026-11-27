@@ -1036,6 +1036,19 @@ done(int how)
             return;
         }
     }
+    /* The Plane of Heaven is at peace. Death, starvation, stoning,
+       sliming, strangling, drowning, and the rest return here.
+       Quit, panic, and a real ascension still finish the game.
+       This is before mortality is counted and before hit points
+       are forced to zero. */
+    if (heaven_peace() && how != ASCENDED && how != QUIT && how != PANICKED
+#ifdef HANGUPHANDLING
+        && !program_state.done_hup
+#endif
+        && !program_state.panicking) {
+        heaven_spare_hero();
+        return;
+    }
     if (how != QUIT && how != ASCENDED && in_wilderness() && dunlev(&u.uz) == 3) {
         struct obj *otmp;
 
