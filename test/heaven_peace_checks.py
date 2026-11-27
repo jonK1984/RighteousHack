@@ -40,6 +40,19 @@ GATE = (
     "A gate of light openeth upon the field of heaven, "
     "and a voice saith: Come up hither."
 )
+NORTH = (
+    "Strait is the gate, and narrow is the way, which leadeth unto life "
+    "(Matthew 7:14)"
+)
+EAST = (
+    "I am the way, the truth, and the life: no man cometh unto the Father, "
+    "but by me. (John 14:6)"
+)
+SOUTH = "This is the way, walk ye in it (Isaiah 30:21)"
+WEST = (
+    "And God shall wipe away all tears from their eyes; and there shall be "
+    "no more death (Revelation 21:4)"
+)
 PROMPT = "Art thou ready to go up? (This ends the game.)"
 
 
@@ -251,6 +264,57 @@ class HeavenPeace(unittest.TestCase):
             "setmangry(struct monst *mtmp, boolean via_attack)", 1)[1]
         angry = angry.split("via_attack &&", 1)[0]
         self.assertIn("heaven_peace()", angry)
+
+    def test_four_verses_are_burned_around_the_altar(self):
+        heaven = src("heaven.c")
+        block = heaven.split("heaven_verses[]", 1)[1].split("};", 1)[0]
+        texts = (NORTH, EAST, SOUTH, WEST)
+        offsets = ("{ 0, -1,", "{ 1, 0,", "{ 0, 1,", "{ -1, 0,")
+        at = 0
+        for off, text in zip(offsets, texts):
+            pos = block.index(off, at)
+            words = block.index(text, pos)
+            self.assertLess(pos, words)
+            at = words
+            self.assertNotIn("\u2014", text)
+            self.assertNotIn("--", text)
+            # Shorter than the read buffer, and long enough that an
+            # 80-column Windows tty must fold it rather than cut it.
+            self.assertLess(len(text), 200)
+        self.assertGreater(len(EAST), 78)
+        lay = heaven.split("heaven_lay_verses(coordxy ax", 1)[1]
+        lay = lay.split("heaven_begin_peace", 1)[0]
+        self.assertIn("heaven_verse_spot", lay)
+        self.assertIn("heaven_spare_spot", lay)
+        self.assertIn("BURN", lay)
+        self.assertIn("nowipeout = 1", lay)
+        self.assertIn("lit = 1", lay)
+        self.assertIn("waslit = 1", lay)
+        begin = heaven.split("heaven_begin_peace(void)", 1)[1]
+        begin = begin.split("docrt();", 1)[0]
+        self.assertLess(begin.index("maketrap(ax, ay, MAGIC_PORTAL)"),
+                        begin.index("heaven_lay_verses(ax, ay)"))
+        read = src("engrave.c").split("read_engr_at(", 1)[1]
+        read = read.split("maxelen", 1)[0]
+        self.assertIn("heaven_is_altar_verse", read)
+        self.assertIn("rh_text_window(ep->engr_txt[actual_text])", read)
+        wipe = src("engrave.c").split("wipe_engr_at(", 1)[1]
+        wipe = wipe.split("wipeout_text", 1)[0]
+        self.assertIn("nowipeout", wipe)
+        gone = src("engrave.c").split("del_engr_at(", 1)[1]
+        gone = gone.split("del_engr(ep)", 1)[0]
+        self.assertIn("heaven_is_altar_verse", gone)
+        wand = src("zap.c").split("e->engr_type != VERSE", 1)[1]
+        wand = wand.split("WAN_POLYMORPH", 1)[0]
+        self.assertIn("heaven_is_altar_verse", wand)
+        color = src("display.c").split(
+            "The four burned verses", 1)[1].split("Fig trees", 1)[0]
+        self.assertIn("CLR_WHITE", color)
+        self.assertIn("S_engroom", color)
+        save = src("engrave.c")
+        self.assertIn("engraving-actual_text", save)
+        patch = (ROOT / "include" / "patchlevel.h").read_text()
+        self.assertIn("#define EDITLEVEL 20", patch)
 
 
 if __name__ == "__main__":

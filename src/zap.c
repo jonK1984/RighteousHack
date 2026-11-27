@@ -3742,7 +3742,8 @@ zap_map(
         struct engr *e = engr_at(x, y);
 
         /* subset of engraving effects; none sets `disclose' */
-        if (e && e->engr_type != HEADSTONE && e->engr_type != VERSE) {
+        if (e && e->engr_type != HEADSTONE && e->engr_type != VERSE
+            && !heaven_is_altar_verse(e->engr_txt[actual_text])) {
             switch (obj->otyp) {
             case WAN_POLYMORPH:
             case SPE_POLYMORPH:

@@ -27,6 +27,12 @@ static void heaven_dismiss_hostiles(void);
 static void heaven_drop_migrants(void);
 static boolean heaven_find_altar(coordxy *, coordxy *);
 static void heaven_shift_objs(coordxy, coordxy);
+static boolean heaven_verse_spot(coordxy, coordxy);
+static boolean heaven_spare_spot(coordxy, coordxy, int, int, coordxy *,
+                                 coordxy *, int, coordxy *, coordxy *);
+static void heaven_shift_off(coordxy, coordxy, coordxy, coordxy,
+                             coordxy *, coordxy *, int);
+static void heaven_lay_verses(coordxy, coordxy);
 
 static void
 lucifer_mark(struct monst *mtmp)
@@ -503,6 +509,199 @@ heaven_shift_objs(coordxy ax, coordxy ay)
     newsym(nx, ny);
 }
 
+/* North, east, south, west of the altar. y grows south. */
+static const struct {
+    int dx, dy;
+    const char *text;
+} heaven_verses[] = {
+    { 0, -1,
+      "Strait is the gate, and narrow is the way, which leadeth unto life (Matthew 7:14)" },
+    { 1, 0,
+      "I am the way, the truth, and the life: no man cometh unto the Father, but by me. (John 14:6)" },
+    { 0, 1,
+      "This is the way, walk ye in it (Isaiah 30:21)" },
+    { -1, 0,
+      "And God shall wipe away all tears from their eyes; and there shall be no more death (Revelation 21:4)" },
+};
+
+boolean
+heaven_is_altar_verse(const char *s)
+{
+    int i;
+
+    if (!s || !*s)
+        return FALSE;
+    for (i = 0; i < (int) SIZE(heaven_verses); i++)
+        if (!strcmp(s, heaven_verses[i].text))
+            return TRUE;
+    return FALSE;
+}
+
+/* A floor the engraving symbol can be drawn on. Not the altar. */
+static boolean
+heaven_verse_spot(coordxy x, coordxy y)
+{
+    if (!isok(x, y))
+        return FALSE;
+    if (levl[x][y].typ != ROOM && levl[x][y].typ != CORR
+        && levl[x][y].typ != ICE)
+        return FALSE;
+    if (is_pool_or_lava(x, y) || IS_AIR(levl[x][y].typ))
+        return FALSE;
+    if (t_at(x, y))
+        return FALSE;
+    return TRUE;
+}
+
+/* Nearest free floor if the cardinal square cannot hold a verse.
+   Prefer the intended side when two squares are the same distance. */
+static boolean
+heaven_spare_spot(
+    coordxy ax, coordxy ay,
+    int pdx, int pdy,
+    coordxy *sx, coordxy *sy,
+    int nused, coordxy *ux, coordxy *uy)
+{
+    int r, dx, dy, best, found;
+    coordxy bx, by;
+
+    found = 0;
+    best = 0;
+    bx = by = 0;
+    for (r = 1; r <= 4; r++) {
+        for (dy = -r; dy <= r; dy++)
+            for (dx = -r; dx <= r; dx++) {
+                coordxy x, y;
+                int i, score, taken;
+
+                if (abs(dx) != r && abs(dy) != r)
+                    continue;
+                x = (coordxy) (ax + dx);
+                y = (coordxy) (ay + dy);
+                if (!heaven_verse_spot(x, y))
+                    continue;
+                taken = 0;
+                for (i = 0; i < nused; i++)
+                    if (ux[i] == x && uy[i] == y)
+                        taken = 1;
+                if (taken)
+                    continue;
+                score = (dx * dx + dy * dy) * 8
+                        + abs(dx - pdx) + abs(dy - pdy);
+                if (!found || score < best) {
+                    found = 1;
+                    best = score;
+                    bx = x;
+                    by = y;
+                }
+            }
+        if (found)
+            break;
+    }
+    if (!found)
+        return FALSE;
+    *sx = bx;
+    *sy = by;
+    return TRUE;
+}
+
+/* Floor items hide the engraving. Move them off the verse square. */
+static void
+heaven_shift_off(
+    coordxy x, coordxy y,
+    coordxy ax, coordxy ay,
+    coordxy *ux, coordxy *uy, int nused)
+{
+    struct obj *obj, *nxt;
+    coordxy nx, ny;
+    int r, dx, dy, found;
+
+    if (!svl.level.objects[x][y])
+        return;
+    found = 0;
+    nx = ny = 0;
+    for (r = 1; r <= 3 && !found; r++)
+        for (dy = -r; dy <= r && !found; dy++)
+            for (dx = -r; dx <= r; dx++) {
+                coordxy tx, ty;
+                int i, taken;
+
+                if (!dx && !dy)
+                    continue;
+                if (abs(dx) != r && abs(dy) != r)
+                    continue;
+                tx = (coordxy) (x + dx);
+                ty = (coordxy) (y + dy);
+                if (!isok(tx, ty) || (tx == ax && ty == ay))
+                    continue;
+                if (!ACCESSIBLE(levl[tx][ty].typ) || is_pool_or_lava(tx, ty))
+                    continue;
+                taken = 0;
+                for (i = 0; i < nused; i++)
+                    if (ux[i] == tx && uy[i] == ty)
+                        taken = 1;
+                if (taken)
+                    continue;
+                nx = tx;
+                ny = ty;
+                found = 1;
+                break;
+            }
+    if (!found)
+        return;
+    for (obj = svl.level.objects[x][y]; obj; obj = nxt) {
+        nxt = obj->nexthere;
+        obj_extract_self(obj);
+        place_object(obj, nx, ny);
+        stackobj(obj);
+    }
+    newsym(nx, ny);
+}
+
+static void
+heaven_lay_verses(coordxy ax, coordxy ay)
+{
+    coordxy ux[4], uy[4];
+    int i, nused;
+
+    nused = 0;
+    for (i = 0; i < (int) SIZE(heaven_verses); i++) {
+        coordxy x, y;
+        struct engr *ep;
+
+        x = (coordxy) (ax + heaven_verses[i].dx);
+        y = (coordxy) (ay + heaven_verses[i].dy);
+        {
+            int j, taken = 0;
+
+            for (j = 0; j < nused; j++)
+                if (ux[j] == x && uy[j] == y)
+                    taken = 1;
+            if (taken || !heaven_verse_spot(x, y)) {
+                if (!heaven_spare_spot(ax, ay, heaven_verses[i].dx,
+                                       heaven_verses[i].dy, &x, &y,
+                                       nused, ux, uy))
+                    continue;
+            }
+        }
+        ux[nused] = x;
+        uy[nused] = y;
+        nused++;
+        heaven_shift_off(x, y, ax, ay, ux, uy, nused);
+        make_engr_at(x, y, heaven_verses[i].text, (char *) 0, 0L, BURN);
+        ep = engr_at(x, y);
+        if (!ep)
+            continue;
+        ep->nowipeout = 1;
+        ep->erevealed = 1;
+        levl[x][y].lit = 1;
+        levl[x][y].waslit = 1;
+        levl[x][y].seenv = SVALL;
+        map_engraving(ep, TRUE);
+        newsym(x, y);
+    }
+}
+
 void
 heaven_begin_peace(void)
 {
@@ -536,6 +735,7 @@ heaven_begin_peace(void)
     levl[ax][ay].waslit = 1;
     map_trap(ttmp, TRUE);
     newsym(ax, ay);
+    heaven_lay_verses(ax, ay);
     docrt();
     if (first) {
         pline("A gate of light openeth upon the field of heaven, and a voice saith: Come up hither.");
