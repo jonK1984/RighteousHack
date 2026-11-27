@@ -26,7 +26,10 @@ static boolean heaven_keep_during_peace(struct monst *);
 static void heaven_dismiss_hostiles(void);
 static void heaven_drop_migrants(void);
 static boolean heaven_find_altar(coordxy *, coordxy *);
-static void heaven_shift_objs(coordxy, coordxy);
+static struct mkroom *heaven_altar_room(coordxy, coordxy);
+static boolean heaven_room_floor(struct mkroom *, coordxy, coordxy);
+static void heaven_room_center(coordxy, coordxy, coordxy *, coordxy *);
+static boolean heaven_portal_square(coordxy, coordxy, coordxy *, coordxy *);
 static boolean heaven_verse_spot(coordxy, coordxy);
 static boolean heaven_spare_spot(coordxy, coordxy, int, int, coordxy *,
                                  coordxy *, int, coordxy *, coordxy *);
@@ -478,38 +481,112 @@ heaven_find_altar(coordxy *ax, coordxy *ay)
     return FALSE;
 }
 
-/* Floor items hide a trap. Move them aside so the gate can be seen. */
-static void
-heaven_shift_objs(coordxy ax, coordxy ay)
+/* The temple (or other room) that holds the lawful altar. */
+static struct mkroom *
+heaven_altar_room(coordxy ax, coordxy ay)
 {
-    coordxy nx = 0, ny = 0;
-    struct obj *obj, *nxt;
-    int dx, dy;
-    boolean found = FALSE;
+    int i;
+    struct mkroom *croom, *any;
 
-    for (dy = -1; dy <= 1 && !found; dy++)
-        for (dx = -1; dx <= 1; dx++) {
-            if (!dx && !dy)
-                continue;
-            if (isok(ax + dx, ay + dy)
-                && ACCESSIBLE(levl[ax + dx][ay + dy].typ)) {
-                nx = (coordxy) (ax + dx);
-                ny = (coordxy) (ay + dy);
-                found = TRUE;
-            }
-        }
-    if (!found)
-        return;
-    for (obj = svl.level.objects[ax][ay]; obj; obj = nxt) {
-        nxt = obj->nexthere;
-        obj_extract_self(obj);
-        place_object(obj, nx, ny);
-        stackobj(obj);
+    if ((int) levl[ax][ay].roomno >= ROOMOFFSET) {
+        i = (int) levl[ax][ay].roomno - ROOMOFFSET;
+        if (i >= 0 && i < svn.nroom && svr.rooms[i].hx >= svr.rooms[i].lx)
+            return &svr.rooms[i];
     }
-    newsym(nx, ny);
+    any = (struct mkroom *) 0;
+    for (i = 0; i < svn.nroom; i++) {
+        croom = &svr.rooms[i];
+        if (croom->hx < croom->lx)
+            continue;
+        if (!inside_room(croom, ax, ay))
+            continue;
+        if (croom->rtype == TEMPLE || croom->orig_rtype == TEMPLE)
+            return croom;
+        if (!any)
+            any = croom;
+    }
+    return any;
 }
 
-/* North, east, south, west of the altar. y grows south. */
+/* Floor of that room, including the altar, excluding its walls. */
+static boolean
+heaven_room_floor(struct mkroom *croom, coordxy x, coordxy y)
+{
+    int rno;
+
+    if (!croom || !isok(x, y))
+        return FALSE;
+    if (levl[x][y].typ != ROOM && levl[x][y].typ != CORR
+        && levl[x][y].typ != ICE && !IS_ALTAR(levl[x][y].typ))
+        return FALSE;
+    if (croom->irregular) {
+        rno = (int) ((croom - svr.rooms) + ROOMOFFSET);
+        return (boolean) (!levl[x][y].edge
+                          && (int) levl[x][y].roomno == rno);
+    }
+    return (boolean) (x >= croom->lx && x <= croom->hx
+                      && y >= croom->ly && y <= croom->hy);
+}
+
+/* Midpoint of the room's floor. On these temples that is the altar. */
+static void
+heaven_room_center(coordxy ax, coordxy ay, coordxy *cx, coordxy *cy)
+{
+    struct mkroom *croom;
+    coordxy x, y;
+    int minx, maxx, miny, maxy, n;
+
+    *cx = ax;
+    *cy = ay;
+    croom = heaven_altar_room(ax, ay);
+    if (!croom)
+        return;
+    minx = COLNO;
+    maxx = 0;
+    miny = ROWNO;
+    maxy = 0;
+    n = 0;
+    for (x = max(croom->lx, (coordxy) 1); x <= min(croom->hx, (coordxy) (COLNO - 1));
+         x++)
+        for (y = max(croom->ly, (coordxy) 0);
+             y <= min(croom->hy, (coordxy) (ROWNO - 1)); y++) {
+            if (!heaven_room_floor(croom, x, y))
+                continue;
+            if (x < minx)
+                minx = x;
+            if (x > maxx)
+                maxx = x;
+            if (y < miny)
+                miny = y;
+            if (y > maxy)
+                maxy = y;
+            n++;
+        }
+    if (!n)
+        return;
+    *cx = (coordxy) ((minx + maxx) / 2);
+    *cy = (coordxy) ((miny + maxy) / 2);
+}
+
+/* The hero is standing on the altar, so the gate is not put there.
+   The center of the temple is used when it is open floor. Otherwise
+   the nearest open floor to that center, never the altar. */
+static boolean
+heaven_portal_square(coordxy ax, coordxy ay, coordxy *px, coordxy *py)
+{
+    coordxy cx, cy, dummyx, dummyy;
+
+    heaven_room_center(ax, ay, &cx, &cy);
+    if ((cx != ax || cy != ay) && !IS_ALTAR(levl[cx][cy].typ)
+        && heaven_verse_spot(cx, cy)) {
+        *px = cx;
+        *py = cy;
+        return TRUE;
+    }
+    return heaven_spare_spot(cx, cy, 0, 0, px, py, 0, &dummyx, &dummyy);
+}
+
+/* North, east, south, west of the gate. y grows south. */
 static const struct {
     int dx, dy;
     const char *text;
@@ -705,7 +782,7 @@ heaven_lay_verses(coordxy ax, coordxy ay)
 void
 heaven_begin_peace(void)
 {
-    coordxy ax, ay;
+    coordxy ax, ay, px, py;
     struct trap *ttmp;
     boolean first;
 
@@ -719,23 +796,31 @@ heaven_begin_peace(void)
     heaven_spare_hero();
     if (!heaven_find_altar(&ax, &ay))
         return;
-    heaven_shift_objs(ax, ay);
+    /* The hero is on the altar. The gate opens at the center of
+       that room, and the verses stand around the gate. */
+    if (!heaven_portal_square(ax, ay, &px, &py))
+        return;
     ttmp = t_at(ax, ay);
+    if (ttmp && ttmp->ttyp == MAGIC_PORTAL)
+        deltrap(ttmp);
+    heaven_shift_off(px, py, ax, ay, (coordxy *) 0, (coordxy *) 0, 0);
+    ttmp = t_at(px, py);
     if (ttmp && ttmp->ttyp != MAGIC_PORTAL) {
         deltrap(ttmp);
         ttmp = (struct trap *) 0;
     }
     if (!ttmp)
-        ttmp = maketrap(ax, ay, MAGIC_PORTAL);
+        ttmp = maketrap(px, py, MAGIC_PORTAL);
     if (!ttmp)
         return;
     ttmp->tseen = 1;
-    levl[ax][ay].seenv = SVALL;
-    levl[ax][ay].lit = 1;
-    levl[ax][ay].waslit = 1;
+    levl[px][py].seenv = SVALL;
+    levl[px][py].lit = 1;
+    levl[px][py].waslit = 1;
     map_trap(ttmp, TRUE);
+    newsym(px, py);
     newsym(ax, ay);
-    heaven_lay_verses(ax, ay);
+    heaven_lay_verses(px, py);
     docrt();
     if (first) {
         pline("A gate of light openeth upon the field of heaven, and a voice saith: Come up hither.");

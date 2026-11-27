@@ -2699,7 +2699,7 @@ map_glyphinfo(
         if (is_heaven_chest(goldchest))
             glyphinfo->gm.sym.color = CLR_YELLOW;
     }
-    /* The gate on the altar is the ordinary magic-portal symbol,
+    /* The gate is the ordinary magic-portal symbol,
        drawn bright yellow for the duration of the peace. */
     if (iflags.use_color && heaven_peace() && isok(x, y)
         && glyph_is_trap(glyph)) {

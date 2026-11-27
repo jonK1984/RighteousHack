@@ -196,16 +196,29 @@ class HeavenPeace(unittest.TestCase):
         self.assertLess(sounds.index("archangel_speech(mtmp)"),
                         sounds.index("heaven_peace_angel()"))
 
-    def test_the_portal_is_on_the_altar_and_the_prompt_defaults_to_no(self):
+    def test_the_portal_is_in_the_temple_and_the_prompt_defaults_to_no(self):
         heaven = src("heaven.c")
         altar = heaven.split("heaven_find_altar(coordxy *ax", 1)[1]
-        altar = altar.split("heaven_shift_objs", 1)[0]
+        altar = altar.split("heaven_altar_room", 1)[0]
         self.assertIn("AM_SANCTUM", altar)
         self.assertIn("A_LAWFUL", altar)
+        center = heaven.split("heaven_room_center(coordxy ax", 1)[1]
+        center = center.split("heaven_portal_square", 1)[0]
+        self.assertIn("(minx + maxx) / 2", center)
+        self.assertIn("(miny + maxy) / 2", center)
+        spot = heaven.split("heaven_portal_square(coordxy ax", 1)[1]
+        spot = spot.split("North, east, south, west", 1)[0]
+        self.assertIn("cx != ax || cy != ay", spot)
+        self.assertIn("IS_ALTAR", spot)
+        self.assertIn("heaven_spare_spot", spot)
         begin = heaven.split("heaven_begin_peace(void)", 1)[1]
         begin = begin.split("heaven_gate_enter", 1)[0]
         self.assertIn("heaven_find_altar(&ax, &ay)", begin)
-        self.assertIn("maketrap(ax, ay, MAGIC_PORTAL)", begin)
+        self.assertIn("heaven_portal_square(ax, ay, &px, &py)", begin)
+        self.assertNotIn("maketrap(ax, ay, MAGIC_PORTAL)", begin)
+        self.assertIn("maketrap(px, py, MAGIC_PORTAL)", begin)
+        self.assertIn("heaven_lay_verses(px, py)", begin)
+        self.assertNotIn("heaven_lay_verses(ax, ay)", begin)
         self.assertIn(GATE, begin)
         self.assertNotIn("\u2014", GATE)
         gate = heaven.split("heaven_gate_enter(void)", 1)[1]
@@ -222,7 +235,7 @@ class HeavenPeace(unittest.TestCase):
         furniture = furniture.split("return (struct trap *) 0;", 1)[0]
         self.assertIn("typ == MAGIC_PORTAL && lev->typ == ALTAR", furniture)
         display = src("display.c")
-        color = display.split("The gate on the altar", 1)[1]
+        color = display.split("The gate is the ordinary magic-portal", 1)[1]
         color = color.split("Fig trees", 1)[0]
         self.assertIn("CLR_YELLOW", color)
         self.assertIn("glyph_is_trap", color)
@@ -265,7 +278,7 @@ class HeavenPeace(unittest.TestCase):
         angry = angry.split("via_attack &&", 1)[0]
         self.assertIn("heaven_peace()", angry)
 
-    def test_four_verses_are_burned_around_the_altar(self):
+    def test_four_verses_are_burned_around_the_portal(self):
         heaven = src("heaven.c")
         block = heaven.split("heaven_verses[]", 1)[1].split("};", 1)[0]
         texts = (NORTH, EAST, SOUTH, WEST)
@@ -292,8 +305,8 @@ class HeavenPeace(unittest.TestCase):
         self.assertIn("waslit = 1", lay)
         begin = heaven.split("heaven_begin_peace(void)", 1)[1]
         begin = begin.split("docrt();", 1)[0]
-        self.assertLess(begin.index("maketrap(ax, ay, MAGIC_PORTAL)"),
-                        begin.index("heaven_lay_verses(ax, ay)"))
+        self.assertLess(begin.index("maketrap(px, py, MAGIC_PORTAL)"),
+                        begin.index("heaven_lay_verses(px, py)"))
         read = src("engrave.c").split("read_engr_at(", 1)[1]
         read = read.split("maxelen", 1)[0]
         self.assertIn("heaven_is_altar_verse", read)
