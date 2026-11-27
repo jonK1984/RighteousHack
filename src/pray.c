@@ -1319,8 +1319,6 @@ offer_real_amulet(struct obj *otmp, aligntyp altaralign)
         /* And the opposing team picks you up and carries you off
            on their shoulders. */
         adjalign(-99);
-        pline("%s accepts your gift, and gains dominion over %s...",
-              a_gname(), u_gname());
         pline("%s is enraged...", u_gname());
         pline("Fortunately, %s permits you to live...", a_gname());
         pline(cloud_of_smoke, hcolor(NH_ORANGE));
@@ -1475,6 +1473,58 @@ dosacrifice(void)
     otmp = floorfood("sacrifice", 1);
     if (!otmp)
         return ECMD_OK;
+
+    /* Any rite at the Great Dragon's high altar ends the game.
+       Other unaligned altars are left as they were. */
+    if (Is_astralevel(&u.uz) && highaltar && altaralign == A_NONE) {
+        heaven_dragon_end();
+        return ECMD_TIME;
+    }
+
+    if (otmp->otyp == PLAYER_SOUL) {
+        /* The soul stands where the Amulet stood. A wrong altar
+           does not give evil dominion over the hero. */
+        if (!highaltar) {
+            offer_too_soon(altaralign);
+            return ECMD_TIME;
+        }
+        /* The Lord's high altar. The helmet must be worn, or the
+           soul is not taken. */
+        if (Is_astralevel(&u.uz) && altaralign == A_LAWFUL
+            && !cap_of_salvation_worn()) {
+            pline("Nothing happens. Without the helmet of salvation, thou canst not offer thy soul.");
+            return ECMD_TIME;
+        }
+        if (carried(otmp))
+            useup(otmp);
+        else
+            useupf(otmp, 1L);
+        You("offer your soul to %s...", a_gname());
+        if (u.ualign.type != altaralign || altaralign != A_LAWFUL) {
+            adjalign(-99);
+            pline("%s is enraged...", u_gname());
+            pline("Fortunately, %s permits you to live...", a_gname());
+            pline("A cloud of %s smoke surrounds you...", hcolor(NH_ORANGE));
+            done(ESCAPED);
+            return ECMD_TIME;
+        }
+        if (Is_astralevel(&u.uz)) {
+            endcut_ascend();
+            return ECMD_TIME;
+        }
+        u.uevent.ascended = 1;
+        adjalign(10);
+        pline("An invisible choir sings, and you are bathed in radiance...");
+        godvoice(altaralign, "Mortal, thou hast done well!");
+        display_nhwindow(WIN_MESSAGE, FALSE);
+        SetVoice((struct monst *) 0, 0, 80, voice_deity);
+        verbalize(
+          "In return for thy service, I grant thee the gift of Immortality!");
+        You("ascend to the status of Demigod%s...",
+            flags.female ? "dess" : "");
+        done(ASCENDED);
+        return ECMD_TIME;
+    }
 
     if (otmp->otyp == AMULET_OF_YENDOR) {
         if (!highaltar) {
@@ -1833,7 +1883,7 @@ can_pray(boolean praying) /* false means no messages (e.g. enlightenment) */
 
     if (on_altar() && gp.p_aligntyp != A_LAWFUL) {
         if (praying)
-            pline("You will not pray at an altar of evil."); /* PLACEHOLDER */
+            pline("You will not pray at an altar of evil.");
         return FALSE;
     }
 
@@ -2099,6 +2149,8 @@ prayer_done(void)
     reset_prayer_timer();
 
     pride_altar_after_prayer();
+    /* After the ordinary outcome. Both are holden if they are here. */
+    heaven_prayer();
     return 1;
 }
 

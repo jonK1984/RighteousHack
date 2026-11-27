@@ -212,18 +212,51 @@ vpline(const char *line, va_list the_args)
         panic("pline attempting to print %d characters!", ln);
 
     if (ln > BUFSZ - 1) {
-        /* too long but modestly so; allow but truncate, preserving final
-           3 chars: "___ extremely long text" -> "___ extremely l...ext"
-           (this may be suboptimal if overflow is less than 3) */
-        if (line != pbuf) /* no '%' was present or format was just "%s" */
-            (void) strncpy(pbuf, line, BUFSZ - 1); /* caveat: unterminated */
-        pbuf[BUFSZ - 1 - 6] = pbuf[BUFSZ - 1 - 5] = pbuf[BUFSZ - 1 - 4] = '.';
-        /* avoid strncpy; buffers could overlap if excess is small */
-        pbuf[BUFSZ - 1 - 3] = line[ln - 3];
-        pbuf[BUFSZ - 1 - 2] = line[ln - 2];
-        pbuf[BUFSZ - 1 - 1] = line[ln - 1];
-        pbuf[BUFSZ - 1] = '\0';
-        line = pbuf;
+        /* Fold at a space into successive messages. Nothing is dropped
+           and no word is split. */
+        const char *src = line;
+        char chunk[BUFSZ];
+
+        if (line != pbuf) {
+            if (ln >= (int) sizeof pbuf)
+                ln = (int) sizeof pbuf - 1;
+            (void) memcpy(pbuf, line, (size_t) ln);
+            pbuf[ln] = '\0';
+            src = pbuf;
+        }
+        while (*src) {
+            int n = (int) strlen(src);
+            int cut = n;
+
+            if (cut > BUFSZ - 1) {
+                const char *nl = strchr(src, '\n');
+
+                cut = BUFSZ - 1;
+                if (nl && (int) (nl - src) < cut)
+                    cut = (int) (nl - src);
+                else {
+                    while (cut > 0 && src[cut] != ' ')
+                        cut--;
+                    if (cut <= 0)
+                        cut = (nl && (int) (nl - src) < BUFSZ)
+                                  ? (int) (nl - src) : BUFSZ - 1;
+                }
+            } else if (strchr(src, '\n')) {
+                cut = (int) (strchr(src, '\n') - src);
+            }
+            if (cut <= 0)
+                cut = 1;
+            if (cut >= BUFSZ)
+                cut = BUFSZ - 1;
+            (void) memcpy(chunk, src, (size_t) cut);
+            chunk[cut] = '\0';
+            src += cut;
+            if (*src == ' ' || *src == '\n')
+                src++;
+            if (chunk[0])
+                pline("%s", chunk);
+        }
+        return;
     }
     msgtyp = MSGTYP_NORMAL;
 

@@ -63,7 +63,7 @@ static struct ll_achieve_msg achieve_msg [] = {
     { LL_ACHIEVE, "performed the invocation" },
     { LL_ACHIEVE, "acquired The Amulet of Yendor" },
     { LL_ACHIEVE, "entered the Elemental Planes" },
-    { LL_ACHIEVE, "entered the Astral Plane" },
+    { LL_ACHIEVE, "entered the Plane of Heaven" },
     { LL_ACHIEVE, "ascended" },
     /* if the type of item isn't discovered yet, disclosing the event
        via #chronicle would be a spoiler (particularly for gray stone);
@@ -536,10 +536,7 @@ background_enlightenment(int unused_mode UNUSED, int final)
                /* permanent conversion */
                : (u.ualign.type != u.ualignbase[A_ORIGINAL])
                   ? (!final ? "now " : "belatedly ")
-                  /* atheist (ignored in very early game) */
-                  : (!u.uconduct.gnostic && svm.moves > 1000L)
-                     ? "nominally "
-                     : "",
+                  : "",
             u_gname());
     enlght_out(buf);
 
@@ -581,8 +578,13 @@ background_enlightenment(int unused_mode UNUSED, int final)
         int egdepth = observable_depth(&u.uz);
 
         (void) endgamelevelname(tmpbuf, egdepth);
+        /* Air, Fire, Water, and Earth stay "Elemental Plane of ...".
+           Heaven is not an elemental plane. */
         Snprintf(buf, sizeof(buf), "in the endgame, on the %s%s",
-                 !strncmp(tmpbuf, "Plane", 5) ? "Elemental " : "", tmpbuf);
+                 (!strncmp(tmpbuf, "Plane", 5)
+                  && strcmp(tmpbuf, "Plane of Heaven"))
+                     ? "Elemental " : "",
+                 tmpbuf);
     } else if (Is_knox(&u.uz)) {
         /* this gives away the fact that the knox branch is only 1 level */
         Sprintf(buf, "on the %s level", svd.dungeons[u.uz.dnum].dname);
@@ -2118,9 +2120,6 @@ show_conduct(int final)
     else if (!u.uconduct.unvegetarian)
         you_have_been("vegetarian");
 
-    if (!u.uconduct.gnostic)
-        you_have_been("an atheist");
-
     if (!u.uconduct.weaphit) {
         you_have_never("hit with a wielded weapon");
     } else if (wizard) {
@@ -2144,9 +2143,9 @@ show_conduct(int final)
 
     ngenocided = num_genocides();
     if (ngenocided == 0) {
-        you_have_never("genocided any monsters");
+        you_have_never("banished any monsters");
     } else {
-        Sprintf(buf, "genocided %d type%s of monster%s", ngenocided,
+        Sprintf(buf, "banished %d type%s of monster%s", ngenocided,
                 plur(ngenocided), plur(ngenocided));
         you_have_X(buf);
     }
@@ -2360,7 +2359,7 @@ show_achievements(
             you_have_X("reached the Elemental Planes");
             break;
         case ACH_ASTR:
-            you_have_X("reached the Astral Plane");
+            you_have_X("reached the Plane of Heaven");
             break;
         case ACH_UWIN:
             /* the ultimate achievement... */
@@ -2734,8 +2733,8 @@ set_vanq_order(boolean for_vanq)
                                             : MENU_ITEMFLAGS_NONE);
     }
     Sprintf(buf, "Sort order for %s",
-            for_vanq ? "vanquished monster counts (also genocided types)"
-                     : "genocided monster types (also vanquished counts)");
+            for_vanq ? "vanquished monster counts (also banished types)"
+                     : "banished monster types (also vanquished counts)");
     end_menu(tmpwin, buf);
 
     n = select_menu(tmpwin, PICK_ONE, &selected);
@@ -2945,7 +2944,7 @@ num_genocides(void)
         if (svm.mvitals[i].mvflags & G_GENOD) {
             ++n;
             if (UniqCritterIndx(i))
-                impossible("unique creature '%d: %s' genocided?",
+                impossible("unique creature '%d: %s' banished?",
                            i, mons[i].pmnames[NEUTRAL]);
         }
     }
@@ -3022,7 +3021,7 @@ list_genocided(char defquery, boolean ask)
     if (ngone > 0) {
         Sprintf(buf, "Do you want a list of %sspecies%s%s?",
                 (nextinct && !ngenocided) ? "extinct " : "",
-                (ngenocided) ? " genocided" : "",
+                (ngenocided) ? " banished" : "",
                 (nextinct && ngenocided) ? " and extinct" : "");
         c = ask ? yn_function(buf, (ngone > 1) ? "ynaq" : "ynq\033a",
                               defquery, TRUE)
@@ -3058,7 +3057,7 @@ list_genocided(char defquery, boolean ask)
 
             klwin = create_nhwindow(NHW_MENU);
             Sprintf(buf, "%s%s species:",
-                    (ngenocided) ? "Genocided" : "Extinct",
+                    (ngenocided) ? "Banished" : "Extinct",
                     (nextinct && ngenocided) ? " or extinct" : "");
             putstr(klwin, 0, buf);
             if (!dumping)
@@ -3093,7 +3092,7 @@ list_genocided(char defquery, boolean ask)
             if (!dumping)
                 putstr(klwin, 0, "");
             if (ngenocided > 0) {
-                Sprintf(buf, "%d species genocided.", ngenocided);
+                Sprintf(buf, "%d species banished.", ngenocided);
                 putstr(klwin, 0, buf);
             }
             if (nextinct > 0) {
@@ -3109,10 +3108,10 @@ list_genocided(char defquery, boolean ask)
     } else if (!program_state.gameover) {
         /* #genocided rather than final disclosure, so pline() is ok and
            extinction has been ignored */
-        pline("No creatures have been genocided%s.", genoing ? " yet" : "");
+        pline("No creatures have been banished%s.", genoing ? " yet" : "");
 #ifdef DUMPLOG
     } else if (dumping) { /* 'gameover' is True if we make it here */
-        putstr(0, 0, "No species were genocided or became extinct.");
+        putstr(0, 0, "No species were banished or became extinct.");
 #endif
     }
 }

@@ -653,6 +653,9 @@ fall_through(
         }
         return;
     }
+    /* The trap already opened. Do not fall, and do not become stuck in it. */
+    if (road_bars_leave((d_level *) 0))
+        return;
     if ((Flying || is_clinger(gy.youmonst.data))
         && (ftflags & TOOKPLUNGE) && td && t) {
         if (Flying)

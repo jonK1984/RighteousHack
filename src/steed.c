@@ -437,10 +437,18 @@ kick_steed(void)
         u.usteed->mtame--;
     if (!u.usteed->mtame && u.usteed->mleashed)
         m_unleash(u.usteed, TRUE);
-    if (!u.usteed->mtame
-        || (u.ulevel + u.usteed->mtame < rnd(MAXULEV / 2 + 5))) {
+    /* No longer tame: the mount is gone, and the blanket does not
+       keep the hero on a hostile steed. */
+    if (!u.usteed->mtame) {
         newsym(u.usteed->mx, u.usteed->my);
         dismount_steed(DISMOUNT_THROWN);
+        return;
+    }
+    /* Still tame, but the kick makes it buck. */
+    if (u.ulevel + u.usteed->mtame < rnd(MAXULEV / 2 + 5)) {
+        newsym(u.usteed->mx, u.usteed->my);
+        if (!blanket_keeps_seat())
+            dismount_steed(DISMOUNT_THROWN);
         return;
     }
 
@@ -569,6 +577,39 @@ landing_spot(
         found = enexto(spot, u.ux, u.uy, gy.youmonst.data);
 
     return found;
+}
+
+/* The worn Riding Blanket of the Heavenly Host may keep the hero
+   seated when an attack would throw him. Restricted and unskilled
+   riding is 10 percent, basic 25, skilled 60, expert 98. A voluntary
+   dismount, the steed dying, polymorph, and the steed being taken
+   away do not call this. */
+boolean
+blanket_keeps_seat(void)
+{
+    struct obj *saddle;
+    int chance, skill;
+
+    if (!u.usteed)
+        return FALSE;
+    saddle = which_armor(u.usteed, W_SADDLE);
+    if (!is_blanket_of_the_heavenly_host(saddle))
+        return FALSE;
+
+    skill = P_SKILL(P_RIDING);
+    if (skill <= P_UNSKILLED)
+        chance = 10; /* restricted and unskilled */
+    else if (skill == P_BASIC)
+        chance = 25;
+    else if (skill == P_SKILLED)
+        chance = 60;
+    else
+        chance = 98; /* expert */
+
+    if (rn2(100) >= chance)
+        return FALSE;
+    pline("The blanket holdeth thee fast.");
+    return TRUE;
 }
 
 /* Stop riding the current steed */

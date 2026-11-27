@@ -1010,6 +1010,11 @@ test_move(
 
     if (!isok(x, y))
         return FALSE;
+    if (goodground_bars_from(ux, uy, x, y)) {
+        if (mode == DO_MOVE && goodground_gate_closed(x, y))
+            pline("The gate is shut.");
+        return FALSE;
+    }
 
     tmpr = &levl[x][y];
 
@@ -5985,10 +5990,20 @@ carried_player_soul(void)
 {
     struct obj *otmp;
 
+    /* Open inventory only. A soul inside a container does not count,
+       the same as the Amulet's u.uhave.amulet flag. */
     for (otmp = gi.invent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == PLAYER_SOUL)
             return otmp;
     return (struct obj *) 0;
+}
+
+/* The soul in hand. Checked when the game asks, so a save that
+   already holds the soul needs no new field. */
+boolean
+has_endgame_key(void)
+{
+    return (boolean) (carried_player_soul() != 0);
 }
 
 /* Up out of the Sanctum after the hosts freeze. Both must hold now. */
@@ -6013,6 +6028,38 @@ sanctum_ascent_refused(void)
         pline("A voice whispers: Put on the helmet of salvation. You cannot face what lies ahead with your mind unguarded.");
     else
         pline("A voice whispers: You come empty handed and bare headed. Recover your soul and put on the helmet of salvation.");
+}
+
+/* Set only around wizard #levelchange. Other level changes stay sealed. */
+static boolean wizport_cmd = FALSE;
+
+void
+road_set_wizport(boolean on)
+{
+    wizport_cmd = on;
+}
+
+boolean
+road_wizport_now(void)
+{
+    return wizport_cmd;
+}
+
+/* Once the Road has begun, the hero cannot leave a level without the
+   cap on and the soul in hand. dest NULL means the caller already
+   knows this is a real departure. A destination at or above the
+   surface is a death or an escape and is not sealed. */
+boolean
+road_bars_leave(d_level *dest)
+{
+    if (!wayside_road() || sanctum_ascent_open())
+        return FALSE;
+    if (dest && on_level(dest, &u.uz))
+        return FALSE;
+    if (dest && dest->dlevel <= 0)
+        return FALSE;
+    sanctum_ascent_refused();
+    return TRUE;
 }
 
 static boolean
@@ -6522,7 +6569,7 @@ sanctum_yes_end(void)
     sanctum_light_burst();
     give_cap_of_salvation();
     /* The climb is the Road to Salvation, designed later. */
-    pline("The way back up is the Road to Salvation. It has not been opened.");
+    pline("The way back up is the Road to Salvation.");
 }
 
 static void

@@ -262,7 +262,9 @@ do_mgivenname(void)
      * the existing name, or if the player is trying to remove the
      * monster's existing name without assigning a new one.
      */
-    if ((mtmp->data->geno & G_UNIQ) && !mtmp->ispriest) {
+    if (((mtmp->data->geno & G_UNIQ) && !mtmp->ispriest)
+        || is_lucifer(mtmp) || is_heaven_arch(mtmp)
+        || is_heaven_cherub(mtmp) || is_heaven_seraph(mtmp)) {
         if (!alreadynamed(mtmp, monnambuf, buf))
             pline("%s doesn't like being called names!", upstart(monnambuf));
     } else if (mtmp->isshk
@@ -843,6 +845,15 @@ x_monnam(
     if (mtmp == &gy.youmonst)
         return strcpy(buf, "you"); /* ignore article, "invisible", &c */
 
+    /* Lucifer wears an angel's likeness until he strikes. */
+    if (!Hallucination && is_lucifer(mtmp)
+        && M_AP_TYPE(mtmp) == M_AP_MONSTER
+        && !(suppress & SUPPRESS_MAPPEARANCE)) {
+        if (article == ARTICLE_NONE)
+            return strcpy(buf, "Angel of the Lord");
+        return strcpy(buf, "an Angel of the Lord");
+    }
+
     if (program_state.gameover)
         suppress |= SUPPRESS_HALLUCINATION;
     if (article == ARTICLE_YOUR && !mtmp->mtame)
@@ -953,6 +964,20 @@ x_monnam(
 
         Strcat(buf, rname);
         name_at_start = bogon_is_pname(rnamecode);
+    } else if (is_lucifer(mtmp)) {
+        /* Proper name. Looking keeps the title. Combat uses the name alone. */
+        Strcat(buf, called ? "Lucifer (The Great Dragon)" : "Lucifer");
+        name_at_start = TRUE;
+    } else if (is_heaven_arch(mtmp) && has_mgivenname(mtmp)) {
+        /* "Michael", never "Archon called Michael". */
+        Strcat(buf, MGIVENNAME(mtmp));
+        name_at_start = TRUE;
+    } else if (is_heaven_cherub(mtmp)) {
+        Strcat(buf, "cherub");
+        name_at_start = FALSE;
+    } else if (is_heaven_seraph(mtmp)) {
+        Strcat(buf, "seraph");
+        name_at_start = FALSE;
     } else if (do_name && has_mgivenname(mtmp)) {
         char *name = MGIVENNAME(mtmp);
 

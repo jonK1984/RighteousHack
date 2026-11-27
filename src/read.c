@@ -2666,13 +2666,13 @@ do_class_genocide(void)
             pline1(thats_enough_tries);
             return;
         }
-        Strcpy(promptbuf, "What class of monsters do you want to genocide?");
+        Strcpy(promptbuf, "What class of monsters do you want to banish?");
         if (j > 0)
             Snprintf(eos(promptbuf), sizeof promptbuf - strlen(promptbuf),
                      " [enter %s]",
                      iflags.cmdassist
                        ? "the symbol or name representing a class, or '?'"
-                       : "'?' to see previous genocides");
+                       : "'?' to see previous banishments");
         getlin(promptbuf, buf);
         (void) mungspaces(buf);
         /* avoid 'that does not represent any monster' for empty input */
@@ -2689,7 +2689,7 @@ do_class_genocide(void)
         if (*buf == '\033' || !strcmpi(buf, "none")
             || !strcmpi(buf, "'none'") || !strcmpi(buf, "nothing")) {
             livelog_printf(LL_GENOCIDE,
-                           "declined to perform class genocide");
+                           "declined to perform class banishment");
             return;
         }
         /* "?" runs #genocided to show existing genocides, then re-prompts;
@@ -2719,7 +2719,7 @@ do_class_genocide(void)
             if (gonecnt)
                 pline("All such monsters are already nonexistent.");
             else if (immunecnt || class == S_invisible)
-                You("aren't permitted to genocide such monsters.");
+                You("aren't permitted to banish such monsters.");
             else if (wizard && buf[0] == '*') {
                 struct monst *mtmp, *mtmp2;
 
@@ -2756,10 +2756,10 @@ do_class_genocide(void)
                     if (!ll_done++) {
                         if (!num_genocides())
                             livelog_printf(LL_CONDUCT | LL_GENOCIDE,
-                                     "performed %s first genocide (class %c)",
+                                     "performed %s first banishment (class %c)",
                                            uhis(), def_monsyms[class].sym);
                         else
-                            livelog_printf(LL_GENOCIDE, "genocided class %c",
+                            livelog_printf(LL_GENOCIDE, "banished class %c",
                                            def_monsyms[class].sym);
                     }
 
@@ -2820,7 +2820,7 @@ do_class_genocide(void)
                         if (i == PM_HIGH_CLERIC)
                             uniq = FALSE;
 
-                        You("aren't permitted to genocide %s%s.",
+                        You("aren't permitted to banish %s%s.",
                             (uniq && !named) ? "the " : "",
                             (uniq || named) ? mons[i].pmnames[NEUTRAL] : nam);
                     }
@@ -2870,13 +2870,13 @@ do_genocide(
                 return;
             }
             Strcpy(promptbuf,
-                   "What type of monster do you want to genocide?");
+                   "What type of monster do you want to banish?");
             if (i > 0)
                 Snprintf(eos(promptbuf), sizeof promptbuf - strlen(promptbuf),
                          " [enter %s]",
                          iflags.cmdassist
                            ? "the name of a type of monster, or '?'"
-                           : "'?' to see previous genocides");
+                           : "'?' to see previous banishments");
             getlin(promptbuf, buf);
             (void) mungspaces(buf);
             /* avoid 'such creatures do not exist' for empty input */
@@ -2895,7 +2895,7 @@ do_genocide(
                 if (!(how & REALLY) && (ptr = rndmonst()) != 0)
                     break; /* remaining checks don't apply */
 
-                livelog_printf(LL_GENOCIDE, "declined to perform genocide");
+                livelog_printf(LL_GENOCIDE, "declined to perform banishment");
                 return;
             }
             /* "?" or "'?'" runs #genocided to show existing genocides */
@@ -2973,10 +2973,10 @@ do_genocide(
     if (how & REALLY) {
         if (!num_genocides())
             livelog_printf(LL_CONDUCT | LL_GENOCIDE,
-                           "performed %s first genocide (%s)",
+                           "performed %s first banishment (%s)",
                            uhis(), makeplural(realbuf));
         else
-            livelog_printf(LL_GENOCIDE, "genocided %s", makeplural(realbuf));
+            livelog_printf(LL_GENOCIDE, "banished %s", makeplural(realbuf));
 
         /* setting no-corpse affects wishing and random tin generation */
         svm.mvitals[mndx].mvflags |= (G_GENOD | G_NOCORPSE);
@@ -2987,7 +2987,7 @@ do_genocide(
             u.uhp = -1;
             if (how & PLAYER) {
                 svk.killer.format = KILLED_BY;
-                Strcpy(svk.killer.name, "genocidal confusion");
+                Strcpy(svk.killer.name, "confused banishment");
             } else if (how & ONTHRONE) {
                 /* player selected while on a throne */
                 svk.killer.format = KILLED_BY_AN;

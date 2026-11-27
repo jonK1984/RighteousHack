@@ -1022,7 +1022,7 @@ dog_move(
     int omx, omy; /* original mtmp position */
     int appr, whappr, udist;
     int i, j, k;
-    struct edog *edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
+    struct edog *edog;
     struct obj *obj = (struct obj *) 0;
     xint16 otyp;
     boolean cursemsg[9], do_eat = FALSE;
@@ -1034,6 +1034,10 @@ dog_move(
     long allowflags;
     struct mfndposdata mfp;
 #define GDIST(x, y) (dist2(x, y, gg.gx, gg.gy))
+
+    /* Restore a guardian angel before the pet-record check. */
+    rh_fix_tame(mtmp);
+    edog = (mtmp->mtame && has_edog(mtmp)) ? EDOG(mtmp) : 0;
 
     /*
      * Tame Angels have isminion set and an ispriest structure instead of
@@ -1056,7 +1060,9 @@ dog_move(
     /* Let steeds eat and maybe throw rider during Conflict */
     if (mtmp == u.usteed) {
         if (Conflict && !resist_conflict(mtmp)) {
-            dismount_steed(DISMOUNT_THROWN);
+            /* The steed turns and would throw its rider. */
+            if (!blanket_keeps_seat())
+                dismount_steed(DISMOUNT_THROWN);
             return MMOVE_MOVED;
         }
         udist = 1;

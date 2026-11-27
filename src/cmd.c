@@ -647,14 +647,14 @@ doextlist(void)
                     continue;
                 /* command description might get modified on the fly */
                 cmd_desc = efp->ef_desc;
-                /* suppress part of the description for #genocided if it
+                /* suppress part of the description for #banished if it
                    doesn't apply during the current game */
                 if (!wizard && !discover
                     && (efp->flags & GENERALCMD) != 0 /* minor optimization */
                     && strstri(cmd_desc, "extinct"))
                     cmd_desc = strsubst(strcpy(descbuf, cmd_desc),
-                                        " been genocided or become extinct",
-                                        " been genocided");
+                                        " been banished or become extinct",
+                                        " been banished");
                 /* if searching, skip this command if it doesn't match */
                 if (*searchbuf
                     /* first try case-insensitive substring match */
@@ -1683,6 +1683,10 @@ struct ext_func_tab extcmdlist[] = {
               doattributes, IFBURIED | GENERALCMD, NULL },
     { '@',    "autopickup", "toggle the 'autopickup' option on/off",
               dotogglepickup, IFBURIED | GENERALCMD, NULL },
+    { M('g'), "banished",
+              "list monsters that have been banished or become extinct",
+              dogenocided,
+              IFBURIED | AUTOCOMPLETE | GENERALCMD | CMD_M_PREFIX, NULL },
 #ifdef CRASHREPORT
     { '\0',   "bugreport", "file a bug report",
               dobugreport, GENERALCMD | NOFUZZERCMD, NULL },
@@ -1730,10 +1734,6 @@ struct ext_func_tab extcmdlist[] = {
               dofire, 0, NULL },
     { M('f'), "force", "force a lock",
               doforce, AUTOCOMPLETE, NULL },
-    { M('g'), "genocided",
-              "list monsters that have been genocided or become extinct",
-              dogenocided,
-              IFBURIED | AUTOCOMPLETE | GENERALCMD | CMD_M_PREFIX, NULL },
     { ';',    "glance", "show what type of thing a map symbol corresponds to",
               doquickwhatis, IFBURIED | GENERALCMD, NULL },
     { '?',    "help", "give a help message",
@@ -1809,6 +1809,9 @@ struct ext_func_tab extcmdlist[] = {
               wiz_polyself, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
     { M('p'), "pray", "pray to the gods for help",
               dopray, IFBURIED | AUTOCOMPLETE, NULL },
+    { '\0',   "proanimate", "play an endgame cutscene (prophet mode)",
+              do_proanimate, IFBURIED | AUTOCOMPLETE | WIZMODECMD | GENERALCMD,
+              NULL },
     { C('p'), "prevmsg", "view recent game messages",
               doprev_message, IFBURIED | GENERALCMD | CMD_INSANE, NULL },
     { 'P',    "puton", "put on an accessory (ring, amulet, etc)",

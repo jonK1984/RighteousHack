@@ -11,6 +11,9 @@ with two alignments, good and evil. Alignment still works as it
 does now until that change is made.
 
 2026-11-23
+The Good Ground is the last Road trial, in the Dungeons of Doom between Sodom and Tyre and the prophet. Climbing out of the dungeon with the cap, your soul, and that trial done opens the Planes. Old saves will not load.
+
+2026-11-23
 In the Thorns, the Goldsmith and Jeweler doors stand on their signs, the end shops can be reached, and the Prince of the city stands on an ordinary throne.
 
 2026-11-23
@@ -234,7 +237,7 @@ not yet speak a line in their own language.
 
 2026-11-04
 Jacob's Ladder is a garden. Its fountains are living water,
-the same full cure as the Wilderness garden. A magic portal
+the same full cure as the Wilderness garden. An ancient portal
 there returns to the Sokoban level where you first arrive,
 on the stair you came in by. Six builders stand in the
 corners of the Sokoban prize room, off that room's stair.
@@ -304,7 +307,7 @@ Killing a priest of the Great Dragon is not murder. There is no
 Offering the real Amulet of Yendor on the Sanctum high altar
 prints "You feel ashamed." The Amulet is not used up, you live,
 and the alignment record is not touched. It takes a turn. An
-offering on the Astral Plane is unchanged.
+offering on the Plane of Heaven is unchanged.
 
 2026-11-03
 On Sodom and Tyre, the Sword of the Spirit deals double damage.
@@ -435,7 +438,7 @@ are unchanged.
 2026-11-02
 A Pride reflection is always a doppelganger and does not change
 shape. Its life drain still grows, but one turn never takes more
-than 5 hit points. Reading the finger of execution book always
+than 5 hit points. Reading the finger of judgement book always
 teaches the spell. Casting it is unchanged. The Rod of Frozen
 Power never runs out, and its burst is drawn as a cold explosion.
 The Amulet of Immortality does not save you. An ordinary amulet

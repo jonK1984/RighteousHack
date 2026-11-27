@@ -1542,9 +1542,11 @@ prev_level(boolean at_stairs)
         /* Taking an up dungeon branch. */
         /* KMH -- Upwards branches are okay if not level 1 */
         /* (Just make sure it doesn't go above depth 1) */
-        if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet)
-            done(ESCAPED);
-        else {
+        if (!u.uz.dnum && u.uz.dlevel == 1) {
+            /* The soul, the cap, and the Good Ground, or a death. */
+            (void) salvation_climb(stway);
+            return;
+        } else {
             newlevel.dnum = stway->tolev.dnum;
             newlevel.dlevel = stway->tolev.dlevel;
             goto_level(&newlevel, at_stairs, FALSE, FALSE);
@@ -2381,6 +2383,8 @@ visible_level_tag(const char *proto)
         return "babylon";
     if (!strcmp(proto, "minend"))
         return "minesend";
+    if (!strcmp(proto, "astral"))
+        return "Plane of Heaven";
     if (!strcmp(proto, "sanctum"))
         return "Sanctum of the Great Dragon";
     if (!strcmp(proto, "hinnom"))
@@ -3519,7 +3523,7 @@ endgamelevelname(char *outbuf, int indx)
     *outbuf = '\0';
     switch (indx) {
     case -5:
-        Strcpy(outbuf, "Astral Plane");
+        Strcpy(outbuf, "Plane of Heaven");
         break;
     case -4:
         planename = "Water";
@@ -3630,8 +3634,11 @@ print_mapseen(
     boolean died_here = (final == 2 && on_level(&u.uz, &mptr->lev));
     anything any;
     s_level *thorns_lev = find_level("thorns");
+    s_level *ground_lev = find_level("goodground");
     boolean gilded_city = (boolean) (thorns_lev
                                      && on_level(&mptr->lev, &thorns_lev->dlevel));
+    boolean fruitful = (boolean) (ground_lev
+                                  && on_level(&mptr->lev, &ground_lev->dlevel));
 
     /* Damnable special cases */
     /* The quest and knox should appear to be level 1 to match
@@ -3696,7 +3703,7 @@ print_mapseen(
         return;
 
     /* The Thorns names itself. Fountains and trees stay off this line. */
-    if (OF_INTEREST(mptr->feat) && !gilded_city) {
+    if (OF_INTEREST(mptr->feat) && !gilded_city && !fruitful) {
         buf[0] = 0;
 
         i = 0; /* interest counter */
@@ -3791,6 +3798,8 @@ print_mapseen(
         Sprintf(buf, "%sSanctum of the Great Dragon.", PREFIX);
     } else if (gilded_city) {
         Sprintf(buf, "%sA Gilded City.", PREFIX);
+    } else if (fruitful) {
+        Sprintf(buf, "%sA Fruitful Field.", PREFIX);
     }
     if (*buf) {
         add_menu_str(win, buf);

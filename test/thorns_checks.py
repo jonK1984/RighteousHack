@@ -204,7 +204,7 @@ class Rules(unittest.TestCase):
                         screen.index("Here is everything a weary pilgrim"))
         self.assertEqual(screen.count('"\\n"'), 2)
         self.assertIn("0x80000000UL", THORNS)
-        self.assertIn("#define EDITLEVEL 19", PATCH)
+        self.assertIn("#define EDITLEVEL 20", PATCH)
         self.assertNotIn("\u2014", tick)
 
     def test_the_overview_names_the_gilded_city(self):

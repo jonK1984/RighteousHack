@@ -709,6 +709,10 @@ dochug(struct monst *mtmp)
     /* Frozen hosts stay where they are. They can still be killed. */
     if (Is_sanctum(&u.uz) && u.uevent.sanctum_frozen)
         return 0;
+    /* Lucifer's specials take the turn. A plain dragon attack follows
+       only when none of them lands. */
+    if (lucifer_act(mtmp))
+        return 0;
     if (mtmp->data == &mons[PM_CHILD]) {
         mtmp->mstrategy |= STRAT_WAITFORU;
         mtmp->mpeaceful = 1;

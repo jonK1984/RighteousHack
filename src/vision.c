@@ -545,7 +545,7 @@ vision_recalc(int control)
     if (u.uswallow || control == 2) {
         /* do nothing -- get_unused_cs() nulls out the new work area */
         ;
-    } else if (Blind) {
+    } else if (Blind && !endcut_omniscient) {
         /*
          * Calculate the could_see array even when blind so that monsters
          * can see you, even if you can't see them.  Note that the current
@@ -707,6 +707,18 @@ vision_recalc(int control)
      */
     temp_array = gv.viz_array;
     gv.viz_array = next_array;
+
+    /* The battle cutscene shows the whole Plane of Heaven. The
+       level does not remember the map, and the hero's sight is
+       short, so the ordinary cone would leave a black field. */
+    if (endcut_omniscient && control != 2 && !u.uswallow) {
+        for (row = 0; row < ROWNO; row++) {
+            next_rmin[row] = 1;
+            next_rmax[row] = COLNO - 1;
+            for (col = 1; col < COLNO; col++)
+                next_array[row][col] |= (IN_SIGHT | COULD_SEE);
+        }
+    }
 
     /*
      * The main update loop.  Here we do two things:

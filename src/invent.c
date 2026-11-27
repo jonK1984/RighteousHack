@@ -1916,7 +1916,10 @@ getobj(
     for (;;) {
         cnt = 0L;
         cntgiven = FALSE;
-        Sprintf(qbuf, "What do you want to %s?", word);
+        if (!strcmp(word, "sacrifice"))
+            Strcpy(qbuf, "What do you wish to offer?");
+        else
+            Sprintf(qbuf, "What do you want to %s?", word);
         if (gi.in_doagain) {
             ilet = readchar();
         } else if (iflags.force_invmenu) {
@@ -1970,9 +1973,13 @@ getobj(
                 allowed_choices = altlets;
 
             menuquery[0] = qbuf[0] = '\0';
-            if (iflags.force_invmenu)
-                Snprintf(menuquery, sizeof menuquery,
-                         "What do you want to %s?", word);
+            if (iflags.force_invmenu) {
+                if (!strcmp(word, "sacrifice"))
+                    Strcpy(menuquery, "What do you wish to offer?");
+                else
+                    Snprintf(menuquery, sizeof menuquery,
+                             "What do you want to %s?", word);
+            }
             if (!allowed_choices || *allowed_choices == HANDS_SYM
                 || *buf == HANDS_SYM)
                 handsbuf = getobj_hands_txt(word, qbuf);
@@ -4080,6 +4087,8 @@ dfeature_at(coordxy x, coordxy y, char *buf)
         } else if (Is_hinnom_level(&u.uz) && !u.uevent.berachah
                    && Amask2align(lev->altarmask & AM_MASK) == A_NONE) {
             dfeature = "altar of Moloch";
+        } else if (Is_sanctum(&u.uz) && (lev->altarmask & AM_SANCTUM)) {
+            dfeature = "evil high altar";
         } else {
             Sprintf(altbuf, "%saltar to %s (%s)",
                     (lev->altarmask & AM_SANCTUM) ? "high " : "",

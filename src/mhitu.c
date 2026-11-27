@@ -318,6 +318,22 @@ getmattk(
     struct obj *weap = (magr == &gy.youmonst) ? uwep : MON_WEP(magr);
     boolean udefend = mdef == &gy.youmonst;
 
+    /* Cherubim keep ki-rin stats and swing a flaming sword.
+       Seraphim keep the Archon attacks, and the weapon blows burn. */
+    if (magr != &gy.youmonst && is_heaven_cherub(magr) && indx == 0) {
+        *alt_attk_buf = *attk;
+        alt_attk_buf->aatyp = AT_WEAP;
+        alt_attk_buf->adtyp = AD_FIRE;
+        alt_attk_buf->damn = 2;
+        alt_attk_buf->damd = 6;
+        attk = alt_attk_buf;
+    } else if (magr != &gy.youmonst && is_heaven_seraph(magr)
+               && attk->aatyp == AT_WEAP && attk->adtyp == AD_PHYS) {
+        *alt_attk_buf = *attk;
+        alt_attk_buf->adtyp = AD_FIRE;
+        attk = alt_attk_buf;
+    }
+
     /* honor SEDUCE=0 */
     if (!SYSOPT_SEDUCE) {
         extern const struct attack c_sa_no[NATTK];
@@ -1341,6 +1357,10 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
         if ((t && is_pit(t->ttyp)) && sobj_at(BOULDER, u.ux, u.uy))
             return M_ATTK_MISS;
         if (failed_grab(mtmp, &gy.youmonst, mattk))
+            return M_ATTK_MISS;
+        /* Swallowing plucks a rider off. The blanket may refuse,
+           before the monster steps onto the hero. */
+        if (u.usteed && blanket_keeps_seat())
             return M_ATTK_MISS;
 
         if (Punished)

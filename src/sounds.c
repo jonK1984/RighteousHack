@@ -854,7 +854,7 @@ domonnoise(struct monst *mtmp)
                                            The(aobjnam(key, "slip")),
                                            (const char *) 0);
             }
-            verbalize("This key opens the gate to Gehennom in the Valley of the Dead."); /* PLACEHOLDER */
+            verbalize("This key opens the gate to Gehennom in the Valley of the Dead.");
             verbalize("And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it.");
             u.uevent.peter_rewarded = 1;
             for (dir = 0; dir < N_DIRS; dir++) {
@@ -1320,14 +1320,19 @@ domonnoise(struct monst *mtmp)
         }
         FALLTHROUGH;
         /* FALLTHRU */
-    case MS_CUSS:
-        if (!mtmp->mpeaceful)
+    case MS_CUSS: {
+        const char *arch = archangel_speech(mtmp);
+
+        if (arch)
+            com_pager(arch);
+        else if (!mtmp->mpeaceful || speaks_as_fallen(mtmp))
             cuss(mtmp);
         else if (is_lminion(mtmp))
             verbl_msg = "It's not too late.";
         else
             verbl_msg = "We're all doomed.";
         break;
+    }
     case MS_SPELL:
         /* deliberately vague, since it's not actually casting any spell */
         pline_msg = "seems to mutter a cantrip.";
@@ -1562,6 +1567,8 @@ dochat(void)
     if (stony_chat(mtmp))
         return ECMD_TIME;
     if (thorns_chat(mtmp))
+        return ECMD_TIME;
+    if (goodground_chat(mtmp))
         return ECMD_TIME;
     if (wayside_chat(mtmp))
         return ECMD_TIME;

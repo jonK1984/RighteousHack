@@ -302,6 +302,36 @@ restobjchn(NHFILE *nhfp, boolean frozen)
     return first;
 }
 
+/* The old Moloch blow count used bits 10 and 11, which are
+   STRAT_LUCIFER and STRAT_LUCIFER_WAIT. A red dragon keeps
+   those bits. Anyone else loses them. Moloch's count is
+   written into MOLOCH_HIT_MASK. */
+void
+rh_fix_strategy(struct monst *mtmp)
+{
+    unsigned long strat, oldhits;
+
+    if (!mtmp || !mtmp->data)
+        return;
+    strat = mtmp->mstrategy;
+    if (mtmp->data != &mons[PM_RED_DRAGON]
+        && (strat & (STRAT_LUCIFER | STRAT_LUCIFER_WAIT)) != 0L) {
+        if (mtmp->data == &mons[PM_MOLOCH]) {
+            oldhits = (strat & MOLOCH_HIT_OLD_MASK) >> MOLOCH_HIT_OLD_SHIFT;
+            strat &= ~MOLOCH_HIT_OLD_MASK;
+            strat = (strat & ~MOLOCH_HIT_MASK)
+                    | (oldhits << MOLOCH_HIT_SHIFT);
+        } else {
+            strat &= ~(STRAT_LUCIFER | STRAT_LUCIFER_WAIT);
+        }
+    }
+    if (mtmp->data != &mons[PM_MOLOCH])
+        strat &= ~MOLOCH_HIT_MASK;
+    mtmp->mstrategy = strat;
+    /* Pet records are repaired later. This runs from restmonchn
+       while the current level is read, before the hero is loaded. */
+}
+
 /* restore one monster */
 staticfn void
 restmon(NHFILE *nhfp, struct monst *mtmp)
@@ -405,6 +435,10 @@ restmonchn(NHFILE *nhfp)
         }
         offset = mtmp->mnum;
         mtmp->data = &mons[offset];
+        /* A saved Moloch may still keep his blow count in the
+           old Lucifer bits. Move it, and drop a Lucifer mark
+           from anything that is not a red dragon. */
+        rh_fix_strategy(mtmp);
         if (ghostly) {
             int mndx = (mtmp->cham == NON_PM) ? monsndx(mtmp->data)
                                               : mtmp->cham;
@@ -697,6 +731,13 @@ restgamestate(NHFILE *nhfp)
     setuwep(otmp); /* (don't need any null check here) */
     if (!uwep || uwep->otyp == PICK_AXE || uwep->otyp == GRAPPLING_HOOK)
         gu.unweapon = TRUE;
+    /* Migrating pets were read before setworn(). Repair them now. */
+    {
+        struct monst *mtmp;
+
+        for (mtmp = gm.migrating_mons; mtmp; mtmp = mtmp->nmon)
+            rh_fix_tame(mtmp);
+    }
 #endif /* !SFCTOOL */
 
     restore_dungeon(nhfp);
@@ -943,6 +984,10 @@ dorecover(NHFILE *nhfp)
     u.usteed_mid = u.ustuck_mid = 0;
     program_state.beyond_savefile_load = 1;
 
+    /* The loaded level keeps its old floor. Put the stairs back
+       before the first picture, so '<' works without a new game. */
+    goodground_repair();
+
     docrt();
     clear_nhwindow(WIN_MESSAGE);
 
@@ -1181,6 +1226,12 @@ getlev(NHFILE *nhfp, int pid, xint8 lev)
         for (y = 0; y < ROWNO; y++)
             svl.level.monsters[x][y] = (struct monst *) 0;
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        /* The first pass of the current level runs before the
+           hero is loaded. Repairing a pet then would call into
+           attributes through a worn-item pointer that is still
+           the address from the save file. */
+        if (program_state.restoring != REST_GSTATE)
+            rh_fix_tame(mtmp);
         if (mtmp->isshk)
             set_residency(mtmp, FALSE);
         if (mtmp->m_id == u.usteed_mid) {

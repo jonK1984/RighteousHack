@@ -760,7 +760,7 @@
           list  of  discovered  objects  in a particular class) commands to
           offer a menu of several sorting alternatives (which  sets  a  new
           value for the sortdiscoveries option); also for "#vanquished" and
-          "#genocided" commands to offer a sorting menu.
+          "#banished" commands to offer a sorting menu.
 
           A few other commands (eat food, offer sacrifice,  apply  tinning-
           kit,  drink/quaff, dip, tip container) use the `m' prefix to skip
@@ -1463,20 +1463,20 @@
      #force
           Force a lock.  Autocompletes.  Default key is `M-f'.
 
-     #genocided
-          List any monster types which have  been  genocided.   In  explore
+     #banished
+          List any monster types which have  been  banished.   In  explore
           mode  and  prophet mode  it  also  shows  types  which have become
           extinct.
 
           The display order is the same as is used by #vanquished.  The `m'
           prefix  brings  up  a menu of available sorting orders, and doing
-          that for either #genocided or #vanquished changes the  order  for
+          that for either #banished or #vanquished changes the  order  for
           both.
 
           If  the  sorting  order  is  "count high to low" or "count low to
           high" (which  are  applicable  for  #vanquished),  that  will  be
-          ignored  for  #genocided  and  alphabetical will be used instead.
-          The menu omits those two choices when used for #genocide.
+          ignored  for  #banished  and  alphabetical will be used instead.
+          The menu omits those two choices when used for #banished.
 
           Autocompletes.  Default key is `M-g'.
 
@@ -1991,7 +1991,7 @@
           monsters  list  contains at least two types of monsters).  Which-
           ever ordering is  picked  gets  assigned  to  the  sortvanquished
           option so is remembered for subsequent #vanquished requests.  The
-          "#genocided" command shares this sorting order.
+          "#banished" command shares this sorting order.
 
           During end-of-game disclosure, when asked whether  to  show  van-
           quished  monsters answering `a' will let you choose from the sort
@@ -2204,7 +2204,7 @@
 
      M-f  #force
 
-     M-g  #genocided
+     M-g  #banished
 
      M-i  #invoke
 
@@ -2428,7 +2428,7 @@
      Unlike (level) teleporters, the destination level of a particular trap
      door or hole is persistent, so falling into one will bring you to  the
      same  level  each  time--though  not  necessarily the same spot on the
-     level.  Magic portals behave similarly, but with some additional vari-
+     level.  Ancient portals behave similarly, but with some additional vari-
      ation.   Some  portals  are  two-way  and  their remote destination is
      always the same: another portal which can take you back.   Others  are
      one-way and send you to a specific destination level but not necessar-
@@ -3886,7 +3886,7 @@
          Invocation   -  Opened the Gates of Hell into the Sanctum of the Great Dragon.
          Amulet       -  Acquired the fabled Amulet of Yendor.
          Endgame      -  Reached the Elemental Planes.
-         Astral       -  Reached the Astral Plane level.
+         Heaven       -  Reached the Plane of Heaven level.
          Blind        -  Blind from birth.
          Deaf         -  Deaf from birth.
          Nudist       -  Never wore any armor.
@@ -5339,7 +5339,7 @@
 
      sortvanquished
        Controls the sorting behavior for the output of the #vanquished com-
-       mand and also for the #genocided command.  Persistent.
+       mand and also for the #banished command.  Persistent.
 
        The possible values are:
 
@@ -5355,7 +5355,7 @@
        z - order by count, low to high; ties broken by internal index.
 
        Can be interactively set via the `m O' command or via using the  `m'
-       prefix  before either the #vanquished command or the #genocided com-
+       prefix  before either the #vanquished command or the #banished com-
        mand.
 
 
@@ -6670,7 +6670,7 @@
         #  S_litcorr              (lit corridor)
         :  S_lizard               (lizard)
         \  S_lslant               (diagonal beam [zap animation])
-        ^  S_magic_portal         (magic portal)
+        ^  S_magic_portal         (ancient portal)
         ^  S_magic_trap           (magic trap)
         m  S_mimic                (mimic)
         ]  S_mimic_def            (mimic)

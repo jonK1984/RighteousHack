@@ -419,17 +419,57 @@ convert_line(char *in_line, char *out_line)
     return;
 }
 
+/* Copy one paragraph, folded on a space so a long line is not cut
+   off in the middle of a word. A newline ends the piece. */
+static void
+take_folded(char *dst, int dstmax, const char **msgp)
+{
+    const char *s = *msgp;
+    int n = 0, cut;
+
+    if (*s == '\n') {
+        dst[0] = '\0';
+        *msgp = s + 1;
+        return;
+    }
+    while (s[n] && s[n] != '\n' && n < dstmax)
+        n++;
+    cut = n;
+    if (s[n] && s[n] != '\n') {
+        while (cut > 0 && s[cut] != ' ')
+            cut--;
+        if (cut <= 0)
+            cut = n;
+    }
+    while (cut > 0 && s[cut - 1] == ' ')
+        cut--;
+    if (cut <= 0)
+        cut = n > 0 ? n : 1;
+    if (cut > dstmax)
+        cut = dstmax;
+    (void) memcpy(dst, s, (size_t) cut);
+    dst[cut] = '\0';
+    s += cut;
+    /* A source line often ends with a space before its newline.
+       Skip those spaces and that one newline together. Leaving the
+       newline behind makes the next piece a blank line. */
+    while (*s == ' ')
+        s++;
+    if (*s == '\n')
+        s++;
+    *msgp = s;
+}
+
 staticfn void
 deliver_by_pline(const char *str)
 {
     char in_line[BUFSZ], out_line[BUFSZ];
-    const char *msgp = str, *msgend = eos((char *) str);
+    const char *msgp = str;
 
-    while (msgp < msgend) {
-        /* copynchars() will stop at newline if it finds one */
-        copynchars(in_line, msgp, (int) sizeof in_line - 1);
-        msgp += strlen(in_line) + 1;
-
+    while (msgp && *msgp) {
+        take_folded(in_line, (int) sizeof in_line - 1, &msgp);
+        if (!in_line[0])
+            continue;
         convert_line(in_line, out_line);
         pline("%s", out_line);
     }
@@ -439,16 +479,17 @@ staticfn void
 deliver_by_window(const char *msg, int how)
 {
     char in_line[BUFSZ], out_line[BUFSZ];
-    const char *msgp = msg, *msgend = eos((char *) msg);
+    const char *msgp = msg;
     winid datawin = create_nhwindow(how);
 
-    while (msgp < msgend) {
-        /* copynchars() will stop at newline if it finds one */
-        copynchars(in_line, msgp, (int) sizeof in_line - 1);
-        msgp += strlen(in_line) + 1;
-
+    while (msgp && *msgp) {
+        take_folded(in_line, (int) sizeof in_line - 1, &msgp);
+        if (!in_line[0]) {
+            putstr(datawin, 0, "");
+            continue;
+        }
         convert_line(in_line, out_line);
-        putstr(datawin, 0, out_line);
+        rh_putstr(datawin, 0, out_line);
     }
 
     display_nhwindow(datawin, TRUE);

@@ -55,7 +55,10 @@ struct u_event {
 
     Bitfield(amulet_wish, 1);       /* has gained a wish from the Amulet */
     Bitfield(gibeon_wish, 1);       /* Cave of Gibeon vision has been given */
-    Bitfield(petra_step, 3);        /* unused; path letters are always safe */
+    Bitfield(petra_step, 3);        /* bit 0: Son of Perdition slain for good
+                                     * on the Plane of Heaven.
+                                     * bit 1: the four archangels have
+                                     * descended. Bit 2 stays unused. */
     Bitfield(peter_rewarded, 1);    /* Peter kept the net and gave the keys */
     Bitfield(babylon_hint, 1);      /* prayer has named the palace key */
     Bitfield(peter_quest, 1);       /* Peter has given the quest scroll */
@@ -391,7 +394,8 @@ enum utotypes {
     UTOTYPE_PORTAL   = 0x04,
     UTOTYPE_WILDHOME = 0x08,  /* sword return to the Wilderness stair */
     UTOTYPE_RMPORTAL = 0x10,  /* remove portal */
-    UTOTYPE_DEFERRED = 0x20   /* deferred_goto */
+    UTOTYPE_DEFERRED = 0x20,  /* deferred_goto */
+    UTOTYPE_WIZPORT  = 0x40   /* wizard #levelchange only */
 };
 
 /*** Information about the player ***/
@@ -536,11 +540,14 @@ struct you {
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
     /* Wayside trial, and the host level of every Road trial.
-       host[i] is the Gehennom dlevel for trial i. 0 means unset.
-       EDITLEVEL 17: the old single-branch save does not load. */
+       host[i] is the host dlevel for trial i. 0 means unset.
+       hostdnum[i] is that host's dungeon. The first three are
+       Gehennom. The Good Ground is in the Dungeons of Doom.
+       EDITLEVEL 20. */
     struct {
         unsigned long bits;
-        xint16 host[4];          /* one slot per trial, including future ones */
+        xint16 host[4];          /* one slot per trial */
+        xint16 hostdnum[4];      /* dungeon of host[i]; meaningful if host[i] */
         unsigned vid[6];         /* villager m_id, house order */
         unsigned mino_id;
         unsigned giant_id;
@@ -565,6 +572,15 @@ struct you {
     /* Turns left before the Fiery Steed may breathe again.
        EDITLEVEL 19. 0 means the fire is ready. */
     int ufirewait;
+    /* The Good Ground, the fourth trial. EDITLEVEL 20.
+       bits: intro, gate, game, guess, done, then one bit per fig.
+       Bits 16..18 count chats with the flock, and stop at 7.
+       sheep is the flock size, 5 to 10. flock marks which spots. */
+    struct {
+        unsigned long bits;
+        xint16 sheep;
+        unsigned short flock;
+    } ugood;
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */

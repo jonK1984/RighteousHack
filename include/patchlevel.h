@@ -17,7 +17,7 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 19 /* the Fiery Steed's fire cooldown is saved */
+#define EDITLEVEL 20 /* the Good Ground flock and fig grove are saved */
 
 /*
  * Development status possibilities.

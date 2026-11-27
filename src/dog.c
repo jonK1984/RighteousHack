@@ -31,6 +31,56 @@ newedog(struct monst *mtmp)
     }
 }
 
+/* The guardian angel is tame, keeps emin, and has no edog.
+   dog_move() allows that only while isminion is set. An old
+   save may still have the emin and a cleared flag. Put the
+   flag back. Any other tame monster gets an edog. */
+void
+rh_fix_tame(struct monst *mtmp)
+{
+    if (!mtmp || !mtmp->mtame)
+        return;
+    if (!has_edog(mtmp) && has_emin(mtmp)
+        && mtmp->data == &mons[PM_ANGEL]) {
+        mtmp->isminion = 1;
+        return;
+    }
+    rh_attach_edog(mtmp);
+}
+
+/* A tame monster needs an edog or dog_move() will panic.
+   The guardian angel is the one exception: it is a minion
+   and keeps emin instead. This does not count as taming
+   for conduct. The monster was already tame. */
+void
+rh_attach_edog(struct monst *mtmp)
+{
+    struct edog *edogp;
+
+    if (!mtmp || !mtmp->mtame || mtmp->isminion || has_edog(mtmp))
+        return;
+    newedog(mtmp);
+    edogp = EDOG(mtmp);
+    edogp->droptime = 0;
+    edogp->dropdist = 10000;
+    /* ACURR reads worn armor. During the first restore pass those
+       pointers still hold addresses from the save file. */
+    edogp->apport = (gy.youmonst.data) ? ACURR(A_CHA) : 1;
+    if (edogp->apport <= 0)
+        edogp->apport = 1;
+    edogp->whistletime = 0;
+    edogp->hungrytime = svm.moves + 1000L;
+    edogp->ogoal.x = -1;
+    edogp->ogoal.y = -1;
+    edogp->abuse = 0;
+    edogp->revivals = 0;
+    edogp->mhpmax_penalty = 0;
+    edogp->killed_by_u = 0;
+    mtmp->mpeaceful = 1;
+    if (mtmp->data && gy.youmonst.data)
+        set_malign(mtmp);
+}
+
 void
 free_edog(struct monst *mtmp)
 {

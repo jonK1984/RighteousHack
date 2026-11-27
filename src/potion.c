@@ -1191,7 +1191,7 @@ peffect_gain_level(struct obj *otmp)
 
         gp.potion_unkn++;
         /* they went up a level */
-        if (on_lvl_1 ? u.uhave.amulet : Can_rise_up(u.ux, u.uy, &u.uz)) {
+        if (on_lvl_1 ? has_endgame_key() : Can_rise_up(u.ux, u.uy, &u.uz)) {
             int newlev;
             d_level newlevel;
 
@@ -1206,6 +1206,8 @@ peffect_gain_level(struct obj *otmp)
                 }
             }
             if (wayside_blocks_levelport())
+                return;
+            if (road_bars_leave(&newlevel))
                 return;
             You("rise up, through the %s!", ceiling(u.ux, u.uy));
             goto_level(&newlevel, FALSE, FALSE, FALSE);
@@ -1517,7 +1519,7 @@ peffects(struct obj *otmp)
         peffect_water(otmp);
         break;
     case POT_TEARS_OF_CHILDREN:
-        pline("You feel the love of the children lift you up."); /* PLACEHOLDER */
+        pline("You feel the love of the children lift you up.");
         pluslvl(FALSE);
         break;
     case POT_BOOZE:

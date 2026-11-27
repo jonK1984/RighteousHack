@@ -106,7 +106,7 @@ class Stairs(unittest.TestCase):
 
     def test_exit_and_back_stairs(self):
         link = WAYSIDE.split("trial_link(", 1)[1].split("trials_left", 1)[0]
-        self.assertIn("back->dlevel = u.uwayside.host[i]", link)
+        self.assertIn("host_of(i, back)", link)
         self.assertIn("back->dlevel - 1", link)
         wayside = WAYSIDE.split("fix_stairs(void)", 1)[1].split(
             "seal_walls", 1)[0]
@@ -129,7 +129,7 @@ class Stairs(unittest.TestCase):
         self.assertIn('name = "The Thorns"', DUNGEON)
         self.assertIn("unconnected", DUNGEON)
         self.assertNotIn('name = "The Road to Salvation"', DUNGEON)
-        self.assertNotIn("Good Ground", DUNGEON)
+        self.assertIn('name = "The Good Ground"', DUNGEON)
         self.assertIn('{ "The Thorns", "thorns", thorns_trial_done }', WAYSIDE)
 
 
@@ -147,7 +147,7 @@ class Depth(unittest.TestCase):
         body = WAYSIDE.split("trial_set_depths(void)", 1)[1].split(
             "trial_receive", 1)[0]
         self.assertIn("depth_start = depth(&host)", body)
-        self.assertIn("host.dlevel = u.uwayside.host[i]", body)
+        self.assertIn("host_of(i, &host)", body)
         choose = WAYSIDE.split("trial_choose(void)", 1)[1].split(
             "trial_set_depths(void)", 1)[0]
         self.assertIn("trial_set_depths()", choose)

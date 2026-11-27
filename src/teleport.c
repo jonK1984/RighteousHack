@@ -97,6 +97,8 @@ goodpos(
 
     if (!isok(x, y))
         return FALSE;
+    if (goodground_no_landing(x, y))
+        return FALSE;
     /* Fear: monsters cannot step onto the path or the stairs. */
     if (mtmp && mtmp != &gy.youmonst && in_wilderness() && dunlev(&u.uz) == 4
         && (on_fear_path(x, y) || levl[x][y].typ == STAIRS))
@@ -1473,14 +1475,18 @@ domagicportal(struct trap *ttmp)
     if (!on_level(&u.uz, &u.uz0))
         return;
 
-    You("activated a magic portal!");
+    You("activated an ancient portal!");
 
-    /* prevent the poor shnook, whose amulet was stolen while in
-     * the endgame, from accidently triggering the portal to the
-     * next level, and thus losing the game
-     */
-    if (In_endgame(&u.uz) && !u.uhave.amulet) {
-        You_feel("dizzy for a moment, but nothing happens...");
+    /* Every plane-to-plane portal. Earth, Air, Fire, Water, and
+       the gate into the Astral Plane. The cap and the soul.
+       The refusal is its own dizzy line, not the stair text. */
+    if (In_endgame(&u.uz) && !sanctum_ascent_open()) {
+        if (cap_of_salvation_worn() && !has_endgame_key())
+            pline("Nothing happens. Without thy soul, thou feelest dizzy.");
+        else if (!cap_of_salvation_worn() && has_endgame_key())
+            pline("Nothing happens. Without the helmet of salvation, thou feelest dizzy.");
+        else
+            pline("Nothing happens. Without thy soul and the helmet of salvation, thou feelest dizzy.");
         return;
     }
 

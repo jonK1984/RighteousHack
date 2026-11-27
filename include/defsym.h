@@ -170,7 +170,7 @@
     PCHAR( 62, '^',  S_trap_door, "trap door", CLR_BROWN)
     PCHAR( 63, '^',  S_teleportation_trap, "teleportation trap", CLR_MAGENTA)
     PCHAR( 64, '^',  S_level_teleporter, "level teleporter", CLR_MAGENTA)
-    PCHAR( 65, '^',  S_magic_portal, "magic portal", CLR_BRIGHT_MAGENTA)
+    PCHAR( 65, '^',  S_magic_portal, "ancient portal", CLR_BRIGHT_MAGENTA)
     PCHAR( 66, '"',  S_web, "web", CLR_GRAY)
     PCHAR( 67, '^',  S_statue_trap, "statue trap", CLR_GRAY)
     PCHAR( 68, '^',  S_magic_trap, "magic trap", HI_ZAP)

@@ -68,9 +68,12 @@ amulet(void)
     if (!u.uhave.amulet)
         return;
 #endif
-    if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR)
-         || ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
-        && !rn2(15)) {
+    if (!(amu = carried_player_soul())) {
+        if (((amu = uamul) == 0 || amu->otyp != AMULET_OF_YENDOR)
+            && ((amu = uwep) == 0 || amu->otyp != AMULET_OF_YENDOR))
+            amu = 0;
+    }
+    if (amu && !rn2(15)) {
         for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap) {
             if (ttmp->ttyp == MAGIC_PORTAL) {
                 int du = distu(ttmp->tx, ttmp->ty);
@@ -94,7 +97,7 @@ amulet(void)
             continue;
         if (mtmp->iswiz && mtmp->msleeping && !rn2(40)) {
             mtmp->msleeping = 0;
-            if (!m_next2u(mtmp))
+            if (!m_next2u(mtmp) && u.uhave.amulet)
                 You(
       "get the creepy feeling that somebody noticed your taking the Amulet.");
             return;
@@ -120,6 +123,7 @@ mon_has_special(struct monst *mtmp)
 
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == AMULET_OF_YENDOR
+            || otmp->otyp == PLAYER_SOUL
             || any_quest_artifact(otmp)
             || otmp->otyp == BELL_OF_OPENING
             || otmp->otyp == CANDELABRUM_OF_INVOCATION
@@ -373,7 +377,7 @@ tactics(struct monst *mtmp)
 
     mtmp->mstrategy =
         (mtmp->mstrategy & (STRAT_WAITMASK | STRAT_APPEARMSG
-                            | STRAT_HINNOM_RELEASED)) | strat;
+                            | STRAT_RH_KEEP)) | strat;
 
     switch (strat) {
     case STRAT_HEAL: /* hide and recover */
@@ -721,6 +725,8 @@ resurrect(void)
     long elapsed;
     const char *verb;
 
+    if (perdition_forever())
+        return;
     if (!svc.context.no_of_wizards) {
         /* make a new Wizard */
         verb = "kill";
@@ -818,6 +824,11 @@ void
 wizdeadorgone(void)
 {
     svc.context.no_of_wizards--;
+    /* Slain on the Plane of Heaven, he does not rise again. */
+    if (Is_astralevel(&u.uz)) {
+        u.uevent.petra_step |= 1;
+        pline("The Son of Perdition is cast down, and shall rise up no more.");
+    }
     if (!u.uevent.udemigod) {
         u.uevent.udemigod = TRUE;
         u.udg_cnt = rn1(250, 50);
@@ -871,6 +882,8 @@ static const char *const random_malediction[] = {
 void
 cuss(struct monst *mtmp)
 {
+    const char *arch;
+
     if (Deaf)
         return;
     if (mtmp->iswiz) {
@@ -894,8 +907,11 @@ cuss(struct monst *mtmp)
                       ROLL_FROM(random_malediction),
                       ROLL_FROM(random_insult));
         }
-    } else if (is_lminion(mtmp)
-               && !(mtmp->isminion && EMIN(mtmp)->renegade)) {
+    } else if ((arch = archangel_speech(mtmp)) != 0) {
+        com_pager(arch);
+    } else if (speaks_as_fallen(mtmp)) {
+        com_pager("fallen_angel_cuss");
+    } else if (is_lminion(mtmp)) {
         com_pager("angel_cuss"); /* TODO: the Hallucination msg */
         /*com_pager(rn2(QTN_ANGELIC - 1 + (Hallucination ? 1 : 0))
           + QT_ANGELIC);*/

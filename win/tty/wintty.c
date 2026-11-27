@@ -2252,6 +2252,56 @@ tty_putstr(winid window, int attr, const char *str)
     if (str == (const char *) 0
         || ((cw->flags & WIN_CANCELLED) && (cw->type != NHW_MESSAGE)))
         return;
+    /* Fold text and menu lines before compress_str can cut them
+       at BUFSZ. A blank line stays blank. A word is not split. */
+    if ((cw->type == NHW_TEXT || cw->type == NHW_MENU) && *str) {
+        const char *nl = strchr(str, '\n');
+        int cols = (CO > 20) ? CO - 1 : 79;
+        int n, whole;
+
+        if (cols > BUFSZ - 1)
+            cols = BUFSZ - 1;
+        whole = (int) strlen(str);
+        if (nl == str) {
+            tty_putstr(window, attr, "");
+            if (str[1])
+                tty_putstr(window, attr, str + 1);
+            return;
+        }
+        if (nl || whole > cols) {
+            char buf[BUFSZ];
+            const char *rest;
+
+            n = whole;
+            if (nl && (int) (nl - str) < n)
+                n = (int) (nl - str);
+            if (n > cols) {
+                n = cols;
+                while (n > 0 && str[n] != ' ')
+                    n--;
+                if (n <= 0) {
+                    n = 0;
+                    while (str[n] && str[n] != ' ' && str[n] != '\n')
+                        n++;
+                    if (!n)
+                        n = cols;
+                }
+            }
+            if (n >= BUFSZ)
+                n = BUFSZ - 1;
+            if (n <= 0)
+                n = 1;
+            (void) strncpy(buf, str, (size_t) n);
+            buf[n] = '\0';
+            rest = str + n;
+            if (*rest == ' ' || *rest == '\n')
+                rest++;
+            tty_putstr(window, attr, buf);
+            if (*rest)
+                tty_putstr(window, attr, rest);
+            return;
+        }
+    }
     if (cw->type != NHW_MESSAGE
 #ifdef TTY_PERM_INVENT
         && window != WIN_INVEN
@@ -5733,6 +5783,84 @@ tty_narrow_way_splash(void)
 #endif
     term_clear_screen();
     (void) fflush(stdout);
+}
+
+boolean
+tty_endcut_ok(void)
+{
+    return (boolean) (ttyDisplay && ttyDisplay->rows >= 24
+                      && ttyDisplay->cols >= 80);
+}
+
+static void
+tty_endcut_paint(winid window, int x, int y, int ch, int color, int inv)
+{
+    tty_curs(window, x, y);
+    if (iflags.use_color) {
+        if (ttyDisplay->color != NO_COLOR)
+            term_end_color();
+        ttyDisplay->color = (uint32) color;
+        if (color != NO_COLOR)
+            term_start_color(color);
+    }
+    if (inv)
+        term_start_attr(ATR_INVERSE);
+    if (ch == 1) {
+#if defined(ENHANCED_SYMBOLS) && (defined(WIN32) || defined(UNIX) || defined(MSDOS))
+        if ((tty_procs.wincap2 & WC2_U_UTF8STR) && SYMHANDLING(H_UTF8)) {
+            static uint8 psi[3] = { 0xCE, 0xA8, 0 };
+
+            g_pututf8(psi);
+        } else
+#endif
+            g_putch('D');
+    } else {
+        g_putch(ch ? ch : ' ');
+    }
+    if (inv)
+        term_end_attr(ATR_INVERSE);
+}
+
+void
+tty_endcut_begin(void)
+{
+    if (ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    ttyDisplay->color = NO_COLOR;
+    term_clear_screen();
+}
+
+void
+tty_endcut_cell(int x, int y, int ch, int color, int inv)
+{
+    tty_endcut_paint(BASE_WINDOW, x + 1, y, ch, color, inv);
+}
+
+void
+tty_endcut_mapcell(int x, int y, int ch, int color, int inv)
+{
+    if (WIN_MAP == WIN_ERR)
+        return;
+    tty_endcut_paint(WIN_MAP, (int) x, (int) y, ch, color, inv);
+}
+
+void
+tty_endcut_flush(void)
+{
+    if (ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    ttyDisplay->color = NO_COLOR;
+    (void) fflush(stdout);
+}
+
+void
+tty_endcut_end(void)
+{
+    term_end_attr(ATR_INVERSE);
+    if (ttyDisplay && ttyDisplay->color != NO_COLOR)
+        term_end_color();
+    if (ttyDisplay)
+        ttyDisplay->color = NO_COLOR;
 }
 
 #endif /* TTY_GRAPHICS */

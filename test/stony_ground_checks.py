@@ -155,7 +155,37 @@ class Cuts(unittest.TestCase):
         self.assertIn('name = "young believer", x = 42, y = 11', LUA)
         self.assertIn('name = "old man", x = 48, y = 11', LUA)
         self.assertIn('name = "mother", x = 54, y = 11', LUA)
-        self.assertIn('x = 48, y = 13', LUA)
+        self.assertIn('x = 71, y = 18', LUA)
+        self.assertNotIn('x = 48, y = 13', LUA)
+
+    def test_the_hidden_trail_reaches_the_chest(self):
+        rows = map_rows()
+        self.assertEqual(len(rows), 21)
+        self.assertTrue(all(len(row) == 75 for row in rows))
+        self.assertEqual(rows[12][59], "S")
+        self.assertEqual(rows[12][60:65], "#####")
+        self.assertEqual(rows[13][64], "#")
+        self.assertEqual(rows[14][64], "#")
+        self.assertEqual(rows[15][64:68], "####")
+        for y in range(16, 20):
+            self.assertEqual(rows[y][66:73], ".......", y)
+        self.assertEqual(rows[18][71], ".")
+        for y in range(5, 10):
+            self.assertEqual(rows[y][47:49], "##", y)
+        self.assertIn('des.door("secret", 59, 12)', LUA)
+        self.assertIn('"nomongen"', LUA)
+        self.assertIn('"hardfloor"', LUA)
+        self.assertIn('"noflip"', LUA)
+        self.assertIn("#define CHEST_X MX(71)", SRC)
+        self.assertIn("#define CHEST_Y MY(18)", SRC)
+        walk = walkable(rows)
+        camp = (48, 12)
+        door = (59, 12)
+        chest = (71, 18)
+        self.assertIn(camp, walk)
+        self.assertTrue(reaches(walk, set(), camp, door))
+        self.assertTrue(reaches(walk, set(), door, chest))
+        self.assertFalse(reaches(walk, {door}, camp, chest))
 
 
 class Rules(unittest.TestCase):

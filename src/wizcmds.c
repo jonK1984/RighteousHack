@@ -398,9 +398,11 @@ wiz_load_splua(void)
 int
 wiz_level_tele(void)
 {
-    if (wizard)
+    if (wizard) {
+        road_set_wizport(TRUE);
         level_tele();
-    else
+        road_set_wizport(FALSE);
+    } else
         pline(unavailcmd, ecname_from_fn(wiz_level_tele));
     return ECMD_OK;
 }

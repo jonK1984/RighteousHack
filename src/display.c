@@ -2298,7 +2298,7 @@ back_to_glyph(coordxy x, coordxy y)
         idx = svl.level.flags.arboreal ? S_tree : S_stone;
         break;
     case ROOM:
-        idx = S_room;
+        idx = (goodground_fig(x, y) >= 0) ? S_tree : S_room;
         break;
     case CORR:
         idx = (ptr->waslit || flags.lit_corridor) ? S_litcorr : S_corr;
@@ -2653,6 +2653,60 @@ map_glyphinfo(
         glyphinfo->gm.sym.symidx = mons[glyph_to_mon(glyph)].mlet + SYM_OFF_M;
     }
     glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+    /* Plane of Heaven. Fallen angels keep the A, in red. Lucifer is
+       inverse red: Greek psi when this symset can show Unicode, else D. */
+    if (isok(x, y)) {
+        struct monst *hm = m_at(x, y);
+
+        if (hm && iflags.use_color) {
+            if (is_heaven_fallen(hm))
+                glyphinfo->gm.sym.color = CLR_RED;
+            else if (is_heaven_priest(hm))
+                glyphinfo->gm.sym.color = CLR_RED;
+            else if (is_heaven_cherub(hm))
+                glyphinfo->gm.sym.color = CLR_BRIGHT_BLUE;
+            else if (is_heaven_seraph(hm))
+                glyphinfo->gm.sym.color = CLR_YELLOW;
+            else if (is_heaven_arch(hm))
+                glyphinfo->gm.sym.color = CLR_WHITE;
+            else if (is_heaven_lord(hm))
+                glyphinfo->gm.sym.color = CLR_GRAY;
+        }
+        if (hm && is_lucifer(hm) && M_AP_TYPE(hm) == M_AP_NOTHING) {
+            glyphinfo->gm.glyphflags |= MG_INVERSE;
+            glyphinfo->ttychar = 'D';
+            if (iflags.use_color)
+                glyphinfo->gm.sym.color = CLR_RED;
+#ifdef ENHANCED_SYMBOLS
+            if (SYMHANDLING(H_UTF8)) {
+                static uint8 lucifer_utf8[] = { 0xCE, 0xA8, 0 };
+                static struct unicode_representation lucifer_psi = {
+                    0x03A8, 0
+                };
+
+                lucifer_psi.utf8str = lucifer_utf8;
+                glyphinfo->gm.u = &lucifer_psi;
+            }
+#endif
+        }
+    }
+    /* The Plane of Heaven's named chest is yellow. Ordinary chests
+       stay the color of wood. The name is already saved. */
+    if (iflags.use_color && !Hallucination && isok(x, y)
+        && glyph_is_normal_object(glyph)) {
+        struct obj *goldchest = vobj_at(x, y);
+
+        if (is_heaven_chest(goldchest))
+            glyphinfo->gm.sym.color = CLR_YELLOW;
+    }
+    /* Fig trees keep the tree symbol, colored purple, eaten or not. */
+    if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
+        && !u_at(x, y)) {
+        glyphinfo->gm.sym.symidx = S_tree + SYM_OFF_P;
+        if (iflags.use_color)
+            glyphinfo->gm.sym.color = CLR_MAGENTA;
+        glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+    }
     /* PETRA letters are drawn on the floor itself, in tty as well.
        Unseen squares stay blank. */
     if (glyph_is_cmap(glyph) && isok(x, y)

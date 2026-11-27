@@ -77,10 +77,47 @@ questtext = {
          "\"Repent, for the Kingdom of Heaven is at hand!\"",
          "\"It is written: 'Thou shalt worship the Lord thy God, and Him only shalt thou serve.'\"",
          "\"Depart from me, ye worker of iniquity!\"",
-         "\"The wages of sin is death - but the gift of God is enternal life through Christ Jesus our Lord.\"",
+         "\"The wages of sin is death - but the gift of God is eternal life through Christ Jesus our Lord.\"",
          "\"Who has told you of the wrath that is to come!\"",
          "\"Behold, the Lamb of God cometh to judge the living and the dead.\"",
          "\"Even now the axe is laid to the root of the tree.\"",
+      },
+      fallen_angel_cuss = {
+         "\"Ye shall not surely die.\"",
+         "\"I will ascend above the heights of the clouds; I will be like the most High.\"",
+         "\"Fall down before the Dragon, and rise up a king.\"",
+         "\"What profit hath thy faithfulness brought thee? Kneel, and know true power.\"",
+         "\"We have beheld His face, and we chose otherwise.\"",
+         "\"Why serve when thou mightest reign?\"",
+         "\"We kept not our first estate, and we repent not of it.\"",
+         "\"The Dragon hath promised us thrones. What hath thy Lord promised thee?\"",
+         "\"Thou art but dust, and unto dust thou shalt return. We are flame.\"",
+         "\"We were cast down once. We shall not be cast down again.\"",
+      },
+      michael_speech = {
+         "\"Take thy place beside me, and let the dragon see that the Lord's host lacketh not for warriors.\"",
+         "\"Stand fast, soldier of the Lord. The dragon's host breaketh upon us as the sea upon the rock.\"",
+         "\"I cast him down once from these courts. By the Lord's hand I shall cast him down again.\"",
+         "\"Who is like unto God? Not the dragon, nor any of his host.\"",
+      },
+      gabriel_speech = {
+         "\"I am Gabriel, that stand in the presence of God.\"",
+         "\"For with God nothing shall be impossible.\"",
+         "\"I have borne good tidings to the lowly. Now I bear the sword against the serpent.\"",
+         "\"Fear not. The trumpet that hath sounded this day shall sound again at the last.\"",
+      },
+      raphael_speech = {
+         "\"I am but a servant of the Most High. Give thanks unto Him, for He hath kept thee unto this hour.\"",
+         "\"Thy wounds are seen, mortal. Endure, for healing cometh in the morning.\"",
+         "\"Many have fallen on the road thou hast walked. Thou art still standing, and that is the Lord's doing.\"",
+         "\"Be of good courage, mortal. No wound the dragon giveth can reach the soul the Lord hath kept.\"",
+         "\"Thy soul was bought at a great price. Let not the dragon steal it back.\"",
+      },
+      uriel_speech = {
+         "\"I have kept the deep and the chains thereof. There is room yet in Tartarus for the dragon's host.\"",
+         "\"I watched over thee in the world below. Now behold the war thou wast made for.\"",
+         "\"The light of God shineth here, and no darkness may hide from it.\"",
+         "\"Lift thine eyes, mortal. The end of thy road is at hand.\"",
       },
       banished = {
          synopsis = "[You have been cast out from the fellowship of the faithful.]",
@@ -146,7 +183,7 @@ from a throne of glory:
 Trembling, you rise. The voice continues:
 
 "I am sending you to the depths of the earth, where the accuser of the 
-bretheren, that ancient serpent who is called the Devil and Satan,
+brethren, that ancient serpent who is called the Devil and Satan,
 has bound a soul captive which I have ordained for redemption. Descend into the 
 great cave that opens beneath this place. Find the soul, break the chains 
 the Adversary has forged, and bring my %SC into the light. Do exactly as I command. 
@@ -305,13 +342,13 @@ you know you must return %o to %l.]],
          "\"So you're %ls prize pupil!  I don't know what he sees in you.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and sacrifice it at the altar of %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and sacrifice it at the altar of %d.]",
          output = "text",
          text = [["Congratulations, %p.  I wondered if anyone could prevail against
 the minions of the Great Dragon.  Now, you must embark on one
 final adventure.
 
-"Take the Amulet, and find your way onto the Astral Plane.
+"Take the Amulet, and find your way onto the Plane of Heaven.
 There you must find the altar of %d and sacrifice the
 Amulet on that altar to fulfill your destiny.
 
@@ -397,12 +434,12 @@ guard it now far better than I.
 May the blessings of %d follow you and guard you."]],
       },
       offeredit2 = {
-         synopsis = "[\"Resume your search for the Amulet beyond the magic portal to %Z.\"]",
+         synopsis = "[\"Resume your search for the Amulet beyond the ancient portal to %Z.\"]",
          output = "text",
          text = [["Careful, %p!  %oC might break, and that would be
 a tragic loss.  You are its keeper now, and the time has come to
 resume your search for the Amulet.  %Z await your
-return through the magic portal that brought you here."]],
+return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.
@@ -530,14 +567,14 @@ in your path.]],
          "\"%lC grows old.  We know not who will guide us after he ascends.\"",
       },
       hasamulet = {
-         synopsis = "[\"Take the Amulet to the altar of %d on the Astral Plane and offer it.\"]",
+         synopsis = "[\"Take the Amulet to the altar of %d on the Plane of Heaven and offer it.\"]",
          output = "text",
          text = [["You have been successful, I see, %p.
 
 "Now that the Amulet of Yendor is yours, here is what you must do:
 
 "Journey upwards to the open air.  The Amulet you carry will then
-take you into the Astral Planes, where the Great Temple of %d
+take you into the Planes of Heaven, where the Great Temple of %d
 casts its influence throughout our world.
 
 "Sacrifice the Amulet on the altar.  Thus shall %d become supreme!"]],
@@ -627,7 +664,7 @@ He smiles and says:
 
 "You are its keeper now, and the time has come to resume your search
 for the Amulet.  %Z await your return through the
-magic portal which brought you here."]],
+ancient portal which brought you here."]],
       },
       othertime = {
          text = [[For some reason, you think that this may be the last time you will
@@ -752,12 +789,12 @@ again.]],
          "\"We think %n has used %nj alchemists, and %o, to unleash a new disease we call 'the cold' on Gehennom.\"",
       },
       hasamulet = {
-         synopsis = "[\"You have recovered the Amulet.  Travel to the Astral Plane and return it to %d.\"]",
+         synopsis = "[\"You have recovered the Amulet.  Travel to the Plane of Heaven and return it to %d.\"]",
          output = "text",
          text = [["Ah, you have recovered the Amulet, %p.  Well done!
 
 "Now, you should know that you must travel through the Elemental Planes
-to the Astral, and there return the Amulet to %d.  Go forth and
+to the Plane of Heaven, and there return the Amulet to %d.  Go forth and
 may our prayers be as a wind upon your back."]],
       },
       killed_nemesis = {
@@ -860,7 +897,7 @@ has finished %lh speaks to you.
 
 "You are its keeper now, and the time has come to resume your search
 for the Amulet.  %Z await your return through the
-magic portal which brought you here."]],
+ancient portal which brought you here."]],
       },
       othertime = {
          text = [[Again, you %x %H in the distance.
@@ -985,10 +1022,10 @@ a long sleep.]],
          "\"Many brave %cP died when %n attacked.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and deliver it to %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and deliver it to %d.]",
          output = "text",
          text = [["Thou hast succeeded, We see, %p!  Now thou art commanded to take
-the Amulet to be sacrificed to %d in the Plane of the Astral.
+the Amulet to be sacrificed to %d in the Plane of Heaven.
 
 "Merlin hath counseled Us that thou must travel always upwards through
 the Planes of the Elements, to achieve this goal.
@@ -1078,7 +1115,7 @@ puny %r.  Thou wilt die in agony!"]],
          text = [["Careful, %p!  %oC might break, and that would
 be a tragic loss.  Thou art its keeper now, and the time hath come
 to resume thy search for the Amulet.  %Z await thy
-return through the magic portal that brought thee here."]],
+return through the ancient portal that brought thee here."]],
       },
       othertime = {
          text = [[Again, you stand before %H.  You vaguely sense that this
@@ -1197,11 +1234,11 @@ as possible.]],
          "\"May %d be with you, %s.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and deliver it to %d.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and deliver it to %d.]",
          output = "text",
          text = [["You have prevailed, %p!  %d is surely with you.  Now,
 you must take the Amulet, and sacrifice it on %ds altar on
-the Astral Plane.  I suspect that I shall never see you again in this
+the Plane of Heaven.  I suspect that I shall never see you again in this
 life, but I hope to at %ds feet."]],
       },
       killed_nemesis = {
@@ -1289,7 +1326,7 @@ then returns his gaze to you.
 
 "%oC must remain with you.  Use %oi
 as you resume your search for the Amulet.
-%Z await your return through the magic portal
+%Z await your return through the ancient portal
 that brought you here."]],
       },
       othertime = {
@@ -1411,11 +1448,11 @@ as possible.]],
          "\"May %d be with you, %s.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and offer it on %ds altar.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and offer it on %ds altar.]",
          output = "text",
          text = [["You have prevailed, %p!  %d is surely with you.  Now,
 you must take the amulet, and sacrifice it on %ds altar on
-the Astral Plane.  I suspect that I shall never see you again in this
+the Plane of Heaven.  I suspect that I shall never see you again in this
 life, but I hope to at %ds feet."]],
       },
       killed_nemesis = {
@@ -1509,7 +1546,7 @@ of Yendor.
          text = [[%lC reiterates that %o is yours now.
 
 "The time has come to resume your search for the Amulet.
-%Z await your return through the magic portal
+%Z await your return through the ancient portal
 that brought you here."]],
       },
       othertime = {
@@ -1633,13 +1670,13 @@ on your speed.]],
          "\"We must regain %o.  Without it we will be overrun.\"",
       },
       hasamulet = {
-         synopsis = "[You have the Amulet!  Take it to the Astral Plane and offer it to %d.]",
+         synopsis = "[You have the Amulet!  Take it to the Plane of Heaven and offer it to %d.]",
          output = "text",
          text = [["You have it!  You have recovered the Amulet of Yendor!
 Now attend to me, %p, and I will tell you what must be done:
 
 "The Amulet has within it magic, the capability to transport you to
-the Astral Plane, where the primary circle of %d resides.
+the Plane of Heaven, where the primary circle of %d resides.
 
 "To activate this magic, you must travel upwards as far as you can.
 When you reach the temple, sacrifice the Amulet to %d.
@@ -1741,7 +1778,7 @@ the Amulet."]],
 "With this wondrous bow, one need never run out of arrows.
 You are its keeper now, and the time has come to resume your
 search for the Amulet.  %Z await your return
-through the magic portal that brought you here."]],
+through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You have the oddest feeling that this may be the last time you
@@ -1845,12 +1882,12 @@ you know that you must do likewise.]],
          "\"Be careful what you steal, I hear the boss has perfected turning rocks into worthless pieces of glass.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane and find %ds temple.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven and find %ds temple.]",
          output = "text",
          text = [["I see that with your abilities, and my brains, we could rule this world.
 
 "All that we would need to be all-powerful is for you to take that little
-trinket you've got there up to the Astral Plane.  From there, %d will
+trinket you've got there up to the Plane of Heaven.  From there, %d will
 show you what to do with it.  Once that's done, we will be invincible!"]],
       },
       killed_nemesis = {
@@ -1945,7 +1982,7 @@ the mundane one you detect in his pocket, but noticing your alertness,
 evidently chickens out.
 
 "Go filch the Amulet before someone else beats you to it.
-%Z are back the way you came, through the magic portal."]],
+%Z are back the way you came, through the ancient portal."]],
       },
       othertime = {
          text = [[You rub your hands through your hair, hoping that the little ones on
@@ -2074,7 +2111,7 @@ sun goddess.]],
          "\"If %o is not returned, we will all be ronin.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to the Astral Plane to finish your task.]",
+         synopsis = "[Take the Amulet to the Plane of Heaven to finish your task.]",
          output = "text",
          text = [["Ah, %p-sama.  You have wasted your efforts returning home.
 Now that you are in possession of the Amulet, you are honor-bound to
@@ -2176,7 +2213,7 @@ With that, %l bows, and places his sword atop
 his gaze to you.
 
 "The time is ripe to recover the Amulet.  Return to %Z
-through the magic portal that transported you here so that you may
+through the ancient portal that transported you here so that you may
 achieve the destiny which awaits you."]],
       },
       othertime = {
@@ -2298,7 +2335,7 @@ to quickly return to %H and find %l.]],
          "\"They told me that this was the off season!\"",
       },
       hasamulet = {
-         synopsis = "[You have the Amulet.  Take it to the Astral Plane to finish your task.]",
+         synopsis = "[You have the Amulet.  Take it to the Plane of Heaven to finish your task.]",
          output = "text",
          text = [["Stand back and let me look at you, %p.
 Now that you have recovered the Amulet of Yendor, I'm afraid living
@@ -2401,7 +2438,7 @@ As he looks up from %o he says:
          synopsis = "[Keep %o and return to %Z through the portal.]",
          output = "text",
          text = [["%oC is yours now.  %Z
-await your return through the magic portal that brought you here."]],
+await your return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.
@@ -2520,12 +2557,11 @@ realize that you must return %o to %l immediately.]],
          "\"I would deal with this foul %n myself, but %d forbids it.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to %ds temple on the Astral Plane and offer it.]",
+         synopsis = "[Take the Amulet to %ds temple on the Plane of Heaven and offer it.]",
          output = "text",
          text = [["Excellent, %p.  I see you have recovered the Amulet!
 
-"You must take the Amulet to the Great Temple of %d, on the Astral
-Plane.  There you must offer the Amulet to %d.
+"You must take the Amulet to the Great Temple of %d, on the Plane of Heaven.  There you must offer the Amulet to %d.
 
 "Go now, my %S.  I cannot tell you your fate, as the power of the
 Amulet interferes with mine.  I hope for your success."]],
@@ -2613,7 +2649,7 @@ May your steps be guided by %d, my %S."]],
          text = [["Careful, %p!  %oC might break, and that would be
 a tragic loss.  You are its keeper now, and the time has come to
 resume your search for the Amulet.  %Z await your
-return through the magic portal that brought you here."]],
+return through the ancient portal that brought you here."]],
       },
       othertime = {
          text = [[Again you materialize near %ls abode.  You have a nagging feeling
@@ -2726,25 +2762,25 @@ owner, %l.]],
       },
       guardtalk_after = {
          "\"I have some eye of newt to trade, do you have a spare blind-worm's sting?\"",
-         "\"The magic portal now seems like it will remain stable for quite some time.\"",
+         "\"The ancient portal now seems like it will remain stable for quite some time.\"",
          "\"Have you noticed how much stronger %l is since %o was recovered?\"",
          "\"Thank %d!  We weren't positive you would defeat %n.\"",
          "\"I, too, will venture into the world, because %n was but one of many evils to be vanquished.\"",
       },
       guardtalk_before = {
          "\"Would you happen to have some eye of newt in that overstuffed pack, %s?\"",
-         "\"Ah, the spell to create the magic portal worked.  Outstanding!\"",
+         "\"Ah, the spell to create the ancient portal worked.  Outstanding!\"",
          "\"Hurry!  %lC may not survive that casting of the portal spell!\"",
          "\"The spells of %n were just too powerful for us to withstand.\"",
          "\"I, too, will venture into the world, because %n is but one of many evils to be vanquished.\"",
       },
       hasamulet = {
-         synopsis = "[Take the Amulet to %ds altar on the Astral Plane.]",
+         synopsis = "[Take the Amulet to %ds altar on the Plane of Heaven.]",
          output = "text",
          text = [["Congratulations, %p.  I always knew that if anyone could succeed
 in defeating the Son of Perdition and his minions, it would be you.
 
-"Go now, and take the Amulet to the Astral Plane.  Once there, present
+"Go now, and take the Amulet to the Plane of Heaven.  Once there, present
 the Amulet on the altar of %d.  Along the way you shall pass through
 the four Elemental Planes.  These planes are like nothing you have ever
 experienced before, so be prepared!
@@ -2838,7 +2874,7 @@ beams at you and says:
          output = "text",
          text = [["You are the keeper of %o now.  It is time to
 recover the /other/ Amulet.  %Z await your return through
-the magic portal which brought you here."]],
+the ancient portal which brought you here."]],
       },
       othertime = {
          text = [[You are back at %H.

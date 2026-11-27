@@ -1187,6 +1187,10 @@ makemon(
     /* The Son of Perdition does not enter a trial. */
     if (ptr == &mons[PM_WIZARD_OF_YENDOR] && trial_bars_son())
         return (struct monst *) 0;
+    /* The Good Ground keeps only its flock and its two shepherds. */
+    if (ptr && goodground_here() && ptr != &mons[PM_SHEEP]
+        && ptr != &mons[PM_SHEPHERD])
+        return (struct monst *) 0;
 
     /* if caller wants random location, do it here */
     if (x == 0 && y == 0) {

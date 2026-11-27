@@ -454,7 +454,9 @@ describe_level(
     } else if (In_endgame(&u.uz)) {
         /* [3.6.2: this used to be "Astral Plane" or generic "End Game"] */
         (void) endgamelevelname(buf, depth(&u.uz));
-        if (!addbranch)
+        /* Earth, Air, Fire, and Water show as the element. The Plane
+           of Heaven keeps the full name on the status line. */
+        if (!addbranch && strcmp(buf, "Plane of Heaven"))
             (void) strsubst(buf, "Plane of ", ""); /* just keep <element> */
         addbranch = FALSE;
     } else if (addbranch && Is_sanctum(&u.uz)) {

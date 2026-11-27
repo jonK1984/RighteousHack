@@ -534,7 +534,7 @@ do_attack(struct monst *mtmp)
     if (thorns_unharmed(mtmp))
         return TRUE;
     if (mtmp->data == &mons[PM_MICHAEL]) {
-        pline("You cannot bring yourself to strike %s.", mon_nam(mtmp)); /* PLACEHOLDER */
+        pline("You cannot bring yourself to strike %s.", mon_nam(mtmp));
         return TRUE;
     }
     if (fortress_monster(mtmp))
@@ -1871,6 +1871,10 @@ hmon_hitmon(
 
     if (hmd.dmg > 0)
         hmon_hitmon_dmg_recalc(&hmd, obj);
+    /* The sword of the Spirit is double against the Great Dragon. */
+    if (hmd.dmg > 0 && is_lucifer(mon) && obj
+        && obj->oartifact == ART_SWORD_OF_THE_SPIRIT)
+        hmd.dmg *= 2;
 
     if (hmd.ispoisoned)
         hmon_hitmon_poison(&hmd, mon, obj);
@@ -5463,6 +5467,10 @@ mhitm_knockback(
         }
         return FALSE;
     }
+
+    /* The blow would throw the hero. The blanket may keep the seat. */
+    if (dismount && blanket_keeps_seat())
+        return TRUE;
 
     /* subtly vary the message text if monster won't actually move */
     knockedhow = dismount ? "out of your saddle"

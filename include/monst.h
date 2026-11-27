@@ -183,14 +183,37 @@ struct monst {
 #define STRAT_PLAYER    0x01000000L
 #define STRAT_NONE      0x00000000L
 #define STRAT_STRATMASK 0x0f000000L
-    /* mstrategy unused 0x00fffc00L */
-    /* Portal host (Michael or an angel with him) has left meditation.
-       Lives in the unused range, so the monster record is unchanged. */
-#define STRAT_HINNOM_RELEASED 0x00000100L
-    /* One of the Host making for Moloch once the field is down. */
-#define STRAT_HINNOM_THRONE   0x00000200L
 #define STRAT_GOAL      0x000000ffL
-
+    /* RighteousHack marks. Each one is its own bit in the gap
+       between STRAT_GOAL (bits 0-7) and the stock strategy
+       (bits 24-31). EDITLEVEL stays 20: this is the same word.
+       No new monster kind: that would lengthen mvitals.
+       Bits 20-23 (0x00f00000) are still free. */
+#define STRAT_HINNOM_RELEASED 0x00000100L /* bit 8: left meditation */
+#define STRAT_HINNOM_THRONE   0x00000200L /* bit 9: making for Moloch */
+#define STRAT_LUCIFER         0x00000400L /* bit 10 */
+#define STRAT_LUCIFER_WAIT    0x00000800L /* bit 11 */
+#define STRAT_HEAVEN_LORD     0x00001000L /* bit 12 */
+#define STRAT_HEAVEN_FALLEN   0x00002000L /* bit 13 */
+#define STRAT_HEAVEN_CHERUB   0x00004000L /* bit 14 */
+#define STRAT_HEAVEN_SERAPH   0x00008000L /* bit 15 */
+#define STRAT_HEAVEN_ARCH     0x00010000L /* bit 16 */
+#define STRAT_HEAVEN_PRIEST   0x00020000L /* bit 17 */
+    /* Two hero blows on Moloch. Bits 18-19. This used to be
+       0x00000c00, which is STRAT_LUCIFER and STRAT_LUCIFER_WAIT. */
+#define MOLOCH_HIT_SHIFT      18
+#define MOLOCH_HIT_MASK       0x000c0000L /* bits 18-19 */
+#define MOLOCH_HIT_OLD_SHIFT  10
+#define MOLOCH_HIT_OLD_MASK   0x00000c00L
+#define STRAT_RH_KEEP (STRAT_HINNOM_RELEASED | STRAT_HINNOM_THRONE \
+                       | STRAT_LUCIFER | STRAT_LUCIFER_WAIT \
+                       | STRAT_HEAVEN_LORD | STRAT_HEAVEN_FALLEN \
+                       | STRAT_HEAVEN_CHERUB | STRAT_HEAVEN_SERAPH \
+                       | STRAT_HEAVEN_ARCH | STRAT_HEAVEN_PRIEST \
+                       | MOLOCH_HIT_MASK)
+#define STRAT_STOCK_MASK (STRAT_GOAL | STRAT_STRATMASK | STRAT_WAITMASK \
+                          | STRAT_APPEARMSG | STRAT_ARRIVE | STRAT_HEAL \
+                          | STRAT_GROUND | STRAT_MONSTR | STRAT_PLAYER)
     coord mgoal;           /* monster strategy, target location */
     long mtrapseen;        /* bitmap of traps we've been trapped in */
     long mlstmv;           /* for catching up with lost time */
@@ -207,6 +230,18 @@ struct monst {
 };
 
 #define newmonst() (struct monst *) alloc(sizeof (struct monst))
+
+/* A negative array size means two marks share a bit, or a mark
+   sits on a stock bit. */
+typedef char rh_strat_bits_overlap[
+    ((STRAT_HINNOM_RELEASED + STRAT_HINNOM_THRONE
+      + STRAT_LUCIFER + STRAT_LUCIFER_WAIT
+      + STRAT_HEAVEN_LORD + STRAT_HEAVEN_FALLEN
+      + STRAT_HEAVEN_CHERUB + STRAT_HEAVEN_SERAPH
+      + STRAT_HEAVEN_ARCH + STRAT_HEAVEN_PRIEST
+      + MOLOCH_HIT_MASK) == STRAT_RH_KEEP
+     && (STRAT_RH_KEEP & STRAT_STOCK_MASK) == 0
+     && (MOLOCH_HIT_MASK & MOLOCH_HIT_OLD_MASK) == 0) ? 1 : -1];
 
 /* these are in mspeed */
 #define MSLOW 1 /* slowed monster */
@@ -231,6 +266,60 @@ struct monst {
 #define is_peter(mon) \
     (has_mgivenname(mon) \
      && !strcmp(MGIVENNAME(mon), "Peter the Fisherman"))
+
+/* On the map, the mark only counts on the Plane of Heaven.
+   A migrating monster has no map, so the kind and the bit are enough. */
+#define rh_on_heaven(mon) \
+    (((mon)->mstate & MON_MIGRATING) || Is_astralevel(&u.uz))
+
+/* Lucifer is a red dragon marked with STRAT_LUCIFER. A stray bit
+   on any other kind is not him. */
+#define is_lucifer(mon) \
+    ((mon) && (mon)->data == &mons[PM_RED_DRAGON] \
+     && ((mon)->mstrategy & STRAT_LUCIFER) != 0L \
+     && rh_on_heaven(mon))
+
+/* The Lord's host and the Dragon's priests reuse ki-rin, Archon,
+   Angel, and aligned cleric. The bit counts only on that kind. */
+#define is_heaven_cherub(mon) \
+    ((mon) && (mon)->data == &mons[PM_KI_RIN] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_CHERUB) != 0L \
+     && rh_on_heaven(mon))
+#define is_heaven_seraph(mon) \
+    ((mon) && (mon)->data == &mons[PM_ARCHON] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_SERAPH) != 0L \
+     && rh_on_heaven(mon))
+#define is_heaven_arch(mon) \
+    ((mon) && (mon)->data == &mons[PM_ARCHON] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_ARCH) != 0L \
+     && rh_on_heaven(mon))
+#define is_heaven_priest(mon) \
+    ((mon) && (mon)->data == &mons[PM_ALIGNED_CLERIC] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_PRIEST) != 0L \
+     && rh_on_heaven(mon))
+#define is_heaven_fallen(mon) \
+    ((mon) && (mon)->data == &mons[PM_ANGEL] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_FALLEN) != 0L \
+     && rh_on_heaven(mon))
+/* Fallen angels, and minions who have turned, do not use the
+   faithful angel lines. */
+#define speaks_as_fallen(mon) \
+    ((mon) && (is_heaven_fallen(mon) \
+               || ((mon)->isminion && has_emin(mon) \
+                   && EMIN(mon)->renegade)))
+#define is_heaven_lord(mon) \
+    ((mon) && (mon)->data == &mons[PM_ANGEL] \
+     && ((mon)->mstrategy & STRAT_HEAVEN_LORD) != 0L \
+     && rh_on_heaven(mon))
+#define heaven_lords_host(mon) \
+    (is_heaven_lord(mon) || is_heaven_cherub(mon) \
+     || is_heaven_seraph(mon) || is_heaven_arch(mon))
+
+/* Bit 0 of the unused petra_step field. The field already exists. */
+#define perdition_forever() ((u.uevent.petra_step & 1) != 0)
+
+/* Bit 1 of petra_step. The archangels arrive once. */
+#define heaven_host_arrived() ((u.uevent.petra_step & 2) != 0)
 
 /* monsters which cannot be displaced: temple priests, shopkeepers,
    vault guards, Isaiah, Peter, quest leader */

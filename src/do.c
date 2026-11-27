@@ -1254,13 +1254,13 @@ dodown(void)
     if (stairs_down && stony_block_stairs(FALSE))
         return ECMD_OK;
     if (stairs_down && invocation_pos(u.ux, u.uy) && !u.uevent.invoked) {
-        pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it."); /* PLACEHOLDER */
+        pline("The Gate of the Sanctum stays shut. The Key to the Sanctum will open it.");
         return ECMD_OK;
     }
 
     if (on_level(&valley_level, &u.uz) && !u.uevent.gehennom_entered) {
         if (!carrying(KEY_TO_GATES)) {
-            pline("The gates of Gehennom stay shut. The key Peter gave you will open them."); /* PLACEHOLDER */
+            pline("The gates of Gehennom stay shut. The key Peter gave you will open them.");
             return ECMD_OK;
         }
         You("are standing at the gate to Gehennom.");
@@ -1275,6 +1275,8 @@ dodown(void)
         You("are held back by your pet!");
         return ECMD_OK;
     }
+    if (road_bars_leave((d_level *) 0))
+        return ECMD_OK;
 
     if (trap) {
         const char *down_or_thru = trap->ttyp == HOLE ? "down" : "through";
@@ -1337,6 +1339,10 @@ doup(void)
         You_cant("go up here.");
         return ECMD_OK;
     }
+    /* The top of the Dungeons keeps its own leaving question and death.
+       Every other climb is sealed once the Road has begun. */
+    if (!(!u.uz.dnum && u.uz.dlevel == 1) && road_bars_leave((d_level *) 0))
+        return ECMD_OK;
     if (Is_sanctum(&u.uz)
         && (u.uevent.sanctum_grace || u.uevent.sanctum_doom)) {
         pline("The hosts of darkness bar the way.");
@@ -1360,7 +1366,8 @@ doup(void)
              levl[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
         return ECMD_TIME;
     }
-    if (ledger_no(&u.uz) == 1) {
+    /* The main dungeon level 1 asks its own leaving question. */
+    if (ledger_no(&u.uz) == 1 && (u.uz.dnum || u.uz.dlevel != 1)) {
         if (iflags.debug_fuzzer)
             return ECMD_OK;
         if (y_n("Beware, there will be no return!  Still climb?") != 'y')
@@ -1376,6 +1383,7 @@ doup(void)
         return ECMD_OK;
     /* Alive, and taking the up stair: the Thorns counts as finished. */
     thorns_note_ascent();
+    goodground_note_ascent();
     ga.at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
     prev_level(TRUE);
     ga.at_ladder = FALSE;
@@ -1633,6 +1641,10 @@ goto_level(
 
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
+    /* The bit is set only for wizard #levelchange. It is still on
+       u.utotype when a deferred departure arrives here. */
+    if (!(u.utotype & UTOTYPE_WIZPORT) && road_bars_leave(newlevel))
+        return;
     if (u.uevent.wilderness_sealed
         && !strcmp(svd.dungeons[newlevel->dnum].dname, "The Wilderness Trial")) {
         pline("The wilderness is sealed.");
@@ -1674,8 +1686,8 @@ goto_level(
         return;
     if (newdungeon) {
         if (In_endgame(newlevel)) { /* 1st Endgame Level !!! */
-            if (!u.uhave.amulet)
-                return;  /* must have the Amulet */
+            if (!carried_player_soul())
+                return;  /* the soul stands in for the Amulet */
             if (!wizard) /* wizard ^V can bypass Earth level */
                 assign_level(newlevel, &earth_level); /* (redundant) */
         } else if (In_tutorial(newlevel)) {
@@ -2091,6 +2103,9 @@ goto_level(
     vision_reset(); /* reset the blockages */
     reset_glyphmap(gm_levelchange);
     notice_mon_off(); /* not noticing monsters yet! */
+    /* A saved Good Ground may have floor where the stairs belong.
+       Plant them before the map is drawn. */
+    goodground_repair();
     docrt(); /* does a full vision recalc */
     flush_screen(-1);
 
@@ -2157,7 +2172,8 @@ goto_level(
         if (new && on_level(&u.uz, &astral_level)) {
             final_level(); /* guardian angel,&c */
             record_achievement(ACH_ASTR); /* reached Astral level */
-        } else if (newdungeon && u.uhave.amulet) {
+            heaven_tick();
+        } else if (newdungeon && carried_player_soul()) {
             resurrect(); /* force confrontation with Wizard */
         }
     } else if (In_quest(&u.uz)) {
@@ -2339,8 +2355,14 @@ schedule_goto(
     int utotype_flags,
     const char *pre_msg, const char *post_msg)
 {
+    int depart = utotype_flags | UTOTYPE_DEFERRED;
+
+    if (road_wizport_now())
+        depart |= UTOTYPE_WIZPORT;
+    if (!(depart & UTOTYPE_WIZPORT) && road_bars_leave(tolev))
+        return;
     /* UTOTYPE_DEFERRED is used, so UTOTYPE_NONE can trigger deferred_goto() */
-    u.utotype = utotype_flags | UTOTYPE_DEFERRED;
+    u.utotype = depart;
     /* destination level */
     assign_level(&u.utolev, tolev);
 

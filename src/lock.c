@@ -165,7 +165,8 @@ picklock(void)
 
     if (gx.xlock.door && (peters_door_blocks(u.ux + u.dx, u.uy + u.dy)
                           || sodom_door_blocks(u.ux + u.dx, u.uy + u.dy)
-                          || pride_door_blocks(u.ux + u.dx, u.uy + u.dy)))
+                          || pride_door_blocks(u.ux + u.dx, u.uy + u.dy)
+                          || goodground_gate_blocks(u.ux + u.dx, u.uy + u.dy)))
         return (gx.xlock.usedtime = 0);
 
     You("succeed in %s.", lock_action());
@@ -512,7 +513,7 @@ pick_lock(
                                               : PICKLOCK_DID_NOTHING;
     if (picktyp == KEY_TO_GATES && invocation_pos(u.ux, u.uy)
         && u.uevent.gates_revealed) {
-        pline("This key does not fit this gate."); /* PLACEHOLDER */
+        pline("This key does not fit this gate.");
         return PICKLOCK_LEARNED_SOMETHING;
     }
 
@@ -746,7 +747,8 @@ pick_lock(
             if (hinnom_blocks(cc.x, cc.y)
                 || peters_door_blocks(cc.x, cc.y)
                 || sodom_door_blocks(cc.x, cc.y)
-                || pride_door_blocks(cc.x, cc.y))
+                || pride_door_blocks(cc.x, cc.y)
+                || goodground_gate_blocks(cc.x, cc.y))
                 return PICKLOCK_LEARNED_SOMETHING;
 
             Sprintf(qbuf, "%s it%s%s?",
@@ -996,7 +998,8 @@ doopen_indir(coordxy x, coordxy y)
     }
     if (hinnom_blocks(cc.x, cc.y))
         return res;
-    if (sodom_door_blocks(cc.x, cc.y) || pride_door_blocks(cc.x, cc.y))
+    if (sodom_door_blocks(cc.x, cc.y) || pride_door_blocks(cc.x, cc.y)
+        || goodground_gate_blocks(cc.x, cc.y))
         return res;
 
     if (!(door->doormask & D_CLOSED)) {
@@ -1282,7 +1285,7 @@ doorlock(struct obj *otmp, coordxy x, coordxy y)
     }
 
     if (peters_door_blocks(x, y) || sodom_door_blocks(x, y)
-        || pride_door_blocks(x, y))
+        || pride_door_blocks(x, y) || goodground_gate_blocks(x, y))
         return FALSE;
 
     switch (otmp->otyp) {

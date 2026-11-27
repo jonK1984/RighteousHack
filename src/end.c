@@ -45,7 +45,7 @@ static NEARDATA const char *deaths[] = {
     /* the array of death */
     "died", "choked", "poisoned", "starvation", "drowning", "burning",
     "dissolving under the heat and pressure", "crushed", "turned to stone",
-    "turned into slime", "genocided", "panic", "trickery", "quit",
+    "turned into slime", "banished", "panic", "trickery", "quit",
     "escaped", "ascended"
 };
 
@@ -55,7 +55,7 @@ static NEARDATA const char *ends[] = {
     "starved", "drowned", "burned",
     "dissolved in the lava",
     "were crushed", "turned to stone",
-    "turned into slime", "were genocided",
+    "turned into slime", "were banished",
     "panicked", "were tricked", "quit",
     "escaped", "ascended"
 };
@@ -220,7 +220,11 @@ done_in_by(struct monst *mtmp, int how)
     if (distorted)
         Strcat(buf, "hallucinogen-distorted ");
 
-    if (imitator) {
+    if (is_lucifer(mtmp)) {
+        /* The tombstone names him, with no species in front. */
+        Strcat(buf, "Lucifer");
+        svk.killer.format = KILLED_BY;
+    } else if (imitator) {
         char shape[BUFSZ];
         const char *realnm = pmname(champtr, Mgender(mtmp)),
                    *fakenm = pmname(mptr, Mgender(mtmp));
@@ -1104,7 +1108,7 @@ done(int how)
             disp.botl = TRUE;
         }
     }
-    if (thorns_fatal()) {
+    if (thorns_fatal() || goodground_fatal()) {
         /* Not averted by an amulet of life saving, nor by any
            other Lifesaved source. Wizard and explore mode still
            ask "Die?" below. */
@@ -1123,7 +1127,7 @@ done(int how)
         (void) adjattrib(A_CON, -1, TRUE);
         savelife(how);
         if (how == GENOCIDED) {
-            pline("Unfortunately you are still genocided...");
+            pline("Unfortunately you are still banished...");
         } else {
             char killbuf[BUFSZ];
             formatkiller(killbuf, BUFSZ, how, FALSE);
@@ -1151,6 +1155,8 @@ done(int how)
         svk.killer.format = KILLED_BY_AN; /* reset to 0 */
         return;
     }
+    if (how <= GENOCIDED && iflags.window_inited && !program_state.panicking)
+        endcut_heaven_death();
     really_done(how);
     /*NOTREACHED*/
 }
@@ -1420,7 +1426,9 @@ really_done(int how)
         if (!done_stopprint || flags.tombstone)
             endwin = create_nhwindow(NHW_TEXT);
 
-        if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
+        if (endcut_replace_tomb() && endwin != WIN_ERR)
+            endcut_memorial(endwin, endtime);
+        else if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
             outrip(endwin, how, endtime);
     } else
         done_stopprint = 1; /* just avoid any more output */
@@ -1435,7 +1443,9 @@ really_done(int how)
         dump_redirect(FALSE);
     }
 #endif
-    if (u.uhave.amulet) {
+    if (carried_player_soul()) {
+        Strcat(svk.killer.name, " (with your soul)");
+    } else if (u.uhave.amulet) {
         Strcat(svk.killer.name, " (with the Amulet)");
     } else if (how == ESCAPED) {
         if (Is_astralevel(&u.uz)) /* offered Amulet to wrong deity */
@@ -1560,7 +1570,7 @@ really_done(int how)
             const char *where = svd.dungeons[u.uz.dnum].dname;
 
             if (Is_astralevel(&u.uz))
-                where = "The Astral Plane";
+                where = "The Plane of Heaven";
             else if (Is_sanctum(&u.uz))
                 where = "the Sanctum of the Great Dragon";
             Sprintf(pbuf, "You %s in %s", ends[how], where);

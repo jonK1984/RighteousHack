@@ -518,7 +518,7 @@ gain_guardian_angel(void)
         else
             You_feel("a soft voice:");
         SetVoice((struct monst *) 0, 0, 80, voice_deity);
-        verbalize("Thou hast been worthy of me!");
+        verbalize("Well hast thou fought; behold, I send thee help from the sanctuary.");
         mm.x = u.ux;
         mm.y = u.uy;
         if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL])
@@ -537,6 +537,11 @@ gain_guardian_angel(void)
                 mtmp->mtame = 10;
                 u.uconduct.pets++;
             }
+            /* Stay a minion. A tame angel with no edog is only
+               legal while this flag is set. */
+            mtmp->isminion = 1;
+            if (!has_emin(mtmp))
+                newemin(mtmp);
             /* for 'hilite_pet'; after making tame, before next message */
             newsym(mtmp->mx, mtmp->my);
             if (!Blind)

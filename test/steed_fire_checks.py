@@ -57,7 +57,8 @@ class Rules(unittest.TestCase):
         self.assertIn("--u.ufirewait == 0", tick)
 
     def test_the_wait_is_saved(self):
-        self.assertIn("#define EDITLEVEL 19", PATCH)
+        # The wait landed at 19. The Good Ground moved the level to 20.
+        self.assertIn("#define EDITLEVEL 20", PATCH)
         self.assertIn("int ufirewait;", YOU)
         self.assertIn("steed_fire_tick();",
                       (ROOT / "src" / "allmain.c").read_text())

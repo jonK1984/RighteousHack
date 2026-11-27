@@ -116,7 +116,7 @@ sanity_check_single_mon(
             return;
         }
         if (chk_geno && (svm.mvitals[mndx].mvflags & G_GENOD) != 0)
-            impossible("genocided %s in play (%s)",
+            impossible("banished %s in play (%s)",
                        pmname(mptr, Mgender(mtmp)), msg);
         if (mtmp->mtame && !mtmp->mpeaceful)
             impossible("tame %s is not peaceful (%s)",
@@ -2225,6 +2225,8 @@ mfndpos(
         for (ny = max(0, y - 1); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;
+            if (goodground_bars_from(x, y, nx, ny))
+                continue;
             /* Fear: never step onto the path or either stair. */
             if (in_wilderness() && dunlev(&u.uz) == 4
                 && (on_fear_path(nx, ny) || levl[nx][ny].typ == STAIRS))
@@ -2915,7 +2917,7 @@ lifesaved_monster(struct monst *mtmp)
         if (!surviver) {
             /* genocided monster can't be life-saved */
             if (cansee(mtmp->mx, mtmp->my))
-                pline("Unfortunately, %s is still genocided...",
+                pline("Unfortunately, %s is still banished...",
                       mon_nam(mtmp));
             mtmp->mhp = 0;
         }
@@ -3186,8 +3188,10 @@ mondead(struct monst *mtmp)
     lifesaved_monster(mtmp);
     if (!DEADMONSTER(mtmp))
         return;
+    goodground_sheep_died(mtmp);
     hinnom_child_died(mtmp);
     hinnom_moloch_died(mtmp);
+    lucifer_on_death(mtmp);
 
     /* vampire in bat/fog/wolf form reverts to vampire instead of dying */
     if (is_vampshifter(mtmp) && vamprises(mtmp))

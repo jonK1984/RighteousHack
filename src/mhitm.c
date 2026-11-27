@@ -325,6 +325,11 @@ mattackm(
     /* No monster strikes a tempter, pet or otherwise. */
     if (thorns_is_tempter(mdef))
         return M_ATTK_MISS;
+    /* Pets never strike a sheep or a shepherd of the Good Ground. */
+    if (magr->mtame && goodground_here()
+        && (mdef->data == &mons[PM_SHEEP]
+            || mdef->data == &mons[PM_SHEPHERD]))
+        return M_ATTK_MISS;
     if (helpless(magr))
         return M_ATTK_MISS;
     pa = magr->data;

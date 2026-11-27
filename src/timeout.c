@@ -503,7 +503,7 @@ slimed_to_death(struct kinfo *kptr)
         Strcpy(svk.killer.name, "slimicide");
         /* vary the message depending upon whether life-save was due to
            amulet or due to declining to die in explore or wizard mode */
-        Strcpy(slimebuf, "green slime has been genocided...");
+        Strcpy(slimebuf, "green slime has been banished...");
         if (iflags.last_msg == PLNMSG_OK_DONT_DIE)
             /* follows "OK, so you don't die." and arg is second sentence */
             urgent_pline("Yes, you do.  %s", upstart(slimebuf));

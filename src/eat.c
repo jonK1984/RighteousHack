@@ -2876,6 +2876,12 @@ doeat(void)
         pline("If you can't breathe air, how can you consume solids?");
         return ECMD_OK;
     }
+    {
+        int fig = goodground_eat_fig();
+
+        if (fig >= 0)
+            return fig;
+    }
     if (!(otmp = floorfood("eat", 0)))
         return ECMD_OK;
     if (lots_wife_statue(otmp)) {
@@ -3606,6 +3612,11 @@ offer_ok(struct obj *obj)
     if (!obj)
         return getobj_else ? GETOBJ_EXCLUDE_NONINVENT : GETOBJ_EXCLUDE;
 
+    /* The soul is a tool, not food and not an amulet. On the Plane of
+       Heaven it is the thing to offer. */
+    if (obj->otyp == PLAYER_SOUL)
+        return Is_astralevel(&u.uz) ? GETOBJ_SUGGEST : GETOBJ_DOWNPLAY;
+
     if (obj->oclass != FOOD_CLASS && obj->oclass != AMULET_CLASS)
         return GETOBJ_EXCLUDE;
 
@@ -3738,11 +3749,12 @@ floorfood(
 
     /* Is there some food (probably a heavy corpse) here on the ground? */
     for (otmp = svl.level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
-        if (corpsecheck
+        if ((offering && otmp->otyp == PLAYER_SOUL)
+            || (corpsecheck
                 ? (otmp->otyp == CORPSE
                    && (corpsecheck == 1 || tinnable(otmp)))
                 : feeding ? (otmp->oclass != COIN_CLASS && is_edible(otmp))
-                          : otmp->oclass == FOOD_CLASS) {
+                          : otmp->oclass == FOOD_CLASS)) {
             char qsfx[QBUFSZ];
             boolean one = (otmp->quan == 1L);
 
@@ -3783,7 +3795,9 @@ floorfood(
         impossible("floorfood: unknown request (%s)", verb);
         otmp = (struct obj *) 0;
     }
-    if (otmp && corpsecheck && !(offering && otmp->oclass == AMULET_CLASS)) {
+    if (otmp && corpsecheck
+        && !(offering && (otmp->oclass == AMULET_CLASS
+                          || otmp->otyp == PLAYER_SOUL))) {
         if (otmp->otyp != CORPSE || (corpsecheck == 2 && !tinnable(otmp))) {
             You_cant("%s that!", verb);
             otmp = (struct obj *) 0;

@@ -424,7 +424,7 @@ do_earthquake(int force)
                 algn = Amask2align(amsk & AM_MASK);
                 if (algn == A_LAWFUL) {
                     if (cansee(x, y))
-                        pline("The altar of the Lord stands firm."); /* PLACEHOLDER */
+                        pline("The altar of the Lord stands firm.");
                     break;
                 }
                 raze_altar(x, y, FALSE);
@@ -485,7 +485,7 @@ staticfn const char *
 generic_lvl_desc(void)
 {
     if (Is_astralevel(&u.uz))
-        return "astral plane";
+        return "plane of heaven";
     else if (In_endgame(&u.uz))
         return "plane";
     else if (Is_sanctum(&u.uz))
