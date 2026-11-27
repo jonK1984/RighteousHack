@@ -4131,6 +4131,8 @@ extern boolean road_wizport_now(void);
 extern boolean road_bars_leave(d_level *);
 extern void wayside_begin(void);
 extern boolean wayside_road(void);
+extern void wayside_entrance_burst(coordxy, coordxy);
+extern int invoke_word_lamp(struct obj *);
 extern boolean wayside_at(d_level *);
 extern boolean trial_link(const char *, d_level *, d_level *);
 extern void trial_receive(d_level *);

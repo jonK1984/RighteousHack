@@ -525,7 +525,11 @@ gate_can_play(void)
 static void
 gate_put(coordxy x, coordxy y, char ch, int color)
 {
-    glyph_info *cell = &gg.gbuf[y][x].glyphinfo;
+    glyph_info *cell;
+
+    if (!isok(x, y))
+        return;
+    cell = &gg.gbuf[y][x].glyphinfo;
 
     *cell = nul_glyphinfo;
     cell->glyph = cmap_to_glyph(S_room);
@@ -585,23 +589,25 @@ gate_shimmer(coordxy x, coordxy y)
 }
 
 static boolean
-gate_floor(coordxy x, coordxy y)
+gate_floor(coordxy x, coordxy y, coordxy cx, coordxy cy)
 {
     schar typ;
 
     if (!isok(x, y) || u_at(x, y))
         return FALSE;
-    if (x == GATE_X && y == GATE_Y)
+    if (x == cx && y == cy)
         return FALSE;
     typ = levl[x][y].typ;
     return (boolean) (typ == ROOM || typ == CORR);
 }
 
 /* The wall is still shut. Ten frames of shimmer, then nine of
-   sparkles drifting onto the floor. The doorway appears after the
-   first three of those. No message. Sparkles use the display RNG. */
+   sparkles drifting onto the floor. When open_center is set, the
+   doorway appears after the first three of those. No message.
+   Sparkles use the display RNG. The caller has already decided
+   the port can play this. */
 static void
-dissipate_gate(void)
+play_gate_burst(coordxy cx, coordxy cy, boolean open_center)
 {
     glyph_info *snap;
     boolean save_nap, opened;
@@ -615,19 +621,14 @@ dissipate_gate(void)
         CLR_BRIGHT_CYAN, CLR_BRIGHT_BLUE, CLR_BLUE, CLR_GRAY
     };
 
-    if (!gate_can_play()) {
-        open_gate();
-        return;
-    }
-
     snap = (glyph_info *) alloc((unsigned) (COLNO * ROWNO * sizeof *snap));
     for (y = 0; y < ROWNO; y++)
         for (x = 1; x < COLNO; x++)
             snap[y * COLNO + x] = gg.gbuf[y][x].glyphinfo;
 
     for (i = 0; i < 9; i++) {
-        spark[i].x = (int) GATE_X + rn2_on_display_rng(3) - 1;
-        spark[i].y = (int) GATE_Y;
+        spark[i].x = (int) cx + rn2_on_display_rng(3) - 1;
+        spark[i].y = (int) cy;
         spark[i].dy = rn2_on_display_rng(2) ? 1 : -1;
         spark[i].dx = rn2_on_display_rng(3) - 1;
     }
@@ -640,27 +641,28 @@ dissipate_gate(void)
 
     for (frame = 0; frame < 10; frame++) {
         gate_restore(snap);
-        if (!u_at(GATE_X, GATE_Y))
-            gate_shimmer(GATE_X, GATE_Y);
-        if (!u_at(GATE_X - 1, GATE_Y) && rn2_on_display_rng(5) < 3)
-            gate_shimmer(GATE_X - 1, GATE_Y);
-        if (!u_at(GATE_X + 1, GATE_Y) && rn2_on_display_rng(5) < 3)
-            gate_shimmer(GATE_X + 1, GATE_Y);
+        if (isok(cx, cy) && !u_at(cx, cy))
+            gate_shimmer(cx, cy);
+        if (isok(cx - 1, cy) && !u_at(cx - 1, cy)
+            && rn2_on_display_rng(5) < 3)
+            gate_shimmer(cx - 1, cy);
+        if (isok(cx + 1, cy) && !u_at(cx + 1, cy)
+            && rn2_on_display_rng(5) < 3)
+            gate_shimmer(cx + 1, cy);
         gate_show(2);
     }
 
     for (frame = 0; frame < 9; frame++) {
         int step = frame / 2;
 
-        if (frame == 3) {
+        if (open_center && frame == 3) {
             open_gate();
             opened = TRUE;
-            snap[GATE_Y * COLNO + GATE_X] =
-                gg.gbuf[GATE_Y][GATE_X].glyphinfo;
+            snap[cy * COLNO + cx] = gg.gbuf[cy][cx].glyphinfo;
         }
         gate_restore(snap);
-        if (frame < 3 && !u_at(GATE_X, GATE_Y))
-            gate_put(GATE_X, GATE_Y,
+        if (frame < 3 && isok(cx, cy) && !u_at(cx, cy))
+            gate_put(cx, cy,
                      rn2_on_display_rng(2) ? '*' : '+', CLR_BRIGHT_CYAN);
         if (step > 3)
             step = 3;
@@ -669,7 +671,8 @@ dissipate_gate(void)
                 spark[i].x += spark[i].dx;
                 spark[i].y += spark[i].dy;
             }
-            if (!gate_floor((coordxy) spark[i].x, (coordxy) spark[i].y))
+            if (!gate_floor((coordxy) spark[i].x, (coordxy) spark[i].y,
+                            cx, cy))
                 continue;
             gate_put((coordxy) spark[i].x, (coordxy) spark[i].y,
                      fade_ch[step], fade_co[step]);
@@ -677,9 +680,9 @@ dissipate_gate(void)
         gate_show(2);
     }
 
-    if (!opened) {
+    if (open_center && !opened) {
         open_gate();
-        snap[GATE_Y * COLNO + GATE_X] = gg.gbuf[GATE_Y][GATE_X].glyphinfo;
+        snap[cy * COLNO + cx] = gg.gbuf[cy][cx].glyphinfo;
     }
     gate_restore(snap);
     for (y = 0; y < ROWNO; y++) {
@@ -689,6 +692,26 @@ dissipate_gate(void)
     flush_screen(1);
     flags.nap = save_nap;
     free((genericptr_t) snap);
+}
+
+static void
+dissipate_gate(void)
+{
+    if (!gate_can_play()) {
+        open_gate();
+        return;
+    }
+    play_gate_burst(GATE_X, GATE_Y, TRUE);
+}
+
+/* The same burst, centered on a square, without opening a door.
+   The map underneath is put back when the frames end. */
+void
+wayside_entrance_burst(coordxy x, coordxy y)
+{
+    if (!isok(x, y) || !gate_can_play())
+        return;
+    play_gate_burst(x, y, FALSE);
 }
 
 static void

@@ -1712,6 +1712,53 @@ use_word_lamp(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* How many levels the hero is above the vibrating square.
+   Positive is still above it. */
+static int
+lamp_levels_above_invocation(void)
+{
+    d_level inv;
+
+    inv.dnum = sanctum_level.dnum;
+    inv.dlevel = (sanctum_level.dlevel > 1) ? sanctum_level.dlevel - 1 : 1;
+    return (int) depth(&inv) - (int) depth(&u.uz);
+}
+
+/* #invoke. No cooldown and no other effect. Once the Road has
+   begun, that message wins everywhere. */
+int
+invoke_word_lamp(struct obj *obj)
+{
+    int above;
+
+    (void) obj;
+    if (wayside_road()) {
+        pline("Make thy way to the top of this great cave. The throne of heaven awaiteth thee!");
+        return ECMD_TIME;
+    }
+    if (Is_sanctum(&u.uz)) {
+        pline("Make thy way to the altar of evil. A great choice lieth before thee.");
+        return ECMD_TIME;
+    }
+    if (!Inhell) {
+        pline("The flame of the lamp leaneth low toward the deep. Thou must storm the gates of Gehennom, and the Lord's light shall shine forth in the darkness; thy path lieth there.");
+        return ECMD_TIME;
+    }
+    if (Invocation_lev(&u.uz)) {
+        pline("The entrance to the great Sanctum of evil is within thy reach! It is hidden, but the light of the Lord will show thee the way.");
+        wayside_entrance_burst(svi.inv_pos.x, svi.inv_pos.y);
+        return ECMD_TIME;
+    }
+    above = lamp_levels_above_invocation();
+    if (above > 5)
+        pline("The flame bendeth hard downward. Thou must go much further down, for the way is yet long.");
+    else if (above >= 2)
+        pline("The flame burneth brighter. Only a little further, but downward still.");
+    else if (above == 1)
+        pline("The flame trembleth and pointeth straight down. Only one more level downward.");
+    return ECMD_TIME;
+}
+
 staticfn void
 light_cocktail(struct obj **optr)
 {

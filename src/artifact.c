@@ -1863,6 +1863,7 @@ invoke_ok(struct obj *obj)
 
     /* artifacts and other special items */
     if (obj->oartifact || objects[obj->otyp].oc_unique
+        || obj->otyp == LAMP_OF_GODS_WORD
         || (obj->otyp == FAKE_AMULET_OF_YENDOR && !obj->known))
         return GETOBJ_SUGGEST;
 
@@ -2842,6 +2843,8 @@ arti_invoke(struct obj *obj)
     if (oart == &artilist[ART_NONARTIFACT] || !oart->inv_prop) {
         if (obj->otyp == CRYSTAL_BALL)
             use_crystal_ball(&obj);
+        else if (obj->otyp == LAMP_OF_GODS_WORD)
+            return invoke_word_lamp(obj);
         else
             pline1(nothing_happens);
         return ECMD_TIME;
