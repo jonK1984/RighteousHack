@@ -4133,6 +4133,7 @@ extern void wayside_begin(void);
 extern boolean wayside_road(void);
 extern void wayside_entrance_burst(coordxy, coordxy);
 extern int invoke_word_lamp(struct obj *);
+extern int word_lamp_ac_bonus(struct monst *);
 extern boolean wayside_at(d_level *);
 extern boolean trial_link(const char *, d_level *, d_level *);
 extern void trial_receive(d_level *);

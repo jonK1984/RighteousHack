@@ -1763,6 +1763,51 @@ invoke_word_lamp(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* imported from vision.c, same as light.c, for the lamp's circle */
+extern const coordxy circle_data[];
+extern const coordxy circle_start[];
+
+/* How much worse a hostile's AC is treated when it stands in the
+   light of the lamp the hero is carrying. No message. */
+int
+word_lamp_ac_bonus(struct monst *mdef)
+{
+    struct obj *otmp;
+    light_source *ls;
+    int dx, dy, range;
+    const coordxy *limits;
+
+    if (!mdef || DEADMONSTER(mdef) || mdef->mpeaceful)
+        return 0;
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->otyp == LAMP_OF_GODS_WORD && otmp->lamplit)
+            break;
+    if (!otmp)
+        return 0;
+    for (ls = gl.light_base; ls; ls = ls->next)
+        if (ls->type == LS_OBJECT && ls->id.a_obj == otmp)
+            break;
+    /* Not actually lit by this lamp's light source. */
+    if (!ls || ls->range < 1)
+        return 0;
+    range = ls->range;
+    dx = (int) mdef->mx - (int) u.ux;
+    dy = (int) mdef->my - (int) u.uy;
+    if (dx < 0)
+        dx = -dx;
+    if (dy < 0)
+        dy = -dy;
+    if (dx > range || dy > range)
+        return 0;
+    limits = circle_ptr(range);
+    if (dx > limits[dy])
+        return 0;
+    /* do_light_sources marks these squares when the source is the hero. */
+    if (!couldsee(mdef->mx, mdef->my))
+        return 0;
+    return (u.ulevel + 9) / 10;
+}
+
 staticfn void
 light_cocktail(struct obj **optr)
 {

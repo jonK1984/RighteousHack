@@ -379,6 +379,7 @@ find_roll_to_hit(
     tmp = 1 + abon() + find_mac(mtmp) + u.uhitinc
           + (sgn(Luck) * ((abs(Luck) + 2) / 3))
           + maybe_polyd(gy.youmonst.data->mlevel, u.ulevel);
+    tmp += word_lamp_ac_bonus(mtmp);
 
     /* some actions should occur only once during multiple attacks */
     if (!(*attk_count)++) {

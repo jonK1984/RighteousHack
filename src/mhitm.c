@@ -342,6 +342,8 @@ mattackm(
 
     /* Calculate the armour class differential. */
     tmp = find_mac(mdef) + magr->m_lev;
+    if (magr->mtame)
+        tmp += word_lamp_ac_bonus(mdef);
     if (mdef->mconf || helpless(mdef)) {
         tmp += 4;
         mdef->msleeping = 0;

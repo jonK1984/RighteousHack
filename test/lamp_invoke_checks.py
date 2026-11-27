@@ -47,6 +47,7 @@ class LampInvokeTests(unittest.TestCase):
         chunk = apply.split("lamp_levels_above_invocation(void)", 1)[1]
         chunk = chunk.split("light_cocktail", 1)[0]
         body = chunk.split("invoke_word_lamp(struct obj *obj)", 1)[1]
+        body = body.split("word_lamp_ac_bonus", 1)[0]
         for line in (NOT_HELL, FAR, NEAR, ONE, SQUARE, SANCTUM, ROAD):
             self.assertIn(line, body)
             self.assertNotIn("\u2014", line)
@@ -98,7 +99,7 @@ class LampInvokeTests(unittest.TestCase):
         self.assertLess(body.index("lamp_verse"),
                         body.index("word_lamp_bearing()"))
         invoke = apply.split("invoke_word_lamp(struct obj *obj)", 1)[1]
-        invoke = invoke.split("light_cocktail", 1)[0]
+        invoke = invoke.split("word_lamp_ac_bonus", 1)[0]
         self.assertNotIn("lamplit", invoke)
 
     def test_word_lamp_light_radius_is_four(self):
@@ -126,6 +127,32 @@ class LampInvokeTests(unittest.TestCase):
         relink = relink.split("maybe_write_ls", 1)[0]
         self.assertIn("ls->id.a_obj->otyp == LAMP_OF_GODS_WORD", relink)
         self.assertIn("ls->range = 4", relink)
+
+    def test_lit_lamp_worsens_hostile_ac(self):
+        apply = read("src/apply.c")
+        bonus = apply.split("word_lamp_ac_bonus(struct monst *mdef)", 1)[1]
+        bonus = bonus.split("light_cocktail", 1)[0]
+        self.assertIn("LAMP_OF_GODS_WORD", bonus)
+        self.assertIn("otmp->lamplit", bonus)
+        self.assertIn("gi.invent", bonus)
+        self.assertIn("mdef->mpeaceful", bonus)
+        self.assertIn("gl.light_base", bonus)
+        self.assertIn("ls->id.a_obj == otmp", bonus)
+        self.assertIn("circle_ptr(range)", bonus)
+        self.assertIn("couldsee(mdef->mx, mdef->my)", bonus)
+        self.assertIn("return (u.ulevel + 9) / 10;", bonus)
+        self.assertNotIn("pline(", bonus)
+        hit = read("src/uhitm.c").split("find_roll_to_hit(", 1)[1]
+        hit = hit.split("return tmp;", 1)[0]
+        self.assertIn("tmp += word_lamp_ac_bonus(mtmp);", hit)
+        thrown = read("src/dothrow.c").split("thitmonst(", 1)[1]
+        thrown = thrown.split("dieroll = rnd(20);", 1)[0]
+        self.assertIn("tmp += word_lamp_ac_bonus(mon);", thrown)
+        pets = read("src/mhitm.c").split("mattackm(", 1)[1]
+        pets = pets.split("mdef->mconf", 1)[0]
+        self.assertIn("if (magr->mtame)", pets)
+        self.assertLess(pets.index("if (magr->mtame)"),
+                        pets.index("word_lamp_ac_bonus(mdef)"))
 
 
 if __name__ == "__main__":
