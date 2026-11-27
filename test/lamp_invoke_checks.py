@@ -100,11 +100,32 @@ class LampInvokeTests(unittest.TestCase):
         invoke = apply.split("invoke_word_lamp(struct obj *obj)", 1)[1]
         invoke = invoke.split("light_cocktail", 1)[0]
         self.assertNotIn("lamplit", invoke)
+
+    def test_word_lamp_light_radius_is_four(self):
         timeout = read("src/timeout.c")
-        radius = timeout.split("int radius = 3;", 1)[1]
-        radius = radius.split("do_timer = FALSE;", 1)[0]
-        self.assertIn("case LAMP_OF_GODS_WORD:", radius)
-        self.assertIn("case MAGIC_LAMP:", radius)
+        burn = timeout.split("begin_burn(struct obj *obj", 1)[1]
+        burn = burn.split("end_burn(struct obj *obj", 1)[0]
+        self.assertIn("int radius = 3;", burn)
+        word = burn.split("case LAMP_OF_GODS_WORD:", 1)[1]
+        word = word.split("case ", 1)[0]
+        self.assertIn("radius = 4", word)
+        magic = burn.split("case MAGIC_LAMP:", 1)[1]
+        magic = magic.split("case ", 1)[0]
+        self.assertNotIn("radius =", magic)
+        light = read("src/light.c")
+        split = light.split("obj_split_light_source(", 1)[1]
+        split = split.split("obj_merge_light_sources(", 1)[0]
+        self.assertIn("src->otyp == LAMP_OF_GODS_WORD", split)
+        self.assertIn("ls->range = 4", split)
+        self.assertIn("new_ls->range = 4", split)
+        merge = light.split("obj_merge_light_sources(", 1)[1]
+        merge = merge.split("obj_adjust_light_radius(", 1)[0]
+        self.assertIn("dest->otyp == LAMP_OF_GODS_WORD", merge)
+        self.assertIn("ls->range = 4", merge)
+        relink = light.split("relink_light_sources(", 1)[1]
+        relink = relink.split("maybe_write_ls", 1)[0]
+        self.assertIn("ls->id.a_obj->otyp == LAMP_OF_GODS_WORD", relink)
+        self.assertIn("ls->range = 4", relink)
 
 
 if __name__ == "__main__":
