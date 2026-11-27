@@ -131,7 +131,7 @@ class LampInvokeTests(unittest.TestCase):
     def test_lit_lamp_worsens_hostile_ac(self):
         apply = read("src/apply.c")
         bonus = apply.split("word_lamp_ac_bonus(struct monst *mdef)", 1)[1]
-        bonus = bonus.split("light_cocktail", 1)[0]
+        bonus = bonus.split("gibraltar_blocked", 1)[0]
         self.assertIn("LAMP_OF_GODS_WORD", bonus)
         self.assertIn("otmp->lamplit", bonus)
         self.assertIn("gi.invent", bonus)

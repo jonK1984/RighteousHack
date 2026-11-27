@@ -61,7 +61,7 @@ struct u_event {
                                      * descended.
                                      * bit 2: the Plane of Heaven is at
                                      * peace. Old saves have it clear. */
-    Bitfield(peter_rewarded, 1);    /* Peter kept the net and gave the keys */
+    Bitfield(peter_rewarded, 1);    /* Peter kept the net and gave the palace key */
     Bitfield(babylon_hint, 1);      /* prayer has named the palace key */
     Bitfield(peter_quest, 1);       /* Peter has given the quest scroll */
     Bitfield(church_gifts, 4);      /* XP donations to God's church, 0..10 */
@@ -89,9 +89,11 @@ struct u_event {
     Bitfield(berachah_tears, 1);    /* a child gave the Tears */
     Bitfield(berachah_intro, 1);    /* the Valley arrival text has been shown */
     Bitfield(hinnom_fallen, 1);     /* Michael's trumpet after Moloch falls */
-    /* 65 bits. hinnom_fallen starts a new unsigned unit, so this
-       struct grows. EDITLEVEL 15. The five earlier Hinnom flags
-       needed EDITLEVEL 10. */
+    Bitfield(tome_dread, 1);        /* the grimoire's first touch was shown */
+    Bitfield(peter_grimoire, 1);    /* Peter read the book and gave the Gates key */
+    Bitfield(peter_renewed, 1);     /* Peter renewed power after the Good Ground */
+    /* These three bits sit in the word hinnom_fallen already opened.
+       The struct does not grow. EDITLEVEL stays 20. */
 };
 
 /*

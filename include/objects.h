@@ -1795,6 +1795,22 @@ ANOINTING("full healing",          "black",  1, 0, 10, 200, CLR_BLACK,
                                                         ANO_FULL_HEALING),
 #undef ANOINTING
 
+/* Peter's gifts and the Babylon tome. Probability 0. Not wished for.
+   Appended so earlier object numbers stay the same. */
+OBJECT(OBJ("pebble from the rock of Gibraltar", NoDes),
+       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
+       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
+       PEBBLE_FROM_GIBRALTAR),
+OBJECT(OBJ("Smooth Stone from the rock of Gibraltar", NoDes),
+       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
+       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
+       SMOOTH_STONE_FROM_GIBRALTAR),
+OBJECT(OBJ("Grand Grimoire: The Red Dragon",
+           "tome bound in red dragon hide"),
+       BITS(0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, LEATHER),
+       0, TOOL_CLASS, 0, 0, 50, 0, 0, 0, 0, 0, 50, CLR_RED,
+       GRAND_GRIMOIRE),
+
 #if defined(OBJECTS_DESCR_INIT) || defined(OBJECTS_INIT)
 /* fencepost, the deadly Array Terminator -- name [1st arg] *must* be NULL */
 OBJECT(OBJ(NoDes, NoDes),

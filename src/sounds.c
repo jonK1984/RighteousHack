@@ -673,6 +673,22 @@ mon_is_gecko(struct monst *mon)
     return (boolean) (glyph_to_mon(glyph) == PM_GECKO);
 }
 
+void
+grimoire_first_touch(void)
+{
+    if (u.uevent.tome_dread)
+        return;
+    u.uevent.tome_dread = 1;
+    rh_text_window(
+        "As thy fingers close upon the book, a cold like the grave runneth up thine arm, and the light about thee groweth dim. It is bound in the hide of a red dragon, and the hide is warm, as a thing that yet liveth.\n"
+        "\n"
+        "Thou openest it. The pages are written in an ancient tongue of Babylon, wedge-shaped marks pressed as into clay, yet they writhe upon the page like serpents. Between them are runes older than the flood, inked in what is surely blood. Thou canst not read them, yet they whisper to thee in a voice that is not thine own.\n"
+        "\n"
+        "A great evil presseth upon thy soul, as a hand upon thy throat. Thy heart faileth thee for fear, and every shadow seemeth to lean toward thee.\n"
+        "\n"
+        "Thou must show this to Peter.");
+}
+
 DISABLE_WARNING_FORMAT_NONLITERAL
 
 int /* check calls to this */
@@ -837,29 +853,28 @@ domonnoise(struct monst *mtmp)
         }
         if (!u.uevent.peter_rewarded && carrying(PETER_NET)) {
             struct obj *net = carrying(PETER_NET);
-            struct obj *key;
+            struct obj *gift;
             int dir, nx, ny, doorx = 0, doory = 0, aside = 0;
             boolean found_door = FALSE;
 
-            verbalize("Thank you, friend... 'Follow me, and I will make you fishers of men.' I have cast this net for many souls since then.");
             if (net)
                 useup(net);
-            key = mksobj(KEY_TO_BABYLON, TRUE, FALSE);
-            if (key) {
-                key->dknown = key->known = key->bknown = 1;
-                (void) hold_another_object(key, "Oops!  %s to the floor!",
-                                           The(aobjnam(key, "slip")),
+            rh_text_window(
+                "Peter taketh his net and casteth it over his shoulder. \"Thou hast done well. Here is the key to the palace of Babylon; the great city lieth far below. And take this pebble from the rock of Gibraltar. When thou art weary of the deep, call upon it, and it shall bring thee home to Capernaum.\"");
+            gift = mksobj(KEY_TO_BABYLON, TRUE, FALSE);
+            if (gift) {
+                gift->dknown = gift->known = gift->bknown = 1;
+                (void) hold_another_object(gift, "Oops!  %s to the floor!",
+                                           The(aobjnam(gift, "slip")),
                                            (const char *) 0);
             }
-            key = mksobj(KEY_TO_GATES, TRUE, FALSE);
-            if (key) {
-                key->dknown = key->known = key->bknown = 1;
-                (void) hold_another_object(key, "Oops!  %s to the floor!",
-                                           The(aobjnam(key, "slip")),
+            gift = mksobj(PEBBLE_FROM_GIBRALTAR, TRUE, FALSE);
+            if (gift) {
+                gift->dknown = gift->known = gift->bknown = 1;
+                (void) hold_another_object(gift, "Oops!  %s to the floor!",
+                                           The(aobjnam(gift, "slip")),
                                            (const char *) 0);
             }
-            verbalize("This key opens the gate to Gehennom in the Valley of the Dead.");
-            verbalize("And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it.");
             u.uevent.peter_rewarded = 1;
             for (dir = 0; dir < N_DIRS; dir++) {
                 nx = mtmp->mx + xdir[dir];
@@ -892,6 +907,50 @@ domonnoise(struct monst *mtmp)
             }
             if (aside)
                 pline("%s steps aside.", Monnam(mtmp));
+            return ECMD_TIME;
+        }
+        if (!u.uevent.peter_grimoire && carrying(GRAND_GRIMOIRE)) {
+            struct obj *book = carrying(GRAND_GRIMOIRE);
+            struct obj *key;
+
+            rh_text_window(
+                "Peter taketh the book from thy hand, and his face groweth grim. He setteth it upon the table and will not touch it again with his bare hand, for he senseth the evil within it.\n"
+                "\n"
+                "Peter layeth his hand upon thy shoulder, and his voice is urgent. \"I pray thee, tarry with me. Leave me not alone with this thing until I have searched out its mystery. I beseech thee, stay.\" Seeing the fear in his eyes, thou consentest, and abidest with him.\n"
+                "\n"
+                "For seven days Peter poreth over the book by lamplight, night and day, searching out every dark word and every hidden purpose. He eateth little and sleepeth less, and oft thou hearest him praying in the night.\n"
+                "\n"
+                "On the seventh day he cometh to thee, and his look is grave.\n"
+                "\n"
+                "\"This is the Grand Grimoire: The Red Dragon. It was written by the hand of Lucifer himself. Herein he hath set down his counsel: to gather the hosts of darkness out of the deep, to bind the souls of men as his ransom, and to make war upon the Throne of Heaven itself. The souls of men are but tools in his hand, to be used against the Lord.\"\n"
+                "\n"
+                "Peter's voice falleth low. \"But there is one soul he shall not have. It lieth bound deep in a foul temple, in the very bowels of Gehennom.\" He looketh upon thee long and strangely, as one who knoweth more than he will say. \"Thou must go down and rescue that soul. Thy path is clear.\"\n"
+                "\n"
+                "Together ye carry the book out to the shore and cast it upon a fire. Peter lifteth up his voice against it: \"Back to the pit that spawned thee, thou foul thing of darkness! Thy master's counsel shall not stand!\" The red hide shrieketh as it burneth, and a foul black smoke goeth up, and then it is ash.\n"
+                "\n"
+                "Peter goeth into his house and returneth with a small chest, bound in iron and covered in dust. He openeth it slowly, and taketh out a heavy iron key. \"I had hoped never to bring this forth, not in all my days. But the hour is nigh.\" He putteth it into thine hand. \"This is the Key to the Gates of Hell. Thou must go down into the deep and redeem what was once lost, for the battle for heaven is at hand.\"");
+            discover_object(GRAND_GRIMOIRE, TRUE, FALSE, FALSE);
+            if (book)
+                useup(book);
+            key = mksobj(KEY_TO_GATES, TRUE, FALSE);
+            if (key) {
+                key->dknown = key->known = key->bknown = 1;
+                (void) hold_another_object(key, "Oops!  %s to the floor!",
+                                           The(aobjnam(key, "slip")),
+                                           (const char *) 0);
+            }
+            u.uevent.peter_grimoire = 1;
+            return ECMD_TIME;
+        }
+        if (goodground_trial_done() && !u.uevent.peter_renewed) {
+            u.uenmax += 30;
+            u.uen += 30;
+            disp.botl = TRUE;
+            u.uevent.peter_renewed = 1;
+            rh_text_window(
+                "Peter embraceth thee. \"Thou hast walked the narrow way and come home. \"But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint.\" (Isaiah 40:31)\"\n"
+                "\n"
+                "Thou feelest thy spirit grow mighty within thee.");
             return ECMD_TIME;
         }
         verbalize("The Master gave me a new name, and on it He said He would build. Remember my name, and the floor will hold you.");

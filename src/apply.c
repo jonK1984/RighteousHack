@@ -1808,6 +1808,144 @@ word_lamp_ac_bonus(struct monst *mdef)
     return (u.ulevel + 9) / 10;
 }
 
+/* The Road is unfinished until the Good Ground is finished.
+   A noteleport level also refuses the stone and the pebble. */
+static boolean
+gibraltar_blocked(boolean stone)
+{
+    if (wayside_road() && !goodground_trial_done()) {
+        pline(stone
+              ? "The stone lieth cold in thy hand. Thy road is not yet finished."
+              : "The pebble lieth cold in thy hand. Thy road is not yet finished.");
+        return TRUE;
+    }
+    if (noteleport_level(&gy.youmonst)) {
+        pline(stone
+              ? "The stone lieth cold in thy hand. It will not carry thee from this place."
+              : "The pebble lieth cold in thy hand. It will not carry thee from this place.");
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static boolean
+gibraltar_seen(d_level *lev)
+{
+    xint16 ledger;
+
+    if (!lev || !Lassigned(lev))
+        return FALSE;
+    if (on_level(lev, &u.uz))
+        return TRUE;
+    ledger = ledger_no(lev);
+    if (ledger < 0)
+        return FALSE;
+    return (boolean) ((svl.level_info[ledger].flags & VISITED) != 0);
+}
+
+static void
+gibraltar_arrive(d_level *dest, const char *msg)
+{
+    pline("%s", msg);
+    if (!on_level(dest, &u.uz)) {
+        u.utotype |= UTOTYPE_WIZPORT;
+        goto_level(dest, FALSE, FALSE, FALSE);
+        u.utotype &= ~UTOTYPE_WIZPORT;
+    }
+}
+
+int
+invoke_gibraltar_pebble(struct obj *obj)
+{
+    s_level *town;
+
+    (void) obj;
+    if (gibraltar_blocked(FALSE))
+        return ECMD_TIME;
+    town = find_level("capernaum");
+    if (!town)
+        return ECMD_TIME;
+    gibraltar_arrive(&town->dlevel,
+        "The pebble groweth warm in thy hand, and thou art carried home to Capernaum.");
+    return ECMD_TIME;
+}
+
+int
+invoke_gibraltar_stone(struct obj *obj)
+{
+    struct gsite {
+        const char *name;
+        d_level lev;
+    } site[12];
+    int n = 0, i, pick, maxs = (int) SIZE(site);
+    s_level *slev;
+    d_level inv;
+    winid tmpwin;
+    anything any;
+    menu_item *selected;
+
+    (void) obj;
+    if (gibraltar_blocked(TRUE))
+        return ECMD_TIME;
+
+#define STONE_ADD(nm, dl) \
+    do { \
+        d_level _lev = (dl); \
+        if (n < maxs && gibraltar_seen(&_lev)) { \
+            site[n].name = (nm); \
+            site[n].lev = _lev; \
+            n++; \
+        } \
+    } while (0)
+
+    if ((slev = find_level("capernaum")) != 0)
+        STONE_ADD("Capernaum", slev->dlevel);
+    STONE_ADD("Mines' End", mineend_level);
+    STONE_ADD("the top of Sokoban", sokoend_level);
+    STONE_ADD("the prophet level", oracle_level);
+    if ((slev = find_level("gibeon")) != 0)
+        STONE_ADD("the Cave of Gibeon", slev->dlevel);
+    STONE_ADD("the Quest home level", qstart_level);
+    STONE_ADD("Tyre", medusa_level);
+    STONE_ADD("Babylon's Palace", stronghold_level);
+    STONE_ADD("the Valley of the Dead", valley_level);
+    STONE_ADD("the Valley of Berachah", hinnom_level);
+    STONE_ADD("Orcustown", orcus_level);
+    inv.dnum = sanctum_level.dnum;
+    inv.dlevel = (sanctum_level.dlevel > 1) ? sanctum_level.dlevel - 1 : 1;
+    STONE_ADD("the Entrance to the Sanctum", inv);
+#undef STONE_ADD
+
+    if (n < 1)
+        return ECMD_TIME;
+    tmpwin = create_nhwindow(NHW_MENU);
+    start_menu(tmpwin, MENU_BEHAVE_STANDARD);
+    any = cg.zeroany;
+    for (i = 0; i < n; i++) {
+        any.a_int = i + 1;
+        add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+                 site[i].name, MENU_ITEMFLAGS_NONE);
+    }
+    end_menu(tmpwin, (char *) 0);
+    pick = select_menu(tmpwin, PICK_ONE, &selected);
+    destroy_nhwindow(tmpwin);
+    if (pick <= 0)
+        return ECMD_CANCEL;
+    i = selected[0].item.a_int - 1;
+    free((genericptr_t) selected);
+    if (i < 0 || i >= n)
+        return ECMD_TIME;
+    {
+        char buf[BUFSZ];
+
+        Sprintf(buf,
+            "The stone groweth warm in thy hand, and thou art carried to %s.",
+            site[i].name);
+        gibraltar_arrive(&site[i].lev, buf);
+    }
+    return ECMD_TIME;
+}
+
 staticfn void
 light_cocktail(struct obj **optr)
 {
