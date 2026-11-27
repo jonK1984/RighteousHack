@@ -2054,6 +2054,8 @@ extern int dosuspend(void);
 extern void nt_regularize(char *);
 extern int(*nt_kbhit)(void);
 extern void Delay(int);
+extern void win32_flush_keys(void);
+extern int win32_key_pending(void);
 extern void console_splash_fit(int, int, int *, int *);
 extern void console_splash_restore(void);
 extern void console_splash_gray(int);

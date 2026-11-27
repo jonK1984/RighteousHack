@@ -25,6 +25,11 @@
 #include <time.h>
 #if !defined(MICRO) && !defined(WIN32)
 #include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+#ifdef __GLIBC__
+#include <stdio_ext.h>
+#endif
 #endif
 #ifdef WIN32
 #include <io.h>
@@ -102,11 +107,14 @@ endcut_tty(void)
 #endif
 }
 
-/* True if a key is already waiting. Does not block. */
+/* True if a new key is waiting. Does not block. On Windows, key-up
+   and non-key console records are not keys. */
 static boolean
 endcut_key_ready(void)
 {
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
+    return (boolean) win32_key_pending();
+#elif defined(MICRO)
     return (boolean) kbhit();
 #else
     fd_set fds;
@@ -118,6 +126,49 @@ endcut_key_ready(void)
     tv.tv_usec = 0;
     return (boolean) (select(1, &fds, (fd_set *) 0, (fd_set *) 0, &tv) > 0);
 #endif
+}
+
+/* Drop keys left over from the text card. The Enter that closed it
+   must not count as a skip. */
+static void
+endcut_flush_keys(void)
+{
+#if defined(WIN32)
+    win32_flush_keys();
+#elif defined(MICRO)
+    while (kbhit())
+        (void) nhgetch();
+#else
+    int fd = fileno(stdin);
+    char junk;
+
+    (void) tcflush(fd, TCIFLUSH);
+#ifdef __GLIBC__
+    /* getchar() may already have pulled the extra LF into its buffer. */
+    __fpurge(stdin);
+#endif
+    for (;;) {
+        fd_set fds;
+        struct timeval tv;
+
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+        if (select(fd + 1, &fds, (fd_set *) 0, (fd_set *) 0, &tv) <= 0)
+            break;
+        if (read(fd, &junk, 1) != 1)
+            break;
+    }
+#endif
+}
+
+/* Every cutscene starts here, so the card's Enter is gone before
+   the first wait. */
+static void
+endcut_begin_scene(void)
+{
+    endcut_flush_keys();
 }
 
 /* nh_delay_output is the window port's own pause (about 50 ms on tty).
@@ -270,6 +321,7 @@ endcut_card(const char *text)
 static void
 endcut_play(int seq)
 {
+    endcut_begin_scene();
 #ifdef TTY_GRAPHICS
     int i, n, total;
 
@@ -830,6 +882,7 @@ endcut_altar_scene(boolean harm)
     int n, i, step, shx, shy;
     boolean skip;
 
+    endcut_begin_scene();
     endcut_reveal();
     (void) endcut_find_altar(&ax, &ay);
     endcut_layers_clear();
@@ -1003,6 +1056,7 @@ endcut_lucifer_at(coordxy x, coordxy y, boolean harm)
     boolean skip;
     coordxy lx, ly;
 
+    endcut_begin_scene();
     endcut_reveal();
     found = 0;
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
@@ -1523,6 +1577,7 @@ endcut_memorial(winid extra, time_t when)
     rows[5] = "the joy of thy";
     rows[6] = "Lord";
     rows[7] = "Redeemed on";
+    endcut_begin_scene();
 
 #ifdef TTY_GRAPHICS
     if (endcut_tty()) {
