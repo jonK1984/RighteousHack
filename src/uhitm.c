@@ -379,6 +379,7 @@ find_roll_to_hit(
     tmp = 1 + abon() + find_mac(mtmp) + u.uhitinc
           + (sgn(Luck) * ((abs(Luck) + 2) / 3))
           + maybe_polyd(gy.youmonst.data->mlevel, u.ulevel);
+    tmp += word_lamp_ac_bonus(mtmp);
 
     /* some actions should occur only once during multiple attacks */
     if (!(*attk_count)++) {
@@ -1883,6 +1884,7 @@ hmon_hitmon(
         hmd.dmg = 0;
         hmd.get_dmg_bonus = FALSE;
         (void) peter_unhurt(mon);
+        peter_hero_rebuke();
     }
 
     if (hmd.dmg < 1) {
@@ -2535,6 +2537,7 @@ mhitm_ad_drli(
         if (is_peter(mdef)) {
             (void) peter_unhurt(mdef);
             pline("%s is unharmed.", Monnam(mdef));
+            peter_hero_rebuke();
             mhm->damage = 0;
             return;
         }
@@ -4964,6 +4967,7 @@ damageum(
     mdef->mstrategy &= ~STRAT_WAITFORU; /* in case player is very fast */
     if (peter_unhurt(mdef)) {
         pline("%s is unharmed.", Monnam(mdef));
+        peter_hero_rebuke();
         mhm.damage = 0;
     } else
         mdef->mhp -= mhm.damage;
@@ -5292,6 +5296,7 @@ gulpum(struct monst *mdef, struct attack *mattk)
             end_engulf();
             if (peter_unhurt(mdef)) {
                 pline("%s is unharmed.", Monnam(mdef));
+                peter_hero_rebuke();
                 dam = 0;
             } else
                 mdef->mhp -= dam;

@@ -154,6 +154,12 @@ des.engraving({ coord = loc, type="burn", text="PSALM 91" })
 des.object({ id = "verse of righteous fear", coord = loc, buc="blessed" })
 -- The treasure of the lord
 des.object("chest",37,08)
+-- The Grand Grimoire, in the throne room.
+des.object({ id = "chest", trapped = 0, locked = 1, x = 32, y = 8,
+             contents = function()
+                des.object("Grand Grimoire: The Red Dragon")
+             end
+})
 -- Traps
 des.trap("trap door",40,08)
 des.trap("trap door",44,08)

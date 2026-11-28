@@ -1680,22 +1680,26 @@ word_lamp_bearing(void)
     return "toward the vibrating square";
 }
 
-/* The lamp stays lit. Applying it again only reads the flame. */
+/* Applying a lit lamp puts it out. Applying an unlit one lights
+   it, speaks the verse once, and reads the flame. */
 static int
 use_word_lamp(struct obj *obj)
 {
     const char *bearing;
 
+    if (obj->lamplit) {
+        pline("%s is now off.", Yname2(obj));
+        end_burn(obj, TRUE);
+        return ECMD_TIME;
+    }
     if (Underwater) {
         pline("This is not a diving lamp.");
         return ECMD_TIME;
     }
-    if (!obj->lamplit) {
-        check_unpaid(obj);
-        obj->spe = 1;
-        begin_burn(obj, FALSE);
-        pline("%s is now on.", Yname2(obj));
-    }
+    check_unpaid(obj);
+    obj->spe = 1;
+    begin_burn(obj, FALSE);
+    pline("%s is now on.", Yname2(obj));
     if (!u.uevent.lamp_verse) {
         /* Psalm 119:105 KJV, without the acrostic heading "NUN." */
         pline("Thy word is a lamp unto my feet, and a light unto my path.");
@@ -1709,6 +1713,279 @@ use_word_lamp(struct obj *obj)
         pline("The flame bends %s.", bearing);
     else
         pline("The flame bends toward the %s.", bearing);
+    return ECMD_TIME;
+}
+
+/* How many levels the hero is above the vibrating square.
+   Positive is still above it. */
+static int
+lamp_levels_above_invocation(void)
+{
+    d_level inv;
+
+    inv.dnum = sanctum_level.dnum;
+    inv.dlevel = (sanctum_level.dlevel > 1) ? sanctum_level.dlevel - 1 : 1;
+    return (int) depth(&inv) - (int) depth(&u.uz);
+}
+
+/* #invoke. No cooldown and no other effect. Once the Road has
+   begun, that message wins everywhere. */
+int
+invoke_word_lamp(struct obj *obj)
+{
+    int above;
+
+    (void) obj;
+    if (wayside_road()) {
+        pline("Make thy way to the top of this great cave. The throne of heaven awaiteth thee!");
+        return ECMD_TIME;
+    }
+    if (Is_sanctum(&u.uz)) {
+        pline("Make thy way to the altar of evil. A great choice lieth before thee.");
+        return ECMD_TIME;
+    }
+    if (!Inhell) {
+        pline("The flame of the lamp leaneth low toward the deep. Thou must storm the gates of Gehennom, and the Lord's light shall shine forth in the darkness; thy path lieth there.");
+        return ECMD_TIME;
+    }
+    if (Invocation_lev(&u.uz)) {
+        pline("The entrance to the great Sanctum of evil is within thy reach! It is hidden, but the light of the Lord will show thee the way.");
+        wayside_entrance_burst(svi.inv_pos.x, svi.inv_pos.y);
+        return ECMD_TIME;
+    }
+    above = lamp_levels_above_invocation();
+    if (above > 5)
+        pline("The flame bendeth hard downward. Thou must go much further down, for the way is yet long.");
+    else if (above >= 2)
+        pline("The flame burneth brighter. Only a little further, but downward still.");
+    else if (above == 1)
+        pline("The flame trembleth and pointeth straight down. Only one more level downward.");
+    return ECMD_TIME;
+}
+
+/* imported from vision.c, same as light.c, for the lamp's circle */
+extern const coordxy circle_data[];
+extern const coordxy circle_start[];
+
+/* How much worse a hostile's AC is treated when it stands in the
+   light of the lamp the hero is carrying. No message. */
+int
+word_lamp_ac_bonus(struct monst *mdef)
+{
+    struct obj *otmp;
+    light_source *ls;
+    int dx, dy, range;
+    const coordxy *limits;
+
+    if (!mdef || DEADMONSTER(mdef) || mdef->mpeaceful)
+        return 0;
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->otyp == LAMP_OF_GODS_WORD && otmp->lamplit)
+            break;
+    if (!otmp)
+        return 0;
+    for (ls = gl.light_base; ls; ls = ls->next)
+        if (ls->type == LS_OBJECT && ls->id.a_obj == otmp)
+            break;
+    /* Not actually lit by this lamp's light source. */
+    if (!ls || ls->range < 1)
+        return 0;
+    range = ls->range;
+    dx = (int) mdef->mx - (int) u.ux;
+    dy = (int) mdef->my - (int) u.uy;
+    if (dx < 0)
+        dx = -dx;
+    if (dy < 0)
+        dy = -dy;
+    if (dx > range || dy > range)
+        return 0;
+    limits = circle_ptr(range);
+    if (dx > limits[dy])
+        return 0;
+    /* do_light_sources marks these squares when the source is the hero. */
+    if (!couldsee(mdef->mx, mdef->my))
+        return 0;
+    return (u.ulevel + 9) / 10;
+}
+
+/* The Road is unfinished until the Good Ground is finished.
+   A noteleport level also refuses the stone and the pebble. */
+static boolean
+gibraltar_blocked(boolean stone)
+{
+    if (wayside_road() && !goodground_trial_done()) {
+        pline(stone
+              ? "The stone lieth cold in thy hand. Thy road is not yet finished."
+              : "The pebble lieth cold in thy hand. Thy road is not yet finished.");
+        return TRUE;
+    }
+    if (noteleport_level(&gy.youmonst)) {
+        pline(stone
+              ? "The stone lieth cold in thy hand. It will not carry thee from this place."
+              : "The pebble lieth cold in thy hand. It will not carry thee from this place.");
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static boolean
+gibraltar_seen(d_level *lev)
+{
+    xint16 ledger;
+
+    if (!lev || !Lassigned(lev))
+        return FALSE;
+    if (on_level(lev, &u.uz))
+        return TRUE;
+    ledger = ledger_no(lev);
+    if (ledger < 0)
+        return FALSE;
+    return (boolean) ((svl.level_info[ledger].flags & VISITED) != 0);
+}
+
+static void
+gibraltar_arrive(d_level *dest, const char *msg)
+{
+    pline("%s", msg);
+    if (!on_level(dest, &u.uz)) {
+        u.utotype |= UTOTYPE_WIZPORT;
+        goto_level(dest, FALSE, FALSE, FALSE);
+        u.utotype &= ~UTOTYPE_WIZPORT;
+    }
+}
+
+int
+invoke_gibraltar_pebble(struct obj *obj)
+{
+    s_level *town;
+
+    (void) obj;
+    if (gibraltar_blocked(FALSE))
+        return ECMD_TIME;
+    town = find_level("capernaum");
+    if (!town)
+        return ECMD_TIME;
+    gibraltar_arrive(&town->dlevel,
+        "The pebble groweth warm in thy hand, and thou art carried home to Capernaum.");
+    return ECMD_TIME;
+}
+
+int
+invoke_gibraltar_fiery(struct obj *obj)
+{
+    winid tmpwin;
+    anything any;
+    menu_item *selected;
+    int pick;
+    s_level *town;
+    d_level palace;
+
+    (void) obj;
+    if (gibraltar_blocked(FALSE))
+        return ECMD_TIME;
+    tmpwin = create_nhwindow(NHW_MENU);
+    start_menu(tmpwin, MENU_BEHAVE_STANDARD);
+    any = cg.zeroany;
+    any.a_int = 1;
+    add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+             "Capernaum", MENU_ITEMFLAGS_NONE);
+    any.a_int = 2;
+    add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+             "Babylon's Palace", MENU_ITEMFLAGS_NONE);
+    end_menu(tmpwin, "Whither shall the pebble carry thee?");
+    pick = select_menu(tmpwin, PICK_ONE, &selected);
+    destroy_nhwindow(tmpwin);
+    if (pick <= 0)
+        return ECMD_CANCEL;
+    pick = selected[0].item.a_int;
+    free((genericptr_t) selected);
+    if (pick == 1) {
+        town = find_level("capernaum");
+        if (!town)
+            return ECMD_TIME;
+        gibraltar_arrive(&town->dlevel,
+            "The pebble burneth bright in thy hand, and thou art carried home to Capernaum.");
+    } else if (pick == 2) {
+        palace = stronghold_level;
+        gibraltar_arrive(&palace,
+            "The pebble burneth bright in thy hand, and thou art carried unto the palace of Babylon.");
+    }
+    return ECMD_TIME;
+}
+
+int
+invoke_gibraltar_stone(struct obj *obj)
+{
+    struct gsite {
+        const char *name;
+        d_level lev;
+    } site[12];
+    int n = 0, i, pick, maxs = (int) SIZE(site);
+    s_level *slev;
+    d_level inv;
+    winid tmpwin;
+    anything any;
+    menu_item *selected;
+
+    (void) obj;
+    if (gibraltar_blocked(TRUE))
+        return ECMD_TIME;
+
+#define STONE_ADD(nm, dl) \
+    do { \
+        d_level _lev = (dl); \
+        if (n < maxs && gibraltar_seen(&_lev)) { \
+            site[n].name = (nm); \
+            site[n].lev = _lev; \
+            n++; \
+        } \
+    } while (0)
+
+    if ((slev = find_level("capernaum")) != 0)
+        STONE_ADD("Capernaum", slev->dlevel);
+    STONE_ADD("Mines' End", mineend_level);
+    STONE_ADD("the top of Sokoban", sokoend_level);
+    STONE_ADD("the prophet level", oracle_level);
+    if ((slev = find_level("gibeon")) != 0)
+        STONE_ADD("the Cave of Gibeon", slev->dlevel);
+    STONE_ADD("the Quest home level", qstart_level);
+    STONE_ADD("Tyre", medusa_level);
+    STONE_ADD("Babylon's Palace", stronghold_level);
+    STONE_ADD("the Valley of the Dead", valley_level);
+    STONE_ADD("the Valley of Berachah", hinnom_level);
+    STONE_ADD("Orcustown", orcus_level);
+    inv.dnum = sanctum_level.dnum;
+    inv.dlevel = (sanctum_level.dlevel > 1) ? sanctum_level.dlevel - 1 : 1;
+    STONE_ADD("the Entrance to the Sanctum", inv);
+#undef STONE_ADD
+
+    if (n < 1)
+        return ECMD_TIME;
+    tmpwin = create_nhwindow(NHW_MENU);
+    start_menu(tmpwin, MENU_BEHAVE_STANDARD);
+    any = cg.zeroany;
+    for (i = 0; i < n; i++) {
+        any.a_int = i + 1;
+        add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+                 site[i].name, MENU_ITEMFLAGS_NONE);
+    }
+    end_menu(tmpwin, (char *) 0);
+    pick = select_menu(tmpwin, PICK_ONE, &selected);
+    destroy_nhwindow(tmpwin);
+    if (pick <= 0)
+        return ECMD_CANCEL;
+    i = selected[0].item.a_int - 1;
+    free((genericptr_t) selected);
+    if (i < 0 || i >= n)
+        return ECMD_TIME;
+    {
+        char buf[BUFSZ];
+
+        Sprintf(buf,
+            "The stone groweth warm in thy hand, and thou art carried to %s.",
+            site[i].name);
+        gibraltar_arrive(&site[i].lev, buf);
+    }
     return ECMD_TIME;
 }
 

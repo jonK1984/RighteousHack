@@ -1739,6 +1739,33 @@ hinnom_chat(struct monst *mtmp)
     if (mtmp->data == &mons[PM_MICHAEL]) {
         SetVoice(mtmp, 0, 80, 0);
         if (Is_berachah_level(&u.uz)) {
+            if (carrying(FIERY_PEBBLE_FROM_GIBRALTAR)
+                || carrying(PEBBLE_FROM_GIBRALTAR)) {
+                boolean fiery = carrying(FIERY_PEBBLE_FROM_GIBRALTAR) ? TRUE
+                                                                     : FALSE;
+                struct obj *pebble = carrying(fiery
+                                              ? FIERY_PEBBLE_FROM_GIBRALTAR
+                                              : PEBBLE_FROM_GIBRALTAR);
+                struct obj *stone;
+
+                if (pebble)
+                    useup(pebble);
+                stone = mksobj(SMOOTH_STONE_FROM_GIBRALTAR, TRUE, FALSE);
+                if (stone) {
+                    stone->dknown = stone->known = stone->bknown = 1;
+                    (void) hold_another_object(stone,
+                                               "Oops!  %s to the floor!",
+                                               The(aobjnam(stone, "slip")),
+                                               (const char *) 0);
+                }
+                if (fiery)
+                    pline("Michael taketh the fiery pebble and turneth it in his hand, and the fire goeth out of it, and it is made smooth. \"Now this stone shall carry thee to any place thou hast trodden.\"");
+                else
+                    pline("Michael taketh the pebble and turneth it in his hand, and it is made smooth. \"Now this stone shall carry thee to any place thou hast trodden.\"");
+                if (wayside_road() && !goodground_trial_done())
+                    pline("\"But it will not carry thee until thy road to salvation is finished.\"");
+                return TRUE;
+            }
             michael_berachah_line();
             return TRUE;
         }

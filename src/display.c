@@ -2718,22 +2718,32 @@ map_glyphinfo(
             && (vcmap == S_engroom || vcmap == S_engrcorr))
             glyphinfo->gm.sym.color = CLR_WHITE;
     }
-    /* Fig trees keep the tree symbol, colored purple, eaten or not. */
+    /* Fig trees keep the tree symbol, colored purple, eaten or not.
+       A Unicode symset would otherwise keep drawing the floor glyph. */
     if (isok(x, y) && goodground_fig(x, y) >= 0 && glyph_is_cmap(glyph)
         && !u_at(x, y)) {
         glyphinfo->gm.sym.symidx = S_tree + SYM_OFF_P;
         if (iflags.use_color)
             glyphinfo->gm.sym.color = CLR_MAGENTA;
         glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
+#ifdef ENHANCED_SYMBOLS
+        glyphinfo->gm.u = glyphmap[cmap_to_glyph(S_tree)].u;
+#endif
     }
-    /* PETRA letters are drawn on the floor itself, in tty as well.
-       Unseen squares stay blank. */
+    /* PETRA letters are drawn on the floor itself. Unseen squares
+       stay blank. Unicode symsets draw gm.u and skip ttychar, so the
+       floor glyph has to be cleared. The letter is plain ASCII, so
+       DECgraphics does not turn it into a line-drawing character. */
     if (glyph_is_cmap(glyph) && isok(x, y)
         && (levl[x][y].seenv || cansee(x, y))) {
         char letter = petra_map_letter(x, y);
 
-        if (letter)
+        if (letter) {
             glyphinfo->ttychar = letter;
+#ifdef ENHANCED_SYMBOLS
+            glyphinfo->gm.u = (struct unicode_representation *) 0;
+#endif
+        }
     }
     glyphinfo->glyph = glyph;
 }

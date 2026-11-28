@@ -2046,6 +2046,7 @@ thitmonst(
      */
     tmp = -1 + Luck + find_mac(mon) + u.uhitinc
           + maybe_polyd(gy.youmonst.data->mlevel, u.ulevel);
+    tmp += word_lamp_ac_bonus(mon);
     if (ACURR(A_DEX) < 4)
         tmp -= 3;
     else if (ACURR(A_DEX) < 6)

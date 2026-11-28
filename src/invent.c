@@ -1187,6 +1187,8 @@ addinv_nomerge(struct obj *obj)
 void
 carry_obj_effects(struct obj *obj)
 {
+    if (obj->where == OBJ_INVENT && obj->otyp == GRAND_GRIMOIRE)
+        grimoire_first_touch();
     /* Cursed figurines can spontaneously transform when carried. */
     if (obj->otyp == FIGURINE) {
         if (obj->cursed && obj->corpsenm != NON_PM

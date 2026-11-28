@@ -317,6 +317,9 @@ read_ok(struct obj *obj)
     if (!obj)
         return GETOBJ_EXCLUDE;
 
+    if (obj->otyp == GRAND_GRIMOIRE)
+        return GETOBJ_SUGGEST;
+
     if (obj->oclass == SCROLL_CLASS || obj->oclass == SPBOOK_CLASS)
         return GETOBJ_SUGGEST;
 
@@ -360,6 +363,11 @@ doread(void)
         return ECMD_CANCEL;
     otyp = scroll->otyp;
     scroll->pickup_prev = 0; /* no longer 'just picked up' */
+
+    if (otyp == GRAND_GRIMOIRE) {
+        pline("The book is written in a tongue strange unto thee, and the evil written therein is too unspeakable to read. Thou must show this to Peter.");
+        return ECMD_TIME;
+    }
 
     /* Cookies are removed. A leftover one yields a Prophet proverb. */
     if (otyp == FORTUNE_COOKIE) {

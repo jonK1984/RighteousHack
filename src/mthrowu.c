@@ -457,6 +457,8 @@ ohitmon(
                 || stony_unharmed(mtmp)) {
                 if (vis)
                     pline("%s is unharmed.", Monnam(mtmp));
+                if (!svc.context.mon_moving && is_peter(mtmp))
+                    peter_hero_rebuke();
                 if (!svc.context.mon_moving && wayside_is_villager(mtmp))
                     wayside_hero_strikes(mtmp);
                 damage = 0;

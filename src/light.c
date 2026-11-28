@@ -547,6 +547,8 @@ relink_light_sources(boolean ghostly)
                 if (ls->type == LS_OBJECT) {
                     if ((ls->id.a_obj = find_oid(nid)) == 0)
                         which = 'o';
+                    else if (ls->id.a_obj->otyp == LAMP_OF_GODS_WORD)
+                        ls->range = 4;
                 } else {
                     if ((ls->id.a_monst = find_mid(nid, FM_EVERYWHERE)) == 0)
                         which = 'm';
@@ -795,6 +797,13 @@ obj_split_light_source(struct obj *src, struct obj *dest)
                 ls->range = candle_light_range(src);
                 new_ls->range = candle_light_range(dest);
                 gv.vision_full_recalc = 1; /* in case range changed */
+            } else if (src->otyp == LAMP_OF_GODS_WORD
+                       || dest->otyp == LAMP_OF_GODS_WORD) {
+                if (src->otyp == LAMP_OF_GODS_WORD)
+                    ls->range = 4;
+                if (dest->otyp == LAMP_OF_GODS_WORD)
+                    new_ls->range = 4;
+                gv.vision_full_recalc = 1;
             }
             new_ls->id.a_obj = dest;
             new_ls->next = gl.light_base;
@@ -816,7 +825,10 @@ obj_merge_light_sources(struct obj *src, struct obj *dest)
 
     for (ls = gl.light_base; ls; ls = ls->next)
         if (ls->type == LS_OBJECT && ls->id.a_obj == dest) {
-            ls->range = candle_light_range(dest);
+            if (dest->otyp == LAMP_OF_GODS_WORD)
+                ls->range = 4;
+            else
+                ls->range = candle_light_range(dest);
             gv.vision_full_recalc = 1; /* in case range changed */
             break;
         }

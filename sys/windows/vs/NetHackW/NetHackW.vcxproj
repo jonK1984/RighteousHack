@@ -240,6 +240,7 @@
     <ClCompile Include="$(SrcDir)heaven.c" />
     <ClCompile Include="$(SrcDir)endcut.c" />
     <ClCompile Include="$(SrcDir)endframes.c" />
+    <ClCompile Include="$(SrcDir)peterframes.c" />
     <ClCompile Include="$(SrcDir)wayside.c" />
     <ClCompile Include="$(SrcDir)weapon.c" />
     <ClCompile Include="$(SrcDir)were.c" />

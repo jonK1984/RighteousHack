@@ -202,7 +202,7 @@ Trembling, you rise. The voice continues:
 brethren, that ancient serpent who is called the Devil and Satan,
 has bound a soul captive which I have ordained for redemption. Descend into the 
 great cave that opens beneath this place. Find the soul, break the chains 
-the Adversary has forged, and bring my %SC into the light. Do exactly as I command. 
+the Adversary has forged, and bring my %S into the light. Do exactly as I command. 
 Do not turn from it to the right hand nor to the left."
 
 The glory withdraws. The cave falls silent once more. Before you, a narrow stair 
@@ -211,7 +211,7 @@ staff and a small clay lamp.
 
 As you peer into the abyss, the voice thunders one final time through the cavern:
 
-""%p, be strong and courageous. Do not be frightened, and do not be dismayed,
+"%p, be strong and courageous. Do not be frightened, and do not be dismayed,
 for the LORD your God is with you wherever you go."]],
       },
 -- starting with 'pauper' option set, last paragraph differs from normal legacy

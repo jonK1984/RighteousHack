@@ -347,6 +347,129 @@ endcut_card(const char *text)
     rh_text_window(text);
 }
 
+#ifdef TTY_GRAPHICS
+/* One step toward black. Bright colors fall to their plain color,
+   then to black. Magenta is not a step. */
+static int
+peter_dim_color(int color, int step)
+{
+    static const int chain[16][4] = {
+        { CLR_BLACK, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_RED, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_GREEN, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_BROWN, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_BLUE, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_BLACK, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_CYAN, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_GRAY, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_BLACK, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_ORANGE, CLR_RED, CLR_BLACK, CLR_BLACK },
+        { CLR_BRIGHT_GREEN, CLR_GREEN, CLR_BLACK, CLR_BLACK },
+        { CLR_YELLOW, CLR_BROWN, CLR_BLACK, CLR_BLACK },
+        { CLR_BRIGHT_BLUE, CLR_BLUE, CLR_BLACK, CLR_BLACK },
+        { CLR_BLACK, CLR_BLACK, CLR_BLACK, CLR_BLACK },
+        { CLR_BRIGHT_CYAN, CLR_CYAN, CLR_BLACK, CLR_BLACK },
+        { CLR_WHITE, CLR_GRAY, CLR_BLACK, CLR_BLACK },
+    };
+
+    if (color < 0 || color > 15)
+        color = CLR_BLACK;
+    if (step < 0)
+        step = 0;
+    if (step > 3)
+        step = 3;
+    return chain[color][step];
+}
+
+static void
+peter_paint(uchar ch[24][80], uchar co[24][80])
+{
+    int r, c;
+
+    for (r = 0; r < 24; r++)
+        for (c = 0; c < 80; c++)
+            tty_endcut_cell(c, r, ch[r][c], co[r][c], 0);
+    /* tty_endcut_flush presents through synch_cursor and the
+       console back buffer on Windows. */
+    tty_endcut_flush();
+}
+
+/* TRUE if a key skipped the rest of the cutscene. */
+static boolean
+peter_play_scene(int scene, int ms)
+{
+    int frame;
+
+    for (frame = 0; frame < 32; frame++) {
+        uchar ch[24][80], co[24][80];
+
+        peter_scene_cells(scene, frame, ch, co);
+        peter_paint(ch, co);
+        if (endcut_wait(ms))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static boolean
+peter_fade(int from_scene, int to_scene)
+{
+    uchar ch[24][80], co[24][80], dim[24][80];
+    int step, r, c;
+
+    peter_scene_cells(from_scene, 31, ch, co);
+    for (step = 1; step <= 3; step++) {
+        for (r = 0; r < 24; r++)
+            for (c = 0; c < 80; c++)
+                dim[r][c] = (uchar) peter_dim_color(co[r][c], step);
+        peter_paint(ch, dim);
+        if (endcut_wait(100))
+            return TRUE;
+    }
+    peter_scene_cells(to_scene, 0, ch, co);
+    for (step = 2; step >= 0; step--) {
+        for (r = 0; r < 24; r++)
+            for (c = 0; c < 80; c++)
+                dim[r][c] = (uchar) peter_dim_color(co[r][c], step);
+        peter_paint(ch, dim);
+        if (endcut_wait(100))
+            return TRUE;
+    }
+    return FALSE;
+}
+#endif /* TTY_GRAPHICS */
+
+/* Reading loops twice, fades into the prayer, which loops twice,
+   fades back, and the reading plays once more. Any key skips.
+   Other window ports keep the text and skip the pictures. */
+void
+peter_tome_cutscene(void)
+{
+#ifdef TTY_GRAPHICS
+    int loop;
+
+    if (!endcut_tty())
+        return;
+    endcut_begin_scene();
+    tty_endcut_begin();
+    for (loop = 0; loop < 2; loop++)
+        if (peter_play_scene(PETER_SCENE_READ, 150))
+            goto peter_done;
+    if (peter_fade(PETER_SCENE_READ, PETER_SCENE_PRAY))
+        goto peter_done;
+    for (loop = 0; loop < 2; loop++)
+        if (peter_play_scene(PETER_SCENE_PRAY, 200))
+            goto peter_done;
+    if (peter_fade(PETER_SCENE_PRAY, PETER_SCENE_READ))
+        goto peter_done;
+    (void) peter_play_scene(PETER_SCENE_READ, 150);
+peter_done:
+    tty_endcut_end();
+#else
+    return;
+#endif
+}
+
 /* Full-screen frames on the base window. Does not redraw the map:
    the sunset runs after really_done has destroyed WIN_MAP. */
 static boolean

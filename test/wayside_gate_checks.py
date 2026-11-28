@@ -40,8 +40,11 @@ class Gate(unittest.TestCase):
         self.assertIn("gg.gbuf", burst)
         self.assertIn("for (frame = 0; frame < 10; frame++)", burst)
         self.assertIn("for (frame = 0; frame < 9; frame++)", burst)
-        self.assertIn("GATE_X - 1", burst)
-        self.assertIn("GATE_X + 1", burst)
+        self.assertIn("cx - 1", burst)
+        self.assertIn("cx + 1", burst)
+        self.assertIn("play_gate_burst(GATE_X, GATE_Y, TRUE)", burst)
+        self.assertIn("wayside_entrance_burst(coordxy x, coordxy y)", burst)
+        self.assertIn("play_gate_burst(x, y, FALSE)", burst)
         for ch in ("'#', '*', '+'", "'*'", "'+'", "'.'"):
             self.assertIn(ch, burst)
         for color in ("CLR_BRIGHT_CYAN", "CLR_BRIGHT_BLUE", "CLR_CYAN",

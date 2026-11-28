@@ -1744,6 +1744,10 @@ begin_burn(struct obj *obj, boolean already_lit)
 
     switch (obj->otyp) {
     case LAMP_OF_GODS_WORD:
+        obj->lamplit = 1;
+        do_timer = FALSE;
+        radius = 4; /* one step farther than a magic lamp */
+        break;
     case MAGIC_LAMP:
         obj->lamplit = 1;
         do_timer = FALSE;
