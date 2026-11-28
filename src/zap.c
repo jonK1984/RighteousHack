@@ -540,6 +540,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
         } else if (!resist(mtmp, otmp->oclass, dmg, NOTELL)
                    && !DEADMONSTER(mtmp)) {
             if (peter_unhurt(mtmp)) {
+                peter_hero_rebuke();
                 if (canseemon(mtmp))
                     pline("%s is unharmed.", Monnam(mtmp));
             } else {
@@ -4492,8 +4493,12 @@ zhitm(
         tmp /= 2;
     if (tmp < 0)
         tmp = 0; /* don't allow negative damage */
-    if (peter_unhurt(mon))
+    if (peter_unhurt(mon)) {
+        /* type >= 0 is the hero's wand, spell, or breath. */
+        if (type >= 0)
+            peter_hero_rebuke();
         return 0;
+    }
     debugpline3("zapped monster hp = %d (= %d - %d)", mon->mhp - tmp,
                 mon->mhp, tmp);
     mon->mhp -= tmp;
@@ -4919,8 +4924,12 @@ dobuzz(
             return;
         /* Finger of execution kills the swallower. It does not touch you. */
         if (type == ZT_PBOOK(ZT_DEATH)) {
-            if (u.ustuck && !peter_unhurt(u.ustuck))
-                xkilled(u.ustuck, XKILL_GIVEMSG);
+            if (u.ustuck) {
+                if (peter_unhurt(u.ustuck))
+                    peter_hero_rebuke();
+                else
+                    xkilled(u.ustuck, XKILL_GIVEMSG);
+            }
             return;
         }
         tmp = zhitm(u.ustuck, type, nd, &otmp);
@@ -4996,7 +5005,9 @@ dobuzz(
                Pets and peacefuls are hit, the same as any other ray.
                Peter is spared, the same as any other ray. */
             if (type == ZT_PBOOK(ZT_DEATH)) {
-                if (!peter_unhurt(mon))
+                if (peter_unhurt(mon))
+                    peter_hero_rebuke();
+                else
                     xkilled(mon, XKILL_GIVEMSG);
             } else if (!forcemiss && zap_hit(find_mac(mon), spell_type)) {
                 if (mon_reflects(mon, (char *) 0)) {
@@ -6324,6 +6335,8 @@ resist(struct monst *mtmp, char oclass, int damage, int tell)
 
     if (damage) {
         if (peter_unhurt(mtmp)) {
+            if (!gm.m_using && !svc.context.mon_moving)
+                peter_hero_rebuke();
             if (canseemon(mtmp))
                 pline("%s is unharmed.", Monnam(mtmp));
             return resisted;

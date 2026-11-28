@@ -3172,6 +3172,19 @@ peter_unhurt(struct monst *mtmp)
     return TRUE;
 }
 
+/* The hero struck Peter. One rebuke per turn, however many blows land. */
+void
+peter_hero_rebuke(void)
+{
+    static long when = -1L;
+
+    if (when == svm.moves)
+        return;
+    when = svm.moves;
+    pline("A voice cometh out of the clouds, saying, \"Touch not mine anointed, and do my prophets no harm.\"");
+    losehp(5, "rebuked by the LORD", KILLED_BY);
+}
+
 /* monster 'mtmp' has died; maybe life-save, otherwise unshapeshift and
    update vanquished stats and update map */
 void

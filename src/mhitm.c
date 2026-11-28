@@ -1096,6 +1096,8 @@ mdamagem(
         (void) peter_unhurt(mdef);
         if (gv.vis)
             pline("%s is unharmed.", Monnam(mdef));
+        if (magr == &gy.youmonst)
+            peter_hero_rebuke();
         return M_ATTK_HIT;
     }
 
@@ -1198,6 +1200,8 @@ mon_poly(struct monst *magr, struct monst *mdef, int dmg)
             dmg += (mdef->mhpmax + 1) / 2;
             if (!peter_unhurt(mdef))
                 mdef->mhp -= dmg;
+            else if (magr == &gy.youmonst)
+                peter_hero_rebuke();
             moloch_hold_line(mdef);
             dmg = 0;
             if (DEADMONSTER(mdef)) {

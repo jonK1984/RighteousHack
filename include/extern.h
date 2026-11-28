@@ -1839,6 +1839,7 @@ extern void unstuck(struct monst *) NONNULLARG1;
 extern void killed(struct monst *) NONNULLARG1;
 extern boolean is_plot_npc(struct monst *) NONNULLARG1;
 extern boolean peter_unhurt(struct monst *) NONNULLARG1;
+extern void peter_hero_rebuke(void);
 extern void xkilled(struct monst *, int) NONNULLARG1;
 extern void mon_to_stone(struct monst *) NONNULLARG1;
 extern void m_into_limbo(struct monst *) NONNULLARG1;

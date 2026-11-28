@@ -516,6 +516,8 @@ explode(
                 } else if (stony_unharmed(mtmp)) {
                     ; /* the line is the message */
                 } else if (peter_unhurt(mtmp)) {
+                    if (!svc.context.mon_moving)
+                        peter_hero_rebuke();
                     if (cansee(xx, yy))
                         pline("%s is unharmed.", Monnam(mtmp));
                 } else {
