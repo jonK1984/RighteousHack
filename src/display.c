@@ -2392,6 +2392,9 @@ back_to_glyph(coordxy x, coordxy y)
     case WATER:
         idx = S_water;
         break;
+    case BOG:
+        idx = S_bog;
+        break;
     case DBWALL:
         idx = (ptr->horizontal) ? S_hcdbridge : S_vcdbridge;
         break;
@@ -2542,6 +2545,9 @@ get_bkglyph_and_framecolor(
            break;
         case WATER:
            idx = S_water;
+           break;
+        case BOG:
+           idx = S_bog;
            break;
         case LAVAPOOL:
            idx = S_lava;
@@ -3220,7 +3226,7 @@ static const char *const type_names[MAX_TYPE] = {
     "LAVAWALL",
     "IRON_BARS", "DOOR", "CORR", "ROOM", "STAIRS", "LADDER", "FOUNTAIN",
     "THRONE", "SINK", "GRAVE", "ALTAR", "ICE", "DRAWBRIDGE_DOWN", "AIR",
-    "CLOUD"
+    "CLOUD", "BOG"
 };
 
 staticfn const char *

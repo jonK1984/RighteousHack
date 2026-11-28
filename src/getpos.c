@@ -493,6 +493,7 @@ gather_locs_interesting(
                           || sym == S_ice
                           || sym == S_air
                           || sym == S_cloud
+                          || sym == S_bog
                           || is_cmap_lava(sym)
                           || is_cmap_water(sym)
                           || sym == S_ndoor

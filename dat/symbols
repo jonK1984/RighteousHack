@@ -71,6 +71,7 @@ start: Blank
         S_bear_trap: \032
         S_blcorn: \032
         S_blob: \032
+        S_bog: \032
         S_book: \032
         S_boomleft: \032
         S_boomright: \032
@@ -267,6 +268,7 @@ start: IBMgraphics
 	S_fountain: \xf4		# meta-t, integral top half
 	S_sink: \xf4			# meta-t, integral top half
 	S_pool: \xf7			# meta-w, approx. equals
+	S_bog: \xf7			# meta-w, approx. equals
 	S_ice: \xfa			# meta-z, centered dot
 	S_lava: \xf7			# meta-w, approx. equals
 	S_lavawall: \xf7		# meta-w, approx. equals
@@ -713,6 +715,7 @@ start: DECgraphics
 	S_brdnladder: \xfa		# meta-z, greater-than-or-equals
 	S_altar: \xfb			# meta-{, pi (used to default to '_')
 	S_pool: \xe0			# meta-\, diamond
+	S_bog: \xe0			# meta-\, diamond
 	S_ice: \xfe			# meta-~, centered dot
 	S_lava: \xe0			# meta-\, diamond
 	S_lavawall: \xe0		# meta-\, diamond
@@ -801,6 +804,7 @@ start: MACgraphics
 	S_engrcorr: \xb0
 	S_grave: \xef			# same as open door
 	S_pool: \xe0
+	S_bog: \xe0
 finish
 
 # When using Unicode glyphs, care must be taken with how terminals
@@ -855,6 +859,7 @@ start: Enhanced1
 	S_grave: U+2020                     # † DAGGER
 	G_fountain: U+2320/0-150-255        # ⌠ TOP HALF INTEGRAL
 	S_pool: U+224b                      # ≋ TRIPLE TILDE
+	S_bog: U+224b                       # ≋ TRIPLE TILDE
 	S_ice: U+00b7                       # · MIDDLE DOT
 	S_lava: U+224b                      # ≋ TRIPLE TILDE
 	S_lavawall: U+2248                  # ≈ ALMOST EQUAL TO
@@ -957,6 +962,7 @@ start: Enhanced2
 	S_grave: U+2020                     # DAGGER
 	G_fountain: U+2320/0-150-255        # TOP HALF INTEGRAL
 	S_pool: U+224b                      # TRIPLE TILDE
+	S_bog: U+224b                       # TRIPLE TILDE
 	S_ice: U+00b7                       # MIDDLE DOT
 #	S_ice: U+2744                       # ❄️
 	S_lava: U+224b                      # TRIPLE TILDE
@@ -1057,6 +1063,7 @@ start: AmigaFont
 	S_sink: '{'
 	S_fountain: '}'
 	S_pool: '*'
+	S_bog: '*'
 	S_ice: '}'
 	S_lava: '*'
 	S_vodbridge: '*'

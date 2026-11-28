@@ -90,21 +90,22 @@ enum levl_typ_types {
     DRAWBRIDGE_DOWN = 34,
     AIR       = 35,
     CLOUD     = 36,
+    BOG       = 37, /* marsh ground; walkable, may hold a hero on foot */
 
-    MAX_TYPE  = 37,
+    MAX_TYPE  = 38,
     /* for special levels */
-    MATCH_WALL = 38,
+    MATCH_WALL = 39,
 
     /* these aren't levl[][].typ values, they're additional indices
        into terrain_descr[] for status feedback */
-    xFLOOR     = 39,
-    xGROUND    = 40,
-    xOPENDOOR  = 41,
-    xSHUTDOOR  = 42,
-    xSWAMP     = 43,
-    xSUBMERGED = 44,
-    xSEA       = 45,
-    xWATERWALL = 46,
+    xFLOOR     = 40,
+    xGROUND    = 41,
+    xOPENDOOR  = 42,
+    xSHUTDOOR  = 43,
+    xSWAMP     = 44,
+    xSUBMERGED = 45,
+    xSEA       = 46,
+    xWATERWALL = 47,
 
     INVALID_TYPE = 127
 };
@@ -139,6 +140,7 @@ enum levl_typ_types {
 #define IS_AIR(typ) ((typ) == AIR || (typ) == CLOUD)
 #define IS_SOFT(typ) ((typ) == AIR || (typ) == CLOUD || IS_POOL(typ))
 #define IS_WATERWALL(typ) ((typ) == WATER)
+#define IS_BOG(typ) ((typ) == BOG)
 /* for surface checks when it's unknown whether a drawbridge is involved;
    drawbridge_up is the spot in front of a closed drawbridge and not the
    current surface at that spot; caveat: this evaluates its arguments more

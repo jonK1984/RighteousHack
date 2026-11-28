@@ -85,7 +85,7 @@ class AncientPortal(unittest.TestCase):
     def test_the_name_the_player_reads(self):
         sym = read("include/defsym.h")
         self.assertIn(
-            'PCHAR( 65, \'^\',  S_magic_portal, "ancient portal", CLR_BRIGHT_MAGENTA)',
+            'PCHAR( 66, \'^\',  S_magic_portal, "ancient portal", CLR_BRIGHT_MAGENTA)',
             sym)
         self.assertNotIn('"magic portal"', sym)
         tele = read("src/teleport.c")
