@@ -1094,6 +1094,21 @@ OBJECT(OBJ("Bell of Opening", "silver bell"),
        BITS(0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, P_NONE, SILVER),
        0, TOOL_CLASS, 0, 0, 10, 5000, 0, 0, 0, 0, 50, HI_SILVER,
                                                    BELL_OF_OPENING),
+/* Peter's gifts and the Babylon tome. Probability 0. Not wished for.
+   Tools, so they stay in this section. */
+OBJECT(OBJ("pebble from the rock of Gibraltar", NoDes),
+       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
+       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
+       PEBBLE_FROM_GIBRALTAR),
+OBJECT(OBJ("Smooth Stone from the rock of Gibraltar", NoDes),
+       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
+       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
+       SMOOTH_STONE_FROM_GIBRALTAR),
+OBJECT(OBJ("Grand Grimoire: The Red Dragon",
+           "tome bound in red dragon hide"),
+       BITS(0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, LEATHER),
+       0, TOOL_CLASS, 0, 0, 50, 0, 0, 0, 0, 0, 50, CLR_RED,
+       GRAND_GRIMOIRE),
 #undef TOOL
 #undef WEPTOOL
 
@@ -1794,22 +1809,6 @@ ANOINTING("gain energy",          "cloudy",  1, 0, 40, 150, CLR_WHITE,
 ANOINTING("full healing",          "black",  1, 0, 10, 200, CLR_BLACK,
                                                         ANO_FULL_HEALING),
 #undef ANOINTING
-
-/* Peter's gifts and the Babylon tome. Probability 0. Not wished for.
-   Appended so earlier object numbers stay the same. */
-OBJECT(OBJ("pebble from the rock of Gibraltar", NoDes),
-       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
-       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
-       PEBBLE_FROM_GIBRALTAR),
-OBJECT(OBJ("Smooth Stone from the rock of Gibraltar", NoDes),
-       BITS(1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, MINERAL),
-       0, TOOL_CLASS, 0, 0, 10, 0, 0, 0, 0, 0, 10, HI_MINERAL,
-       SMOOTH_STONE_FROM_GIBRALTAR),
-OBJECT(OBJ("Grand Grimoire: The Red Dragon",
-           "tome bound in red dragon hide"),
-       BITS(0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, P_NONE, LEATHER),
-       0, TOOL_CLASS, 0, 0, 50, 0, 0, 0, 0, 0, 50, CLR_RED,
-       GRAND_GRIMOIRE),
 
 #if defined(OBJECTS_DESCR_INIT) || defined(OBJECTS_INIT)
 /* fencepost, the deadly Array Terminator -- name [1st arg] *must* be NULL */
