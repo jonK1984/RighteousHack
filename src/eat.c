@@ -2891,12 +2891,19 @@ doeat(void)
     if (has_oname(otmp) && !strcmp(ONAME(otmp), "loaf of bread")) {
         pline("The bread turns to dust in your mouth. You are hungrier than before.");
         morehungry(500);
-        useup(otmp);
+        /* floorfood() may hand back a floor object. useup() is inventory. */
+        if (carried(otmp))
+            useup(otmp);
+        else
+            useupf(otmp, 1L);
         return ECMD_TIME;
     }
     if (in_wilderness() && dunlev(&u.uz) == 2 && otmp->oclass == FOOD_CLASS) {
         pline("The food turns to ash.");
-        useup(otmp);
+        if (carried(otmp))
+            useup(otmp);
+        else
+            useupf(otmp, 1L);
         return ECMD_TIME;
     }
     if (check_capacity((char *) 0))
