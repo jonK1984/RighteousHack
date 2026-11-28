@@ -982,7 +982,7 @@ domonnoise(struct monst *mtmp)
         }
         if (u.uevent.peter_grimoire && !u.uevent.peter_renewed) {
             rh_text_window(
-                "Peter graspeth thine arm. \"Once my Master said unto me, \"Simon, Simon, behold, Satan hath desired to have you, that he may sift you as wheat: But I have prayed for thee, that thy faith fail not.\" (Luke 22:31-32) Now I say the same unto thee. Every night I pray for thee. Go down, and bring that soul home.\"");
+                "Peter graspeth thine arm. \"Once my Master said unto me, \"Simon, Simon, behold, Satan hath desired to have you, that he may sift you as wheat: But I have prayed for thee, that thy faith fail not.\" Now I say the same unto thee. Every night I pray for thee. Go down, and bring that soul home.\"");
             return ECMD_TIME;
         }
         if (u.uevent.peter_rewarded && !u.uevent.peter_grimoire) {

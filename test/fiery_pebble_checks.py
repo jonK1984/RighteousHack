@@ -16,7 +16,7 @@ FORGE = (
 LUKE = (
     'Peter graspeth thine arm. "Once my Master said unto me, "Simon, Simon, '
     "behold, Satan hath desired to have you, that he may sift you as wheat: "
-    'But I have prayed for thee, that thy faith fail not." (Luke 22:31-32) '
+    'But I have prayed for thee, that thy faith fail not." '
     "Now I say the same unto thee. Every night I pray for thee. Go down, "
     'and bring that soul home."'
 )
