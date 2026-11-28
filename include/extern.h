@@ -3926,6 +3926,10 @@ extern int rh_text_cols(void);
 extern void rh_putstr(winid, int, const char *);
 extern void rh_text_window(const char *);
 extern void endcut_card(const char *);
+#define PETER_SCENE_READ 0
+#define PETER_SCENE_PRAY 1
+extern void peter_scene_cells(int, int, uchar (*)[80], uchar (*)[80]);
+extern void peter_tome_cutscene(void);
 extern void endcut_ascend(void);
 extern void endcut_finish_ascent(void);
 extern void endcut_steed_sunset(void);

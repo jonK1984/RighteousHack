@@ -898,7 +898,7 @@ COREOBJTTY = \
 	$(OTTY)track.o    $(OTTY)trap.o     $(OTTY)u_init.o   $(OTTY)uhitm.o \
 	$(OTTY)utf8map.o  $(OTTY)vault.o    $(OTTY)vision.o   $(OTTY)stony.o \
 	$(OTTY)wayside.o $(OTTY)thorns.o $(OTTY)goodground.o $(OTTY)steedfire.o \
-	$(OTTY)heaven.o $(OTTY)endcut.o $(OTTY)endframes.o \
+	$(OTTY)heaven.o $(OTTY)endcut.o $(OTTY)endframes.o $(OTTY)peterframes.o \
 	$(OTTY)weapon.o \
 	$(OTTY)were.o     $(OTTY)wield.o    $(OTTY)windows.o  $(OTTY)wizard.o \
 	$(OTTY)wizcmds.o  $(OTTY)worm.o     $(OTTY)worn.o     $(OTTY)write.o \
@@ -965,7 +965,7 @@ COREOBJGUI = \
 	$(OGUI)track.o    $(OGUI)trap.o     $(OGUI)u_init.o   $(OGUI)uhitm.o \
 	$(OGUI)utf8map.o  $(OGUI)vault.o    $(OGUI)vision.o   $(OGUI)stony.o \
 	$(OGUI)wayside.o $(OGUI)thorns.o $(OGUI)goodground.o $(OGUI)steedfire.o \
-	$(OGUI)heaven.o $(OGUI)endcut.o $(OGUI)endframes.o \
+	$(OGUI)heaven.o $(OGUI)endcut.o $(OGUI)endframes.o $(OGUI)peterframes.o \
 	$(OGUI)weapon.o \
 	$(OGUI)were.o     $(OGUI)wield.o    $(OGUI)windows.o  $(OGUI)wizard.o \
 	$(OGUI)wizcmds.o  $(OGUI)worm.o     $(OGUI)worn.o     $(OGUI)write.o \
@@ -3395,6 +3395,7 @@ $(OTTY)steedfire.o: steedfire.c $(HACK_H)
 $(OTTY)heaven.o: heaven.c $(HACK_H)
 $(OTTY)endcut.o: endcut.c $(HACK_H)
 $(OTTY)endframes.o: endframes.c $(HACK_H)
+$(OTTY)peterframes.o: peterframes.c $(HACK_H)
 $(OTTY)weapon.o: weapon.c $(HACK_H)
 $(OTTY)were.o: were.c $(HACK_H)
 $(OTTY)wield.o: wield.c $(HACK_H)
@@ -3782,6 +3783,7 @@ $(OGUI)steedfire.o: steedfire.c $(HACK_H)
 $(OGUI)heaven.o: heaven.c $(HACK_H)
 $(OGUI)endcut.o: endcut.c $(HACK_H)
 $(OGUI)endframes.o: endframes.c $(HACK_H)
+$(OGUI)peterframes.o: peterframes.c $(HACK_H)
 $(OGUI)weapon.o: weapon.c $(HACK_H)
 $(OGUI)were.o: were.c $(HACK_H)
 $(OGUI)wield.o: wield.c $(HACK_H)

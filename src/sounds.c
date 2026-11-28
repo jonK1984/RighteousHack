@@ -918,8 +918,9 @@ domonnoise(struct monst *mtmp)
                 "\n"
                 "Peter layeth his hand upon thy shoulder, and his voice is urgent. \"I pray thee, tarry with me. Leave me not alone with this thing until I have searched out its mystery. I beseech thee, stay.\" Seeing the fear in his eyes, thou consentest, and abidest with him.\n"
                 "\n"
-                "For seven days Peter poreth over the book by lamplight, night and day, searching out every dark word and every hidden purpose. He eateth little and sleepeth less, and oft thou hearest him praying in the night.\n"
-                "\n"
+                "For seven days Peter poreth over the book by lamplight, night and day, searching out every dark word and every hidden purpose. He eateth little and sleepeth less, and oft thou hearest him praying in the night.");
+            peter_tome_cutscene();
+            rh_text_window(
                 "On the seventh day he cometh to thee, and his look is grave.\n"
                 "\n"
                 "\"This is the Grand Grimoire: The Red Dragon. It was written by the hand of Lucifer himself. Herein he hath set down his counsel: to gather the hosts of darkness out of the deep, to bind the souls of men as his ransom, and to make war upon the Throne of Heaven itself. The souls of men are but tools in his hand, to be used against the Lord.\"\n"

@@ -532,6 +532,7 @@ HACKCSRC = allmain.c alloc.c apply.c artifact.c attrib.c ball.c bones.c \
 	   timeout.c topten.c track.c trap.c u_init.c utf8map.c \
 	   uhitm.c vault.c version.c vision.c weapon.c were.c wayside.c \
 	   thorns.c goodground.c steedfire.c heaven.c endcut.c endframes.c \
+	   peterframes.c \
 	   wield.c windows.c wizard.c wizcmds.c worm.c worn.c write.c zap.c
 
 # all operating-system-dependent .c (for dependencies and such)
@@ -634,7 +635,7 @@ HOBJ = $(TARGETPFX)allmain.o $(TARGETPFX)alloc.o \
 	$(TARGETPFX)stony.o $(TARGETPFX)wayside.o $(TARGETPFX)thorns.o \
 	$(TARGETPFX)goodground.o \
 	$(TARGETPFX)steedfire.o $(TARGETPFX)heaven.o \
-	$(TARGETPFX)endcut.o $(TARGETPFX)endframes.o \
+	$(TARGETPFX)endcut.o $(TARGETPFX)endframes.o $(TARGETPFX)peterframes.o \
 	$(TARGETPFX)wield.o $(TARGETPFX)windows.o \
 	$(TARGETPFX)wizard.o \
 	$(TARGETPFX)wizcmds.o $(TARGETPFX)worm.o $(TARGETPFX)worn.o \
@@ -1296,6 +1297,7 @@ $(TARGETPFX)steedfire.o: steedfire.c $(HACK_H)
 $(TARGETPFX)heaven.o: heaven.c $(HACK_H)
 $(TARGETPFX)endcut.o: endcut.c $(HACK_H)
 $(TARGETPFX)endframes.o: endframes.c $(HACK_H)
+$(TARGETPFX)peterframes.o: peterframes.c $(HACK_H)
 $(TARGETPFX)wield.o: wield.c $(HACK_H)
 $(TARGETPFX)windows.o: windows.c $(HACK_H) ../include/dlb.h ../include/wintty.h
 $(TARGETPFX)wizard.o: wizard.c $(HACK_H)
