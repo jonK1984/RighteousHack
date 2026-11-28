@@ -1028,6 +1028,7 @@ mksobj_init(struct obj **obj, boolean artif)
             otmp->lamplit = 0;
             break;
         case PEBBLE_FROM_GIBRALTAR:
+        case FIERY_PEBBLE_FROM_GIBRALTAR:
         case SMOOTH_STONE_FROM_GIBRALTAR:
         case GRAND_GRIMOIRE:
             otmp->quan = 1L;

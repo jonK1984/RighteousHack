@@ -202,6 +202,7 @@ class ObjectOrderTests(unittest.TestCase):
         for name in (
             "LAMP_OF_GODS_WORD",
             "PEBBLE_FROM_GIBRALTAR",
+            "FIERY_PEBBLE_FROM_GIBRALTAR",
             "SMOOTH_STONE_FROM_GIBRALTAR",
             "GRAND_GRIMOIRE",
         ):
@@ -209,6 +210,7 @@ class ObjectOrderTests(unittest.TestCase):
         after = text.split("#undef TOOL", 1)[1]
         for name in (
             "PEBBLE_FROM_GIBRALTAR",
+            "FIERY_PEBBLE_FROM_GIBRALTAR",
             "SMOOTH_STONE_FROM_GIBRALTAR",
             "GRAND_GRIMOIRE",
             "LAMP_OF_GODS_WORD",

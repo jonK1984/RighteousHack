@@ -673,6 +673,29 @@ mon_is_gecko(struct monst *mon)
     return (boolean) (glyph_to_mon(glyph) == PM_GECKO);
 }
 
+/* After the Gates key, the plain pebble is cast into the coals. */
+static boolean
+peter_forge_pebble(void)
+{
+    struct obj *pebble, *fiery;
+
+    if (!u.uevent.peter_grimoire)
+        return FALSE;
+    pebble = carrying(PEBBLE_FROM_GIBRALTAR);
+    if (!pebble)
+        return FALSE;
+    useup(pebble);
+    fiery = mksobj(FIERY_PEBBLE_FROM_GIBRALTAR, TRUE, FALSE);
+    if (fiery) {
+        fiery->dknown = fiery->known = fiery->bknown = 1;
+        (void) hold_another_object(fiery, "Oops!  %s to the floor!",
+                                   The(aobjnam(fiery, "slip")),
+                                   (const char *) 0);
+    }
+    pline("Peter seeth the pebble from the rock of Gibraltar in thine hand, and taketh it, and casteth it into the fire of coals. When he draweth it forth, it gloweth as an ember, yet it burneth thee not. \"Now it shall bring thee home to Capernaum, or unto the palace of Babylon, whither thou wilt.\"");
+    return TRUE;
+}
+
 void
 grimoire_first_touch(void)
 {
@@ -941,8 +964,11 @@ domonnoise(struct monst *mtmp)
                                            (const char *) 0);
             }
             u.uevent.peter_grimoire = 1;
+            (void) peter_forge_pebble();
             return ECMD_TIME;
         }
+        if (peter_forge_pebble())
+            return ECMD_TIME;
         if (goodground_trial_done() && !u.uevent.peter_renewed) {
             u.uenmax += 30;
             u.uen += 30;
@@ -952,6 +978,11 @@ domonnoise(struct monst *mtmp)
                 "Peter embraceth thee. \"Thou hast walked the narrow way and come home. \"But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint.\" (Isaiah 40:31)\"\n"
                 "\n"
                 "Thou feelest thy spirit grow mighty within thee.");
+            return ECMD_TIME;
+        }
+        if (u.uevent.peter_grimoire && !u.uevent.peter_renewed) {
+            rh_text_window(
+                "Peter graspeth thine arm. \"Once my Master said unto me, \"Simon, Simon, behold, Satan hath desired to have you, that he may sift you as wheat: But I have prayed for thee, that thy faith fail not.\" (Luke 22:31-32) Now I say the same unto thee. Every night I pray for thee. Go down, and bring that soul home.\"");
             return ECMD_TIME;
         }
         verbalize("The Master gave me a new name, and on it He said He would build. Remember my name, and the floor will hold you.");

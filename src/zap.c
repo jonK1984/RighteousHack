@@ -6581,6 +6581,7 @@ wish_from_text(char *buf, boolean last_try)
             || otmp->otyp == ROCK_WITH_KEYHOLE
             || otmp->otyp == LAMP_OF_GODS_WORD
             || otmp->otyp == PEBBLE_FROM_GIBRALTAR
+            || otmp->otyp == FIERY_PEBBLE_FROM_GIBRALTAR
             || otmp->otyp == SMOOTH_STONE_FROM_GIBRALTAR
             || otmp->otyp == GRAND_GRIMOIRE
             || otmp->otyp == BELL_OF_OPENING

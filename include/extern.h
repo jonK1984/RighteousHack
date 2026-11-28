@@ -4140,6 +4140,7 @@ extern int invoke_word_lamp(struct obj *);
 extern int word_lamp_ac_bonus(struct monst *);
 extern void grimoire_first_touch(void);
 extern int invoke_gibraltar_pebble(struct obj *);
+extern int invoke_gibraltar_fiery(struct obj *);
 extern int invoke_gibraltar_stone(struct obj *);
 extern boolean wayside_at(d_level *);
 extern boolean trial_link(const char *, d_level *, d_level *);

@@ -1871,6 +1871,49 @@ invoke_gibraltar_pebble(struct obj *obj)
 }
 
 int
+invoke_gibraltar_fiery(struct obj *obj)
+{
+    winid tmpwin;
+    anything any;
+    menu_item *selected;
+    int pick;
+    s_level *town;
+    d_level palace;
+
+    (void) obj;
+    if (gibraltar_blocked(FALSE))
+        return ECMD_TIME;
+    tmpwin = create_nhwindow(NHW_MENU);
+    start_menu(tmpwin, MENU_BEHAVE_STANDARD);
+    any = cg.zeroany;
+    any.a_int = 1;
+    add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+             "Capernaum", MENU_ITEMFLAGS_NONE);
+    any.a_int = 2;
+    add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0, ATR_NONE, NO_COLOR,
+             "Babylon's Palace", MENU_ITEMFLAGS_NONE);
+    end_menu(tmpwin, "Whither shall the pebble carry thee?");
+    pick = select_menu(tmpwin, PICK_ONE, &selected);
+    destroy_nhwindow(tmpwin);
+    if (pick <= 0)
+        return ECMD_CANCEL;
+    pick = selected[0].item.a_int;
+    free((genericptr_t) selected);
+    if (pick == 1) {
+        town = find_level("capernaum");
+        if (!town)
+            return ECMD_TIME;
+        gibraltar_arrive(&town->dlevel,
+            "The pebble burneth bright in thy hand, and thou art carried home to Capernaum.");
+    } else if (pick == 2) {
+        palace = stronghold_level;
+        gibraltar_arrive(&palace,
+            "The pebble burneth bright in thy hand, and thou art carried unto the palace of Babylon.");
+    }
+    return ECMD_TIME;
+}
+
+int
 invoke_gibraltar_stone(struct obj *obj)
 {
     struct gsite {
