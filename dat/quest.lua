@@ -211,7 +211,7 @@ staff and a small clay lamp.
 
 As you peer into the abyss, the voice thunders one final time through the cavern:
 
-""%p, be strong and courageous. Do not be frightened, and do not be dismayed,
+"%p, be strong and courageous. Do not be frightened, and do not be dismayed,
 for the LORD your God is with you wherever you go."]],
       },
 -- starting with 'pauper' option set, last paragraph differs from normal legacy
