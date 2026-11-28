@@ -143,6 +143,29 @@ class PeterGibraltarTests(unittest.TestCase):
         self.assertIn("PEBBLE_FROM_GIBRALTAR", zap)
         self.assertIn("SMOOTH_STONE_FROM_GIBRALTAR", zap)
 
+    def test_read_grimoire(self):
+        msg = (
+            "The book is written in a tongue strange unto thee, and the evil "
+            "written therein is too unspeakable to read. Thou must show this "
+            "to Peter."
+        )
+        read = (ROOT / "src/read.c").read_text()
+        self.assertIn(msg, read)
+        hook = read.split("read_ok(struct obj *obj)", 1)[1].split(
+            "doread(void)", 1
+        )[0]
+        self.assertIn("obj->otyp == GRAND_GRIMOIRE", hook)
+        self.assertLess(
+            hook.find("obj->otyp == GRAND_GRIMOIRE"),
+            hook.find("return GETOBJ_SUGGEST"),
+        )
+        body = read.split("otyp == GRAND_GRIMOIRE", 1)[1].split(
+            "FORTUNE_COOKIE", 1
+        )[0]
+        self.assertIn("pline(", body)
+        self.assertNotIn("useup", body)
+        self.assertNotIn("discover", body)
+
 
 if __name__ == "__main__":
     unittest.main()
