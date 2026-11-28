@@ -985,6 +985,11 @@ domonnoise(struct monst *mtmp)
                 "Peter graspeth thine arm. \"Once my Master said unto me, \"Simon, Simon, behold, Satan hath desired to have you, that he may sift you as wheat: But I have prayed for thee, that thy faith fail not.\" (Luke 22:31-32) Now I say the same unto thee. Every night I pray for thee. Go down, and bring that soul home.\"");
             return ECMD_TIME;
         }
+        if (u.uevent.peter_rewarded && !u.uevent.peter_grimoire) {
+            rh_text_window(
+                "Peter looketh out toward the sea. \"I toiled all the night and caught nothing, until He said, \"Cast the net on the right side of the ship, and ye shall find.\"\"");
+            return ECMD_TIME;
+        }
         verbalize("The Master gave me a new name, and on it He said He would build. Remember my name, and the floor will hold you.");
         return ECMD_TIME;
     }

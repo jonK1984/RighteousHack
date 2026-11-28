@@ -89,6 +89,17 @@ class FieryPebbleTests(unittest.TestCase):
         luke = chat.find("peter_grimoire && !u.uevent.peter_renewed")
         self.assertLess(bless, luke)
         self.assertLess(luke, chat.find(LUKE))
+        sea = (
+            'Peter looketh out toward the sea. "I toiled all the night and '
+            'caught nothing, until He said, "Cast the net on the right side '
+            'of the ship, and ye shall find.""'
+        )
+        self.assertIn(sea, sounds)
+        self.assertLess(sounds.find(sea), sounds.find(GENERIC))
+        self.assertLess(
+            chat.find(LUKE),
+            chat.find("peter_rewarded && !u.uevent.peter_grimoire"),
+        )
         hinnom = shown((ROOT / "src/hinnom.c").read_text())
         self.assertIn(MICHAEL_FIRE, hinnom)
         self.assertIn(MICHAEL_PLAIN, hinnom)
