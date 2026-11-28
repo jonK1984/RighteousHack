@@ -88,7 +88,7 @@ struct symsetentry {
  *
  */
 
-#define MAXDCHARS (S_water - S_stone + 1) /* mapped dungeon characters */
+#define MAXDCHARS (S_bog - S_stone + 1) /* mapped dungeon characters */
 #define MAXTCHARS (TRAPNUM - 1) /* trap chars */
 #define MAXECHARS (S_expl_br - S_vbeam + 1) /* mapped effects characters */
 #define MAXEXPCHARS 9 /* number of explosion characters */

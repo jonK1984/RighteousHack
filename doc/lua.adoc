@@ -1576,6 +1576,7 @@ Example:
 | `"W"`     | water
 | `"T"`     | tree
 | `"F"`     | iron bars
+| `"b"`     | bog
 | `"x"`     | "transparent" - used for <<_map>> parts.
 | `"w"`     | "any wall" - see <<_match>>
 |===

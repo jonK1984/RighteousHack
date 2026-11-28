@@ -1020,6 +1020,9 @@ cmap_to_type(int sym)
     case S_water:
         typ = WATER;
         break;
+    case S_bog:
+        typ = BOG;
+        break;
     case S_lavawall:
         typ = LAVAWALL;
         break;

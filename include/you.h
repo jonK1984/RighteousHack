@@ -92,7 +92,8 @@ struct u_event {
     Bitfield(tome_dread, 1);        /* the grimoire's first touch was shown */
     Bitfield(peter_grimoire, 1);    /* Peter read the book and gave the Gates key */
     Bitfield(peter_renewed, 1);     /* Peter renewed power after the Good Ground */
-    /* These three bits sit in the word hinnom_fallen already opened.
+    Bitfield(bog_ridden, 1);        /* a steed has carried the hero onto bog */
+    /* These four bits sit in the word hinnom_fallen already opened.
        The struct does not grow. EDITLEVEL stays 20. */
 };
 

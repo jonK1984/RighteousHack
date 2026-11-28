@@ -4110,6 +4110,8 @@ dfeature_at(coordxy x, coordxy y, char *buf)
         cmap = S_tree; /* "tree" */
     else if (ltyp == IRONBARS)
         dfeature = "set of iron bars";
+    else if (IS_BOG(ltyp))
+        cmap = S_bog; /* "bog" */
 
     if (cmap >= 0)
         dfeature = defsyms[cmap].explanation;

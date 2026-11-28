@@ -50,6 +50,7 @@ staticfn void move_update(boolean);
 staticfn int pickup_checks(void);
 staticfn void maybe_wail(void);
 staticfn boolean water_turbulence(coordxy *, coordxy *);
+staticfn void bog_step(void);
 staticfn int QSORTCALLBACK cmp_weights(const void *, const void *);
 static void ropelogic(void);
 
@@ -3067,8 +3068,18 @@ domove_core(void)
     if (Punished) /* put back ball and chain */
         move_bc(0, bc_control, ballx, bally, chainx, chainy);
 
-    if (u.umoved)
+    if (u.umoved) {
+        d_level bog_lev;
+        coordxy bog_x = u.ux, bog_y = u.uy;
+        boolean onbog = IS_BOG(levl[u.ux][u.uy].typ);
+
+        assign_level(&bog_lev, &u.uz);
         spoteffects(TRUE);
+        /* skip if a trap door or teleporter took the hero elsewhere */
+        if (onbog && u.ux == bog_x && u.uy == bog_y
+            && on_level(&bog_lev, &u.uz) && !u.utotype)
+            bog_step();
+    }
 
     /* delay next move because of ball dragging */
     /* must come after we finished picking up, in spoteffects() */
@@ -3079,6 +3090,24 @@ domove_core(void)
     }
 
     runmode_delay_output();
+}
+
+/* hero has just walked or ridden onto a bog square */
+staticfn void
+bog_step(void)
+{
+    if (u.usteed) {
+        if (!u.uevent.bog_ridden) {
+            u.uevent.bog_ridden = 1;
+            pline("Thy steed beareth thee lightly over the bog.");
+        }
+    } else if (!rn2(20)) {
+        pline("Thy feet sink into the bog.");
+        /* -2, not -1: moveloop counts the next turn boundary first, so
+           this costs the hero exactly one turn (as for ball dragging) */
+        nomul(-2);
+        gn.nomovemsg = "";
+    }
 }
 
 /* delay output based on value of runmode,

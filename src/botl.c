@@ -904,15 +904,16 @@ const char *terrain_descr[] = {
        "Bridge",        /* drawbridge_down, span across moat/ice/lava/floor */
        "Air",           /* open air on Air level or bubble on Water level */
        "Cloud",         /* [part of] a cloud or Air level */
+/*37*/ "Bog",
        /*
         */
-/*37*/ "",              /* MAX_TYPE; skipped ratther than overloaded */
-/*38*/ c_Wall,          /* MATCH_WALL for special levels; shouldn't happen */
+/*38*/ "",              /* MAX_TYPE; skipped ratther than overloaded */
+/*39*/ c_Wall,          /* MATCH_WALL for special levels; shouldn't happen */
        /*
         * additional terrain names that aren't simple levl[][].typ values
         */
-/*39*/ "Floor",         /* substituted for room or corridor */
-/*40*/ "Ground",        /* 'room' on Earth level */
+/*40*/ "Floor",         /* substituted for room or corridor */
+/*41*/ "Ground",        /* 'room' on Earth level */
        "Open-door",     /* open (not broken or doorless) */
        "Shut-door",     /* closed or locked (or trapped) */
        "Swamp",         /* Juiblex level */
